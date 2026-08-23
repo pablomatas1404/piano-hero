@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Test de fluidez</title>
+<style>
+  html,body{ margin:0; padding:0; background:#05070d; overflow:hidden; height:100%; width:100%; }
+  canvas{ display:block; touch-action:none; }
+  #info{
+    position:fixed; top:6px; left:6px; z-index:10; color:#39ff6a; font-family:monospace;
+    font-size:13px; line-height:1.5; background:rgba(0,0,0,.7); padding:6px 10px; border-radius:6px;
+    white-space:pre;
+  }
+</style>
+</head>
+<body>
+<div id="info">cargando...</div>
+<canvas id="c"></canvas>
+<script>
+// Test de fluidez AISLADO (22/08/2026) -- nada de Tone.js, nada de canciones, nada del juego
+// real: solo un bucle requestAnimationFrame dibujando circulos que caen, con botones abajo para
+// tocarlos, igual que el juego de verdad pero reducido a lo minimo. Si ESTO anda fluido en el
+// iPad viejo, el problema del juego real no es el Canvas ni el hardware -- es otra cosa (el peso
+// del archivo entero, basura acumulada, etc.). Si ESTO tambien tartamudea, es el hardware/Canvas.
+var canvas = document.getElementById('c');
+var ctx = canvas.getContext('2d');
+var info = document.getElementById('info');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+var COLORS = ['#ff2d78', '#ff3b3b', '#ff9500', '#ffea00', '#39ff6a', '#00f0ff', '#7c4dff'];
+var LANES = 7;
+var FALL_SEC = 2.2; // mismo tiempo de caida que usa el juego real (LOOKAHEAD)
+
+// Pool fijo de bolitas -- reusamos siempre los mismos objetos, nunca creamos uno nuevo por cuadro
+// (evita justo la sospecha #1 de la que hablaron ChatGPT y Gemini: presion de memoria/recolector
+// de basura por crear objetos todo el tiempo dentro del bucle).
+var MAX_BALLS = 60;
+var balls = [];
+for (var i = 0; i < MAX_BALLS; i++) {
+  balls.push({ active: false, lane: 0, bornAt: 0, hit: false, hitAt: 0 });
+}
+var nextSpawn = 0;
+
+function spawnBall(now) {
+  for (var i = 0; i < MAX_BALLS; i++) {
+    if (!balls[i].active) {
+      balls[i].active = true;
+      balls[i].lane = Math.floor(Math.random() * LANES);
+      balls[i].bornAt = now;
+      balls[i].hit = false;
+      return;
+    }
+  }
+}
+
+canvas.addEventListener('pointerdown', function (ev) {
+  var laneW = canvas.width / LANES;
+  var lane = Math.floor(ev.clientX / laneW);
+  var now = performance.now();
+  // toca la bolita mas cercana a la linea, en ese carril, todavia sin tocar
+  var best = null, bestDiff = 1e9;
+  for (var i = 0; i < MAX_BALLS; i++) {
+    var b = balls[i];
+    if (!b.active || b.hit || b.lane !== lane) continue;
+    var t = (now - b.bornAt) / 1000;
+    var diff = Math.abs(FALL_SEC - t);
+    if (diff < bestDiff) { bestDiff = diff; best = b; }
+  }
+  if (best) { best.hit = true; best.hitAt = now; }
+}, { passive: true });
+
+// Medicion de fluidez real (sugerido por ChatGPT y Gemini): tiempo entre cuadros y el peor de los
+// ultimos ~3 segundos -- si aparecen picos grandes de vez en cuando, es tartamudeo/pausas, no
+// falta de FPS parejo.
+var lastTs = 0, worstDt = 0, worstWindowStart = 0, frameCount = 0, fpsWindowStart = 0, fps = 0;
+
+function frame(ts) {
+  if (!lastTs) lastTs = ts;
+  var dt = ts - lastTs;
+  lastTs = ts;
+  if (dt > worstDt) worstDt = dt;
+  if (ts - worstWindowStart > 3000) { worstWindowStart = ts; worstDt = dt; }
+  frameCount++;
+  if (ts - fpsWindowStart > 500) { fps = Math.round(frameCount / ((ts - fpsWindowStart) / 1000)); frameCount = 0; fpsWindowStart = ts; }
+
+  var w = canvas.width, h = canvas.height;
+  var targetY = h - 70;
+  ctx.clearRect(0, 0, w, h);
+
+  if (ts > nextSpawn) { spawnBall(ts); nextSpawn = ts + 260; }
+
+  var laneW = w / LANES;
+  var r = Math.min(30, laneW * 0.35);
+
+  for (var i = 0; i < MAX_BALLS; i++) {
+    var b = balls[i];
+    if (!b.active) continue;
+    var t = (ts - b.bornAt) / 1000;
+    if (b.hit) {
+      var age = (ts - b.hitAt) / 1000;
+      if (age > 0.3) { b.active = false; continue; }
+      var pop = age / 0.3;
+      ctx.globalAlpha = 1 - pop;
+      ctx.fillStyle = '#39ff6a';
+      ctx.beginPath();
+      ctx.arc(laneW * b.lane + laneW / 2, targetY, r + pop * r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      continue;
+    }
+    if (t > FALL_SEC + 0.3) { b.active = false; continue; }
+    var y = (t / FALL_SEC) * targetY;
+    ctx.fillStyle = COLORS[b.lane];
+    ctx.beginPath();
+    ctx.arc(laneW * b.lane + laneW / 2, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Linea + botones de carril, abajo (para tocar, como el teclado del juego real)
+  ctx.strokeStyle = 'rgba(255,255,255,.4)';
+  ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(0, targetY); ctx.lineTo(w, targetY); ctx.stroke();
+  ctx.setLineDash([]);
+  for (var lane2 = 0; lane2 < LANES; lane2++) {
+    ctx.fillStyle = COLORS[lane2];
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(laneW * lane2 + 3, h - 60, laneW - 6, 54);
+    ctx.globalAlpha = 1;
+  }
+
+  info.textContent = 'FPS: ' + fps + '\nPeor pausa (3s): ' + Math.round(worstDt) + 'ms\ncuadro actual: ' + dt.toFixed(1) + 'ms';
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
