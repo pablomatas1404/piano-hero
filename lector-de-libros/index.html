@@ -1,0 +1,2370 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lector de Libros</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+<style>
+  :root {
+    --bg: #eef0e7;
+    --bg-grain: #e6e9dd;
+    --surface: #ffffff;
+    --surface-2: #f7f8f2;
+    --ink: #1d2a20;
+    --ink-soft: #56655a;
+    --ink-faint: #8b9a86;
+    --accent: #1f7a54;
+    --accent-2: #2f9d6c;
+    --accent-ink: #ffffff;
+    --accent-soft: #dbebe1;
+    --brass: #b8863c;
+    --brass-soft: #f1e3c6;
+    --line: #d7dbc6;
+    --line-strong: #b9c0a8;
+    --shadow: 0 1px 2px rgba(30, 40, 25, 0.06), 0 8px 24px rgba(30, 40, 25, 0.07);
+    --danger: #b1493f;
+    --warn: #c08a2e;
+    --ok: #3f7d54;
+    --underline: #e7a9c2;
+    --paper-left: #fbfaf6;
+    --paper-right: #f6f4ed;
+    --highlight-a: #fff27a;
+    --highlight-b: #ffe45e;
+    --highlight-ink: #2a2205;
+    --radius: 10px;
+    --font-display: 'Special Elite', 'Courier New', monospace;
+    --font-body: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #131c16;
+      --bg-grain: #16201a;
+      --surface: #1a251d;
+      --surface-2: #1f2b22;
+      --ink: #e8ede3;
+      --ink-soft: #a4b39c;
+      --ink-faint: #6d7c67;
+      --accent: #4fc48a;
+      --accent-2: #6fdba5;
+      --accent-ink: #0a1510;
+      --accent-soft: #1c3327;
+      --brass: #d9ab5f;
+      --brass-soft: #3a3020;
+      --line: #2b3a2e;
+      --line-strong: #435a48;
+      --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 30px rgba(0,0,0,0.4);
+      --danger: #e0776a;
+      --warn: #e0b25c;
+      --ok: #6fbf8b;
+      --underline: #c98aa8;
+      --paper-left: #1e2a21;
+      --paper-right: #1a251d;
+      --highlight-a: #b8a227;
+      --highlight-b: #8f7d1c;
+      --highlight-ink: #fffbe0;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #131c16;
+    --bg-grain: #16201a;
+    --surface: #1a251d;
+    --surface-2: #1f2b22;
+    --ink: #e8ede3;
+    --ink-soft: #a4b39c;
+    --ink-faint: #6d7c67;
+    --accent: #4fc48a;
+    --accent-2: #6fdba5;
+    --accent-ink: #0a1510;
+    --accent-soft: #1c3327;
+    --brass: #d9ab5f;
+    --brass-soft: #3a3020;
+    --line: #2b3a2e;
+    --line-strong: #435a48;
+    --shadow: 0 1px 2px rgba(0,0,0,0.35), 0 10px 30px rgba(0,0,0,0.4);
+    --danger: #e0776a;
+    --warn: #e0b25c;
+    --ok: #6fbf8b;
+    --underline: #c98aa8;
+    --paper-left: #1e2a21;
+    --paper-right: #1a251d;
+    --highlight-a: #b8a227;
+    --highlight-b: #8f7d1c;
+    --highlight-ink: #fffbe0;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    background-image:
+      linear-gradient(var(--bg-grain) 1px, transparent 1px);
+    background-size: 100% 32px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  button { font-family: inherit; cursor: pointer; }
+  ::selection { background: var(--brass-soft); }
+
+  a.skip-link:focus { position: fixed; top: 8px; left: 8px; z-index: 999; background: var(--accent); color: var(--accent-ink); padding: 8px 12px; border-radius: 6px; }
+
+  /* ---------- Shell ---------- */
+  #app { max-width: 1320px; margin: 0 auto; padding: 22px 24px 60px; }
+
+  #header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; padding: 20px 26px; margin-bottom: 24px;
+    background: linear-gradient(135deg, var(--surface) 0%, var(--accent-soft) 180%);
+    border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    border-bottom: 3px solid var(--accent);
+  }
+  .wordmark { display: flex; align-items: baseline; gap: 14px; }
+  .wordmark .stamp {
+    font-family: var(--font-display); font-size: 1.75rem; letter-spacing: 0.5px;
+    color: var(--accent); text-shadow: 1px 1px 0 var(--accent-soft);
+  }
+  .wordmark .sub {
+    font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 1.8px; font-weight: 600;
+    text-transform: uppercase; color: var(--ink-soft); border-left: 2px solid var(--accent);
+    padding-left: 12px;
+  }
+  #clock-wrap { display: flex; align-items: center; gap: 14px; }
+  #clock {
+    font-family: var(--font-mono); font-size: 1.15rem; font-weight: 600;
+    background: var(--surface-2); border: 1px solid var(--line);
+    padding: 7px 14px; border-radius: 7px; font-variant-numeric: tabular-nums;
+    min-width: 100px; text-align: center;
+  }
+  #date-badge { font-family: var(--font-mono); font-size: 0.78rem; color: var(--ink-soft); text-transform: capitalize; }
+  #theme-toggle {
+    border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--ink);
+    border-radius: 7px; width: 36px; height: 36px; font-size: 1rem; line-height: 1;
+  }
+  #theme-toggle:hover { border-color: var(--accent); }
+
+  #palette-picker { display: flex; align-items: center; gap: 6px; padding: 0 4px; border-right: 1px solid var(--line-strong); margin-right: 4px; }
+  .palette-swatch {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; padding: 0; cursor: pointer;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12);
+  }
+  .palette-swatch[data-palette="bosque"] { background: linear-gradient(135deg, #6fdba5, #1f7a54); }
+  .palette-swatch[data-palette="oceano"] { background: linear-gradient(135deg, #7cc4ef, #1f6fa8); }
+  .palette-swatch[data-palette="atardecer"] { background: linear-gradient(135deg, #f0a670, #c2622a); }
+  .palette-swatch:hover { transform: scale(1.12); }
+  .palette-swatch.active { border-color: var(--ink); }
+
+  :root[data-palette="oceano"] { --accent: #1f6fa8; --accent-2: #4fa8dd; --accent-soft: #dbe9f2; }
+  :root[data-palette="atardecer"] { --accent: #c2622a; --accent-2: #e08a4d; --accent-soft: #f5e2d3; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"])[data-palette="oceano"] { --accent: #4fa8dd; --accent-2: #7cc4ef; --accent-soft: #1c3040; }
+    :root:not([data-theme="light"])[data-palette="atardecer"] { --accent: #e0824a; --accent-2: #f0a670; --accent-soft: #3a2718; }
+  }
+  :root[data-theme="dark"][data-palette="oceano"] { --accent: #4fa8dd; --accent-2: #7cc4ef; --accent-soft: #1c3040; }
+  :root[data-theme="dark"][data-palette="atardecer"] { --accent: #e0824a; --accent-2: #f0a670; --accent-soft: #3a2718; }
+
+  /* ---------- Layout grid ---------- */
+  #layout { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
+  @media (max-width: 880px) { #layout { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 18px; border-top: 3px solid var(--accent);
+  }
+  .panel + .panel { margin-top: 18px; }
+  .panel-head {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+  }
+  .panel-title {
+    font-family: var(--font-display); font-size: 1.05rem; letter-spacing: 0.3px; color: var(--ink);
+  }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 1.6px; text-transform: uppercase;
+    font-weight: 700; color: var(--accent); margin-bottom: 4px; display: block;
+  }
+
+  /* ---------- Calendar ---------- */
+  .cal-nav { display: flex; align-items: center; gap: 8px; }
+  .cal-btn {
+    border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--ink);
+    border-radius: 6px; width: 26px; height: 26px; font-size: 0.85rem; display: flex; align-items: center; justify-content: center;
+  }
+  .cal-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .cal-month-label { font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600; text-transform: capitalize; min-width: 96px; text-align: center; }
+  table.cal { width: 100%; border-collapse: collapse; margin-top: 8px; table-layout: fixed; }
+  table.cal th {
+    font-family: var(--font-mono); font-size: 0.62rem; color: var(--ink-faint); font-weight: 500;
+    padding-bottom: 4px; text-transform: uppercase;
+  }
+  table.cal td {
+    text-align: center; font-family: var(--font-mono); font-size: 0.78rem; padding: 5px 0;
+    border-radius: 6px; cursor: pointer; position: relative; color: var(--ink-soft);
+  }
+  table.cal td:empty { cursor: default; }
+  table.cal td.has-day:hover { background: var(--accent-soft); color: var(--ink); }
+  table.cal td.today { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+  table.cal td.selected:not(.today) { outline: 1.5px solid var(--brass); outline-offset: -1px; }
+  .task-dots { display: flex; gap: 2px; justify-content: center; margin-top: 2px; height: 4px; }
+  .task-dots span { width: 4px; height: 4px; border-radius: 50%; background: var(--brass); display: block; }
+  table.cal td.today .task-dots span { background: var(--accent-ink); }
+
+  #day-editor { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line-strong); display: none; }
+  #day-editor.open { display: block; }
+  #day-editor .day-title { font-family: var(--font-mono); font-size: 0.78rem; font-weight: 600; margin-bottom: 8px; text-transform: capitalize; }
+  .task-row { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+  .task-row input[type="text"] {
+    flex: 1; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink);
+    border-radius: 5px; padding: 5px 7px; font-size: 0.78rem; font-family: var(--font-body);
+  }
+  .task-row .del { color: var(--ink-faint); background: none; border: none; font-size: 0.8rem; }
+  .task-row .del:hover { color: var(--danger); }
+  #add-task-form { display: flex; gap: 6px; margin-top: 6px; }
+  #add-task-form input {
+    flex: 1; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink);
+    border-radius: 5px; padding: 6px 8px; font-size: 0.78rem; font-family: var(--font-body);
+  }
+  #add-task-form button {
+    border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink);
+    border-radius: 5px; padding: 0 10px; font-size: 0.85rem; font-weight: 600;
+  }
+
+  /* ---------- Calculator ---------- */
+  #calc-display {
+    font-family: var(--font-mono); font-size: 1.5rem; text-align: right; padding: 10px 10px;
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 7px; margin-bottom: 8px;
+    overflow-x: auto; white-space: nowrap; font-variant-numeric: tabular-nums;
+  }
+  #calc-expr { font-family: var(--font-mono); font-size: 0.68rem; color: var(--ink-faint); text-align: right; min-height: 14px; margin-bottom: 2px; }
+  .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .calc-grid button {
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--ink);
+    border-radius: 7px; padding: 10px 0; font-size: 0.95rem; font-family: var(--font-mono); font-weight: 500;
+  }
+  .calc-grid button:hover { border-color: var(--accent); }
+  .calc-grid button:active { transform: translateY(1px); }
+  .calc-grid button.op { color: var(--accent); font-weight: 700; }
+  .calc-grid button.eq { background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: var(--accent-ink); border-color: var(--accent); grid-row: span 2; font-weight: 700; }
+  .calc-grid button.clear { color: var(--danger); }
+  .calc-grid button.zero { grid-column: span 2; }
+
+  /* ---------- Library ---------- */
+  #library-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  #add-pdf-btn {
+    border: 1px solid var(--accent); background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: var(--accent-ink);
+    border-radius: 7px; padding: 9px 16px; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 7px;
+    box-shadow: 0 2px 8px rgba(31,122,84,0.3);
+  }
+  #add-pdf-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+  #add-folder-btn {
+    border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--ink);
+    border-radius: 7px; padding: 9px 16px; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 7px;
+  }
+  #add-folder-btn:hover { border-color: var(--accent); }
+  #storage-note { font-size: 0.72rem; color: var(--ink-faint); max-width: 340px; text-align: right; line-height: 1.35; }
+
+  #library-tabs { display: flex; align-items: center; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .lib-tab {
+    border: 1.5px solid var(--line-strong); background: var(--surface-2); color: var(--ink-soft);
+    border-radius: 999px; padding: 7px 16px; font-size: 0.8rem; font-weight: 700;
+  }
+  .lib-tab:hover { border-color: var(--accent); color: var(--ink); }
+  .lib-tab.active { background: linear-gradient(135deg, var(--accent-2), var(--accent)); border-color: var(--accent); color: var(--accent-ink); }
+  #clear-category-btn {
+    margin-left: auto; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--danger);
+    border-radius: 7px; padding: 6px 12px; font-size: 0.74rem; font-weight: 600;
+  }
+  #clear-category-btn:hover { border-color: var(--danger); background: var(--brass-soft); }
+
+  #library-grid {
+    margin-top: 18px; display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 16px;
+  }
+  .book-card { cursor: pointer; }
+  .book-card .cover-wrap {
+    position: relative; aspect-ratio: 3/4; border-radius: 8px; overflow: hidden;
+    border: 1px solid var(--line); box-shadow: var(--shadow); background: linear-gradient(160deg, var(--accent-soft), var(--surface-2));
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .book-card .cover-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .book-card .cover-fallback {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 14px; font-family: var(--font-display); font-size: 0.85rem; color: var(--ink-soft);
+  }
+  .book-card .progress-pill {
+    position: absolute; bottom: 6px; right: 6px; background: rgba(20,30,20,0.72); color: #fff;
+    font-family: var(--font-mono); font-size: 0.62rem; padding: 2px 6px; border-radius: 20px;
+  }
+  .book-card .format-pill {
+    position: absolute; top: 6px; left: 6px; background: rgba(20,30,20,0.72); color: #fff;
+    font-family: var(--font-mono); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.5px;
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .book-card .title { margin-top: 8px; font-size: 0.8rem; font-weight: 700; line-height: 1.25; }
+  .book-card .sub { font-size: 0.68rem; color: var(--ink-faint); margin-top: 1px; }
+  .book-card:hover .cover-wrap { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 10px 26px rgba(20,30,20,0.22); }
+
+  .card-overlay {
+    position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,15,10,0.05), rgba(10,15,10,0.75));
+    display: flex; flex-direction: column; align-items: stretch; justify-content: flex-end; gap: 6px; padding: 10px;
+    opacity: 0; transition: opacity 0.15s ease;
+  }
+  .book-card:hover .card-overlay, .book-card:focus-within .card-overlay { opacity: 1; }
+  .card-btn {
+    border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.12); color: #fff;
+    border-radius: 6px; padding: 7px 8px; font-size: 0.72rem; font-weight: 600; backdrop-filter: blur(2px);
+  }
+  .card-btn:hover { background: rgba(255,255,255,0.25); }
+  .card-btn.primary { background: linear-gradient(135deg, var(--accent-2), var(--accent)); border-color: var(--accent); font-weight: 700; }
+  .card-btn.primary:hover { filter: brightness(1.08); }
+  .card-row2 { display: flex; gap: 5px; }
+  .card-move {
+    flex: 1; min-width: 0; border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.12); color: #fff;
+    border-radius: 6px; padding: 5px 4px; font-size: 0.66rem; font-weight: 600;
+  }
+  .card-move option { color: #111; }
+  .card-del {
+    border: 1px solid rgba(255,255,255,0.5); background: rgba(255,255,255,0.12); color: #fff;
+    border-radius: 6px; padding: 5px 8px; font-size: 0.72rem; flex-shrink: 0;
+  }
+  .card-del:hover { background: var(--danger); border-color: var(--danger); }
+  @media (hover: none) { .card-overlay { opacity: 1; background: linear-gradient(180deg, rgba(10,15,10,0), rgba(10,15,10,0.78) 55%); } }
+
+  #library-empty {
+    margin-top: 18px; border: 1.5px dashed var(--line-strong); border-radius: var(--radius);
+    padding: 40px 20px; text-align: center; color: var(--ink-soft);
+  }
+  #library-empty .icon { font-size: 2rem; margin-bottom: 10px; }
+  #library-empty .big { font-family: var(--font-display); font-size: 1.05rem; color: var(--ink); margin-bottom: 6px; }
+  #library-empty .small { font-size: 0.8rem; max-width: 380px; margin: 0 auto; line-height: 1.4; }
+
+  /* ---------- Soon tiles ---------- */
+  #soon-row { margin-top: 26px; }
+  .soon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+  .soon-tile {
+    border: 1px dashed var(--line-strong); background: var(--surface-2); border-radius: 9px;
+    padding: 14px 12px; text-align: left; color: var(--ink-soft); display: flex; flex-direction: column; gap: 4px;
+  }
+  .soon-tile:hover { border-color: var(--brass); color: var(--ink); }
+  .soon-tile .ic { font-size: 1.2rem; }
+  .soon-tile .lbl { font-size: 0.78rem; font-weight: 600; font-family: var(--font-body); }
+
+  /* ---------- Toast ---------- */
+  #toast {
+    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--bg); padding: 11px 18px; border-radius: 8px; font-size: 0.82rem;
+    opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 500; box-shadow: var(--shadow);
+    max-width: 90vw; text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ---------- Reader ---------- */
+  #reader-overlay {
+    position: fixed; inset: 0; background: rgba(15, 20, 14, 0.6); backdrop-filter: blur(2px);
+    display: none; align-items: stretch; justify-content: center; z-index: 400; padding: 20px;
+  }
+  #reader-overlay.open { display: flex; }
+  #reader {
+    background: var(--surface); border-radius: 12px; width: 100%; max-width: 1280px;
+    height: min(880px, calc(100vh - 40px));
+    display: grid; grid-template-columns: 1fr 300px; grid-template-rows: minmax(0, 1fr);
+    overflow: hidden; box-shadow: var(--shadow); position: relative;
+    --zoom: 1;
+  }
+  @media (max-width: 900px) {
+    #reader { grid-template-columns: 1fr; }
+    #reader-side { display: none; }
+    /* No side panel at this width, so the floating player becomes the only way to
+       play/pause, change speed, or navigate — show it always, not just in focus mode. */
+    #floating-player { display: flex; }
+  }
+
+  /* ---------- Focus / fullscreen mode ---------- */
+  #reader-overlay.focus-mode { padding: 0; background: var(--bg); }
+  #reader.focus-mode { max-width: none; height: 100vh; border-radius: 0; grid-template-columns: 1fr; }
+  #reader.focus-mode #reader-side,
+  #reader.focus-mode #reader-pagebar,
+  #reader.focus-mode #page-hint { display: none; }
+  #reader.focus-mode #page-canvas-wrap { padding: 40px; }
+  #reader.focus-mode #book-spread { max-width: 1200px; }
+
+  #floating-player {
+    display: none; position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow);
+    padding: 8px 14px; align-items: center; gap: 6px; z-index: 10; max-width: calc(100vw - 40px); flex-wrap: wrap; justify-content: center;
+  }
+  #reader.focus-mode #floating-player { display: flex; }
+  #floating-player button {
+    border: none; background: var(--surface-2); color: var(--ink); border-radius: 999px;
+    width: 34px; height: 34px; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  #floating-player button:hover { background: var(--accent-soft); color: var(--accent); }
+  #fp-exit { width: auto; padding: 0 12px; font-size: 0.75rem; font-weight: 700; }
+  #fp-page-indicator, #fp-rate-val { font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-soft); min-width: 44px; text-align: center; font-variant-numeric: tabular-nums; }
+  #fp-jump-input { width: 58px; padding: 5px 6px; font-size: 0.72rem; }
+  .fp-sep { width: 1px; height: 20px; background: var(--line-strong); margin: 0 3px; flex-shrink: 0; }
+
+  #reader-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  #reader-topbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px;
+    border-bottom: 1px solid var(--line); background: var(--surface-2);
+  }
+  #reader-topbar .title { font-size: 0.82rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; flex-shrink: 0; }
+  #reader-close { border: none; background: none; color: var(--ink-soft); font-size: 1.1rem; padding: 4px 8px; border-radius: 6px; }
+  #reader-close:hover { background: var(--accent-soft); color: var(--ink); }
+
+  #reader-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; flex: 1; }
+  #reader-tools button {
+    border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); border-radius: 6px;
+    padding: 6px 10px; font-size: 0.85rem; font-weight: 600; line-height: 1;
+  }
+  #reader-tools button:hover { border-color: var(--accent); color: var(--accent); }
+  #reader-tools button[aria-pressed="true"] { background: var(--brass); border-color: var(--brass); color: #2a1c05; }
+  #zoom-val { font-family: var(--font-mono); font-size: 0.7rem; color: var(--ink-faint); min-width: 34px; text-align: center; }
+  .tool-sep { width: 1px; height: 18px; background: var(--line-strong); margin: 0 2px; }
+  .audio-badge {
+    font-family: var(--font-mono); font-size: 0.68rem; background: var(--brass-soft); color: var(--brass);
+    border: 1px solid var(--brass); border-radius: 999px; padding: 4px 10px; font-weight: 600; flex-shrink: 0;
+  }
+  .audio-badge:hover { filter: brightness(1.05); }
+  #fp-audio-badge { width: auto; border-radius: 999px; }
+  .format-badge {
+    font-family: var(--font-mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px;
+    background: var(--accent-soft); color: var(--accent); border-radius: 4px; padding: 2px 6px; margin-left: 8px;
+  }
+
+  /* ---------- Open-book spread ---------- */
+  #page-canvas-wrap { flex: 1; overflow: hidden; display: flex; justify-content: center; align-items: stretch; padding: 22px; background: var(--bg-grain); }
+  #book-spread {
+    display: flex; width: 100%; max-width: 960px; margin: 0 auto; box-shadow: 0 6px 30px rgba(20,25,15,0.18), 0 1px 0 rgba(20,25,15,0.08);
+    border-radius: 5px; overflow: hidden; position: relative;
+  }
+  .page {
+    flex: 1 1 50%; min-width: 0; padding: 38px 34px; overflow-y: auto; position: relative;
+    font-size: calc(1.02rem * var(--zoom, 1)); line-height: 1.72; text-align: justify;
+  }
+  .page-left { background: var(--paper-left); border-right: 1px solid var(--line); }
+  .page-right { background: var(--paper-right); color: var(--ink-soft); }
+  .page canvas { display: block; margin: 0 auto; max-width: 100%; height: auto; box-shadow: none; }
+  .pdf-page-wrap { position: relative; margin: 0 auto; max-width: 100%; }
+  .pdf-page-wrap canvas { width: 100%; height: 100%; display: block; }
+  .textLayer { position: absolute; inset: 0; overflow: hidden; line-height: 1; opacity: 1; }
+  .textLayer > span { color: transparent; position: absolute; white-space: pre; cursor: text; transform-origin: 0% 0%; }
+  .textLayer ::selection { background: rgba(80, 140, 255, 0.35); }
+  #page-canvas-wrap.marking .textLayer > span { cursor: crosshair; }
+  .pdf-highlights { position: absolute; inset: 0; pointer-events: none; }
+  .pdf-mark { position: absolute; background: var(--highlight-a); opacity: 0.55; mix-blend-mode: multiply; border-radius: 2px; }
+  .textLayer > span.pdf-reading-active { background: var(--underline); opacity: 0.55; mix-blend-mode: multiply; border-radius: 2px; }
+  #book-spread::before {
+    content: ''; position: absolute; top: 0; bottom: 0; left: 50%; width: 34px; margin-left: -17px;
+    background: linear-gradient(to right, transparent, rgba(20,25,15,0.10) 45%, rgba(20,25,15,0.14) 50%, rgba(20,25,15,0.10) 55%, transparent);
+    pointer-events: none; z-index: 3;
+  }
+  .page .s { padding: 1px 0; cursor: pointer; text-decoration-skip-ink: none; }
+  .page .s:hover { text-decoration: underline; text-decoration-color: var(--line-strong); text-decoration-thickness: 2px; }
+  .page .s.active {
+    text-decoration: underline; text-decoration-color: var(--underline); text-decoration-thickness: 4px;
+    text-underline-offset: 3px; border-radius: 2px;
+  }
+  .page .s.marked { background: linear-gradient(120deg, var(--highlight-a), var(--highlight-b)); color: var(--highlight-ink); border-radius: 2px; }
+  #page-canvas-wrap.marking .page .s { cursor: crosshair; }
+  #page-canvas-wrap.marking .page .s:hover { background: rgba(255, 226, 90, 0.35); }
+  .page-empty { color: var(--ink-faint); font-size: 0.85rem; font-style: italic; }
+  .page-end {
+    display: flex; align-items: center; justify-content: center; height: 100%; text-align: center;
+    font-family: var(--font-display); color: var(--ink-faint); font-size: 0.9rem;
+  }
+  .page-inner .chapter-title {
+    font-family: var(--font-display); font-weight: 700; font-size: 1.2em; text-align: center;
+    color: var(--accent); margin: 0 0 1.4em; letter-spacing: 0.4px;
+  }
+  .page-inner.chapter-start { padding-top: 14%; }
+  .page-inner.chapter-start .chapter-title { margin-bottom: 1.8em; }
+  .page-inner p { margin: 0 0 1.1em; }
+  .page-inner .book-img {
+    display: block; max-width: 100%; height: auto; border-radius: 6px; margin: 0.8em auto;
+    box-shadow: var(--shadow);
+  }
+
+  /* page-turn animation */
+  .page.turn-out { animation: pageTurnOut 0.22s ease forwards; }
+  .page.turn-in { animation: pageTurnIn 0.26s ease-out; }
+  @keyframes pageTurnOut { to { opacity: 0; transform: translateX(-14px) scale(0.985); } }
+  @keyframes pageTurnIn { from { opacity: 0; transform: translateX(14px) scale(0.985); } to { opacity: 1; transform: translateX(0) scale(1); } }
+  .page::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+    background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,0.5) 50%, transparent 60%);
+    background-size: 250% 100%; background-position: 160% 0;
+  }
+  .page.shine::after { animation: shine 0.5s ease; }
+  @keyframes shine { from { opacity: 1; background-position: 160% 0; } to { opacity: 0; background-position: -60% 0; } }
+
+  #reader-pagebar {
+    display: flex; align-items: center; justify-content: center; gap: 16px; padding: 12px; border-top: 1px solid var(--line);
+    font-family: var(--font-mono); font-size: 0.85rem; background: var(--surface-2);
+  }
+  #reader-pagebar button {
+    border: 1.5px solid var(--accent); background: var(--surface); color: var(--accent); border-radius: 8px;
+    padding: 8px 16px; font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 6px;
+  }
+  #reader-pagebar button:hover { background: var(--accent); color: var(--accent-ink); }
+  #reader-pagebar button:disabled { opacity: 0.35; border-color: var(--line-strong); color: var(--ink-faint); background: var(--surface); cursor: default; }
+  #page-indicator { min-width: 70px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 600; }
+  #page-hint { font-size: 0.66rem; color: var(--ink-faint); text-align: center; padding: 0 0 6px; font-family: var(--font-body); }
+  .time-estimate { font-family: var(--font-mono); font-size: 0.7rem; color: var(--brass); font-weight: 600; margin-left: 6px; white-space: nowrap; }
+  #fp-time-estimate { font-size: 0.66rem; margin-left: 0; }
+  #page-jump-form { display: inline-flex; }
+  #page-jump-input, #fp-jump-input {
+    width: 76px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+    border-radius: 6px; padding: 6px 8px; font-family: var(--font-mono); font-size: 0.78rem; text-align: center;
+  }
+  #page-jump-input:focus, #fp-jump-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  #reader-side { border-left: 1px solid var(--line); display: flex; flex-direction: column; background: var(--surface); min-height: 0; overflow: hidden; }
+  #tts-controls { padding: 16px; }
+  #tts-controls .row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  #tts-controls label { font-family: var(--font-mono); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 1px; color: var(--ink-faint); display: block; margin-bottom: 4px; }
+  #voice-select {
+    width: 100%; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); border-radius: 6px;
+    padding: 6px 8px; font-size: 0.78rem; font-family: var(--font-body);
+  }
+  #voice-hint { font-size: 0.66rem; color: var(--ink-faint); margin-top: 4px; line-height: 1.35; }
+  #rate-row { display: flex; align-items: center; gap: 8px; }
+  #rate-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+  #rate-val { font-family: var(--font-mono); font-size: 0.72rem; width: 32px; text-align: right; }
+  #tts-buttons { display: flex; gap: 8px; }
+  #tts-buttons button {
+    flex: 1; border: 1px solid var(--accent); background: linear-gradient(135deg, var(--accent-2), var(--accent)); color: var(--accent-ink);
+    border-radius: 7px; padding: 9px 0; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px;
+    box-shadow: 0 2px 6px rgba(31,122,84,0.25);
+  }
+  #tts-buttons button.secondary { background: var(--surface-2); color: var(--ink); border-color: var(--line-strong); }
+  #tts-buttons button:disabled { opacity: 0.5; cursor: default; }
+  #continuous-row { display: flex; align-items: center; gap: 7px; margin-top: 10px; font-size: 0.76rem; color: var(--ink-soft); }
+  #reader-tip {
+    margin: 0 16px 14px; font-size: 0.72rem; color: var(--ink-faint); line-height: 1.4;
+    background: var(--surface-2); border-radius: 7px; padding: 10px 11px; border: 1px solid var(--line);
+  }
+  #reader-side-spacer { flex: 1; }
+  #delete-book { border: none; background: none; color: var(--ink-faint); font-size: 0.72rem; padding: 10px 14px; text-align: left; border-top: 1px solid var(--line); }
+  #delete-book:hover { color: var(--danger); }
+
+  footer#foot { text-align: center; font-family: var(--font-mono); font-size: 0.68rem; color: var(--ink-faint); margin-top: 30px; letter-spacing: 0.4px; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  /* ---------- Mobile / tablet ---------- */
+  @media (max-width: 700px) {
+    html { font-size: 17px; }
+    #app { padding: 12px 10px 36px; }
+    #header { padding: 14px 14px; gap: 8px; flex-wrap: wrap; }
+    .wordmark .stamp { font-size: 1.3rem; }
+    .wordmark .sub { display: none; }
+    #clock { font-size: 0.95rem; min-width: 78px; padding: 6px 10px; }
+    #date-badge { display: none; }
+    #palette-picker { border-right: none; margin-right: 0; padding: 0; }
+    #layout { gap: 12px; }
+    .panel { padding: 14px; }
+    .panel-title { font-size: 0.95rem; }
+    table.cal td { font-size: 0.82rem; padding: 7px 0; }
+    #library-toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
+    #storage-note { text-align: left; max-width: none; }
+    #library-grid { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px; }
+    .soon-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+
+    /* Reader: single page, controls collapse into the always-on floating player */
+    #reader-overlay { padding: 0; }
+    #reader { border-radius: 0; height: 100dvh; max-width: none; grid-template-columns: 1fr; }
+    #reader-side, #reader-pagebar, #page-hint { display: none; }
+    .page-right { display: none; }
+    .page-left { flex: 1 1 100%; border-right: none; }
+    #book-spread::before { display: none; }
+    .page { font-size: calc(1.18rem * var(--zoom, 1)); padding: 22px 18px 90px; }
+    #reader-tools { gap: 4px; }
+    #reader-tools button { padding: 6px 8px; font-size: 0.78rem; }
+    #zoom-val { display: none; }
+    #floating-player { display: flex; bottom: 14px; max-width: calc(100vw - 24px); padding: 7px 10px; }
+    #reader.focus-mode #floating-player,
+    #reader #floating-player { display: flex; }
+  }
+</style>
+
+<div id="app">
+  <header id="header">
+    <div class="wordmark">
+      <span class="stamp">📖 Lector de Libros</span>
+      <span class="sub">Mesa de trabajo personal</span>
+    </div>
+    <div id="clock-wrap">
+      <span id="date-badge"></span>
+      <span id="clock">--:--:--</span>
+      <div id="palette-picker" role="group" aria-label="Color de la app">
+        <button class="palette-swatch active" data-palette="bosque" title="Bosque"></button>
+        <button class="palette-swatch" data-palette="oceano" title="Océano"></button>
+        <button class="palette-swatch" data-palette="atardecer" title="Atardecer"></button>
+      </div>
+      <button id="theme-toggle" title="Cambiar tema" aria-label="Cambiar tema">🌓</button>
+    </div>
+  </header>
+
+  <div id="layout">
+    <!-- LEFT RAIL -->
+    <div id="rail">
+      <section class="panel" aria-label="Calendario">
+        <span class="eyebrow">Agenda</span>
+        <div id="cal-0"></div>
+        <div id="cal-1" style="margin-top:18px; padding-top:16px; border-top:1px solid var(--line);"></div>
+        <div id="day-editor">
+          <div class="day-title" id="day-editor-title"></div>
+          <div id="task-list"></div>
+          <form id="add-task-form">
+            <input type="text" id="new-task-input" placeholder="Agregar tarea…" maxlength="120">
+            <button type="submit">+</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Calculadora">
+        <span class="eyebrow">Calculadora</span>
+        <div id="calc-expr"></div>
+        <div id="calc-display">0</div>
+        <div class="calc-grid">
+          <button class="clear" data-act="clear">C</button>
+          <button class="op" data-act="back">⌫</button>
+          <button class="op" data-act="pct">%</button>
+          <button class="op" data-op="/">÷</button>
+
+          <button data-num="7">7</button>
+          <button data-num="8">8</button>
+          <button data-num="9">9</button>
+          <button class="op" data-op="*">×</button>
+
+          <button data-num="4">4</button>
+          <button data-num="5">5</button>
+          <button data-num="6">6</button>
+          <button class="op" data-op="-">−</button>
+
+          <button data-num="1">1</button>
+          <button data-num="2">2</button>
+          <button data-num="3">3</button>
+          <button class="op" data-op="+">+</button>
+
+          <button class="zero" data-num="0">0</button>
+          <button data-act="dot">,</button>
+          <button class="eq" data-act="eq">=</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- MAIN: LIBRARY -->
+    <div id="main">
+      <section class="panel" aria-label="Biblioteca">
+        <div id="library-toolbar">
+          <div>
+            <span class="eyebrow">Biblioteca</span>
+            <h2 class="panel-title" style="margin-top:2px;">Tus PDFs</h2>
+          </div>
+          <div style="display:flex; align-items:center; gap:14px;">
+            <span id="storage-note">Cada libro se guarda solo en este navegador — no se sube a ningún servidor ni se comparte con otros que abran este mismo enlace. Formatos: PDF, EPUB, DOCX y TXT.</span>
+            <button id="add-pdf-btn">＋ Agregar libro</button>
+            <button id="add-folder-btn" class="secondary-btn">📁 Agregar carpeta completa</button>
+            <input type="file" id="pdf-input" accept=".pdf,.epub,.docx,.txt,application/pdf,application/epub+zip,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" multiple class="visually-hidden">
+            <input type="file" id="folder-input" webkitdirectory directory multiple class="visually-hidden">
+          </div>
+        </div>
+
+        <div id="library-tabs">
+          <button class="lib-tab active" data-cat="mine">📚 Mis libros</button>
+          <button class="lib-tab" data-cat="clasico">📖 Clásicos</button>
+          <button class="lib-tab" data-cat="infantil">🧒 Cuentos infantiles</button>
+          <button id="clear-category-btn" title="Vaciar esta categoría" hidden>🗑️ Vaciar</button>
+        </div>
+
+        <div id="library-empty">
+          <div class="icon">🗂️</div>
+          <div class="big">Todavía no hay libros acá</div>
+          <div class="small">Apretá "Agregar libro" y sumá el primero (PDF, EPUB, DOCX o TXT) — se genera la tapa automáticamente y queda guardado en este navegador para la próxima vez.</div>
+        </div>
+
+        <div id="library-grid"></div>
+      </section>
+
+      <section id="soon-row">
+        <span class="eyebrow">En camino</span>
+        <div class="soon-grid">
+          <button class="soon-tile" data-soon="Notas">
+            <span class="ic">🗒️</span><span class="lbl">Notas rápidas</span>
+          </button>
+          <button class="soon-tile" data-soon="Expedientes">
+            <span class="ic">📁</span><span class="lbl">Expedientes</span>
+          </button>
+          <button class="soon-tile" data-soon="Contactos">
+            <span class="ic">📇</span><span class="lbl">Contactos</span>
+          </button>
+          <button class="soon-tile" data-soon="Recordatorios">
+            <span class="ic">⏰</span><span class="lbl">Recordatorios</span>
+          </button>
+          <button class="soon-tile" data-soon="Plazos">
+            <span class="ic">⚖️</span><span class="lbl">Plazos procesales</span>
+          </button>
+        </div>
+      </section>
+
+      <footer id="foot">LECTOR DE LIBROS · uso personal · los archivos nunca salen de tu navegador</footer>
+    </div>
+  </div>
+</div>
+
+<!-- READER -->
+<div id="reader-overlay">
+  <div id="reader">
+    <div id="reader-main">
+      <div id="reader-topbar">
+        <div class="title"><span id="reader-title">—</span><span class="format-badge" id="reader-format"></span></div>
+        <button id="audio-badge" class="audio-badge" hidden title="Volver a donde está leyendo"></button>
+        <div id="reader-tools">
+          <button id="locate-btn" title="¿Dónde vamos?">📍</button>
+          <button id="mark-btn" title="Marcar frases con resaltador" aria-pressed="false">🖍️</button>
+          <span class="tool-sep"></span>
+          <button id="zoom-out-btn" title="Achicar letra">A−</button>
+          <span id="zoom-val">100%</span>
+          <button id="zoom-in-btn" title="Agrandar letra">A+</button>
+          <span class="tool-sep"></span>
+          <button id="focus-btn" title="Pantalla completa">⛶</button>
+        </div>
+        <button id="reader-close" aria-label="Cerrar lector">✕</button>
+      </div>
+      <div id="page-canvas-wrap">
+        <div id="book-spread">
+          <div class="page page-left" id="page-left"></div>
+          <div class="page page-right" id="page-right"></div>
+        </div>
+      </div>
+      <div id="page-hint">Podés navegar libremente sin que se corte el audio · doble clic en una frase para que la lectura arranque desde ahí · usá 📍 para volver a donde va la voz</div>
+      <div id="reader-pagebar">
+        <button id="page-prev" aria-label="Página anterior">‹ Anterior</button>
+        <span id="page-indicator">— / —</span>
+        <form id="page-jump-form"><input type="number" id="page-jump-input" min="1" placeholder="Ir a pág…"></form>
+        <button id="page-next" aria-label="Página siguiente">Siguiente ›</button>
+        <span id="time-estimate" class="time-estimate"></span>
+      </div>
+    </div>
+    <div id="reader-side">
+      <div id="tts-controls">
+        <div class="row" style="flex-direction:column; align-items:stretch;">
+          <label for="voice-select">Voz</label>
+          <select id="voice-select"></select>
+          <div id="voice-hint"></div>
+        </div>
+        <div class="row" style="flex-direction:column; align-items:stretch;">
+          <label>Velocidad</label>
+          <div id="rate-row">
+            <input type="range" id="rate-range" min="0.6" max="1.6" step="0.05" value="1">
+            <span id="rate-val">1.0×</span>
+          </div>
+        </div>
+        <div id="tts-buttons">
+          <button id="tts-play">▶ Leer</button>
+          <button id="tts-pause" class="secondary" disabled>❚❚ Pausar</button>
+          <button id="tts-stop" class="secondary" disabled>■ Detener</button>
+        </div>
+        <label id="continuous-row"><input type="checkbox" id="continuous-check" checked> Seguir al pasar de página</label>
+      </div>
+      <div id="reader-tip">💡 Podés navegar el libro libremente: el audio sigue leyendo aunque cambies de página. El subrayado pastel solo se ve cuando estás mirando la página que se está narrando — tocá el globito rosa "🔊 leyendo pág. N" para volver ahí. Doble clic en una frase para que la lectura arranque desde ese punto exacto.</div>
+      <div id="reader-side-spacer"></div>
+      <button id="delete-book">🗑️ Quitar este libro de la biblioteca</button>
+    </div>
+    <div id="floating-player">
+      <button id="fp-prev" title="Página anterior">‹</button>
+      <span id="fp-page-indicator">— / —</span>
+      <form id="fp-jump-form"><input type="number" id="fp-jump-input" min="1" placeholder="Ir a…"></form>
+      <button id="fp-next" title="Página siguiente">›</button>
+      <span id="fp-time-estimate" class="time-estimate"></span>
+      <span class="fp-sep"></span>
+      <button id="fp-play" title="Leer / pausar">▶</button>
+      <button id="fp-rate-down" title="Más lento">🐢</button>
+      <span id="fp-rate-val">1.0×</span>
+      <button id="fp-rate-up" title="Más rápido">🐇</button>
+      <span class="fp-sep"></span>
+      <button id="fp-zoom-out" title="Achicar letra">A−</button>
+      <button id="fp-zoom-in" title="Agrandar letra">A+</button>
+      <span class="fp-sep"></span>
+      <button id="fp-locate" title="¿Dónde vamos?">📍</button>
+      <button id="fp-audio-badge" class="audio-badge" hidden title="Volver a donde está leyendo"></button>
+      <button id="fp-exit" title="Salir de pantalla completa">✕ Salir</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+
+  /* ===================== Utilities ===================== */
+  var $ = function(sel, root){ return (root||document).querySelector(sel); };
+  var $all = function(sel, root){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); };
+
+  var toastEl = $('#toast');
+  var toastTimer = null;
+  function toast(msg, ms){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, ms || 2600);
+  }
+
+  /* ===================== Theme toggle ===================== */
+  (function themeInit(){
+    var root = document.documentElement;
+    var saved = null;
+    try { saved = localStorage.getItem('ldl_theme'); } catch(e){}
+    if (saved === 'light' || saved === 'dark') root.setAttribute('data-theme', saved);
+    $('#theme-toggle').addEventListener('click', function(){
+      var cur = root.getAttribute('data-theme');
+      var mqDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var next;
+      if (!cur) next = mqDark ? 'light' : 'dark';
+      else next = cur === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('ldl_theme', next); } catch(e){}
+    });
+  })();
+
+  /* ===================== Palette picker ===================== */
+  (function paletteInit(){
+    var root = document.documentElement;
+    var saved = null;
+    try { saved = localStorage.getItem('ldl_palette'); } catch(e){}
+    if (saved && saved !== 'bosque') root.setAttribute('data-palette', saved);
+    $all('.palette-swatch').forEach(function(btn){
+      btn.classList.toggle('active', btn.dataset.palette === (saved || 'bosque'));
+      btn.addEventListener('click', function(){
+        var p = btn.dataset.palette;
+        if (p === 'bosque') root.removeAttribute('data-palette');
+        else root.setAttribute('data-palette', p);
+        try { localStorage.setItem('ldl_palette', p); } catch(e){}
+        $all('.palette-swatch').forEach(function(b){ b.classList.toggle('active', b === btn); });
+      });
+    });
+  })();
+
+  /* ===================== Clock ===================== */
+  var MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var DIAS = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  function tickClock(){
+    var d = new Date();
+    var hh = String(d.getHours()).padStart(2,'0');
+    var mm = String(d.getMinutes()).padStart(2,'0');
+    var ss = String(d.getSeconds()).padStart(2,'0');
+    $('#clock').textContent = hh+':'+mm+':'+ss;
+    $('#date-badge').textContent = DIAS[d.getDay()] + ' ' + d.getDate() + ' de ' + MESES[d.getMonth()];
+  }
+  tickClock(); setInterval(tickClock, 1000);
+
+  /* ===================== Soon tiles ===================== */
+  $all('.soon-tile').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      toast('🚧 "' + btn.dataset.soon + '" — todavía no lo he desarrollado. ¡Pronto!');
+    });
+  });
+
+  /* ===================== Calendar + tasks ===================== */
+  var TASKS_KEY = 'ldl_tasks_v1';
+  function loadTasks(){ try { return JSON.parse(localStorage.getItem(TASKS_KEY) || '{}'); } catch(e){ return {}; } }
+  function saveTasks(t){ try { localStorage.setItem(TASKS_KEY, JSON.stringify(t)); } catch(e){} }
+  var tasks = loadTasks();
+
+  var today = new Date();
+  var calState = [
+    new Date(today.getFullYear(), today.getMonth(), 1),
+    new Date(today.getFullYear(), today.getMonth()+1, 1)
+  ];
+  var selectedKey = null;
+
+  function dayKey(y,m,d){ return y+'-'+m+'-'+d; }
+
+  function renderCalendar(idx){
+    var dt = calState[idx];
+    var container = $('#cal-'+idx);
+    var y = dt.getFullYear(), m = dt.getMonth();
+    var html = '<div class="cal-nav" style="justify-content:space-between; display:flex;">' +
+      '<button class="cal-btn" data-cal="'+idx+'" data-dir="-1">‹</button>' +
+      '<span class="cal-month-label">' + MESES[m] + ' ' + y + '</span>' +
+      '<button class="cal-btn" data-cal="'+idx+'" data-dir="1">›</button>' +
+      '</div>' +
+      '<table class="cal"><thead><tr><th>D</th><th>L</th><th>M</th><th>M</th><th>J</th><th>V</th><th>S</th></tr></thead><tbody><tr>';
+    var start = new Date(y, m, 1).getDay();
+    var dMax = new Date(y, m+1, 0).getDate();
+    for (var i=0;i<start;i++) html += '<td></td>';
+    for (var d=1; d<=dMax; d++){
+      if ((d+start-1) % 7 === 0 && d !== 1) html += '</tr><tr>';
+      var key = dayKey(y,m,d);
+      var isToday = (d===today.getDate() && m===today.getMonth() && y===today.getFullYear());
+      var isSel = (key === selectedKey);
+      var cls = 'has-day' + (isToday?' today':'') + (isSel?' selected':'');
+      var dots = '';
+      var dayTasks = tasks[key];
+      if (dayTasks && dayTasks.length){
+        dots = '<div class="task-dots">' + dayTasks.slice(0,4).map(function(){return '<span></span>';}).join('') + '</div>';
+      }
+      html += '<td class="'+cls+'" data-key="'+key+'" data-label="'+d+' de '+MESES[m]+'">'+d+dots+'</td>';
+    }
+    html += '</tr></tbody></table>';
+    container.innerHTML = html;
+  }
+
+  function renderCalendars(){ renderCalendar(0); renderCalendar(1); }
+  renderCalendars();
+
+  document.addEventListener('click', function(ev){
+    var navBtn = ev.target.closest('.cal-btn');
+    if (navBtn){
+      var idx = +navBtn.dataset.cal, dir = +navBtn.dataset.dir;
+      calState[idx] = new Date(calState[idx].getFullYear(), calState[idx].getMonth()+dir, 1);
+      renderCalendar(idx);
+      return;
+    }
+    var cell = ev.target.closest('table.cal td.has-day');
+    if (cell){
+      selectedKey = cell.dataset.key;
+      openDayEditor(cell.dataset.key, cell.dataset.label);
+      renderCalendars();
+    }
+  });
+
+  function openDayEditor(key, label){
+    var box = $('#day-editor');
+    box.classList.add('open');
+    $('#day-editor-title').textContent = label;
+    renderTaskList(key);
+  }
+
+  function renderTaskList(key){
+    var list = $('#task-list');
+    list.innerHTML = '';
+    (tasks[key] || []).forEach(function(t, i){
+      var row = document.createElement('div');
+      row.className = 'task-row';
+      row.innerHTML = '<input type="text" value="" maxlength="120"><button class="del" title="Eliminar">✕</button>';
+      var input = row.querySelector('input');
+      input.value = t;
+      input.addEventListener('change', function(){
+        tasks[key][i] = input.value;
+        saveTasks(tasks);
+      });
+      row.querySelector('.del').addEventListener('click', function(){
+        tasks[key].splice(i,1);
+        if (!tasks[key].length) delete tasks[key];
+        saveTasks(tasks);
+        renderTaskList(key);
+        renderCalendars();
+      });
+      list.appendChild(row);
+    });
+  }
+
+  $('#add-task-form').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    if (!selectedKey) return;
+    var input = $('#new-task-input');
+    var val = input.value.trim();
+    if (!val) return;
+    if (!tasks[selectedKey]) tasks[selectedKey] = [];
+    tasks[selectedKey].push(val);
+    saveTasks(tasks);
+    input.value = '';
+    renderTaskList(selectedKey);
+    renderCalendars();
+  });
+
+  /* ===================== Calculator ===================== */
+  (function calc(){
+    var display = $('#calc-display');
+    var exprEl = $('#calc-expr');
+    var acc = null, curOp = null, entry = '0', fresh = true, exprText = '';
+
+    function fmt(n){
+      if (!isFinite(n)) return 'Error';
+      var s = String(Math.round(n * 1e10) / 1e10);
+      return s.replace('.', ',');
+    }
+    function render(){ display.textContent = entry.replace('.', ','); exprEl.textContent = exprText; }
+
+    function inputNum(n){
+      if (fresh) { entry = (n === '0' ? '0' : n); fresh = false; }
+      else entry = entry === '0' ? n : entry + n;
+      render();
+    }
+    function inputDot(){
+      if (fresh) { entry = '0.'; fresh = false; return render(); }
+      if (entry.indexOf('.') === -1) entry += '.';
+      render();
+    }
+    function setOp(op){
+      var val = parseFloat(entry);
+      if (curOp && !fresh) {
+        acc = applyOp(acc, val, curOp);
+      } else {
+        acc = val;
+      }
+      curOp = op;
+      exprText = fmt(acc) + ' ' + ({'+':'+','-':'−','*':'×','/':'÷'}[op]);
+      fresh = true;
+    }
+    function applyOp(a,b,op){
+      switch(op){ case '+': return a+b; case '-': return a-b; case '*': return a*b; case '/': return b===0?NaN:a/b; }
+      return b;
+    }
+    function equals(){
+      if (curOp == null) return;
+      var val = parseFloat(entry);
+      var res = applyOp(acc, val, curOp);
+      entry = fmt(res);
+      exprText = '';
+      curOp = null; acc = null; fresh = true;
+      render();
+    }
+    function clearAll(){ acc=null; curOp=null; entry='0'; fresh=true; exprText=''; render(); }
+    function backspace(){
+      if (fresh) return;
+      entry = entry.length > 1 ? entry.slice(0,-1) : '0';
+      if (entry === '-') entry = '0';
+      render();
+    }
+    function pct(){ entry = fmt(parseFloat(entry) / 100); render(); }
+
+    $('.calc-grid').addEventListener('click', function(ev){
+      var b = ev.target.closest('button');
+      if (!b) return;
+      if (b.dataset.num !== undefined) return inputNum(b.dataset.num);
+      if (b.dataset.op) return setOp(b.dataset.op);
+      switch(b.dataset.act){
+        case 'clear': return clearAll();
+        case 'back': return backspace();
+        case 'dot': return inputDot();
+        case 'pct': return pct();
+        case 'eq': return equals();
+      }
+    });
+    render();
+  })();
+
+  /* ===================== IndexedDB (book storage) ===================== */
+  var DB_NAME = 'lector_de_libros_db';
+  var DB_STORE = 'books';
+  var dbPromise = new Promise(function(resolve, reject){
+    var req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = function(){
+      var db = req.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE, { keyPath: 'id' });
+    };
+    req.onsuccess = function(){ resolve(req.result); };
+    req.onerror = function(){ reject(req.error); };
+  });
+
+  function dbPut(book){
+    return dbPromise.then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(DB_STORE, 'readwrite');
+        tx.objectStore(DB_STORE).put(book);
+        tx.oncomplete = function(){ resolve(); };
+        tx.onerror = function(){ reject(tx.error); };
+      });
+    });
+  }
+  function dbGetAll(){
+    return dbPromise.then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(DB_STORE, 'readonly');
+        var req = tx.objectStore(DB_STORE).getAll();
+        req.onsuccess = function(){ resolve(req.result || []); };
+        req.onerror = function(){ reject(req.error); };
+      });
+    });
+  }
+  function dbGet(id){
+    return dbPromise.then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(DB_STORE, 'readonly');
+        var req = tx.objectStore(DB_STORE).get(id);
+        req.onsuccess = function(){ resolve(req.result || null); };
+        req.onerror = function(){ reject(req.error); };
+      });
+    });
+  }
+  function dbDelete(id){
+    return dbPromise.then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(DB_STORE, 'readwrite');
+        tx.objectStore(DB_STORE).delete(id);
+        tx.oncomplete = function(){ resolve(); };
+        tx.onerror = function(){ reject(tx.error); };
+      });
+    });
+  }
+
+  /* ===================== Library ===================== */
+  var library = []; // metadata cache: {id,name,pages,lastPage,cover,addedAt,lastOpenedAt,size}
+
+  function fmtPct(book){
+    if (!book.pages) return 0;
+    return Math.round(((book.lastPage||1) / book.pages) * 100);
+  }
+
+  function bookCardHTML(book){
+    var pct = fmtPct(book);
+    var coverImg = book.cover ? '<img src="'+book.cover+'" alt="">' : '';
+    var fallback = book.cover ? '' : '<div class="cover-fallback">'+escapeHtml(book.name)+'</div>';
+    var started = (book.lastPage || 1) > 1;
+    var fmt = (book.type || 'pdf').toUpperCase();
+    var cat = book.category || 'mine';
+    return '<div class="book-card" data-id="'+book.id+'">' +
+      '<div class="cover-wrap">' + coverImg + fallback +
+      '<span class="format-pill">'+fmt+'</span>' +
+      '<span class="progress-pill">'+pct+'%</span>' +
+      '<div class="card-overlay">' +
+        (started ? '<button class="card-btn primary" data-action="resume" data-id="'+book.id+'">▶ Retomar lectura</button>' : '') +
+        '<button class="card-btn'+(started?'':' primary')+'" data-action="restart" data-id="'+book.id+'">'+(started?'↺ Empezar de nuevo':'▶ Empezar a leer')+'</button>' +
+        '<div class="card-row2">' +
+          '<select class="card-move" data-id="'+book.id+'" title="Mover a…">' +
+            '<option value="mine"'+(cat==='mine'?' selected':'')+'>📚 Mis libros</option>' +
+            '<option value="clasico"'+(cat==='clasico'?' selected':'')+'>📖 Clásicos</option>' +
+            '<option value="infantil"'+(cat==='infantil'?' selected':'')+'>🧒 Infantiles</option>' +
+          '</select>' +
+          '<button class="card-del" data-id="'+book.id+'" title="Borrar este libro">🗑️</button>' +
+        '</div>' +
+      '</div>' +
+      '</div>' +
+      '<div class="title">'+escapeHtml(book.name)+'</div>' +
+      '<div class="sub">'+(book.pages ? (book.lastPage||1)+' / '+book.pages+' pág.' : '')+'</div>' +
+      '</div>';
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  var libraryFilter = 'mine'; // 'mine' | 'clasico' | 'infantil'
+
+  function booksInCategory(cat){
+    if (cat === 'mine') return library.filter(function(b){ return !b.category; });
+    return library.filter(function(b){ return b.category === cat; });
+  }
+
+  function renderLibrary(){
+    var grid = $('#library-grid');
+    var empty = $('#library-empty');
+    var shown = booksInCategory(libraryFilter);
+    $('#clear-category-btn').hidden = !shown.length;
+
+    if (!shown.length){
+      grid.innerHTML = '';
+      empty.style.display = 'block';
+      $('#library-empty .big').textContent = libraryFilter === 'mine' ? 'Todavía no hay libros acá'
+        : (libraryFilter === 'clasico' ? 'Todavía no agregaste clásicos' : 'Todavía no agregaste cuentos infantiles');
+      $('#library-empty .small').textContent = libraryFilter === 'mine'
+        ? 'Apretá "Agregar libro" y sumá el primero (PDF, EPUB, DOCX o TXT) — se genera la tapa automáticamente y queda guardado en este navegador para la próxima vez.'
+        : 'Usá "📁 Agregar carpeta completa" y elegí la subcarpeta correspondiente dentro de "libros" para que se clasifiquen solos.';
+      return;
+    }
+    empty.style.display = 'none';
+
+    // Recently opened first (so resuming is quick without a separate duplicate strip), then newest added.
+    var sorted = shown.slice().sort(function(a,b){
+      return (b.lastOpenedAt||0) - (a.lastOpenedAt||0) || b.addedAt - a.addedAt;
+    });
+    grid.innerHTML = sorted.map(bookCardHTML).join('');
+  }
+
+  $('#library-tabs').addEventListener('click', function(ev){
+    var tab = ev.target.closest('.lib-tab');
+    if (!tab) return;
+    libraryFilter = tab.dataset.cat;
+    $all('.lib-tab').forEach(function(t){ t.classList.toggle('active', t === tab); });
+    renderLibrary();
+  });
+
+  $('#clear-category-btn').addEventListener('click', function(){
+    var cat = libraryFilter;
+    var books = booksInCategory(cat);
+    if (!books.length) return;
+    var label = cat === 'clasico' ? 'clásicos' : cat === 'infantil' ? 'cuentos infantiles' : 'libros de "Mis libros"';
+    if (!confirm('¿Borrar los '+books.length+' '+label+' de esta categoría? Esto no se puede deshacer.')) return;
+    Promise.all(books.map(function(b){ return dbDelete(b.id); })).then(function(){
+      var ids = books.map(function(b){ return b.id; });
+      library = library.filter(function(b){ return ids.indexOf(b.id) === -1; });
+      renderLibrary();
+      toast('Se borraron '+books.length+' '+label+'.');
+    });
+  });
+
+  function deleteBookById(id){
+    var book = library.find(function(b){ return b.id === id; });
+    if (!book) return;
+    if (!confirm('¿Borrar "'+book.name+'" de la biblioteca? Esto no se puede deshacer.')) return;
+    dbDelete(id).then(function(){
+      library = library.filter(function(b){ return b.id !== id; });
+      renderLibrary();
+      toast('Libro eliminado.');
+    });
+  }
+
+  function moveBookCategory(id, newCat){
+    dbGet(id).then(function(book){
+      if (!book) return;
+      book.category = newCat;
+      dbPut(book).then(function(){
+        var idx = library.findIndex(function(b){ return b.id === id; });
+        if (idx >= 0) library[idx].category = newCat;
+        renderLibrary();
+        var label = newCat === 'clasico' ? 'Clásicos' : newCat === 'infantil' ? 'Cuentos infantiles' : 'Mis libros';
+        toast('Movido a "'+label+'".');
+      });
+    });
+  }
+
+  document.addEventListener('click', function(ev){
+    if (ev.target.tagName === 'SELECT' || ev.target.tagName === 'OPTION') return;
+    var del = ev.target.closest('.card-del');
+    if (del){ ev.stopPropagation(); deleteBookById(del.dataset.id); return; }
+    var btn = ev.target.closest('.card-btn');
+    if (btn){
+      ev.stopPropagation();
+      openReader(btn.dataset.id, btn.dataset.action === 'restart');
+      return;
+    }
+    var card = ev.target.closest('.book-card');
+    if (card) openReader(card.dataset.id);
+  });
+
+  document.addEventListener('change', function(ev){
+    var sel = ev.target.closest('.card-move');
+    if (!sel) return;
+    moveBookCategory(sel.dataset.id, sel.value === 'mine' ? null : sel.value);
+  });
+
+  function loadLibrary(){
+    dbGetAll().then(function(rows){
+      library = rows.map(function(r){
+        return { id:r.id, name:r.name, type:r.type, category:r.category||null, pages:r.pages, lastPage:r.lastPage, cover:r.cover, addedAt:r.addedAt, lastOpenedAt:r.lastOpenedAt, size:r.size };
+      });
+      renderLibrary();
+    }).catch(function(err){ console.error(err); toast('No se pudo abrir el almacenamiento local del navegador.'); });
+  }
+  loadLibrary();
+
+  /* Add book flow — PDF, EPUB, DOCX, TXT */
+  $('#add-pdf-btn').addEventListener('click', function(){ $('#pdf-input').click(); });
+  $('#pdf-input').addEventListener('change', function(ev){
+    var files = Array.prototype.slice.call(ev.target.files || []);
+    ev.target.value = '';
+    files.forEach(addBookFile);
+  });
+
+  $('#add-folder-btn').addEventListener('click', function(){ $('#folder-input').click(); });
+  $('#folder-input').addEventListener('change', function(ev){
+    var files = Array.prototype.slice.call(ev.target.files || []);
+    ev.target.value = '';
+    var supported = files.filter(function(f){ return /\.(pdf|epub|docx|txt)$/i.test(f.name); });
+    if (!supported.length){ toast('No encontré PDFs, EPUBs, DOCX ni TXT en esa carpeta.'); return; }
+    toast('Importando '+supported.length+' archivo(s) de la carpeta…');
+    supported.forEach(addBookFile);
+  });
+
+  function extOf(name){
+    var m = /\.([a-z0-9]+)$/i.exec(name);
+    return m ? m[1].toLowerCase() : '';
+  }
+
+  /* ---- Page data model: pagesText[i] = { blocks:[{t:'h'|'p'|'img', text|src}], chapterStart:bool } ---- */
+
+  function normalizeZipPath(path){
+    var parts = path.split('/'); var out = [];
+    parts.forEach(function(p){ if (p === '..') out.pop(); else if (p !== '.' && p !== '') out.push(p); });
+    return out.join('/');
+  }
+
+  function paginateBlocks(blocks, sizeLimit){
+    sizeLimit = sizeLimit || 1400;
+    var pages = []; var cur = []; var curLen = 0;
+    blocks.forEach(function(b){
+      var cost = b.t === 'img' ? 500 : (b.text || '').length;
+      if (cur.length && curLen + cost > sizeLimit){ pages.push(cur); cur = []; curLen = 0; }
+      cur.push(b); curLen += cost;
+    });
+    if (cur.length) pages.push(cur);
+    return pages;
+  }
+
+  function chapterToPages(blocks){
+    var groups = paginateBlocks(blocks);
+    return groups.map(function(g, i){ return { blocks: g, chapterStart: i === 0 }; });
+  }
+
+  function paragraphsToBlocks(text){
+    text = text.replace(/\r\n/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+    if (!text) return [];
+    return text.split(/\n{2,}/).map(function(p){ return { t: 'p', text: p.trim() }; }).filter(function(b){ return b.text; });
+  }
+
+  function extractChapterBlocks(doc){
+    var blocks = [];
+    var body = doc.body || doc.documentElement;
+    if (!body) return blocks;
+    function walk(el){
+      Array.prototype.forEach.call(el.children || [], function(node){
+        var tag = node.tagName ? node.tagName.toLowerCase() : '';
+        if (/^h[1-6]$/.test(tag)){
+          var ht = node.textContent.trim();
+          if (ht) blocks.push({ t: 'h', text: ht });
+        } else if (tag === 'img'){
+          var isrc = node.getAttribute('src');
+          if (isrc) blocks.push({ t: 'img', rawSrc: isrc });
+        } else if (tag === 'p' || tag === 'blockquote' || tag === 'li'){
+          var childImgs = node.querySelectorAll ? node.querySelectorAll('img') : [];
+          Array.prototype.forEach.call(childImgs, function(im){
+            var s = im.getAttribute('src');
+            if (s) blocks.push({ t: 'img', rawSrc: s });
+          });
+          var pt = node.textContent.trim();
+          if (pt) blocks.push({ t: 'p', text: pt });
+        } else if (tag === 'div' || tag === 'section' || tag === 'article' || tag === 'body' || tag === 'svg'){
+          if (tag === 'svg'){
+            var svgImg = node.querySelector ? node.querySelector('image') : null;
+            var s2 = svgImg ? (svgImg.getAttribute('xlink:href') || svgImg.getAttribute('href')) : null;
+            if (s2) blocks.push({ t: 'img', rawSrc: s2 });
+          } else {
+            walk(node);
+          }
+        } else if (!node.children.length){
+          var t2 = node.textContent && node.textContent.trim();
+          if (t2) blocks.push({ t: 'p', text: t2 });
+        } else {
+          walk(node);
+        }
+      });
+    }
+    walk(body);
+    return blocks;
+  }
+
+  function resolveChapterImages(zip, opfDir, blocks){
+    var jobs = blocks.map(function(b){
+      if (b.t !== 'img') return Promise.resolve();
+      var path = normalizeZipPath((opfDir + b.rawSrc).replace(/\/{2,}/g, '/').split('#')[0]);
+      var zf = zip.file(path);
+      if (!zf) return Promise.resolve();
+      return zf.async('base64').then(function(b64){
+        var ext2 = (path.split('.').pop() || '').toLowerCase();
+        var mime = ext2 === 'png' ? 'image/png' : ext2 === 'gif' ? 'image/gif' : ext2 === 'svg' ? 'image/svg+xml' : 'image/jpeg';
+        b.src = 'data:' + mime + ';base64,' + b64;
+      }).catch(function(){});
+    });
+    return Promise.all(jobs).then(function(){
+      return blocks.filter(function(b){ return b.t !== 'img' || b.src; });
+    });
+  }
+
+  function saveNewBook(book, category){
+    book.category = category || null; // 'clasico' | 'infantil' | null (personal)
+    return dbPut(book).then(function(){
+      library.push({ id:book.id, name:book.name, type:book.type, category:book.category, pages:book.pages, lastPage:book.lastPage, cover:book.cover, addedAt:book.addedAt, lastOpenedAt:book.lastOpenedAt, size:book.size });
+      renderLibrary();
+      toast('"'+book.name+'" agregado a la biblioteca.');
+    });
+  }
+
+  function categoryFromPath(relPath){
+    if (!relPath) return null;
+    var p = relPath.toLowerCase();
+    if (p.indexOf('clasicos/') >= 0 || p.indexOf('clásicos/') >= 0) return 'clasico';
+    if (p.indexOf('infantiles/') >= 0 || p.indexOf('ninos/') >= 0 || p.indexOf('niños/') >= 0) return 'infantil';
+    return null;
+  }
+
+  function addBookFile(file){
+    var ext = extOf(file.name);
+    var baseName = file.name.replace(/\.[a-z0-9]+$/i, '');
+    var id = 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+    var category = categoryFromPath(file.webkitRelativePath || '');
+
+    if (ext === 'pdf'){
+      toast('Agregando "'+file.name+'"…');
+      var r1 = new FileReader();
+      r1.onload = function(){
+        var buf = r1.result;
+        pdfjsLib.getDocument({ data: buf.slice(0) }).promise.then(function(pdf){
+          return pdf.getPage(1).then(function(page){
+            var vp = page.getViewport({ scale: 0.5 });
+            var cnv = document.createElement('canvas');
+            cnv.width = vp.width; cnv.height = vp.height;
+            var cctx = cnv.getContext('2d');
+            return page.render({ canvasContext: cctx, viewport: vp }).promise.then(function(){
+              return saveNewBook({
+                id: id, type: 'pdf', name: baseName, size: file.size, pages: pdf.numPages,
+                lastPage: 1, cover: cnv.toDataURL('image/jpeg', 0.72),
+                addedAt: Date.now(), lastOpenedAt: null, data: buf
+              }, category);
+            });
+          });
+        }).catch(function(err){ console.error(err); toast('No se pudo leer "'+file.name+'" — ¿es un PDF válido?'); });
+      };
+      r1.onerror = function(){ toast('Error al leer "'+file.name+'".'); };
+      r1.readAsArrayBuffer(file);
+      return;
+    }
+
+    if (ext === 'epub'){
+      toast('Agregando "'+file.name+'"…');
+      var r2 = new FileReader();
+      r2.onload = function(){
+        JSZip.loadAsync(r2.result).then(function(zip){
+          return zip.file('META-INF/container.xml').async('string').then(function(containerXml){
+            var opfPath = (/full-path="([^"]+)"/.exec(containerXml) || [])[1];
+            if (!opfPath) throw new Error('No se encontró el archivo OPF del EPUB.');
+            var opfDir = opfPath.replace(/[^/]+$/, '');
+            return zip.file(opfPath).async('string').then(function(opfXml){
+              var dom = new DOMParser().parseFromString(opfXml, 'application/xml');
+              var manifest = {};
+              Array.prototype.forEach.call(dom.getElementsByTagName('item'), function(it){
+                manifest[it.getAttribute('id')] = { href: it.getAttribute('href'), props: it.getAttribute('properties') || '' };
+              });
+              var spineIds = Array.prototype.map.call(dom.getElementsByTagName('itemref'), function(it){ return it.getAttribute('idref'); });
+              var titleEl = dom.getElementsByTagName('dc:title')[0] || dom.getElementsByTagName('title')[0];
+              var epubTitle = titleEl ? titleEl.textContent.trim() : baseName;
+
+              var coverItem = null;
+              Object.keys(manifest).forEach(function(k){ if (/cover-image/.test(manifest[k].props)) coverItem = manifest[k]; });
+              if (!coverItem){
+                var meta = dom.querySelector && dom.querySelector('meta[name="cover"]');
+                var coverId = meta ? meta.getAttribute('content') : null;
+                if (coverId && manifest[coverId]) coverItem = manifest[coverId];
+              }
+
+              var coverPromise = Promise.resolve(null);
+              if (coverItem){
+                var coverPath = normalizeZipPath(opfDir + coverItem.href);
+                var zf = zip.file(coverPath);
+                if (zf) coverPromise = zf.async('base64').then(function(b64){
+                  var mime = /\.png$/i.test(coverPath) ? 'image/png' : 'image/jpeg';
+                  return 'data:'+mime+';base64,'+b64;
+                });
+              }
+
+              var chapterPromises = spineIds.map(function(sid){
+                var item = manifest[sid];
+                if (!item) return Promise.resolve([]);
+                var path = normalizeZipPath((opfDir + item.href).replace(/\/{2,}/g,'/'));
+                var zf = zip.file(path);
+                if (!zf) return Promise.resolve([]);
+                return zf.async('string').then(function(xhtml){
+                  var doc = new DOMParser().parseFromString(xhtml, 'application/xhtml+xml');
+                  var blocks = extractChapterBlocks(doc);
+                  var chapterDir = path.replace(/[^/]+$/, '');
+                  return resolveChapterImages(zip, chapterDir, blocks);
+                }).catch(function(){ return []; });
+              });
+
+              return Promise.all([coverPromise, Promise.all(chapterPromises)]).then(function(res){
+                var cover = res[0];
+                var pagesText = [];
+                res[1].forEach(function(chapterBlocks){
+                  if (!chapterBlocks.length) return;
+                  pagesText = pagesText.concat(chapterToPages(chapterBlocks));
+                });
+                if (!pagesText.length) throw new Error('No se pudo extraer contenido de este EPUB.');
+                // No cover image found in manifest? Use the book's first illustration as a fallback cover.
+                if (!cover){
+                  outer: for (var pi=0; pi<pagesText.length; pi++){
+                    for (var bi=0; bi<pagesText[pi].blocks.length; bi++){
+                      if (pagesText[pi].blocks[bi].t === 'img'){ cover = pagesText[pi].blocks[bi].src; break outer; }
+                    }
+                  }
+                }
+                return saveNewBook({
+                  id: id, type: 'epub', name: epubTitle || baseName, size: file.size, pages: pagesText.length,
+                  lastPage: 1, cover: cover, addedAt: Date.now(), lastOpenedAt: null, pagesText: pagesText
+                }, category);
+              });
+            });
+          });
+        }).catch(function(err){
+          console.error(err);
+          toast('No se pudo abrir "'+file.name+'" como EPUB. ¿Es un archivo .epub válido?');
+        });
+      };
+      r2.onerror = function(){ toast('Error al leer "'+file.name+'".'); };
+      r2.readAsArrayBuffer(file);
+      return;
+    }
+
+    if (ext === 'docx'){
+      toast('Agregando "'+file.name+'"…');
+      var r3 = new FileReader();
+      r3.onload = function(){
+        mammoth.extractRawText({ arrayBuffer: r3.result }).then(function(result){
+          var blocks = paragraphsToBlocks(result.value);
+          var pagesText = chapterToPages(blocks);
+          if (!pagesText.length) throw new Error('DOCX vacío.');
+          return saveNewBook({
+            id: id, type: 'docx', name: baseName, size: file.size, pages: pagesText.length,
+            lastPage: 1, cover: null, addedAt: Date.now(), lastOpenedAt: null, pagesText: pagesText
+          }, category);
+        }).catch(function(err){
+          console.error(err);
+          toast('No se pudo leer "'+file.name+'" como DOCX.');
+        });
+      };
+      r3.onerror = function(){ toast('Error al leer "'+file.name+'".'); };
+      r3.readAsArrayBuffer(file);
+      return;
+    }
+
+    if (ext === 'txt'){
+      toast('Agregando "'+file.name+'"…');
+      var r4 = new FileReader();
+      r4.onload = function(){
+        var blocks = paragraphsToBlocks(String(r4.result));
+        var pagesText = chapterToPages(blocks);
+        if (!pagesText.length) { toast('"'+file.name+'" está vacío.'); return; }
+        saveNewBook({
+          id: id, type: 'txt', name: baseName, size: file.size, pages: pagesText.length,
+          lastPage: 1, cover: null, addedAt: Date.now(), lastOpenedAt: null, pagesText: pagesText
+        }, category);
+      };
+      r4.onerror = function(){ toast('Error al leer "'+file.name+'".'); };
+      r4.readAsText(file, 'utf-8');
+      return;
+    }
+
+    if (ext === 'doc'){
+      toast('"'+file.name+'" es un .doc viejo (Word 97-2003) — convertilo a .docx desde Word ("Guardar como") y volvé a agregarlo.', 4200);
+      return;
+    }
+
+    toast('"'+file.name+'" (.'+(ext||'?')+') no es un formato soportado todavía. Por ahora: PDF, EPUB, DOCX, TXT.', 4200);
+  }
+
+  /* ===================== Reader ===================== */
+  var readerState = {
+    id: null, pdf: null, book: null, pageNum: 1, rendering: false,
+    sentences: [], rightSentences: [], sentenceIdx: 0, speaking: false, paused: false, continuous: true, highlightMode: false,
+    audioPageNum: null, audioSentences: [], audioLeftCount: 0, followView: true,
+    lastPageTurnAt: null
+  };
+
+  function updateReadingPace(pagesAdvanced){
+    var book = readerState.book;
+    if (!book || pagesAdvanced <= 0) return;
+    var now = Date.now();
+    if (readerState.lastPageTurnAt){
+      var elapsedSec = (now - readerState.lastPageTurnAt) / 1000;
+      // Ignore absurd samples (book just opened, tab was backgrounded, etc.)
+      if (elapsedSec > 2 && elapsedSec < 1800){
+        var secPerPage = elapsedSec / pagesAdvanced;
+        var prev = book.paceSecPerPage || secPerPage;
+        book.paceSecPerPage = prev * 0.7 + secPerPage * 0.3; // smooth it out
+        dbPut(book);
+      }
+    }
+    readerState.lastPageTurnAt = now;
+    syncTimeEstimate();
+  }
+
+  function formatDuration(totalSec){
+    var h = Math.floor(totalSec / 3600);
+    var m = Math.round((totalSec % 3600) / 60);
+    if (h <= 0 && m <= 0) return 'menos de 1 min';
+    return (h > 0 ? h + 'h ' : '') + (m > 0 ? m + 'min' : '');
+  }
+
+  function syncTimeEstimate(){
+    var book = readerState.book;
+    var el1 = $('#time-estimate'); var el2 = $('#fp-time-estimate');
+    if (!book || !book.pages){ if(el1) el1.textContent=''; if(el2) el2.textContent=''; return; }
+    var pace = book.paceSecPerPage || 95; // ~95s/page fallback until we have real data
+    var currentPage = readerState.audioPageNum || readerState.pageNum || 1;
+    var remainingPages = Math.max(0, book.pages - currentPage);
+    var txt = remainingPages ? ('≈ ' + formatDuration(remainingPages * pace) + ' restantes') : '¡Último tramo!';
+    if (el1) el1.textContent = txt;
+    if (el2) el2.textContent = txt;
+  }
+
+  function blocksToSentences(blocks){
+    var out = [];
+    (blocks || []).forEach(function(b){ if (b.t !== 'img') out = out.concat(sentencesOf(b.text)); });
+    return out;
+  }
+
+  function getPageSentences(num){
+    var book = readerState.book;
+    if (book.type === 'pdf'){
+      return readerState.pdf.getPage(num).then(function(page){ return page.getTextContent(); })
+        .then(function(tc){
+          var text = tc.items.map(function(it){ return it.str; }).join(' ').replace(/\s+/g,' ').trim();
+          return sentencesOf(text);
+        });
+    }
+    var pageObj = book.pagesText && book.pagesText[num - 1];
+    return Promise.resolve(pageObj ? blocksToSentences(pageObj.blocks) : []);
+  }
+
+  function loadAudioSpread(leftNum){
+    var book = readerState.book;
+    return Promise.all([
+      getPageSentences(leftNum),
+      leftNum < book.pages ? getPageSentences(leftNum + 1) : Promise.resolve([])
+    ]).then(function(res){
+      readerState.audioPageNum = leftNum;
+      readerState.audioLeftCount = res[0].length;
+      readerState.audioSentences = res[0].concat(res[1]);
+    });
+  }
+
+  function syncAudioBadge(){
+    var diverged = readerState.audioPageNum && readerState.audioPageNum !== readerState.pageNum;
+    var txt = diverged ? ('🔊 leyendo pág. ' + readerState.audioPageNum) : '';
+    $('#audio-badge').textContent = txt;
+    $('#audio-badge').hidden = !diverged;
+    $('#fp-audio-badge').textContent = txt;
+    $('#fp-audio-badge').hidden = !diverged;
+  }
+
+  function pageHighlights(book, pageNum){
+    return (book.highlights && book.highlights[pageNum]) || [];
+  }
+  function toggleHighlight(sentenceIdx, pageNum, container){
+    var book = readerState.book;
+    if (!book || book.type === 'pdf') return; // PDFs use selection-drag highlighting instead (see attachPdfSelectionHighlighting)
+    if (!book.highlights) book.highlights = {};
+    var arr = book.highlights[pageNum] || [];
+    var pos = arr.indexOf(sentenceIdx);
+    if (pos >= 0) arr.splice(pos, 1); else arr.push(sentenceIdx);
+    book.highlights[pageNum] = arr;
+    dbPut(book);
+    var el = container.querySelector('.s[data-i="'+sentenceIdx+'"]');
+    if (el) el.classList.toggle('marked', pos < 0);
+  }
+
+  var overlay = $('#reader-overlay');
+  var pageLeft = $('#page-left');
+  var pageRight = $('#page-right');
+
+  function migrateBookIfNeeded(book){
+    // Books added before the rich-page rewrite stored pagesText as plain strings.
+    // Wrap them into the new block format on the fly — no need to re-import.
+    if (book.type === 'pdf' || !book.pagesText || !book.pagesText.length) return false;
+    if (typeof book.pagesText[0] === 'string'){
+      book.pagesText = book.pagesText.map(function(pageStr){
+        return { blocks: paragraphsToBlocks(pageStr), chapterStart: false };
+      });
+      return true;
+    }
+    return false;
+  }
+
+  function openReader(id, restart){
+    dbGet(id).then(function(book){
+      if (!book) { toast('No se encontró ese libro.'); return; }
+      if (migrateBookIfNeeded(book)) dbPut(book);
+      readerState.id = id;
+      readerState.book = book;
+      readerState.pageNum = restart ? 1 : (book.lastPage || 1);
+      readerState.audioPageNum = readerState.pageNum;
+      readerState.audioSentences = [];
+      readerState.audioLeftCount = 0;
+      readerState.sentenceIdx = 0;
+      readerState.followView = true;
+      readerState.pdfTextMeta = {};
+      readerState.lastPageTurnAt = null;
+      book.lastOpenedAt = Date.now();
+      if (restart) book.lastPage = 1;
+      dbPut(book);
+      var idx = library.findIndex(function(b){ return b.id === id; });
+      if (idx >= 0) { library[idx].lastOpenedAt = book.lastOpenedAt; if (restart) library[idx].lastPage = 1; }
+
+      $('#reader-title').textContent = book.name;
+      $('#reader-format').textContent = (book.type || 'pdf').toUpperCase();
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+
+      if (book.type === 'pdf'){
+        pdfjsLib.getDocument({ data: book.data.slice(0) }).promise.then(function(pdf){
+          readerState.pdf = pdf;
+          renderPage(readerState.pageNum, true);
+        }).catch(function(err){
+          console.error(err);
+          toast('No se pudo abrir el PDF.');
+          closeReader();
+        });
+      } else {
+        readerState.pdf = null;
+        renderPage(readerState.pageNum, true);
+      }
+    });
+  }
+
+  function closeReader(){
+    stopTTS();
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+    readerState.pdf = null;
+    renderLibrary();
+  }
+  $('#reader-close').addEventListener('click', closeReader);
+  overlay.addEventListener('click', function(ev){ if (ev.target === overlay) closeReader(); });
+  document.addEventListener('keydown', function(ev){
+    if (!overlay.classList.contains('open')) return;
+    if (ev.key === 'Escape') return closeReader();
+    if (ev.target && /INPUT|SELECT|TEXTAREA/.test(ev.target.tagName)) return;
+    if (ev.key === 'ArrowRight' || ev.key === 'ArrowDown' || ev.key === 'PageDown') { ev.preventDefault(); goToPage(readerState.pageNum + 1); }
+    if (ev.key === 'ArrowLeft' || ev.key === 'ArrowUp' || ev.key === 'PageUp') { ev.preventDefault(); goToPage(readerState.pageNum - 1); }
+  });
+
+  function goToPage(num){
+    // Manual navigation — never touches the audio itself, which keeps reading wherever it
+    // is. It does mark that you've taken the wheel, so the view stops auto-following the
+    // voice until you tap 📍 (locateReading) to reconnect.
+    var total = readerState.book ? readerState.book.pages : 0;
+    if (num < 1 || num > total || num === readerState.pageNum) return;
+    readerState.followView = false;
+    renderPage(num);
+  }
+
+  var wheelLock = false;
+  $('#page-canvas-wrap').addEventListener('wheel', function(ev){
+    if (!overlay.classList.contains('open') || wheelLock) return;
+    var el = pageLeft;
+    var atBottom = el.scrollHeight - el.clientHeight - el.scrollTop < 4;
+    var atTop = el.scrollTop < 4;
+    if (ev.deltaY > 0 && atBottom){ ev.preventDefault(); wheelLock = true; goToPage(readerState.pageNum + 1); setTimeout(function(){ wheelLock = false; }, 450); }
+    else if (ev.deltaY < 0 && atTop){ ev.preventDefault(); wheelLock = true; goToPage(readerState.pageNum - 1); setTimeout(function(){ wheelLock = false; }, 450); }
+  }, { passive: false });
+
+  function sentencesOf(text){
+    // Normalize to NFC: some EPUB/DOCX/PDF sources encode accents as a base letter +
+    // combining mark (NFD). A few Windows voices then read the mark's name out loud
+    // ("e con acento") instead of just pronouncing the accented letter. NFC fixes that.
+    text = (text || '').normalize('NFC');
+    return (text.match(/[^.!?]+[.!?]*/g) || (text ? [text] : []))
+      .map(function(s){ return s.trim(); }).filter(Boolean);
+  }
+
+  function blocksToHtml(blocks, markedIdx, chapterStart){
+    markedIdx = markedIdx || [];
+    var idx = 0;
+    var html = '<div class="page-inner' + (chapterStart ? ' chapter-start' : '') + '">';
+    (blocks || []).forEach(function(b){
+      if (b.t === 'img'){ html += '<img class="book-img" src="'+b.src+'" alt="">'; return; }
+      var tag = b.t === 'h' ? 'h3' : 'p';
+      var cls = b.t === 'h' ? ' class="chapter-title"' : '';
+      html += '<'+tag+cls+'>';
+      sentencesOf(b.text).forEach(function(s){
+        var mcls = 's' + (markedIdx.indexOf(idx) >= 0 ? ' marked' : '');
+        html += '<span class="'+mcls+'" data-i="'+idx+'">'+escapeHtml(s)+' </span>';
+        idx++;
+      });
+      html += '</'+tag+'>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function onPageReady(num, pageObj, totalPages, nextPageObj, atEnd){
+    // Note: readerState.sentenceIdx is owned by the audio engine (speakFrom/jumpToSentence) —
+    // never reset it here, or browsing pages would silently corrupt where the voice is reading.
+    var blocks = (pageObj && pageObj.blocks) || [];
+    readerState.sentences = blocksToSentences(blocks);
+
+    var marked = pageHighlights(readerState.book, num);
+    pageLeft.innerHTML = blocks.length ? blocksToHtml(blocks, marked, pageObj && pageObj.chapterStart)
+      : '<div class="page-inner page-empty">Esta página no tiene texto seleccionable (puede ser una imagen escaneada).</div>';
+
+    if (atEnd){
+      readerState.rightSentences = [];
+      pageRight.innerHTML = '<div class="page-end">— Fin del libro —</div>';
+    } else if (nextPageObj != null){
+      var nextBlocks = nextPageObj.blocks || [];
+      readerState.rightSentences = blocksToSentences(nextBlocks);
+      var markedRight = pageHighlights(readerState.book, num + 1);
+      pageRight.innerHTML = nextBlocks.length ? blocksToHtml(nextBlocks, markedRight, nextPageObj.chapterStart) : '<div class="page-inner page-empty">Página en blanco.</div>';
+    } else {
+      readerState.rightSentences = [];
+      pageRight.innerHTML = '';
+    }
+
+    readerState.pageNum = num;
+    // Note: lastPage (resume position) tracks the AUDIO's progress, not just browsing —
+    // see speakFrom()/jumpToSentence() — so glancing ahead never overwrites your real progress.
+    syncPageIndicator(num, totalPages);
+    syncAudioBadge();
+    readerState.rendering = false;
+  }
+
+  function syncPageIndicator(num, total){
+    $('#page-indicator').textContent = num + ' / ' + total;
+    $('#fp-page-indicator').textContent = num + ' / ' + total;
+    $('#page-prev').disabled = num <= 1;
+    $('#page-next').disabled = num >= total;
+    $('#fp-prev').disabled = num <= 1;
+    $('#fp-next').disabled = num >= total;
+    $('#page-jump-input').setAttribute('max', total);
+    $('#fp-jump-input').setAttribute('max', total);
+    syncTimeEstimate();
+  }
+
+  function jumpForm(ev){
+    ev.preventDefault();
+    var input = ev.target.querySelector('input');
+    var n = parseInt(input.value, 10);
+    if (n) goToPage(n);
+    input.value = '';
+    input.blur();
+  }
+  $('#page-jump-form').addEventListener('submit', jumpForm);
+  $('#fp-jump-form').addEventListener('submit', jumpForm);
+
+  function renderPage(num, skipAnim){
+    if (readerState.rendering || !readerState.book) return;
+    var book = readerState.book;
+    readerState.rendering = true;
+
+    if (!skipAnim){
+      pageLeft.classList.add('turn-out');
+      setTimeout(function(){
+        pageLeft.classList.remove('turn-out');
+        pageLeft.classList.add('turn-in', 'shine');
+        setTimeout(function(){ pageLeft.classList.remove('turn-in','shine'); }, 280);
+      }, 200);
+    }
+
+    if (book.type === 'pdf'){
+      if (!readerState.pdf) { readerState.rendering = false; return; }
+      var total = readerState.pdf.numPages;
+      Promise.all([
+        renderPdfPageInto(pageLeft, num, false, true, 'left'),
+        num < total ? renderPdfPageInto(pageRight, num+1, false, true, 'right') : Promise.resolve(null)
+      ]).then(function(res){
+        readerState.sentences = sentencesOf(res[0]);
+        readerState.rightSentences = (num < total && res[1]) ? sentencesOf(res[1]) : [];
+        if (num >= total) pageRight.innerHTML = '<div class="page-end">— Fin del libro —</div>';
+        readerState.pageNum = num;
+        syncPageIndicator(num, total);
+        syncAudioBadge();
+        readerState.rendering = false;
+      }).catch(function(err){ console.error(err); readerState.rendering = false; });
+    } else {
+      var pageObj = (book.pagesText && book.pagesText[num-1]) || null;
+      var nextPageObj = num < book.pages ? (book.pagesText && book.pagesText[num]) : null;
+      onPageReady(num, pageObj, book.pages, nextPageObj, num >= book.pages);
+    }
+  }
+
+  function renderPdfPageInto(container, num, dim, withTextLayer, side){
+    return readerState.pdf.getPage(num).then(function(page){
+      var wrapW = container.clientWidth - 20 || 380;
+      var baseVp = page.getViewport({ scale: 1 });
+      var scale = Math.min(1.6, Math.max(0.4, wrapW / baseVp.width)) * (typeof zoom === 'number' ? zoom : 1);
+      var vp = page.getViewport({ scale: scale });
+      var cnv = document.createElement('canvas');
+      cnv.width = vp.width; cnv.height = vp.height;
+      var cctx = cnv.getContext('2d');
+      return page.render({ canvasContext: cctx, viewport: vp }).promise.then(function(){
+        return page.getTextContent();
+      }).then(function(tc){
+        container.innerHTML = '';
+        var wrap = document.createElement('div');
+        wrap.className = 'pdf-page-wrap';
+        wrap.style.width = vp.width + 'px';
+        wrap.style.height = vp.height + 'px';
+        wrap.appendChild(cnv);
+        if (withTextLayer){
+          var textLayerDiv = document.createElement('div');
+          textLayerDiv.className = 'textLayer';
+          wrap.appendChild(textLayerDiv);
+          try {
+            var task = pdfjsLib.renderTextLayer({ textContent: tc, container: textLayerDiv, viewport: vp, textDivs: [] });
+            if (task && task.promise) task.promise.then(function(){ attachPdfClickToRead(textLayerDiv, tc.items, side); });
+          } catch(e){ console.error(e); }
+          attachPdfSelectionHighlighting(wrap, num);
+          renderPdfHighlights(wrap, num);
+        }
+        container.appendChild(wrap);
+        return tc.items.map(function(it){ return it.str; }).join(' ').replace(/\s+/g,' ').trim();
+      });
+    });
+  }
+
+  function sentenceStartOffsets(text){
+    text = (text || '').normalize('NFC');
+    var out = []; var re = /[^.!?]+[.!?]*/g; var m;
+    while ((m = re.exec(text))){
+      var raw = m[0];
+      var lead = raw.length - raw.replace(/^\s+/, '').length;
+      var trimmed = raw.trim();
+      if (trimmed) out.push(m.index + lead);
+    }
+    return out;
+  }
+
+  function textLayerSpans(div){
+    // pdf.js sometimes interleaves non-<span> nodes (line breaks etc.) between the per-item
+    // spans, so div.children does NOT reliably line up with the `items` array — only the
+    // <span> elements do, in the same order pdf.js created them from `items`.
+    return Array.prototype.filter.call(div.children, function(el){ return el.tagName === 'SPAN'; });
+  }
+
+  function attachPdfClickToRead(textLayerDiv, items, side){
+    var offsets = []; var acc = 0;
+    items.forEach(function(it){ offsets.push(acc); acc += (it.str || '').length + 1; });
+    var fullText = items.map(function(it){ return it.str; }).join(' ');
+    var starts = sentenceStartOffsets(fullText);
+    var spans = textLayerSpans(textLayerDiv);
+    if (!readerState.pdfTextMeta) readerState.pdfTextMeta = {};
+    readerState.pdfTextMeta[side] = { offsets: offsets, starts: starts, spans: spans };
+    if (readerState.pageNum === readerState.audioPageNum && readerState.speaking){
+      // Re-render landed on the page currently being narrated — restore the highlight immediately.
+      var leftCount = readerState.audioLeftCount || 0;
+      var curSide = readerState.sentenceIdx < leftCount ? 'left' : 'right';
+      if (curSide === side){
+        highlightPdfSentence(side, curSide === 'left' ? readerState.sentenceIdx : readerState.sentenceIdx - leftCount);
+      }
+    }
+    textLayerDiv.addEventListener('dblclick', function(ev){
+      if (readerState.highlightMode) return;
+      var span = ev.target.closest('span');
+      if (!span) return;
+      var itemIdx = spans.indexOf(span);
+      if (itemIdx < 0) return;
+      var charOffset = offsets[itemIdx] || 0;
+      var sIdx = 0;
+      for (var i = 0; i < starts.length; i++){ if (starts[i] <= charOffset) sIdx = i; else break; }
+      ev.preventDefault();
+      jumpToSentence(sIdx, side);
+    });
+  }
+
+  function attachPdfSelectionHighlighting(wrap, pageNum){
+    wrap.addEventListener('mouseup', function(){
+      if (!readerState.highlightMode || !readerState.book || readerState.book.type !== 'pdf') return;
+      var sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+      var range = sel.getRangeAt(0);
+      if (!wrap.contains(range.commonAncestorContainer)) return;
+      var rects = Array.prototype.slice.call(range.getClientRects());
+      if (!rects.length) return;
+      var wrapRect = wrap.getBoundingClientRect();
+      var marks = rects.map(function(r){
+        return {
+          left: (r.left - wrapRect.left) / wrapRect.width,
+          top: (r.top - wrapRect.top) / wrapRect.height,
+          width: r.width / wrapRect.width,
+          height: r.height / wrapRect.height
+        };
+      });
+      var book = readerState.book;
+      if (!book.pdfHighlights) book.pdfHighlights = {};
+      book.pdfHighlights[pageNum] = (book.pdfHighlights[pageNum] || []).concat(marks);
+      dbPut(book);
+      sel.removeAllRanges();
+      renderPdfHighlights(wrap, pageNum);
+      toast('🖍️ Frase resaltada.');
+    });
+  }
+
+  function renderPdfHighlights(wrap, num){
+    var old = wrap.querySelector('.pdf-highlights');
+    if (old) old.remove();
+    var book = readerState.book;
+    var list = (book.pdfHighlights && book.pdfHighlights[num]) || [];
+    if (!list.length) return;
+    var layer = document.createElement('div');
+    layer.className = 'pdf-highlights';
+    list.forEach(function(m){
+      var d = document.createElement('div');
+      d.className = 'pdf-mark';
+      d.style.left = (m.left*100)+'%'; d.style.top = (m.top*100)+'%';
+      d.style.width = (m.width*100)+'%'; d.style.height = (m.height*100)+'%';
+      layer.appendChild(d);
+    });
+    wrap.appendChild(layer);
+  }
+
+  function jumpToSentence(localIdx, side){
+    // Double-click always redirects the AUDIO to read from here — on whichever page (left
+    // or right of the current spread) you clicked — independent of where it was before.
+    var wasActive = readerState.speaking || readerState.paused;
+    if (wasActive){ suppressCancelError = true; synth.cancel(); }
+    readerState.speaking = false;
+    readerState.paused = false;
+
+    var leftSentences = readerState.sentences;
+    var rightSentences = readerState.rightSentences || [];
+    readerState.audioPageNum = readerState.pageNum;
+    readerState.audioLeftCount = leftSentences.length;
+    readerState.audioSentences = leftSentences.concat(rightSentences);
+    var absIdx = side === 'right' ? leftSentences.length + localIdx : localIdx;
+    readerState.sentenceIdx = absIdx;
+    readerState.followView = true;
+
+    var targetPage = side === 'right' ? readerState.pageNum + 1 : readerState.pageNum;
+    readerState.book.lastPage = targetPage;
+    dbPut(readerState.book);
+    var libIdx = library.findIndex(function(b){ return b.id === readerState.id; });
+    if (libIdx >= 0) library[libIdx].lastPage = targetPage;
+
+    highlightSentence(absIdx);
+    syncAudioBadge();
+    setTTSButtons();
+    if (wasActive) speakFrom(absIdx);
+  }
+
+  document.addEventListener('dblclick', function(ev){
+    if (readerState.highlightMode) return; // marking mode owns clicks instead
+    var sLeft = ev.target.closest('#page-left .s');
+    var sRight = !sLeft && ev.target.closest('#page-right .s');
+    if (sLeft){ ev.preventDefault(); jumpToSentence(+sLeft.dataset.i, 'left'); }
+    else if (sRight){ ev.preventDefault(); jumpToSentence(+sRight.dataset.i, 'right'); }
+  });
+
+  document.addEventListener('click', function(ev){
+    if (!readerState.highlightMode) return;
+    var sLeft = ev.target.closest('#page-left .s');
+    var sRight = !sLeft && ev.target.closest('#page-right .s');
+    if (sLeft) toggleHighlight(+sLeft.dataset.i, readerState.pageNum, pageLeft);
+    else if (sRight) toggleHighlight(+sRight.dataset.i, readerState.pageNum + 1, pageRight);
+  });
+
+  var markBtn = $('#mark-btn');
+  markBtn.addEventListener('click', function(){
+    readerState.highlightMode = !readerState.highlightMode;
+    markBtn.setAttribute('aria-pressed', String(readerState.highlightMode));
+    $('#page-canvas-wrap').classList.toggle('marking', readerState.highlightMode);
+    toast(readerState.highlightMode ? '🖍️ Modo resaltador activo — tocá una frase para marcarla' : 'Resaltador desactivado');
+  });
+
+  function locateReading(){
+    if (!readerState.audioPageNum || !readerState.audioSentences.length){
+      toast('Todavía no empezaste a leer este libro.'); return;
+    }
+    readerState.followView = true;
+    var idx = Math.min(readerState.sentenceIdx, readerState.audioSentences.length - 1);
+    if (readerState.pageNum !== readerState.audioPageNum){
+      renderPage(readerState.audioPageNum, true);
+      setTimeout(function(){ highlightSentence(idx); }, 140);
+    } else {
+      highlightSentence(idx);
+    }
+  }
+  $('#locate-btn').addEventListener('click', locateReading);
+  $('#fp-locate').addEventListener('click', locateReading);
+  $('#audio-badge').addEventListener('click', locateReading);
+  $('#fp-audio-badge').addEventListener('click', locateReading);
+
+  /* ---------- Zoom ---------- */
+  var ZOOM_MIN = 0.75, ZOOM_MAX = 2.2, ZOOM_STEP = 0.15;
+  var zoom = 1;
+  try { var savedZoom = parseFloat(localStorage.getItem('ldl_zoom')); if (savedZoom) zoom = savedZoom; } catch(e){}
+  function applyZoom(){
+    zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom));
+    $('#reader').style.setProperty('--zoom', zoom);
+    $('#zoom-val').textContent = Math.round(zoom * 100) + '%';
+    try { localStorage.setItem('ldl_zoom', zoom); } catch(e){}
+  }
+  function zoomBy(delta){
+    zoom += delta;
+    applyZoom();
+    if (overlay.classList.contains('open') && readerState.book && readerState.book.type === 'pdf'){
+      renderPage(readerState.pageNum, true);
+    }
+  }
+  $('#zoom-in-btn').addEventListener('click', function(){ zoomBy(ZOOM_STEP); });
+  $('#zoom-out-btn').addEventListener('click', function(){ zoomBy(-ZOOM_STEP); });
+  $('#fp-zoom-in').addEventListener('click', function(){ zoomBy(ZOOM_STEP); });
+  $('#fp-zoom-out').addEventListener('click', function(){ zoomBy(-ZOOM_STEP); });
+  applyZoom();
+
+  /* ---------- Focus / fullscreen mode ---------- */
+  function setFocusMode(on){
+    overlay.classList.toggle('focus-mode', on);
+    $('#reader').classList.toggle('focus-mode', on);
+    if (on){
+      try { overlay.requestFullscreen && overlay.requestFullscreen().catch(function(){}); } catch(e){}
+    } else if (document.fullscreenElement){
+      try { document.exitFullscreen && document.exitFullscreen().catch(function(){}); } catch(e){}
+    }
+  }
+  $('#focus-btn').addEventListener('click', function(){ setFocusMode(!overlay.classList.contains('focus-mode')); });
+  $('#fp-exit').addEventListener('click', function(){ setFocusMode(false); });
+  document.addEventListener('fullscreenchange', function(){
+    if (!document.fullscreenElement && overlay.classList.contains('focus-mode')) setFocusMode(false);
+  });
+
+  function syncFpPlayIcon(){
+    $('#fp-play').textContent = (readerState.speaking && !readerState.paused) ? '❚❚' : '▶';
+  }
+  $('#fp-prev').addEventListener('click', function(){ goToPage(readerState.pageNum - 1); });
+  $('#fp-next').addEventListener('click', function(){ goToPage(readerState.pageNum + 1); });
+  $('#fp-play').addEventListener('click', function(){
+    if (readerState.speaking && !readerState.paused) $('#tts-pause').click();
+    else $('#tts-play').click();
+  });
+
+  $('#page-prev').addEventListener('click', function(){ goToPage(readerState.pageNum - 1); });
+  $('#page-next').addEventListener('click', function(){ goToPage(readerState.pageNum + 1); });
+
+  $('#delete-book').addEventListener('click', function(){
+    if (!readerState.id) return;
+    if (!confirm('¿Quitar "'+readerState.book.name+'" de la biblioteca? Esto no se puede deshacer.')) return;
+    var id = readerState.id;
+    dbDelete(id).then(function(){
+      library = library.filter(function(b){ return b.id !== id; });
+      closeReader();
+      toast('Libro eliminado.');
+    });
+  });
+
+  window.addEventListener('resize', function(){
+    if (overlay.classList.contains('open')) renderPage(readerState.pageNum, true);
+  });
+
+  /* ---------- Text to speech ---------- */
+  var synth = window.speechSynthesis;
+  // Chrome/Edge have a long-standing bug where speechSynthesis silently stalls after
+  // ~15s of continuous speaking unless nudged with pause()+resume(). This keeps long
+  // reading sessions from randomly freezing.
+  var ttsWatchdog = null;
+  function startTTSWatchdog(){
+    stopTTSWatchdog();
+    ttsWatchdog = setInterval(function(){
+      if (synth.speaking && !synth.paused){ synth.pause(); synth.resume(); }
+    }, 9000);
+  }
+  function stopTTSWatchdog(){ if (ttsWatchdog){ clearInterval(ttsWatchdog); ttsWatchdog = null; } }
+  var voices = [];
+  var suppressCancelError = false;
+  var continuousCheck = $('#continuous-check');
+  continuousCheck.addEventListener('change', function(){ readerState.continuous = continuousCheck.checked; });
+
+  var MALE_NAMES = /tom[aá]s|jorge|diego|[aá]lvaro|carlos|andr[eé]s|alonso|gonzalo|nicol[aá]s|ernesto|dami[aá]n|fernando|ricardo|pablo|juan|male\b|hombre/i;
+
+  function scoreVoice(v, preferMale){
+    var name = v.name.toLowerCase();
+    var score = 0;
+    if (/^es/i.test(v.lang)) score += 10;
+    if (/ar\b|argentin/i.test(v.lang) || /argentin/i.test(name)) score += 6;
+    if (/natural|online|neural/i.test(name)) score += 8;
+    if (/google/i.test(name)) score += 2;
+    if (preferMale && MALE_NAMES.test(name)) score += 5;
+    return score;
+  }
+
+  var savedVoiceName = null;
+  try { savedVoiceName = localStorage.getItem('ldl_voice_name'); } catch(e){}
+  var lastVoiceKey = '';
+
+  function populateVoices(){
+    voices = synth.getVoices();
+    if (!voices.length) return;
+    var key = voices.map(function(v){ return v.name; }).join('|');
+    var sel = $('#voice-select');
+    if (key === lastVoiceKey && sel._list && sel._list.length) return; // avoid resetting selection needlessly
+    lastVoiceKey = key;
+
+    var currentName = sel._list && sel._list[+sel.value] ? sel._list[+sel.value].name : (savedVoiceName || null);
+
+    var es = voices.filter(function(v){
+      return /^es/i.test(v.lang) || /^spa\b/i.test(v.lang) || /spanish|español|castellano/i.test(v.name);
+    });
+    var usingFallback = !es.length;
+    var list = (es.length ? es : voices).slice().sort(function(a,b){ return scoreVoice(b, true) - scoreVoice(a, true); });
+    sel.innerHTML = list.map(function(v,i){
+      return '<option value="'+i+'">'+v.name+' ('+v.lang+')</option>';
+    }).join('');
+    sel._list = list;
+
+    var restoreIdx = -1;
+    if (currentName) restoreIdx = list.findIndex(function(v){ return v.name === currentName; });
+    if (restoreIdx < 0 && list.length){
+      // default: prefer a natural-sounding male voice; else best-scored
+      var maleIdx = list.findIndex(function(v){ return MALE_NAMES.test(v.name.toLowerCase()) && /natural|online|neural/i.test(v.name); });
+      if (maleIdx < 0) maleIdx = list.findIndex(function(v){ return MALE_NAMES.test(v.name.toLowerCase()); });
+      restoreIdx = maleIdx >= 0 ? maleIdx : 0;
+    }
+    sel.value = String(Math.max(restoreIdx, 0));
+
+    var best = list[+sel.value];
+    var hint = $('#voice-hint');
+    if (!list.length){
+      hint.textContent = 'Este navegador no ofrece voces. Probá en Microsoft Edge.';
+    } else if (usingFallback){
+      hint.textContent = '⚠️ No encontré ninguna voz en español instalada en este dispositivo — la lista de abajo son las voces en OTROS idiomas que sí tenés. Instalá una voz en español desde la configuración de accesibilidad/idioma del equipo para que suene bien.';
+    } else if (best && /natural|online|neural/i.test(best.name)){
+      hint.textContent = '✓ Voz neuronal natural detectada — se mantiene aunque cambies de página o de frase.';
+    } else {
+      hint.textContent = 'Voces disponibles suenan algo robóticas. Para voces neuronales naturales en español, abrí este enlace en Microsoft Edge (Windows) — trae voces "Online (Natural)" integradas y gratis.';
+    }
+  }
+  populateVoices();
+  if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = populateVoices;
+
+  $('#voice-select').addEventListener('change', function(){
+    var v = currentVoice();
+    if (v) { try { localStorage.setItem('ldl_voice_name', v.name); } catch(e){} }
+  });
+
+  var rateRange = $('#rate-range');
+  function syncRateVal(){
+    var t = parseFloat(rateRange.value).toFixed(2) + '×';
+    $('#rate-val').textContent = t;
+    $('#fp-rate-val').textContent = t;
+  }
+  rateRange.addEventListener('input', syncRateVal);
+  syncRateVal();
+  function rateBy(delta){
+    var v = Math.max(0.6, Math.min(1.6, parseFloat(rateRange.value) + delta));
+    rateRange.value = v.toFixed(2);
+    syncRateVal();
+  }
+  $('#fp-rate-up').addEventListener('click', function(){ rateBy(0.1); });
+  $('#fp-rate-down').addEventListener('click', function(){ rateBy(-0.1); });
+
+  function currentVoice(){
+    var sel = $('#voice-select');
+    var list = sel._list || [];
+    var i = +sel.value || 0;
+    return list[i] || null;
+  }
+
+  function setTTSButtons(){
+    $('#tts-play').disabled = readerState.speaking && !readerState.paused;
+    $('#tts-pause').disabled = !readerState.speaking;
+    $('#tts-stop').disabled = !readerState.speaking && !readerState.paused;
+    $('#tts-pause').textContent = readerState.paused ? '▶ Continuar' : '❚❚ Pausar';
+    syncFpPlayIcon();
+  }
+
+  function highlightSentence(i){
+    // Only draws on-page if the view happens to be showing the audio's spread right now.
+    if (readerState.pageNum !== readerState.audioPageNum) return;
+    var leftCount = readerState.audioLeftCount || 0;
+    var side = i < leftCount ? 'left' : 'right';
+    var localIdx = i < leftCount ? i : i - leftCount;
+
+    if (readerState.book && readerState.book.type === 'pdf'){
+      highlightPdfSentence(side, localIdx);
+      return;
+    }
+    $all('#page-left .s.active, #page-right .s.active').forEach(function(el){ el.classList.remove('active'); });
+    var container = side === 'left' ? pageLeft : pageRight;
+    var el = container.querySelector('.s[data-i="'+localIdx+'"]');
+    if (el){ el.classList.add('active'); el.scrollIntoView({ block:'center', behavior:'smooth' }); }
+  }
+
+  function clearPdfActiveHighlight(){
+    ['left','right'].forEach(function(side){
+      var meta = readerState.pdfTextMeta && readerState.pdfTextMeta[side];
+      if (meta && meta.spans) meta.spans.forEach(function(el){ el.classList.remove('pdf-reading-active'); });
+    });
+  }
+
+  function highlightPdfSentence(side, localIdx){
+    clearPdfActiveHighlight();
+    var meta = readerState.pdfTextMeta && readerState.pdfTextMeta[side];
+    if (!meta || !meta.starts.length) return;
+    var start = meta.starts[localIdx];
+    if (start == null) return;
+    var end = (localIdx + 1 < meta.starts.length) ? meta.starts[localIdx + 1] : Infinity;
+    var spans = meta.spans;
+    var firstEl = null;
+    for (var k = 0; k < meta.offsets.length && k < spans.length; k++){
+      if (meta.offsets[k] >= start && meta.offsets[k] < end){
+        spans[k].classList.add('pdf-reading-active');
+        if (!firstEl) firstEl = spans[k];
+      }
+    }
+    if (firstEl) firstEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+
+  function speakFrom(i){
+    if (!readerState.audioSentences.length){ toast('No hay texto para leer en esta página.'); return; }
+    if (i >= readerState.audioSentences.length){
+      // The whole spread (both visible pages) has been read — flip to the next spread together.
+      var total = readerState.book ? readerState.book.pages : 0;
+      var nextLeft = readerState.audioPageNum + 2;
+      if (readerState.continuous && nextLeft <= total){
+        var pagesJustRead = nextLeft - readerState.audioPageNum;
+        loadAudioSpread(nextLeft).then(function(){
+          readerState.sentenceIdx = 0;
+          readerState.book.lastPage = nextLeft;
+          dbPut(readerState.book);
+          var idx = library.findIndex(function(b){ return b.id === readerState.id; });
+          if (idx >= 0) library[idx].lastPage = nextLeft;
+          if (readerState.followView) renderPage(nextLeft);
+          syncAudioBadge();
+          updateReadingPace(pagesJustRead);
+          speakFrom(0);
+        }).catch(function(err){ console.error(err); stopTTS(); });
+      } else {
+        stopTTS();
+      }
+      return;
+    }
+    var utt = new SpeechSynthesisUtterance(readerState.audioSentences[i]);
+    var v = currentVoice();
+    if (v) { utt.voice = v; utt.lang = v.lang; }
+    utt.rate = parseFloat(rateRange.value);
+    utt.onstart = function(){ highlightSentence(i); readerState.speaking = true; readerState.paused = false; setTTSButtons(); startTTSWatchdog(); };
+    utt.onend = function(){ readerState.sentenceIdx = i+1; speakFrom(i+1); };
+    utt.onerror = function(){
+      if (suppressCancelError){ suppressCancelError = false; return; }
+      readerState.speaking = false; setTTSButtons();
+    };
+    synth.speak(utt);
+  }
+
+  $('#tts-play').addEventListener('click', function(){
+    if (readerState.paused){ synth.resume(); readerState.paused = false; readerState.speaking = true; setTTSButtons(); return; }
+    if (!readerState.audioSentences.length){
+      // Nothing queued yet — start from whatever spread is currently in view.
+      readerState.audioPageNum = readerState.pageNum;
+      readerState.audioLeftCount = readerState.sentences.length;
+      readerState.audioSentences = readerState.sentences.concat(readerState.rightSentences || []);
+    }
+    speakFrom(readerState.sentenceIdx || 0);
+  });
+  $('#tts-pause').addEventListener('click', function(){
+    if (!readerState.speaking) return;
+    synth.pause(); readerState.paused = true; readerState.speaking = false; setTTSButtons(); stopTTSWatchdog();
+  });
+  $('#tts-stop').addEventListener('click', stopTTS);
+
+  function stopTTS(){
+    synth.cancel();
+    readerState.speaking = false; readerState.paused = false; readerState.sentenceIdx = 0;
+    $all('#page-left .s.active, #page-right .s.active').forEach(function(el){ el.classList.remove('active'); });
+    clearPdfActiveHighlight();
+    setTTSButtons();
+    stopTTSWatchdog();
+  }
+
+  setTTSButtons();
+
+})();
+</script>
+</html>
