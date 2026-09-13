@@ -550,6 +550,7 @@
     padding: 6px 8px; font-size: 0.78rem; font-family: var(--font-body);
   }
   #voice-hint { font-size: 0.66rem; color: var(--ink-faint); margin-top: 4px; line-height: 1.35; }
+  .piper-explain { font-size: 0.68rem; color: var(--ink-soft); line-height: 1.45; margin-bottom: 6px; }
   #piper-row select { margin-top: 2px; }
   #piper-download-btn {
     margin-top: 6px; border: 1px solid var(--accent); background: linear-gradient(135deg, var(--accent-2), var(--accent));
@@ -786,7 +787,8 @@
           <div id="voice-hint"></div>
         </div>
         <div class="row" id="piper-row" style="flex-direction:column; align-items:stretch; display:none;">
-          <label>Voz neuronal (Piper) <span class="format-badge">nuevo</span></label>
+          <label>Voz neuronal PRO <span class="format-badge">nuevo</span></label>
+          <div class="piper-explain">Una voz mucho más natural que la del navegador. Se prepara sola la primera vez que abrís un libro (pesa ~60&nbsp;MB, tarda uno o dos minutos según tu conexión) y después queda guardada para siempre — no se vuelve a descargar. Si querés otra voz de la lista, elegila y tocá el botón.</div>
           <select id="piper-voice-select"></select>
           <button id="piper-download-btn" type="button">⬇️ Descargar y usar esta voz</button>
           <div id="piper-status"></div>
@@ -1724,6 +1726,7 @@
       dbPut(book);
       var idx = library.findIndex(function(b){ return b.id === id; });
       if (idx >= 0) { library[idx].lastOpenedAt = book.lastOpenedAt; if (restart) library[idx].lastPage = 1; }
+      if (window.__piperTTS) maybeAutoDownloadDefaultVoice();
 
       $('#reader-title').textContent = book.name;
       $('#reader-format').textContent = (book.type || 'pdf').toUpperCase();
@@ -2328,10 +2331,32 @@
     updatePiperButtonLabel();
   }
 
+  var PIPER_DEFAULT_VOICE = 'es_MX-claude-high';
+
+  function maybeAutoDownloadDefaultVoice(){
+    if (piperVoiceId) return; // you already have a voice picked/downloaded — never touch that choice
+    var conn = navigator.connection || navigator.webkitConnection || navigator.mozConnection;
+    if (conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || ''))) return; // respect data saver / slow connections
+    window.__piperTTS.stored().then(function(stored){
+      if (stored.indexOf(PIPER_DEFAULT_VOICE) >= 0){ activatePiperVoice(PIPER_DEFAULT_VOICE); populatePiperSelect(); return; }
+      var status = $('#piper-status');
+      status.textContent = '🎙️ Preparando una voz de mejor calidad en segundo plano — podés seguir leyendo mientras tanto…';
+      window.__piperTTS.download(PIPER_DEFAULT_VOICE, function(progress){
+        var pct = Math.round((progress.loaded || 0) * 100 / (progress.total || 1));
+        status.textContent = '🎙️ Preparando una voz de mejor calidad en segundo plano… ' + pct + '%';
+      }).then(function(){
+        status.textContent = '✓ Voz de mejor calidad lista — activada sola.';
+        activatePiperVoice(PIPER_DEFAULT_VOICE);
+        populatePiperSelect();
+      }).catch(function(err){ console.error(err); status.textContent = ''; });
+    });
+  }
+
   window.addEventListener('piper-ready', function(){
     if (!window.__piperTTS) return; // blocked by the environment (e.g. Artifacts sandbox) — silently stay on browser voices
     $('#piper-row').style.display = '';
     populatePiperSelect();
+    // Auto-download only kicks in once you actually open a book to read — see openReader().
   });
 
   $('#piper-voice-select').addEventListener('change', updatePiperButtonLabel);
