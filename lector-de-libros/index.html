@@ -494,9 +494,13 @@
   .page canvas { display: block; margin: 0 auto; max-width: 100%; height: auto; box-shadow: none; }
   .pdf-page-wrap { position: relative; margin: 0 auto; max-width: 100%; }
   .pdf-page-wrap canvas { width: 100%; height: 100%; display: block; }
-  .textLayer { position: absolute; inset: 0; overflow: hidden; line-height: 1; opacity: 1; }
+  .textLayer {
+    position: absolute; inset: 0; overflow: hidden; line-height: 1; opacity: 1;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  }
   .textLayer > span { color: transparent; position: absolute; white-space: pre; cursor: text; transform-origin: 0% 0%; }
   .textLayer ::selection { background: rgba(80, 140, 255, 0.35); }
+  #page-canvas-wrap.marking .textLayer { user-select: text; -webkit-user-select: text; }
   #page-canvas-wrap.marking .textLayer > span { cursor: crosshair; }
   .pdf-highlights { position: absolute; inset: 0; pointer-events: none; }
   .pdf-mark { position: absolute; background: var(--highlight-a); opacity: 0.55; mix-blend-mode: multiply; border-radius: 2px; }
@@ -506,7 +510,7 @@
     background: linear-gradient(to right, transparent, rgba(20,25,15,0.10) 45%, rgba(20,25,15,0.14) 50%, rgba(20,25,15,0.10) 55%, transparent);
     pointer-events: none; z-index: 3;
   }
-  .page .s { padding: 1px 0; cursor: pointer; text-decoration-skip-ink: none; }
+  .page .s { padding: 1px 0; cursor: pointer; text-decoration-skip-ink: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   .page .s:hover { text-decoration: underline; text-decoration-color: var(--line-strong); text-decoration-thickness: 2px; }
   .page .s.active {
     text-decoration: underline; text-decoration-color: var(--underline); text-decoration-thickness: 4px;
@@ -1690,6 +1694,7 @@
       readerState.audioPageNum = leftNum;
       readerState.audioLeftCount = res[0].length;
       readerState.audioSentences = res[0].concat(res[1]);
+      piperPrefetchCache = {}; // new spread's sentences don't match old cached indices
     });
   }
 
@@ -2288,8 +2293,16 @@
   function syncFpVoiceSelect(){
     var main = $('#voice-select'); var fp = $('#fp-voice-select');
     if (!fp) return;
-    fp.innerHTML = main.innerHTML;
-    fp.value = main.value;
+    var browserGroup = '<optgroup label="Voces del navegador">' + main.innerHTML + '</optgroup>';
+    var piperGroup = '';
+    if (window.__piperTTS){
+      piperGroup = '<optgroup label="Voz neuronal PRO">' + PIPER_VOICES.map(function(v){
+        var sel = (readerState.ttsEngine === 'piper' && piperVoiceId === v.id) ? ' selected' : '';
+        return '<option value="piper:'+v.id+'"'+sel+'>🎙️ '+v.label+'</option>';
+      }).join('') + '</optgroup>';
+    }
+    fp.innerHTML = browserGroup + piperGroup;
+    if (readerState.ttsEngine !== 'piper') fp.value = main.value;
   }
 
   $('#voice-select').addEventListener('change', function(){
@@ -2300,7 +2313,9 @@
   });
 
   $('#fp-voice-select').addEventListener('change', function(){
-    $('#voice-select').value = this.value;
+    var v = this.value;
+    if (v.indexOf('piper:') === 0){ triggerPiperVoice(v.slice(6)); return; }
+    $('#voice-select').value = v;
     $('#voice-select').dispatchEvent(new Event('change'));
   });
 
@@ -2379,6 +2394,7 @@
     readerState.ttsEngine = 'piper';
     try { localStorage.setItem('ldl_piper_voice', voiceId); localStorage.setItem('ldl_tts_engine', 'piper'); } catch(e){}
     updatePiperButtonLabel();
+    syncFpVoiceSelect();
   }
 
   var piperBusy = false;
@@ -2429,6 +2445,7 @@
     if (!window.__piperTTS) return; // blocked by the environment (e.g. Artifacts sandbox) — silently stay on browser voices
     $('#piper-row').style.display = '';
     populatePiperSelect();
+    syncFpVoiceSelect();
     // Auto-download only kicks in once you actually open a book to read — see openReader().
   });
 
@@ -2441,14 +2458,28 @@
     triggerPiperVoice($('#piper-voice-select').value);
   });
 
+  var piperPrefetchCache = {};
+
+  function piperAudioFor(i){
+    if (!piperPrefetchCache[i]){
+      var text = readerState.audioSentences[i];
+      piperPrefetchCache[i] = window.__piperTTS.predict({ text: text, voiceId: piperVoiceId });
+    }
+    return piperPrefetchCache[i];
+  }
+
   function speakOnePiper(i){
-    var text = readerState.audioSentences[i];
-    window.__piperTTS.predict({ text: text, voiceId: piperVoiceId }).then(function(wavBlob){
+    piperAudioFor(i).then(function(wavBlob){
       if (piperAudioEl){ piperAudioEl.pause(); piperAudioEl.src = ''; piperAudioEl = null; }
       var audio = new Audio(URL.createObjectURL(wavBlob));
       audio.playbackRate = parseFloat(rateRange.value);
       piperAudioEl = audio;
-      audio.onplay = function(){ highlightSentence(i); readerState.speaking = true; readerState.paused = false; setTTSButtons(); };
+      audio.onplay = function(){
+        highlightSentence(i); readerState.speaking = true; readerState.paused = false; setTTSButtons();
+        // Start generating the next sentence's audio now, while this one is still playing —
+        // that's what kills the multi-second silent gap between sentences.
+        if (i + 1 < readerState.audioSentences.length) piperAudioFor(i + 1).catch(function(){});
+      };
       audio.onended = function(){ readerState.sentenceIdx = i + 1; speakFrom(i + 1); };
       audio.onerror = function(){ readerState.speaking = false; setTTSButtons(); };
       audio.play().catch(function(err){ console.error(err); readerState.speaking = false; setTTSButtons(); });
