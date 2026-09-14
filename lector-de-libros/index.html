@@ -863,6 +863,7 @@
       <span id="fp-time-estimate" class="time-estimate"></span>
       <span class="fp-sep"></span>
       <button id="fp-play" title="Leer / pausar">▶</button>
+      <button id="fp-stop" title="Detener la lectura" disabled>■</button>
       <button id="fp-rate-down" title="Más lento">🐢</button>
       <span id="fp-rate-val">1.0×</span>
       <button id="fp-rate-up" title="Más rápido">🐇</button>
@@ -2230,6 +2231,7 @@
     if (readerState.speaking && !readerState.paused) $('#tts-pause').click();
     else $('#tts-play').click();
   });
+  $('#fp-stop').addEventListener('click', function(){ stopTTS(); });
 
   $('#page-prev').addEventListener('click', function(){ goToPage(readerState.pageNum - 1); });
   $('#page-next').addEventListener('click', function(){ goToPage(readerState.pageNum + 1); });
@@ -2251,6 +2253,46 @@
 
   /* ---------- Text to speech ---------- */
   var synth = window.speechSynthesis;
+
+  // On Android/Chrome, once the screen locks or the tab goes to background, the browser
+  // throttles/suspends JS timers and callbacks — the onend→speak(next) chain used to move
+  // to the next sentence can then sit frozen for many seconds (this is what causes the long
+  // silent pauses between sentences, on ANY voice, once the phone screen turns off or you
+  // switch app). Two fixes together solve it:
+  //  1) Screen Wake Lock: keeps the screen from turning off while actively reading aloud.
+  //  2) Media Session API: tells Android "this is active media playback", which keeps the
+  //     tab out of background throttling even if the wake lock isn't available/granted, and
+  //     also gives real Play/Pause/Stop controls on the lock screen and notification shade.
+  var wakeLock = null;
+  function acquireWakeLock(){
+    if (!('wakeLock' in navigator)) return;
+    navigator.wakeLock.request('screen').then(function(lock){
+      wakeLock = lock;
+      wakeLock.addEventListener('release', function(){ wakeLock = null; });
+    }).catch(function(){ /* not available/allowed right now — media session still helps */ });
+  }
+  function releaseWakeLock(){ if (wakeLock){ wakeLock.release().catch(function(){}); wakeLock = null; } }
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'visible' && readerState.speaking && !readerState.paused) acquireWakeLock();
+  });
+
+  function updateMediaSession(){
+    if (!('mediaSession' in navigator)) return;
+    var book = readerState.book;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: (book && book.name) || 'Lector de Libros',
+        artist: 'Lector de Libros'
+      });
+    } catch(e){}
+    navigator.mediaSession.playbackState = readerState.speaking && !readerState.paused ? 'playing' : (readerState.paused ? 'paused' : 'none');
+  }
+  if ('mediaSession' in navigator){
+    navigator.mediaSession.setActionHandler('play', function(){ $('#tts-play').click(); });
+    navigator.mediaSession.setActionHandler('pause', function(){ $('#tts-pause').click(); });
+    navigator.mediaSession.setActionHandler('stop', function(){ stopTTS(); });
+  }
+
   // Chrome/Edge have a long-standing bug where speechSynthesis silently stalls after
   // ~15s of continuous speaking unless nudged with pause()+resume(). This keeps long
   // reading sessions from randomly freezing.
@@ -2561,8 +2603,11 @@
     $('#tts-play').disabled = readerState.speaking && !readerState.paused;
     $('#tts-pause').disabled = !readerState.speaking;
     $('#tts-stop').disabled = !readerState.speaking && !readerState.paused;
+    $('#fp-stop').disabled = !readerState.speaking && !readerState.paused;
     $('#tts-pause').textContent = readerState.paused ? '▶ Continuar' : '❚❚ Pausar';
     syncFpPlayIcon();
+    if (readerState.speaking && !readerState.paused) acquireWakeLock(); else releaseWakeLock();
+    updateMediaSession();
   }
 
   function highlightSentence(i){
