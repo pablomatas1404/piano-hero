@@ -1795,6 +1795,11 @@
       readerState.followView = true;
       readerState.pdfTextMeta = {};
       readerState.lastPageTurnAt = null;
+      readerState.sentences = [];
+      readerState.rightSentences = [];
+      // A previous book's page render may still be finishing in the background (see the
+      // staleness guard in renderPage) — don't let it block this new book from rendering.
+      readerState.rendering = false;
       book.lastOpenedAt = Date.now();
       if (restart) book.lastPage = 1;
       dbPut(book);
@@ -1959,11 +1964,16 @@
 
     if (book.type === 'pdf'){
       if (!readerState.pdf) { readerState.rendering = false; return; }
-      var total = readerState.pdf.numPages;
+      var pdfRef = readerState.pdf;
+      var total = pdfRef.numPages;
       Promise.all([
         renderPdfPageInto(pageLeft, num, false, true, 'left'),
         num < total ? renderPdfPageInto(pageRight, num+1, false, true, 'right') : Promise.resolve(null)
       ]).then(function(res){
+        // A slow PDF render can finish AFTER the user has already closed this book and
+        // opened a different one — applying it now would silently overwrite the new book's
+        // text with this stale one (that's what caused audio to keep reading the old book).
+        if (readerState.book !== book || readerState.pdf !== pdfRef){ readerState.rendering = false; return; }
         readerState.sentences = sentencesOf(res[0]);
         readerState.rightSentences = (num < total && res[1]) ? sentencesOf(res[1]) : [];
         if (num >= total) pageRight.innerHTML = '<div class="page-end">— Fin del libro —</div>';
