@@ -393,11 +393,18 @@
     --zoom: 1;
   }
   @media (max-width: 900px) {
-    #reader { grid-template-columns: 1fr; }
+    #reader { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
     #reader-side { display: none; }
     /* No side panel at this width, so the floating player becomes the only way to
-       play/pause, change speed, or navigate — show it always, not just in focus mode. */
-    #floating-player { display: flex; }
+       play/pause, change speed, or navigate — docked below the text, not floating over it. */
+    #floating-player {
+      display: flex; position: static; grid-row: 2; transform: none; width: 100%;
+      max-width: none; border-radius: 0; border-left: none; border-right: none; border-bottom: none;
+      box-shadow: 0 -6px 16px rgba(0,0,0,0.12);
+    }
+    #reader.controls-hidden #floating-player { display: none; }
+    #fp-expand-handle { display: none; }
+    #reader.controls-hidden #fp-expand-handle { display: flex; }
   }
 
   /* ---------- Focus / fullscreen mode ---------- */
@@ -411,12 +418,12 @@
 
   #floating-player {
     display: none; position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%);
-    background: var(--surface); border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow);
-    padding: 8px 14px; align-items: center; gap: 6px; z-index: 10; max-width: calc(100vw - 40px); flex-wrap: wrap; justify-content: center;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow);
+    padding: 10px 14px; align-items: center; gap: 6px; z-index: 10; max-width: calc(100vw - 40px); flex-wrap: wrap; justify-content: center;
   }
   #reader.focus-mode #floating-player { display: flex; }
   #floating-player button {
-    border: none; background: var(--surface-2); color: var(--ink); border-radius: 999px;
+    border: none; background: var(--surface-2); color: var(--ink); border-radius: 8px;
     width: 34px; height: 34px; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
   #floating-player button:hover { background: var(--accent-soft); color: var(--accent); }
@@ -424,6 +431,14 @@
   #fp-page-indicator, #fp-rate-val { font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-soft); min-width: 44px; text-align: center; font-variant-numeric: tabular-nums; }
   #fp-jump-input { width: 58px; padding: 5px 6px; font-size: 0.72rem; }
   .fp-sep { width: 1px; height: 20px; background: var(--line-strong); margin: 0 3px; flex-shrink: 0; }
+  #fp-voice-select { flex-basis: 100%; order: 99; margin-top: 4px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); border-radius: 8px; padding: 6px 8px; font-size: 0.74rem; }
+  #fp-collapse-toggle { order: -1; background: var(--surface-2); }
+  #fp-expand-handle {
+    display: none; align-items: center; justify-content: center; gap: 6px;
+    position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 11;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow);
+    padding: 8px 16px; font-size: 0.78rem; font-weight: 700; color: var(--accent);
+  }
 
   #reader-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
   #reader-topbar {
@@ -550,6 +565,7 @@
     padding: 6px 8px; font-size: 0.78rem; font-family: var(--font-body);
   }
   #voice-hint { font-size: 0.66rem; color: var(--ink-faint); margin-top: 4px; line-height: 1.35; }
+  .piper-explain { font-size: 0.68rem; color: var(--ink-soft); line-height: 1.45; margin-bottom: 6px; }
   #piper-row select { margin-top: 2px; }
   #piper-download-btn {
     margin-top: 6px; border: 1px solid var(--accent); background: linear-gradient(135deg, var(--accent-2), var(--accent));
@@ -786,7 +802,8 @@
           <div id="voice-hint"></div>
         </div>
         <div class="row" id="piper-row" style="flex-direction:column; align-items:stretch; display:none;">
-          <label>Voz neuronal (Piper) <span class="format-badge">nuevo</span></label>
+          <label>Voz neuronal PRO <span class="format-badge">nuevo</span></label>
+          <div class="piper-explain">Una voz mucho más natural que la del navegador. Se prepara sola la primera vez que abrís un libro (pesa ~60&nbsp;MB, tarda uno o dos minutos según tu conexión) y después queda guardada para siempre — no se vuelve a descargar. Si querés otra voz de la lista, elegila y tocá el botón.</div>
           <select id="piper-voice-select"></select>
           <button id="piper-download-btn" type="button">⬇️ Descargar y usar esta voz</button>
           <div id="piper-status"></div>
@@ -810,6 +827,7 @@
       <button id="delete-book">🗑️ Quitar este libro de la biblioteca</button>
     </div>
     <div id="floating-player">
+      <button id="fp-collapse-toggle" title="Ocultar controles">▾</button>
       <button id="fp-prev" title="Página anterior">‹</button>
       <span id="fp-page-indicator">— / —</span>
       <form id="fp-jump-form"><input type="number" id="fp-jump-input" min="1" placeholder="Ir a…"></form>
@@ -827,7 +845,9 @@
       <button id="fp-locate" title="¿Dónde vamos?">📍</button>
       <button id="fp-audio-badge" class="audio-badge" hidden title="Volver a donde está leyendo"></button>
       <button id="fp-exit" title="Salir de pantalla completa">✕ Salir</button>
+      <select id="fp-voice-select" title="Cambiar voz"></select>
     </div>
+    <button id="fp-expand-handle" title="Mostrar controles">▴ Controles</button>
   </div>
 </div>
 
@@ -1724,6 +1744,7 @@
       dbPut(book);
       var idx = library.findIndex(function(b){ return b.id === id; });
       if (idx >= 0) { library[idx].lastOpenedAt = book.lastOpenedAt; if (restart) library[idx].lastPage = 1; }
+      if (window.__piperTTS) maybeAutoDownloadDefaultVoice();
 
       $('#reader-title').textContent = book.name;
       $('#reader-format').textContent = (book.type || 'pdf').toUpperCase();
@@ -2249,13 +2270,36 @@
     } else {
       hint.textContent = 'Voces disponibles suenan algo robóticas. Para voces neuronales naturales en español, abrí este enlace en Microsoft Edge (Windows) — trae voces "Online (Natural)" integradas y gratis.';
     }
+    syncFpVoiceSelect();
   }
   populateVoices();
   if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = populateVoices;
 
+  function syncFpVoiceSelect(){
+    var main = $('#voice-select'); var fp = $('#fp-voice-select');
+    if (!fp) return;
+    fp.innerHTML = main.innerHTML;
+    fp.value = main.value;
+  }
+
   $('#voice-select').addEventListener('change', function(){
     var v = currentVoice();
     if (v) { try { localStorage.setItem('ldl_voice_name', v.name); } catch(e){} }
+    readerState.ttsEngine = 'browser';
+    syncFpVoiceSelect();
+  });
+
+  $('#fp-voice-select').addEventListener('change', function(){
+    $('#voice-select').value = this.value;
+    $('#voice-select').dispatchEvent(new Event('change'));
+  });
+
+  /* ---------- Collapse / expand the mobile control bar ---------- */
+  $('#fp-collapse-toggle').addEventListener('click', function(){
+    $('#reader').classList.add('controls-hidden');
+  });
+  $('#fp-expand-handle').addEventListener('click', function(){
+    $('#reader').classList.remove('controls-hidden');
   });
 
   var rateRange = $('#rate-range');
@@ -2324,39 +2368,67 @@
     piperVoiceId = voiceId;
     readerState.ttsEngine = 'piper';
     try { localStorage.setItem('ldl_piper_voice', voiceId); localStorage.setItem('ldl_tts_engine', 'piper'); } catch(e){}
-    toast('🎙️ Usando la voz neuronal Piper de ahora en más.');
     updatePiperButtonLabel();
+  }
+
+  var piperBusy = false;
+
+  function triggerPiperVoice(voiceId){
+    if (piperBusy) return;
+    piperBusy = true;
+    var status = $('#piper-status'); var btn = $('#piper-download-btn');
+    btn.disabled = true;
+    window.__piperTTS.stored().then(function(stored){
+      var already = stored.indexOf(voiceId) >= 0;
+      var dl;
+      if (already){
+        status.textContent = 'Probando la voz…';
+        dl = Promise.resolve();
+      } else {
+        status.textContent = 'Descargando… 0%';
+        dl = window.__piperTTS.download(voiceId, function(progress){
+          var pct = Math.round((progress.loaded || 0) * 100 / (progress.total || 1));
+          status.textContent = 'Descargando… ' + pct + '% (se hace una sola vez)';
+        }).then(function(){ status.textContent = 'Probando la voz…'; });
+      }
+      return dl.then(function(){ return window.__piperTTS.predict({ text: 'Hola, esta es una prueba.', voiceId: voiceId }); });
+    }).then(function(){
+      status.textContent = '✓ Lista y funcionando.';
+      activatePiperVoice(voiceId);
+      populatePiperSelect();
+      piperBusy = false; btn.disabled = false;
+    }).catch(function(err){
+      console.error('Piper error:', err);
+      var msg = (err && err.message) ? err.message : String(err);
+      status.textContent = '⚠️ Esta voz no funcionó en tu dispositivo (' + msg + '). Seguimos con la voz del navegador — probá otra de la lista.';
+      if (readerState.ttsEngine === 'piper' && piperVoiceId === voiceId) readerState.ttsEngine = 'browser';
+      piperBusy = false; btn.disabled = false;
+    });
+  }
+
+  var PIPER_DEFAULT_VOICE = 'es_MX-claude-high';
+
+  function maybeAutoDownloadDefaultVoice(){
+    if (piperVoiceId) return; // you already have a voice picked/downloaded — never touch that choice
+    var conn = navigator.connection || navigator.webkitConnection || navigator.mozConnection;
+    if (conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || ''))) return; // respect data saver / slow connections
+    triggerPiperVoice(PIPER_DEFAULT_VOICE);
   }
 
   window.addEventListener('piper-ready', function(){
     if (!window.__piperTTS) return; // blocked by the environment (e.g. Artifacts sandbox) — silently stay on browser voices
     $('#piper-row').style.display = '';
     populatePiperSelect();
+    // Auto-download only kicks in once you actually open a book to read — see openReader().
   });
 
-  $('#piper-voice-select').addEventListener('change', updatePiperButtonLabel);
+  $('#piper-voice-select').addEventListener('change', function(){
+    updatePiperButtonLabel();
+    triggerPiperVoice($('#piper-voice-select').value);
+  });
 
   $('#piper-download-btn').addEventListener('click', function(){
-    var voiceId = $('#piper-voice-select').value;
-    var btn = $('#piper-download-btn'); var status = $('#piper-status');
-    window.__piperTTS.stored().then(function(stored){
-      if (stored.indexOf(voiceId) >= 0){ activatePiperVoice(voiceId); return; }
-      btn.disabled = true;
-      status.textContent = 'Descargando… 0%';
-      window.__piperTTS.download(voiceId, function(progress){
-        var pct = Math.round((progress.loaded || 0) * 100 / (progress.total || 1));
-        status.textContent = 'Descargando… ' + pct + '% (se hace una sola vez)';
-      }).then(function(){
-        btn.disabled = false;
-        status.textContent = '✓ Voz descargada y lista.';
-        activatePiperVoice(voiceId);
-        populatePiperSelect();
-      }).catch(function(err){
-        console.error(err);
-        btn.disabled = false;
-        status.textContent = 'No se pudo descargar la voz. Probá de nuevo.';
-      });
-    });
+    triggerPiperVoice($('#piper-voice-select').value);
   });
 
   function speakOnePiper(i){
@@ -2371,8 +2443,11 @@
       audio.onerror = function(){ readerState.speaking = false; setTTSButtons(); };
       audio.play().catch(function(err){ console.error(err); readerState.speaking = false; setTTSButtons(); });
     }).catch(function(err){
-      console.error(err);
-      toast('La voz Piper falló en esta frase — sigo con la voz del navegador.');
+      console.error('Piper error durante la lectura:', err);
+      var msg = (err && err.message) ? err.message : String(err);
+      var st = $('#piper-status');
+      if (st) st.textContent = '⚠️ La voz Piper falló durante la lectura (' + msg + ') — sigo con la voz del navegador.';
+      toast('⚠️ La voz Piper falló — sigo con la voz del navegador.', 4200);
       readerState.ttsEngine = 'browser';
       speakFrom(i);
     });
