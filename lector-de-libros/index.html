@@ -2123,6 +2123,7 @@
     // Double-click always redirects the AUDIO to read from here — on whichever page (left
     // or right of the current spread) you clicked — independent of where it was before.
     var wasActive = readerState.speaking || readerState.paused;
+    ttsGeneration++; // invalidate any in-flight utterance so it can't override this jump
     if (wasActive){
       suppressCancelError = true; synth.cancel();
       if (piperAudioEl){ piperAudioEl.pause(); piperAudioEl.src = ''; piperAudioEl = null; }
@@ -2135,6 +2136,7 @@
     readerState.audioPageNum = readerState.pageNum;
     readerState.audioLeftCount = leftSentences.length;
     readerState.audioSentences = leftSentences.concat(rightSentences);
+    piperPrefetchCache = {}; // old cache was keyed to the previous page's sentence indices
     var absIdx = side === 'right' ? leftSentences.length + localIdx : localIdx;
     readerState.sentenceIdx = absIdx;
     readerState.followView = true;
@@ -2316,6 +2318,12 @@
   function stopTTSWatchdog(){ if (ttsWatchdog){ clearInterval(ttsWatchdog); ttsWatchdog = null; } }
   var voices = [];
   var suppressCancelError = false;
+  // Bumped every time we deliberately cancel/redirect the audio (double-click jump, stop,
+  // switching books). Some browsers fire the ending utterance's 'end' event (not 'error')
+  // even when it was cancel()-ed, not actually finished — without this guard that stray
+  // 'end' calls speakFrom(i+1) with the OLD sentence index, so a double-click jump to a
+  // different page silently gets overridden and the audio just keeps going where it was.
+  var ttsGeneration = 0;
   var continuousCheck = $('#continuous-check');
   continuousCheck.addEventListener('change', function(){ readerState.continuous = continuousCheck.checked; });
 
@@ -2584,19 +2592,25 @@
   }
 
   function speakOnePiper(i){
+    var myGen = ttsGeneration;
     piperAudioFor(i).then(function(wavBlob){
+      if (myGen !== ttsGeneration) return; // a jump/stop happened while this was generating
       if (piperAudioEl){ piperAudioEl.pause(); piperAudioEl.src = ''; piperAudioEl = null; }
       var audio = new Audio(URL.createObjectURL(wavBlob));
       audio.playbackRate = parseFloat(rateRange.value);
       piperAudioEl = audio;
       audio.onplay = function(){
+        if (myGen !== ttsGeneration) return;
         highlightSentence(i); readerState.speaking = true; readerState.paused = false; setTTSButtons();
         // Safe to prefetch now: onnxruntime-web runs in a Worker (see the proxy setting
         // above), so generating the next sentence doesn't freeze the page while this plays.
         if (i + 1 < readerState.audioSentences.length) piperAudioFor(i + 1).catch(function(){});
       };
-      audio.onended = function(){ readerState.sentenceIdx = i + 1; speakFrom(i + 1); };
-      audio.onerror = function(){ readerState.speaking = false; setTTSButtons(); };
+      audio.onended = function(){
+        if (myGen !== ttsGeneration) return;
+        readerState.sentenceIdx = i + 1; speakFrom(i + 1);
+      };
+      audio.onerror = function(){ if (myGen !== ttsGeneration) return; readerState.speaking = false; setTTSButtons(); };
       audio.play().catch(function(err){ console.error(err); readerState.speaking = false; setTTSButtons(); });
     }).catch(function(err){
       console.error('Piper error durante la lectura:', err);
@@ -2694,10 +2708,18 @@
     var v = currentVoice();
     if (v) { utt.voice = v; utt.lang = v.lang; }
     utt.rate = parseFloat(rateRange.value);
-    utt.onstart = function(){ highlightSentence(i); readerState.speaking = true; readerState.paused = false; setTTSButtons(); startTTSWatchdog(); };
-    utt.onend = function(){ readerState.sentenceIdx = i+1; speakFrom(i+1); };
+    var myGen = ttsGeneration;
+    utt.onstart = function(){
+      if (myGen !== ttsGeneration) return; // a jump/stop/cancel happened after this utterance was queued
+      highlightSentence(i); readerState.speaking = true; readerState.paused = false; setTTSButtons(); startTTSWatchdog();
+    };
+    utt.onend = function(){
+      if (myGen !== ttsGeneration) return; // stray 'end' from a cancel()-ed utterance — don't keep going from the old spot
+      readerState.sentenceIdx = i+1; speakFrom(i+1);
+    };
     utt.onerror = function(){
       if (suppressCancelError){ suppressCancelError = false; return; }
+      if (myGen !== ttsGeneration) return;
       readerState.speaking = false; setTTSButtons();
     };
     synth.speak(utt);
@@ -2726,6 +2748,7 @@
   $('#tts-stop').addEventListener('click', stopTTS);
 
   function stopTTS(){
+    ttsGeneration++; // invalidate any in-flight utterance callback
     synth.cancel();
     if (piperAudioEl){ piperAudioEl.pause(); piperAudioEl.src = ''; piperAudioEl = null; }
     readerState.speaking = false; readerState.paused = false; readerState.sentenceIdx = 0;
