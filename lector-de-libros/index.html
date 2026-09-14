@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lector de Libros</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1f7a54">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -177,6 +180,11 @@
     border-radius: 7px; width: 36px; height: 36px; font-size: 1rem; line-height: 1;
   }
   #theme-toggle:hover { border-color: var(--accent); }
+  #install-btn {
+    border: 1px solid var(--accent); background: linear-gradient(135deg, var(--accent-2), var(--accent));
+    color: var(--accent-ink); border-radius: 7px; padding: 0 12px; height: 36px; font-size: 0.8rem; font-weight: 700;
+  }
+  #install-btn:hover { filter: brightness(1.06); }
 
   #palette-picker { display: flex; align-items: center; gap: 6px; padding: 0 4px; border-right: 1px solid var(--line-strong); margin-right: 4px; }
   .palette-swatch {
@@ -667,6 +675,7 @@
         <button class="palette-swatch" data-palette="oceano" title="Océano"></button>
         <button class="palette-swatch" data-palette="atardecer" title="Atardecer"></button>
       </div>
+      <button id="install-btn" hidden title="Instalar como app">📲 Instalar</button>
       <button id="theme-toggle" title="Cambiar tema" aria-label="Cambiar tema">🌓</button>
     </div>
   </header>
@@ -890,6 +899,32 @@
     toastEl.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, ms || 2600);
+  }
+
+  /* ===================== Install as app (PWA) ===================== */
+  var deferredInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    var btn = document.getElementById('install-btn');
+    if (btn) btn.hidden = false;
+  });
+  document.addEventListener('DOMContentLoaded', function(){
+    var btn = document.getElementById('install-btn');
+    if (btn) btn.addEventListener('click', function(){
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      deferredInstallPrompt.userChoice.then(function(){ deferredInstallPrompt = null; btn.hidden = true; });
+    });
+  });
+  window.addEventListener('appinstalled', function(){
+    var btn = document.getElementById('install-btn');
+    if (btn) btn.hidden = true;
+  });
+  if ('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
   }
 
   /* ===================== Theme toggle ===================== */
