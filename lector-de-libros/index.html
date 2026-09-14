@@ -2398,9 +2398,23 @@
   }
 
   var piperBusy = false;
+  var verifiedPiperVoices = [];
+  try { verifiedPiperVoices = JSON.parse(localStorage.getItem('ldl_piper_verified') || '[]'); } catch(e){}
+  function markPiperVerified(voiceId){
+    if (verifiedPiperVoices.indexOf(voiceId) === -1) verifiedPiperVoices.push(voiceId);
+    try { localStorage.setItem('ldl_piper_verified', JSON.stringify(verifiedPiperVoices)); } catch(e){}
+  }
 
   function triggerPiperVoice(voiceId){
     if (piperBusy) return;
+    // Already downloaded AND verified working before? Switch instantly, no re-test needed —
+    // re-testing every switch was the other thing making voice changes feel frozen.
+    if (verifiedPiperVoices.indexOf(voiceId) !== -1){
+      activatePiperVoice(voiceId);
+      populatePiperSelect();
+      $('#piper-status').textContent = '✓ Lista y funcionando.';
+      return;
+    }
     piperBusy = true;
     var status = $('#piper-status'); var btn = $('#piper-download-btn');
     btn.disabled = true;
@@ -2420,6 +2434,7 @@
       return dl.then(function(){ return window.__piperTTS.predict({ text: 'Hola, esta es una prueba.', voiceId: voiceId }); });
     }).then(function(){
       status.textContent = '✓ Lista y funcionando.';
+      markPiperVerified(voiceId);
       activatePiperVoice(voiceId);
       populatePiperSelect();
       piperBusy = false; btn.disabled = false;
@@ -2474,12 +2489,7 @@
       var audio = new Audio(URL.createObjectURL(wavBlob));
       audio.playbackRate = parseFloat(rateRange.value);
       piperAudioEl = audio;
-      audio.onplay = function(){
-        highlightSentence(i); readerState.speaking = true; readerState.paused = false; setTTSButtons();
-        // Start generating the next sentence's audio now, while this one is still playing —
-        // that's what kills the multi-second silent gap between sentences.
-        if (i + 1 < readerState.audioSentences.length) piperAudioFor(i + 1).catch(function(){});
-      };
+      audio.onplay = function(){ highlightSentence(i); readerState.speaking = true; readerState.paused = false; setTTSButtons(); };
       audio.onended = function(){ readerState.sentenceIdx = i + 1; speakFrom(i + 1); };
       audio.onerror = function(){ readerState.speaking = false; setTTSButtons(); };
       audio.play().catch(function(err){ console.error(err); readerState.speaking = false; setTTSButtons(); });
