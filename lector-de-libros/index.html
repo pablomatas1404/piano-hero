@@ -604,6 +604,7 @@
     padding: 6px 8px; font-size: 0.78rem; font-family: var(--font-body);
   }
   #voice-hint { font-size: 0.66rem; color: var(--ink-faint); margin-top: 4px; line-height: 1.35; }
+  #voice-network-hint { font-size: 0.66rem; color: var(--ink-faint); margin-top: 4px; line-height: 1.35; }
   .piper-explain { font-size: 0.68rem; color: var(--ink-soft); line-height: 1.45; margin-bottom: 6px; }
   #piper-row select { margin-top: 2px; }
   #piper-download-btn {
@@ -841,6 +842,7 @@
           <label for="voice-select">Voz</label>
           <select id="voice-select"></select>
           <div id="voice-hint"></div>
+          <div id="voice-network-hint" class="hint-note"></div>
         </div>
         <div class="row" id="piper-row" style="flex-direction:column; align-items:stretch; display:none;">
           <label>Voz neuronal PRO <span class="format-badge">nuevo</span></label>
@@ -2150,6 +2152,7 @@
     // or right of the current spread) you clicked — independent of where it was before.
     var wasActive = readerState.speaking || readerState.paused;
     ttsGeneration++; // invalidate any in-flight utterance so it can't override this jump
+    if (currentUtt){ currentUtt.onend = null; currentUtt.onerror = null; currentUtt.onstart = null; currentUtt = null; }
     if (wasActive){
       suppressCancelError = true; synth.cancel();
       if (piperAudioEl){ piperAudioEl.pause(); piperAudioEl.src = ''; piperAudioEl = null; }
@@ -2350,6 +2353,7 @@
   // 'end' calls speakFrom(i+1) with the OLD sentence index, so a double-click jump to a
   // different page silently gets overridden and the audio just keeps going where it was.
   var ttsGeneration = 0;
+  var currentUtt = null; // the most recently queued browser-voice utterance, so stopTTS() can unhook its handlers directly
 
   // ---- On-device diagnostics: a visible log of what the TTS engine is really doing.
   // Built because the freeze/no-stop bugs only reproduce on a phone, where there's no
@@ -2440,8 +2444,27 @@
     } else {
       hint.textContent = 'Voces disponibles suenan algo robóticas. Para voces neuronales naturales en español, abrí este enlace en Microsoft Edge (Windows) — trae voces "Online (Natural)" integradas y gratis.';
     }
+    syncVoiceNetworkHint();
     syncFpVoiceSelect();
   }
+
+  function syncVoiceNetworkHint(){
+    var v = currentVoice();
+    var el = $('#voice-network-hint');
+    if (!el) return;
+    if (!v){ el.textContent = ''; return; }
+    // localService === false means Android/Chrome streams the audio from a server instead of
+    // generating it on the phone — that round trip is the most common cause of long pauses
+    // before each sentence starts on mobile. localService === true is instant, no network.
+    if (v.localService === false){
+      el.textContent = '📡 Esta voz usa internet para generar el audio (no está instalada en el equipo) — en el celular esto puede causar demoras entre frases si la conexión anda lenta.';
+    } else if (v.localService === true){
+      el.textContent = '📴 Esta voz es local (no necesita internet) — debería arrancar al instante.';
+    } else {
+      el.textContent = '';
+    }
+  }
+  $('#voice-select').addEventListener('change', syncVoiceNetworkHint);
   populateVoices();
   if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = populateVoices;
 
@@ -2771,7 +2794,8 @@
     utt.rate = parseFloat(rateRange.value);
     var myGen = ttsGeneration;
     var queuedAt = performance.now();
-    ttsDebug('speak-called', { i: i, gen: myGen, text: (readerState.audioSentences[i]||'').slice(0,25) });
+    currentUtt = utt;
+    ttsDebug('speak-called', { i: i, gen: myGen, voice: v && v.name, local: v && v.localService, text: (readerState.audioSentences[i]||'').slice(0,25) });
     utt.onstart = function(){
       ttsDebug('onstart', { i: i, gen: myGen, current: ttsGeneration, waitedMs: Math.round(performance.now()-queuedAt) });
       if (myGen !== ttsGeneration) return; // a jump/stop/cancel happened after this utterance was queued
@@ -2787,7 +2811,7 @@
       setTimeout(function(){
         if (myGen !== ttsGeneration) return;
         speakFrom(i+1);
-      }, 50);
+      }, 100);
     };
     utt.onerror = function(e){
       ttsDebug('onerror', { i: i, gen: myGen, current: ttsGeneration, err: e && e.error, suppressed: suppressCancelError });
@@ -2825,7 +2849,20 @@
   function stopTTS(){
     ttsDebug('stopTTS-called', { before: { speaking: synth.speaking, pending: synth.pending, paused: synth.paused } });
     ttsGeneration++; // invalidate any in-flight utterance callback
-    synth.cancel();
+    // Unhook the current utterance's handlers directly — on Android, cancel() can arrive
+    // late or get ignored while an utterance is mid-stream, and if its onend/onerror still
+    // fires afterward it would otherwise re-trigger speakFrom() with the OLD index, making
+    // Detener look like it did nothing.
+    if (currentUtt){ currentUtt.onend = null; currentUtt.onerror = null; currentUtt.onstart = null; currentUtt = null; }
+    try {
+      // Documented Android/Chrome quirk: cancel() can be silently ignored if the engine is
+      // in a stuck/paused-ish internal state — nudging with pause()+resume() around it, then
+      // cancelling a second time, clears it reliably.
+      synth.pause();
+      synth.cancel();
+      synth.resume();
+      synth.cancel();
+    } catch(e){ console.error('Error cancelando TTS:', e); }
     ttsDebug('stopTTS-after-cancel', { after: { speaking: synth.speaking, pending: synth.pending, paused: synth.paused } });
     if (piperAudioEl){ piperAudioEl.pause(); piperAudioEl.src = ''; piperAudioEl = null; }
     readerState.speaking = false; readerState.paused = false; readerState.sentenceIdx = 0;
