@@ -399,6 +399,18 @@
   }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  /* ---------- Debug panel ---------- */
+  #debug-panel {
+    position: fixed; right: 10px; bottom: 10px; left: 10px; max-height: 55vh; z-index: 900;
+    background: #111; color: #7fffb0; border: 1px solid #333; border-radius: 10px;
+    display: flex; flex-direction: column; box-shadow: var(--shadow); font-family: var(--font-mono);
+  }
+  #debug-panel-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid #333; color: #eee; }
+  #debug-panel-head strong { flex: 1; font-family: var(--font-body); font-size: 0.85rem; }
+  #debug-panel-head button { background: #222; color: #eee; border: 1px solid #444; border-radius: 6px; padding: 4px 8px; font-size: 0.72rem; cursor: pointer; }
+  #debug-panel-log { margin: 0; padding: 10px; overflow: auto; font-size: 0.68rem; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+  #debug-btn { font-size: 1rem; }
+
   /* ---------- Reader ---------- */
   #reader-overlay {
     position: fixed; inset: 0; background: rgba(15, 20, 14, 0.6); backdrop-filter: blur(2px);
@@ -796,6 +808,7 @@
         <div class="title"><span id="reader-title">—</span><span class="format-badge" id="reader-format"></span></div>
         <button id="audio-badge" class="audio-badge" hidden title="Volver a donde está leyendo"></button>
         <div id="reader-tools">
+          <button id="debug-btn" title="Diagnóstico de la voz (para reportar problemas)">🐞</button>
           <button id="locate-btn" title="¿Dónde vamos?">📍</button>
           <button id="mark-btn" title="Marcar frases con resaltador" aria-pressed="false">🖍️</button>
           <span class="tool-sep"></span>
@@ -878,6 +891,19 @@
     </div>
     <button id="fp-expand-handle" title="Mostrar controles">▴ Controles</button>
   </div>
+</div>
+
+<!-- DEBUG PANEL: shows a log of what the TTS engine is actually doing, so a problem that
+     only happens on a phone (and can't be seen from a computer) can be screenshotted or
+     copied and sent back for diagnosis. Hidden by default; opened with the 🐞 button. -->
+<div id="debug-panel" hidden>
+  <div id="debug-panel-head">
+    <strong>🐞 Diagnóstico de voz</strong>
+    <button id="debug-copy-btn">📋 Copiar</button>
+    <button id="debug-clear-btn">🗑️ Borrar</button>
+    <button id="debug-close-btn">✕</button>
+  </div>
+  <pre id="debug-panel-log"></pre>
 </div>
 
 <div id="toast"></div>
@@ -2324,6 +2350,35 @@
   // 'end' calls speakFrom(i+1) with the OLD sentence index, so a double-click jump to a
   // different page silently gets overridden and the audio just keeps going where it was.
   var ttsGeneration = 0;
+
+  // ---- On-device diagnostics: a visible log of what the TTS engine is really doing.
+  // Built because the freeze/no-stop bugs only reproduce on a phone, where there's no
+  // devtools console to look at — this lets it be screenshotted or copied straight from
+  // the app and sent back for diagnosis.
+  var ttsDebugLog = [];
+  function ttsDebug(ev, data){
+    var line = '[' + new Date().toLocaleTimeString() + '] ' + ev + (data ? ' ' + JSON.stringify(data) : '');
+    ttsDebugLog.push(line);
+    if (ttsDebugLog.length > 300) ttsDebugLog.shift();
+    console.log('[TTS]', ev, data || '');
+    var pre = $('#debug-panel-log');
+    if (pre && !$('#debug-panel').hidden){ pre.textContent = ttsDebugLog.join('\n'); pre.scrollTop = pre.scrollHeight; }
+  }
+  $('#debug-btn').addEventListener('click', function(){
+    var panel = $('#debug-panel');
+    panel.hidden = false;
+    $('#debug-panel-log').textContent = ttsDebugLog.join('\n');
+    $('#debug-panel-log').scrollTop = $('#debug-panel-log').scrollHeight;
+  });
+  $('#debug-close-btn').addEventListener('click', function(){ $('#debug-panel').hidden = true; });
+  $('#debug-clear-btn').addEventListener('click', function(){ ttsDebugLog = []; $('#debug-panel-log').textContent = ''; });
+  $('#debug-copy-btn').addEventListener('click', function(){
+    var text = ttsDebugLog.join('\n');
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ toast('Copiado — pegalo donde lo necesites.'); }).catch(function(){ toast('No se pudo copiar automáticamente — seleccioná el texto a mano.'); });
+    } else { toast('No se pudo copiar automáticamente — seleccioná el texto a mano.'); }
+  });
+
   var continuousCheck = $('#continuous-check');
   continuousCheck.addEventListener('change', function(){ readerState.continuous = continuousCheck.checked; });
 
@@ -2678,13 +2733,19 @@
 
   function speakFrom(i){
     if (!readerState.audioSentences.length){ toast('No hay texto para leer en esta página.'); return; }
+    var genAtCall = ttsGeneration; // snapshot — used below to abort if stopTTS()/a jump happened mid-async-wait
     if (i >= readerState.audioSentences.length){
       // The whole spread (both visible pages) has been read — flip to the next spread together.
       var total = readerState.book ? readerState.book.pages : 0;
       var nextLeft = readerState.audioPageNum + 2;
       if (readerState.continuous && nextLeft <= total){
         var pagesJustRead = nextLeft - readerState.audioPageNum;
+        ttsDebug('spread-transition-start', { nextLeft: nextLeft, gen: genAtCall });
         loadAudioSpread(nextLeft).then(function(){
+          // This can resolve well after the user hit Detener (or jumped) while it was loading —
+          // without this check, Detener would silently get overridden and reading would just
+          // keep going into the next spread as if nothing happened.
+          if (genAtCall !== ttsGeneration){ ttsDebug('spread-transition-aborted-stale', { gen: genAtCall, current: ttsGeneration }); return; }
           readerState.sentenceIdx = 0;
           readerState.book.lastPage = nextLeft;
           dbPut(readerState.book);
@@ -2709,15 +2770,27 @@
     if (v) { utt.voice = v; utt.lang = v.lang; }
     utt.rate = parseFloat(rateRange.value);
     var myGen = ttsGeneration;
+    var queuedAt = performance.now();
+    ttsDebug('speak-called', { i: i, gen: myGen, text: (readerState.audioSentences[i]||'').slice(0,25) });
     utt.onstart = function(){
+      ttsDebug('onstart', { i: i, gen: myGen, current: ttsGeneration, waitedMs: Math.round(performance.now()-queuedAt) });
       if (myGen !== ttsGeneration) return; // a jump/stop/cancel happened after this utterance was queued
       highlightSentence(i); readerState.speaking = true; readerState.paused = false; setTTSButtons(); startTTSWatchdog();
     };
     utt.onend = function(){
+      ttsDebug('onend', { i: i, gen: myGen, current: ttsGeneration, elapsedMs: Math.round(performance.now()-queuedAt) });
       if (myGen !== ttsGeneration) return; // stray 'end' from a cancel()-ed utterance — don't keep going from the old spot
-      readerState.sentenceIdx = i+1; speakFrom(i+1);
+      readerState.sentenceIdx = i+1;
+      // A tiny delay before queuing the next utterance — on some Android/Chrome builds, calling
+      // speak() synchronously from inside onend of the previous one can itself cause the engine
+      // to stall before starting the next utterance.
+      setTimeout(function(){
+        if (myGen !== ttsGeneration) return;
+        speakFrom(i+1);
+      }, 50);
     };
-    utt.onerror = function(){
+    utt.onerror = function(e){
+      ttsDebug('onerror', { i: i, gen: myGen, current: ttsGeneration, err: e && e.error, suppressed: suppressCancelError });
       if (suppressCancelError){ suppressCancelError = false; return; }
       if (myGen !== ttsGeneration) return;
       readerState.speaking = false; setTTSButtons();
@@ -2745,11 +2818,15 @@
     else { synth.pause(); }
     readerState.paused = true; readerState.speaking = false; setTTSButtons(); stopTTSWatchdog();
   });
+  $('#tts-stop').addEventListener('pointerdown', function(){ ttsDebug('stop-pointerdown', {btn:'tts-stop'}); });
   $('#tts-stop').addEventListener('click', stopTTS);
+  $('#fp-stop').addEventListener('pointerdown', function(){ ttsDebug('stop-pointerdown', {btn:'fp-stop'}); });
 
   function stopTTS(){
+    ttsDebug('stopTTS-called', { before: { speaking: synth.speaking, pending: synth.pending, paused: synth.paused } });
     ttsGeneration++; // invalidate any in-flight utterance callback
     synth.cancel();
+    ttsDebug('stopTTS-after-cancel', { after: { speaking: synth.speaking, pending: synth.pending, paused: synth.paused } });
     if (piperAudioEl){ piperAudioEl.pause(); piperAudioEl.src = ''; piperAudioEl = null; }
     readerState.speaking = false; readerState.paused = false; readerState.sentenceIdx = 0;
     $all('#page-left .s.active, #page-right .s.active').forEach(function(el){ el.classList.remove('active'); });
