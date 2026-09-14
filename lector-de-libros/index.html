@@ -23,6 +23,11 @@
   // Artifacts sandbox this import fails harmlessly and the app falls back to
   // the browser's built-in speechSynthesis, unchanged.
   try {
+    var ort = await import('onnxruntime-web');
+    // Run the WASM inference in a Web Worker instead of the main thread — otherwise
+    // every sentence generated freezes the whole page (buttons, menus, everything)
+    // for as long as it takes to compute, which on a phone can be many seconds.
+    ort.env.wasm.proxy = true;
     var mod = await import('https://cdn.jsdelivr.net/npm/@diffusionstudio/vits-web@1.0.3/dist/vits-web.js');
     window.__piperTTS = mod;
   } catch (e) {
@@ -2489,7 +2494,12 @@
       var audio = new Audio(URL.createObjectURL(wavBlob));
       audio.playbackRate = parseFloat(rateRange.value);
       piperAudioEl = audio;
-      audio.onplay = function(){ highlightSentence(i); readerState.speaking = true; readerState.paused = false; setTTSButtons(); };
+      audio.onplay = function(){
+        highlightSentence(i); readerState.speaking = true; readerState.paused = false; setTTSButtons();
+        // Safe to prefetch now: onnxruntime-web runs in a Worker (see the proxy setting
+        // above), so generating the next sentence doesn't freeze the page while this plays.
+        if (i + 1 < readerState.audioSentences.length) piperAudioFor(i + 1).catch(function(){});
+      };
       audio.onended = function(){ readerState.sentenceIdx = i + 1; speakFrom(i + 1); };
       audio.onerror = function(){ readerState.speaking = false; setTTSButtons(); };
       audio.play().catch(function(err){ console.error(err); readerState.speaking = false; setTTSButtons(); });
