@@ -2490,10 +2490,18 @@
   var PIPER_DEFAULT_VOICE = 'es_MX-claude-high';
 
   function maybeAutoDownloadDefaultVoice(){
-    if (piperVoiceId) return; // you already have a voice picked/downloaded — never touch that choice
+    // IMPORTANT: this only quietly caches the model FILE in the background — it must never
+    // run the verification inference or switch the active engine. Running predict() here
+    // (as it used to) competed for the phone's CPU with whatever you were actually doing,
+    // even while listening to a completely different (browser) voice.
+    if (piperVoiceId) return; // you already have a voice picked — never touch that choice
+    if (verifiedPiperVoices.indexOf(PIPER_DEFAULT_VOICE) !== -1) return; // already prepared before
     var conn = navigator.connection || navigator.webkitConnection || navigator.mozConnection;
     if (conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || ''))) return; // respect data saver / slow connections
-    triggerPiperVoice(PIPER_DEFAULT_VOICE);
+    window.__piperTTS.stored().then(function(stored){
+      if (stored.indexOf(PIPER_DEFAULT_VOICE) >= 0) return; // already cached, nothing to do
+      window.__piperTTS.download(PIPER_DEFAULT_VOICE, function(){}).catch(function(){});
+    });
   }
 
   window.addEventListener('piper-ready', function(){
