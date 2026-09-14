@@ -2038,6 +2038,12 @@
         if (withTextLayer){
           var textLayerDiv = document.createElement('div');
           textLayerDiv.className = 'textLayer';
+          // Belt-and-suspenders against Android's native copy/paste popup appearing over the
+          // reading controls on long-press: the CSS user-select:none should already prevent
+          // it, but block the selection/context-menu events directly too in case some Chrome
+          // versions still show the popup from a long-press even without an actual selection.
+          textLayerDiv.addEventListener('selectstart', function(ev){ ev.preventDefault(); });
+          textLayerDiv.addEventListener('contextmenu', function(ev){ ev.preventDefault(); });
           wrap.appendChild(textLayerDiv);
           try {
             var task = pdfjsLib.renderTextLayer({ textContent: tc, container: textLayerDiv, viewport: vp, textDivs: [] });
@@ -2072,9 +2078,20 @@
   }
 
   function attachPdfClickToRead(textLayerDiv, items, side){
+    // Normalize each item's text ONCE, up front, and build both the per-word offsets and the
+    // full text from that same normalized version. Before this fix, offsets were computed from
+    // the raw (un-normalized) PDF text while sentenceStartOffsets() normalized internally — if
+    // the PDF used decomposed accented characters (a very common PDF export quirk), NFC
+    // normalization shortens the string, so the two offset systems drifted apart further into
+    // the page. That's what made double-click highlight the wrong sentence the deeper you were.
+    // Also collapse internal whitespace the same way getPageSentences() does when it builds
+    // the text that's actually fed to sentencesOf() for the TTS queue — otherwise the sentence
+    // COUNT here (used to pick which sentence index to jump to) could differ from the sentence
+    // count in the audio queue, which would point the audio at the wrong sentence entirely.
+    var normItems = items.map(function(it){ return (it.str || '').normalize('NFC').replace(/\s+/g, ' '); });
     var offsets = []; var acc = 0;
-    items.forEach(function(it){ offsets.push(acc); acc += (it.str || '').length + 1; });
-    var fullText = items.map(function(it){ return it.str; }).join(' ');
+    normItems.forEach(function(str){ offsets.push(acc); acc += str.length + 1; });
+    var fullText = normItems.join(' ');
     var starts = sentenceStartOffsets(fullText);
     var spans = textLayerSpans(textLayerDiv);
     if (!readerState.pdfTextMeta) readerState.pdfTextMeta = {};
