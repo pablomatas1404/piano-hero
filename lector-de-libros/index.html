@@ -2730,13 +2730,18 @@
 
   function speakOnePiper(i){
     var myGen = ttsGeneration;
+    var askedAt = performance.now();
+    var fromCache = !!piperPrefetchCache[i];
+    ttsDebug('piper-speak-called', { i: i, gen: myGen, fromCache: fromCache, voice: piperVoiceId });
     piperAudioFor(i).then(function(wavBlob){
+      ttsDebug('piper-audio-ready', { i: i, gen: myGen, current: ttsGeneration, generatedMs: Math.round(performance.now()-askedAt), fromCache: fromCache });
       if (myGen !== ttsGeneration) return; // a jump/stop happened while this was generating
       if (piperAudioEl){ piperAudioEl.pause(); piperAudioEl.src = ''; piperAudioEl = null; }
       var audio = new Audio(URL.createObjectURL(wavBlob));
       audio.playbackRate = parseFloat(rateRange.value);
       piperAudioEl = audio;
       audio.onplay = function(){
+        ttsDebug('piper-onplay', { i: i, gen: myGen, current: ttsGeneration, totalMs: Math.round(performance.now()-askedAt) });
         if (myGen !== ttsGeneration) return;
         highlightSentence(i); readerState.speaking = true; readerState.paused = false; setTTSButtons();
         // Safe to prefetch now: onnxruntime-web runs in a Worker (see the proxy setting
@@ -2744,12 +2749,14 @@
         if (i + 1 < readerState.audioSentences.length) piperAudioFor(i + 1).catch(function(){});
       };
       audio.onended = function(){
+        ttsDebug('piper-onended', { i: i, gen: myGen, current: ttsGeneration });
         if (myGen !== ttsGeneration) return;
         readerState.sentenceIdx = i + 1; speakFrom(i + 1);
       };
-      audio.onerror = function(){ if (myGen !== ttsGeneration) return; readerState.speaking = false; setTTSButtons(); };
-      audio.play().catch(function(err){ console.error(err); readerState.speaking = false; setTTSButtons(); });
+      audio.onerror = function(){ ttsDebug('piper-onerror', {i:i}); if (myGen !== ttsGeneration) return; readerState.speaking = false; setTTSButtons(); };
+      audio.play().catch(function(err){ ttsDebug('piper-play-rejected', {i:i, err:String(err)}); console.error(err); readerState.speaking = false; setTTSButtons(); });
     }).catch(function(err){
+      ttsDebug('piper-generate-failed', { i: i, gen: myGen, err: (err && err.message) || String(err) });
       console.error('Piper error durante la lectura:', err);
       var msg = (err && err.message) ? err.message : String(err);
       var st = $('#piper-status');
@@ -2815,6 +2822,11 @@
 
   function speakFrom(i){
     if (!readerState.audioSentences.length){ toast('No hay texto para leer en esta página.'); return; }
+    // Mark as "speaking" immediately, not just once audio actually starts — Piper can take
+    // several real seconds to GENERATE each sentence before there's anything to play, and
+    // during that gap readerState.speaking was still false, which disabled the Detener button
+    // right when it was most needed. Stop/Pausa should be usable throughout, generation included.
+    if (i < readerState.audioSentences.length){ readerState.speaking = true; readerState.paused = false; setTTSButtons(); }
     var genAtCall = ttsGeneration; // snapshot — used below to abort if stopTTS()/a jump happened mid-async-wait
     if (i >= readerState.audioSentences.length){
       // The whole spread (both visible pages) has been read — flip to the next spread together.
