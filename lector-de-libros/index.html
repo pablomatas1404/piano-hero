@@ -2150,6 +2150,7 @@
   function jumpToSentence(localIdx, side){
     // Double-click always redirects the AUDIO to read from here — on whichever page (left
     // or right of the current spread) you clicked — independent of where it was before.
+    ttsDebug('jumpToSentence', { localIdx: localIdx, side: side });
     var wasActive = readerState.speaking || readerState.paused;
     ttsGeneration++; // invalidate any in-flight utterance so it can't override this jump
     if (currentUtt){ currentUtt.onend = null; currentUtt.onerror = null; currentUtt.onstart = null; currentUtt = null; }
@@ -2183,9 +2184,10 @@
   }
 
   document.addEventListener('dblclick', function(ev){
-    if (readerState.highlightMode) return; // marking mode owns clicks instead
+    if (readerState.highlightMode){ ttsDebug('dblclick-ignored-highlightMode'); return; } // marking mode owns clicks instead
     var sLeft = ev.target.closest('#page-left .s');
     var sRight = !sLeft && ev.target.closest('#page-right .s');
+    if (!sLeft && !sRight) ttsDebug('dblclick-no-sentence-target', { tag: ev.target.tagName, cls: ev.target.className });
     if (sLeft){ ev.preventDefault(); jumpToSentence(+sLeft.dataset.i, 'left'); }
     else if (sRight){ ev.preventDefault(); jumpToSentence(+sRight.dataset.i, 'right'); }
   });
@@ -2359,25 +2361,44 @@
   // Built because the freeze/no-stop bugs only reproduce on a phone, where there's no
   // devtools console to look at — this lets it be screenshotted or copied straight from
   // the app and sent back for diagnosis.
+  var TTS_DEBUG_KEY = 'ldl_tts_debug_log';
   var ttsDebugLog = [];
+  try { ttsDebugLog = JSON.parse(localStorage.getItem(TTS_DEBUG_KEY) || '[]'); } catch(e){ ttsDebugLog = []; }
+  var ttsDebugSaveTimer = null;
+  function ttsDebugPersist(){
+    // Throttled: writing to localStorage on every single event (can be several per second
+    // while reading) would be wasteful — batch it a little instead.
+    if (ttsDebugSaveTimer) return;
+    ttsDebugSaveTimer = setTimeout(function(){
+      ttsDebugSaveTimer = null;
+      try { localStorage.setItem(TTS_DEBUG_KEY, JSON.stringify(ttsDebugLog)); } catch(e){}
+    }, 500);
+  }
   function ttsDebug(ev, data){
     var line = '[' + new Date().toLocaleTimeString() + '] ' + ev + (data ? ' ' + JSON.stringify(data) : '');
     ttsDebugLog.push(line);
     if (ttsDebugLog.length > 300) ttsDebugLog.shift();
     console.log('[TTS]', ev, data || '');
+    ttsDebugPersist(); // survives closing/reopening the app — needed since reproducing these
+                        // bugs usually means closing and reopening right after they happen
     var pre = $('#debug-panel-log');
     if (pre && !$('#debug-panel').hidden){ pre.textContent = ttsDebugLog.join('\n'); pre.scrollTop = pre.scrollHeight; }
   }
   $('#debug-btn').addEventListener('click', function(){
     var panel = $('#debug-panel');
     panel.hidden = false;
-    $('#debug-panel-log').textContent = ttsDebugLog.join('\n');
+    $('#debug-panel-log').textContent = ttsDebugLog.length ? ttsDebugLog.join('\n') : '(vacío todavía — leé un poco y volvé a abrir este panel)';
     $('#debug-panel-log').scrollTop = $('#debug-panel-log').scrollHeight;
   });
   $('#debug-close-btn').addEventListener('click', function(){ $('#debug-panel').hidden = true; });
-  $('#debug-clear-btn').addEventListener('click', function(){ ttsDebugLog = []; $('#debug-panel-log').textContent = ''; });
+  $('#debug-clear-btn').addEventListener('click', function(){
+    ttsDebugLog = [];
+    $('#debug-panel-log').textContent = '';
+    try { localStorage.removeItem(TTS_DEBUG_KEY); } catch(e){}
+  });
   $('#debug-copy-btn').addEventListener('click', function(){
     var text = ttsDebugLog.join('\n');
+    if (!text){ toast('Todavía no hay nada para copiar.'); return; }
     if (navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(text).then(function(){ toast('Copiado — pegalo donde lo necesites.'); }).catch(function(){ toast('No se pudo copiar automáticamente — seleccioná el texto a mano.'); });
     } else { toast('No se pudo copiar automáticamente — seleccioná el texto a mano.'); }
