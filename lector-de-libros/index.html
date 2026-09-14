@@ -423,7 +423,16 @@
     display: grid; grid-template-columns: 1fr 300px; grid-template-rows: minmax(0, 1fr);
     overflow: hidden; box-shadow: var(--shadow); position: relative;
     --zoom: 1;
+    /* Android's native copy/paste popup, triggered by a long-press ANYWHERE selectable, can
+       appear right over the Detener/Play buttons and steal the tap mid-gesture (confirmed via
+       the diagnostic log: the button registers the touch but the click never completes). The
+       .textLayer/.s rules already blocked this for the actual book text specifically — this
+       blankets the whole reader (headings, floating player, everything) as a backstop, since
+       any selectable text anywhere in here can trigger the same popup. Marking mode / actual
+       inputs are explicitly re-enabled below. */
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
   }
+  #reader input, #reader textarea { user-select: text; -webkit-user-select: text; -webkit-touch-callout: default; }
   @media (max-width: 900px) {
     #reader { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
     #reader-side { display: none; }
@@ -1795,6 +1804,18 @@
   var overlay = $('#reader-overlay');
   var pageLeft = $('#page-left');
   var pageRight = $('#page-right');
+  // Same backstop as the PDF text layer (see attachPdfClickToRead/renderPdfPageInto): block
+  // Android's native copy/paste popup directly, everywhere in the reader, not just over the
+  // book text — it was confirmed (via the 🐞 diagnostic log) to appear over the Detener/Play
+  // buttons themselves and swallow the tap before the click ever reaches them.
+  $('#reader').addEventListener('selectstart', function(ev){
+    if (ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA') return;
+    ev.preventDefault();
+  });
+  $('#reader').addEventListener('contextmenu', function(ev){
+    if (ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA') return;
+    ev.preventDefault();
+  });
 
   function migrateBookIfNeeded(book){
     // Books added before the rich-page rewrite stored pagesText as plain strings.
