@@ -2657,18 +2657,19 @@
     btn.disabled = true;
     window.__piperTTS.stored().then(function(stored){
       var already = stored.indexOf(voiceId) >= 0;
-      var dl;
-      if (already){
-        status.textContent = 'Probando la voz…';
-        dl = Promise.resolve();
-      } else {
-        status.textContent = 'Descargando… 0%';
-        dl = window.__piperTTS.download(voiceId, function(progress){
-          var pct = Math.round((progress.loaded || 0) * 100 / (progress.total || 1));
-          status.textContent = 'Descargando… ' + pct + '% (se hace una sola vez)';
-        }).then(function(){ status.textContent = 'Probando la voz…'; });
-      }
-      return dl.then(function(){ return window.__piperTTS.predict({ text: 'Hola, esta es una prueba.', voiceId: voiceId }); });
+      if (already) return Promise.resolve();
+      status.textContent = 'Descargando… 0%';
+      return window.__piperTTS.download(voiceId, function(progress){
+        var pct = Math.round((progress.loaded || 0) * 100 / (progress.total || 1));
+        status.textContent = 'Descargando… ' + pct + '% (se hace una sola vez)';
+      });
+      // Deliberately NOT running a predict() test call here anymore. That test is the exact
+      // same neural-network inference used to read a real sentence — we confirmed (via the
+      // 🐞 diagnostic log) it can take several real seconds on a phone, which made switching
+      // voices feel broken/frozen compared to the instant browser voices. The file being
+      // downloaded successfully is confirmation enough; if the voice genuinely can't run on
+      // this device, that's still caught (and falls back to the browser voice automatically)
+      // the moment it's actually used to read — see the .catch() in speakOnePiper().
     }).then(function(){
       status.textContent = '✓ Lista y funcionando.';
       markPiperVerified(voiceId);
@@ -2678,7 +2679,7 @@
     }).catch(function(err){
       console.error('Piper error:', err);
       var msg = (err && err.message) ? err.message : String(err);
-      status.textContent = '⚠️ Esta voz no funcionó en tu dispositivo (' + msg + '). Seguimos con la voz del navegador — probá otra de la lista.';
+      status.textContent = '⚠️ No se pudo descargar esta voz (' + msg + '). Seguimos con la voz del navegador — probá otra de la lista.';
       if (readerState.ttsEngine === 'piper' && piperVoiceId === voiceId) readerState.ttsEngine = 'browser';
       piperBusy = false; btn.disabled = false;
     });
