@@ -2594,7 +2594,13 @@
     { id: 'es_ES-sharvard-medium', label: 'Sharvard · España' },
     { id: 'es_MX-ald-medium', label: 'Ald · México' },
     { id: 'es_ES-mls_9972-low', label: 'MLS 9972 · España · liviana' },
-    { id: 'es_ES-mls_10246-low', label: 'MLS 10246 · España · liviana' }
+    { id: 'es_ES-mls_10246-low', label: 'MLS 10246 · España · liviana' },
+    { id: 'es_ES-carlfm-x_low', label: 'Carlfm · España · muy liviana' }
+    // Nota: revisamos el catálogo real de la librería (@diffusionstudio/vits-web@1.0.3) el
+    // 2026-09-16 — estas 7 son TODAS las voces en español que realmente responden. Existe una
+    // voz argentina en el proyecto Piper original (es_AR-daniela-high) pero esta versión de la
+    // librería no la tiene disponible (da "Entry not found" al pedirla) y no hay una versión
+    // más nueva publicada todavía. Tampoco hay más variantes mexicanas que "ald" y "claude".
   ];
   var piperVoiceId = null;
   try { piperVoiceId = localStorage.getItem('ldl_piper_voice'); } catch(e){}
