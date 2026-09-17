@@ -614,6 +614,15 @@
   }
   #voice-hint { font-size: 0.66rem; color: var(--ink-faint); margin-top: 4px; line-height: 1.35; }
   #voice-network-hint { font-size: 0.66rem; color: var(--ink-faint); margin-top: 4px; line-height: 1.35; }
+  /* One single, unambiguous indicator of which of the two voice lists (browser vs. Piper)
+     is actually being used right now — there was no way to tell before, and picking in one
+     list without realizing the other one still "wins" made voice switching feel broken. */
+  #active-voice-badge {
+    display: flex; align-items: center; gap: 7px; padding: 8px 10px; margin-bottom: 4px;
+    background: var(--surface-2); border-radius: 8px; font-size: 0.76rem; font-weight: 600; color: var(--ink);
+  }
+  #active-voice-dot { width: 9px; height: 9px; border-radius: 50%; background: #2ecc71; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(46,204,113,0.22); }
+  .active-tag { font-size: 0.66rem; font-weight: 700; color: #2ecc71; margin-left: 6px; }
   .piper-explain { font-size: 0.68rem; color: var(--ink-soft); line-height: 1.45; margin-bottom: 6px; }
   #piper-row select { margin-top: 2px; }
   #piper-download-btn {
@@ -847,15 +856,16 @@
     </div>
     <div id="reader-side">
       <div id="tts-controls">
+        <div id="active-voice-badge"><span id="active-voice-dot"></span><span id="active-voice-text"></span></div>
         <div class="row" style="flex-direction:column; align-items:stretch;">
-          <label for="voice-select">Voz</label>
+          <label for="voice-select">Voz del navegador (arriba) <span id="voice-select-active-tag" class="active-tag" hidden>● en uso</span></label>
           <select id="voice-select"></select>
           <div id="voice-hint"></div>
           <div id="voice-network-hint" class="hint-note"></div>
         </div>
         <div class="row" id="piper-row" style="flex-direction:column; align-items:stretch; display:none;">
-          <label>Voz neuronal PRO <span class="format-badge">nuevo</span></label>
-          <div class="piper-explain">Una voz mucho más natural que la del navegador. Se prepara sola la primera vez que abrís un libro (pesa ~60&nbsp;MB, tarda uno o dos minutos según tu conexión) y después queda guardada para siempre — no se vuelve a descargar. Si querés otra voz de la lista, elegila y tocá el botón.</div>
+          <label>Voz neuronal PRO <span class="format-badge">nuevo</span> <span id="piper-select-active-tag" class="active-tag" hidden>● en uso</span></label>
+          <div class="piper-explain">Una voz mucho más natural que la del navegador. Se prepara sola la primera vez que abrís un libro (pesa ~60&nbsp;MB, tarda uno o dos minutos según tu conexión) y después queda guardada para siempre — no se vuelve a descargar. Si querés otra voz de la lista, elegila y tocá el botón. <strong>Solo UNA de las dos listas de voz (esta o la de arriba) está activa a la vez</strong> — la que tenga "● en uso" al lado es la que realmente vas a escuchar; elegir en la otra lista la reemplaza.</div>
           <select id="piper-voice-select"></select>
           <button id="piper-download-btn" type="button">⬇️ Descargar y usar esta voz</button>
           <div id="piper-status"></div>
@@ -1860,6 +1870,7 @@
       $('#reader-format').textContent = (book.type || 'pdf').toUpperCase();
       overlay.classList.add('open');
       document.body.style.overflow = 'hidden';
+      syncActiveVoiceBadge();
 
       if (book.type === 'pdf'){
         pdfjsLib.getDocument({ data: book.data.slice(0) }).promise.then(function(pdf){
@@ -2542,11 +2553,30 @@
     if (readerState.ttsEngine !== 'piper') fp.value = main.value;
   }
 
+  function syncActiveVoiceBadge(){
+    var dot = $('#active-voice-dot'); var text = $('#active-voice-text');
+    var browserTag = $('#voice-select-active-tag'); var piperTag = $('#piper-select-active-tag');
+    if (!dot || !text) return;
+    if (readerState.ttsEngine === 'piper' && piperVoiceId){
+      var pv = PIPER_VOICES.filter(function(v){ return v.id === piperVoiceId; })[0];
+      text.textContent = '🎙️ Usando ahora: ' + (pv ? pv.label : piperVoiceId) + ' (lista de abajo)';
+      if (browserTag) browserTag.hidden = true;
+      if (piperTag) piperTag.hidden = false;
+    } else {
+      var v = currentVoice();
+      text.textContent = '🔊 Usando ahora: ' + (v ? v.name : 'voz del navegador') + ' (lista de arriba)';
+      if (browserTag) browserTag.hidden = false;
+      if (piperTag) piperTag.hidden = true;
+    }
+  }
+
   $('#voice-select').addEventListener('change', function(){
     var v = currentVoice();
     if (v) { try { localStorage.setItem('ldl_voice_name', v.name); } catch(e){} }
     readerState.ttsEngine = 'browser';
+    try { localStorage.setItem('ldl_tts_engine', 'browser'); } catch(e){}
     syncFpVoiceSelect();
+    syncActiveVoiceBadge();
   });
 
   $('#fp-voice-select').addEventListener('change', function(){
@@ -2647,9 +2677,9 @@
     }
     updatePiperButtonLabel();
     syncFpVoiceSelect();
+    syncActiveVoiceBadge();
   }
 
-  var piperBusy = false;
   var verifiedPiperVoices = [];
   try { verifiedPiperVoices = JSON.parse(localStorage.getItem('ldl_piper_verified') || '[]'); } catch(e){}
   function markPiperVerified(voiceId){
@@ -2657,8 +2687,17 @@
     try { localStorage.setItem('ldl_piper_verified', JSON.stringify(verifiedPiperVoices)); } catch(e){}
   }
 
+  // A per-request token instead of a single "busy" flag: if a previous download/switch never
+  // settles (confirmed this can happen — a hung download() call), a plain busy flag would stay
+  // stuck true forever and silently block every future voice switch attempt (this is what was
+  // reported: pick a new voice mid-download of another one, and afterward NOTHING you pick ever
+  // takes effect again, only fixed by closing and reopening the app). With a token, picking a
+  // voice always wins immediately — an old, still-pending request just gets ignored when/if it
+  // finally settles, instead of it or its "busy" flag blocking what you asked for since.
+  var piperRequestGen = 0;
   function triggerPiperVoice(voiceId){
-    if (piperBusy) return;
+    var myReq = ++piperRequestGen;
+    ttsDebug('piper-voice-requested', { voiceId: voiceId, req: myReq });
     // Already downloaded AND verified working before? Switch instantly, no re-test needed —
     // re-testing every switch was the other thing making voice changes feel frozen.
     if (verifiedPiperVoices.indexOf(voiceId) !== -1){
@@ -2667,7 +2706,6 @@
       $('#piper-status').textContent = '✓ Lista y funcionando.';
       return;
     }
-    piperBusy = true;
     var status = $('#piper-status'); var btn = $('#piper-download-btn');
     btn.disabled = true;
     window.__piperTTS.stored().then(function(stored){
@@ -2675,6 +2713,7 @@
       if (already) return Promise.resolve();
       status.textContent = 'Descargando… 0%';
       return window.__piperTTS.download(voiceId, function(progress){
+        if (myReq !== piperRequestGen) return; // superseded by a newer pick — stop updating this stale status
         var pct = Math.round((progress.loaded || 0) * 100 / (progress.total || 1));
         status.textContent = 'Descargando… ' + pct + '% (se hace una sola vez)';
       });
@@ -2686,17 +2725,19 @@
       // this device, that's still caught (and falls back to the browser voice automatically)
       // the moment it's actually used to read — see the .catch() in speakOnePiper().
     }).then(function(){
+      markPiperVerified(voiceId); // it really did finish downloading, worth remembering regardless
+      if (myReq !== piperRequestGen){ ttsDebug('piper-voice-download-superseded', { voiceId: voiceId }); btn.disabled = false; return; }
       status.textContent = '✓ Lista y funcionando.';
-      markPiperVerified(voiceId);
       activatePiperVoice(voiceId);
       populatePiperSelect();
-      piperBusy = false; btn.disabled = false;
+      btn.disabled = false;
     }).catch(function(err){
+      if (myReq !== piperRequestGen) return; // a newer pick already superseded this failed one
       console.error('Piper error:', err);
       var msg = (err && err.message) ? err.message : String(err);
       status.textContent = '⚠️ No se pudo descargar esta voz (' + msg + '). Seguimos con la voz del navegador — probá otra de la lista.';
       if (readerState.ttsEngine === 'piper' && piperVoiceId === voiceId) readerState.ttsEngine = 'browser';
-      piperBusy = false; btn.disabled = false;
+      btn.disabled = false;
     });
   }
 
@@ -2722,6 +2763,7 @@
     $('#piper-row').style.display = '';
     populatePiperSelect();
     syncFpVoiceSelect();
+    syncActiveVoiceBadge();
     // Auto-download only kicks in once you actually open a book to read — see openReader().
   });
 
