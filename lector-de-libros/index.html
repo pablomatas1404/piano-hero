@@ -2633,9 +2633,18 @@
   }
 
   function activatePiperVoice(voiceId){
+    var changed = piperVoiceId !== voiceId;
     piperVoiceId = voiceId;
     readerState.ttsEngine = 'piper';
     try { localStorage.setItem('ldl_piper_voice', voiceId); localStorage.setItem('ldl_tts_engine', 'piper'); } catch(e){}
+    if (changed){
+      // The upcoming 1-2 sentences may already be pre-generated (or generating right now) with
+      // the OLD voice, to avoid a gap between sentences — that cache doesn't know the voice
+      // just changed, so without clearing it, reading kept going with the old voice for a
+      // while after switching and looked like "Detener/cambiar de voz no hace nada".
+      piperPrefetchCache = {};
+      if (piperAudioEl) ttsDebug('piper-voice-changed-midread', { newVoice: voiceId });
+    }
     updatePiperButtonLabel();
     syncFpVoiceSelect();
   }
