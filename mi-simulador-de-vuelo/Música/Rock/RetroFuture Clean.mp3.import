@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bwi0aajhkxgqj"
+path="res://.godot/imported/RetroFuture Clean.mp3-ee6aaef45140ef5feb791b05d2222ea4.mp3str"
+
+[deps]
+
+source_file="res://Música/Rock/RetroFuture Clean.mp3"
+dest_files=["res://.godot/imported/RetroFuture Clean.mp3-ee6aaef45140ef5feb791b05d2222ea4.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

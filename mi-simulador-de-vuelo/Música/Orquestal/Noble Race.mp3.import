@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://cxp4yw7h232d8"
+path="res://.godot/imported/Noble Race.mp3-613e6894596c8f846f0f5373132d9da2.mp3str"
+
+[deps]
+
+source_file="res://Música/Orquestal/Noble Race.mp3"
+dest_files=["res://.godot/imported/Noble Race.mp3-613e6894596c8f846f0f5373132d9da2.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

@@ -1,0 +1,1324 @@
+[gd_scene format=3 uid="uid://m60spxhmh5mr"]
+
+[ext_resource type="Script" uid="uid://8ryar1hnmsxi" path="res://principal.gd" id="1_tr6oq"]
+[ext_resource type="Script" uid="uid://bil34pvanrpvj" path="res://mundo.gd" id="2_mundo"]
+[ext_resource type="Script" uid="uid://ce4ubwtvpciuk" path="res://minimapa_camara.gd" id="3_minimapa"]
+[ext_resource type="Script" path="res://icono_avion_mapa.gd" id="4_icono_avion"]
+[ext_resource type="Script" path="res://insignia_piloto.gd" id="5_insignia"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_linea_guia"]
+size = Vector3(0.25, 0.25, 1.0)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_linea_guia"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.3, 1, 0.9, 0.35)
+emission_enabled = true
+emission = Color(0.3, 1, 0.9, 1)
+emission_energy_multiplier = 0.6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_credencial"]
+bg_color = Color(0.08, 0.1, 0.14, 0.97)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.85, 0.68, 0.15, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_left = 10
+corner_radius_bottom_right = 10
+shadow_size = 12
+shadow_color = Color(0, 0, 0, 0.4)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_digital"]
+bg_color = Color(0.03, 0.03, 0.03, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.15, 0.15, 0.15, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
+
+[sub_resource type="Sky" id="Sky_1"]
+sky_material = SubResource("ProceduralSkyMaterial_1")
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 2
+sky = SubResource("Sky_1")
+
+[sub_resource type="BoxMesh" id="BoxMesh_fuselaje"]
+size = Vector3(0.8, 0.6, 3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_avion"]
+albedo_color = Color(0.85, 0.85, 0.9, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_nariz"]
+top_radius = 0.0
+bottom_radius = 0.4
+height = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nariz"]
+albedo_color = Color(0.9, 0.1, 0.1, 1)
+emission_enabled = true
+emission = Color(0.9, 0.1, 0.1, 1)
+emission_energy_multiplier = 0.3
+
+[sub_resource type="BoxMesh" id="BoxMesh_alas"]
+size = Vector3(5.5, 0.15, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_cola"]
+size = Vector3(2, 0.12, 0.5)
+
+[sub_resource type="BoxMesh" id="BoxMesh_timon"]
+size = Vector3(0.12, 0.9, 0.5)
+
+[node name="Node3D" type="Node3D" unique_id=1416541288]
+script = ExtResource("2_mundo")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=318760585]
+environment = SubResource("Environment_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1869138687]
+transform = Transform3D(0.707, -0.5, 0.5, 0, 0.707, 0.707, -0.707, -0.5, 0.5, 0, 10, 0)
+shadow_enabled = true
+
+[node name="CesiumGeoreference" type="CesiumGeoreference" parent="." unique_id=811100881]
+ecefX = 2754016.000116488
+ecefY = -4479461.554926906
+ecefZ = -3597677.6133829528
+latitude = -34.55890000000066
+longitude = -58.41640000000001
+altitude = 4.999999999068677
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
+
+[node name="Cesium3DTileset" type="Cesium3DTileset" parent="CesiumGeoreference" unique_id=671413382]
+maximum_simultaneous_tile_loads = 8
+loading_descendant_limit = 10
+ion_asset_id = 2275207
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
+
+[node name="Avion" type="Node3D" parent="." unique_id=283488791]
+# La rotación de arranque YA NO se hardcodea acá -- un giro de 180° a mano
+# (probado 2026-09-21) no dio el resultado esperado, porque los ejes del
+# motor no coinciden con compás real (el problema de siempre en este
+# proyecto). Ahora principal.gd orienta el avión hacia San Fernando con la
+# MISMA fórmula de rumbo real que ya usamos en todos lados (ver
+# _aplicar_orientacion_inicial()), apenas arranca el primer cuadro.
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1000, 0)
+script = ExtResource("1_tr6oq")
+
+[node name="Fuselaje" type="MeshInstance3D" parent="Avion" unique_id=549209527]
+mesh = SubResource("BoxMesh_fuselaje")
+surface_material_override/0 = SubResource("StandardMaterial3D_avion")
+
+[node name="Nariz" type="MeshInstance3D" parent="Avion" unique_id=617368419]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, -1.9)
+mesh = SubResource("CylinderMesh_nariz")
+surface_material_override/0 = SubResource("StandardMaterial3D_nariz")
+
+[node name="Alas" type="MeshInstance3D" parent="Avion" unique_id=1927035582]
+mesh = SubResource("BoxMesh_alas")
+surface_material_override/0 = SubResource("StandardMaterial3D_avion")
+
+[node name="Cola" type="MeshInstance3D" parent="Avion" unique_id=1571999859]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.75)
+mesh = SubResource("BoxMesh_cola")
+surface_material_override/0 = SubResource("StandardMaterial3D_avion")
+
+[node name="Timon" type="MeshInstance3D" parent="Avion" unique_id=1108841276]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 1.75)
+mesh = SubResource("BoxMesh_timon")
+surface_material_override/0 = SubResource("StandardMaterial3D_avion")
+
+[node name="ModeloExterno" type="Node3D" parent="Avion"]
+
+[node name="SonidoMotor" type="AudioStreamPlayer" parent="Avion"]
+autoplay = false
+
+[node name="SonidoRadio" type="AudioStreamPlayer" parent="Avion"]
+autoplay = false
+
+[node name="SonidoMusica" type="AudioStreamPlayer" parent="Avion"]
+autoplay = false
+
+[node name="LineaGuia" type="MeshInstance3D" parent="."]
+visible = false
+mesh = SubResource("BoxMesh_linea_guia")
+material_override = SubResource("StandardMaterial3D_linea_guia")
+
+[node name="CamaraJuego" type="Camera3D" parent="." unique_id=2102651434]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, 8)
+current = true
+near = 0.1
+far = 100000.0
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=605988918]
+
+[node name="PanelInstrumentos" type="HBoxContainer" parent="HUD"]
+offset_left = 20.0
+offset_top = 28.0
+offset_right = 480.0
+offset_bottom = 86.0
+theme_override_constants/separation = 8
+
+[node name="CajaAltitud" type="PanelContainer" parent="HUD/PanelInstrumentos"]
+custom_minimum_size = Vector2(105, 58)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="AltimetroLabel" type="Label" parent="HUD/PanelInstrumentos/CajaAltitud" unique_id=498244907]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_constants/line_spacing = -4
+theme_override_font_sizes/font_size = 15
+text = "ALT
+0m"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CajaRumbo" type="PanelContainer" parent="HUD/PanelInstrumentos"]
+custom_minimum_size = Vector2(105, 58)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="RumboLabel" type="Label" parent="HUD/PanelInstrumentos/CajaRumbo" unique_id=719095640]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_constants/line_spacing = -4
+theme_override_font_sizes/font_size = 15
+text = "RUMBO
+0°"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CajaVelocidad" type="PanelContainer" parent="HUD/PanelInstrumentos"]
+custom_minimum_size = Vector2(105, 58)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="LabelVelocidad" type="Label" parent="HUD/PanelInstrumentos/CajaVelocidad" unique_id=966116536]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_constants/line_spacing = -4
+theme_override_font_sizes/font_size = 15
+text = "VEL
+0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CajaDistancia" type="PanelContainer" parent="HUD/PanelInstrumentos"]
+custom_minimum_size = Vector2(105, 58)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="DistanciaLabel" type="Label" parent="HUD/PanelInstrumentos/CajaDistancia"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 2
+theme_override_constants/line_spacing = -4
+theme_override_font_sizes/font_size = 15
+text = "DIST
+---"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CartelCentral" type="Label" parent="HUD" unique_id=1234580942]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -350.0
+offset_top = -60.0
+offset_right = 350.0
+offset_bottom = 60.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 0.2, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 42
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="BotonDespegar" type="Button" parent="HUD" unique_id=259533165]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -110.0
+offset_top = 75.0
+offset_right = 110.0
+offset_bottom = 125.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 22
+text = "🛫 DESPEGAR"
+
+[node name="FlechaIzquierda" type="Label" parent="HUD" unique_id=920674026]
+visible = false
+offset_left = 500.0
+offset_top = 60.0
+offset_right = 525.0
+offset_bottom = 90.0
+theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 22
+text = "◀"
+
+[node name="FlechaDerecha" type="Label" parent="HUD" unique_id=292334395]
+visible = false
+offset_left = 565.0
+offset_top = 60.0
+offset_right = 590.0
+offset_bottom = 90.0
+theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 22
+text = "▶"
+
+[node name="FlechaArriba" type="Label" parent="HUD" unique_id=1077292601]
+visible = false
+offset_left = 532.0
+offset_top = 30.0
+offset_right = 557.0
+offset_bottom = 58.0
+theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 22
+text = "▲"
+horizontal_alignment = 1
+
+[node name="FlechaAbajo" type="Label" parent="HUD" unique_id=1099777023]
+visible = false
+offset_left = 532.0
+offset_top = 92.0
+offset_right = 557.0
+offset_bottom = 120.0
+theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 22
+text = "▼"
+horizontal_alignment = 1
+
+[node name="LabelRumboObjetivo" type="Label" parent="HUD"]
+visible = false
+offset_left = 600.0
+offset_top = 60.0
+offset_right = 760.0
+offset_bottom = 84.0
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 13
+text = "Ponete en rumbo 0°"
+
+[node name="LabelSugerenciaILS" type="Label" parent="HUD"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -220.0
+offset_top = 100.0
+offset_right = 220.0
+offset_bottom = 128.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.15, 0.15, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 16
+text = "⚠️ Activá el ILS para alinearte con la pista"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="BarraBotones" type="HBoxContainer" parent="HUD"]
+offset_left = 4.0
+offset_top = 2.0
+offset_right = 760.0
+offset_bottom = 24.0
+theme_override_constants/separation = 4
+
+[node name="BotonMisiones" type="Button" parent="HUD/BarraBotones"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "🚁 Misiones"
+
+[node name="BotonElegirVuelo" type="Button" parent="HUD/BarraBotones" unique_id=17034969]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "✈️ Vuelo"
+
+[node name="BotonCarrera" type="Button" parent="HUD/BarraBotones"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "🎓 Carrera"
+
+[node name="BotonMapa" type="Button" parent="HUD/BarraBotones"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "🗺️ Mapa"
+
+[node name="BotonAyudaVisual" type="Button" parent="HUD/BarraBotones"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "➖ Guía"
+
+[node name="LuzAyudaVisual" type="ColorRect" parent="HUD/BarraBotones"]
+custom_minimum_size = Vector2(10, 10)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.25, 0.25, 0.25, 1)
+
+[node name="BotonRadio" type="Button" parent="HUD/BarraBotones"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "📻 Radio: OFF"
+
+[node name="BotonRadioEnVivo" type="Button" parent="HUD/BarraBotones"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "📡 Aspen"
+
+[node name="BotonMusica" type="Button" parent="HUD/BarraBotones"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "🎵 Música"
+
+[node name="BotonILS" type="Button" parent="HUD/BarraBotones"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "🎯 Activar ILS"
+
+[node name="PanelSensibilidad" type="Panel" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -190.0
+offset_top = 100.0
+offset_right = -14.0
+offset_bottom = 260.0
+grow_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="VBoxSensibilidad" type="VBoxContainer" parent="HUD/PanelSensibilidad"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = -8.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 4
+
+[node name="LabelTituloSensibilidad" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_override_font_sizes/font_size = 11
+text = "🛠️ Sensibilidad (avión actual)"
+autowrap_mode = 3
+
+[node name="FilaGiro" type="HBoxContainer" parent="HUD/PanelSensibilidad/VBoxSensibilidad"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="LabelGiro" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaGiro"]
+custom_minimum_size = Vector2(58, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "Giro"
+
+[node name="BotonGiroMenos" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaGiro"]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "－"
+
+[node name="LabelGiroValor" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaGiro"]
+custom_minimum_size = Vector2(34, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 1
+text = "0.60"
+
+[node name="BotonGiroMas" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaGiro"]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "＋"
+
+[node name="FilaAngulo" type="HBoxContainer" parent="HUD/PanelSensibilidad/VBoxSensibilidad"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="LabelAngulo" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaAngulo"]
+custom_minimum_size = Vector2(58, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "Ángulo"
+
+[node name="BotonAnguloMenos" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaAngulo"]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "－"
+
+[node name="LabelAnguloValor" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaAngulo"]
+custom_minimum_size = Vector2(34, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 1
+text = "45°"
+
+[node name="BotonAnguloMas" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaAngulo"]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "＋"
+
+[node name="FilaVertical" type="HBoxContainer" parent="HUD/PanelSensibilidad/VBoxSensibilidad"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="LabelVertical" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVertical"]
+custom_minimum_size = Vector2(58, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "Subir/bajar"
+autowrap_mode = 3
+
+[node name="BotonVerticalMenos" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVertical"]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "－"
+
+[node name="LabelVerticalValor" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVertical"]
+custom_minimum_size = Vector2(34, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 1
+text = "40°"
+
+[node name="BotonVerticalMas" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVertical"]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "＋"
+
+[node name="FilaVelMinima" type="HBoxContainer" parent="HUD/PanelSensibilidad/VBoxSensibilidad"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="LabelVelMinima" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMinima"]
+custom_minimum_size = Vector2(58, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "Vel. mínima"
+autowrap_mode = 3
+
+[node name="BotonVelMinimaMenos" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMinima"]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "－"
+
+[node name="LabelVelMinimaValor" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMinima"]
+custom_minimum_size = Vector2(34, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 1
+text = "0"
+
+[node name="BotonVelMinimaMas" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMinima"]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "＋"
+
+[node name="FilaVelMaxima" type="HBoxContainer" parent="HUD/PanelSensibilidad/VBoxSensibilidad"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="LabelVelMaxima" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMaxima"]
+custom_minimum_size = Vector2(58, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "Vel. máxima"
+autowrap_mode = 3
+
+[node name="BotonVelMaximaMenos" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMaxima"]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "－"
+
+[node name="LabelVelMaximaValor" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMaxima"]
+custom_minimum_size = Vector2(34, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 1
+text = "1500"
+
+[node name="BotonVelMaximaMas" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMaxima"]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "＋"
+
+[node name="PanelCarrera" type="Panel" parent="HUD"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 80.0
+offset_top = 80.0
+offset_right = -80.0
+offset_bottom = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_credencial")
+
+[node name="PanelSeleccionPerfil" type="VBoxContainer" parent="HUD/PanelCarrera"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -180.0
+offset_right = 200.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="LabelTituloPerfil" type="Label" parent="HUD/PanelCarrera/PanelSeleccionPerfil"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.68, 0.15, 1)
+theme_override_font_sizes/font_size = 22
+text = "🎓 Modo Carrera -- ¿Quién vuela?"
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="ScrollPerfiles" type="ScrollContainer" parent="HUD/PanelCarrera/PanelSeleccionPerfil"]
+custom_minimum_size = Vector2(0, 160)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ListaPerfiles" type="VBoxContainer" parent="HUD/PanelCarrera/PanelSeleccionPerfil/ScrollPerfiles"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="LabelNuevoPerfil" type="Label" parent="HUD/PanelCarrera/PanelSeleccionPerfil"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 13
+text = "¿Piloto nuevo? Escribí tu nombre:"
+
+[node name="HBoxNuevoPerfil" type="HBoxContainer" parent="HUD/PanelCarrera/PanelSeleccionPerfil"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="CampoNuevoPerfil" type="LineEdit" parent="HUD/PanelCarrera/PanelSeleccionPerfil/HBoxNuevoPerfil"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Tu nombre"
+
+[node name="BotonCrearPerfil" type="Button" parent="HUD/PanelCarrera/PanelSeleccionPerfil/HBoxNuevoPerfil"]
+custom_minimum_size = Vector2(90, 36)
+layout_mode = 2
+text = "Crear"
+
+[node name="BotonCerrarCarrera1" type="Button" parent="HUD/PanelCarrera/PanelSeleccionPerfil"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+text = "Cerrar"
+
+[node name="PanelCredencial" type="VBoxContainer" parent="HUD/PanelCarrera"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -230.0
+offset_top = -240.0
+offset_right = 230.0
+offset_bottom = 260.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="LabelTituloCredencial" type="Label" parent="HUD/PanelCarrera/PanelCredencial"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.68, 0.15, 1)
+theme_override_font_sizes/font_size = 18
+text = "✈️ CREDENCIAL DE PILOTO"
+horizontal_alignment = 1
+
+[node name="LabelNombrePiloto" type="Label" parent="HUD/PanelCarrera/PanelCredencial"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 24
+text = "Pablo"
+horizontal_alignment = 1
+
+[node name="HBoxRango" type="HBoxContainer" parent="HUD/PanelCarrera/PanelCredencial"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 10
+
+[node name="InsigniaPiloto" type="Control" parent="HUD/PanelCarrera/PanelCredencial/HBoxRango"]
+custom_minimum_size = Vector2(40, 34)
+layout_mode = 2
+script = ExtResource("5_insignia")
+
+[node name="LabelRango" type="Label" parent="HUD/PanelCarrera/PanelCredencial/HBoxRango"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.68, 0.15, 1)
+theme_override_font_sizes/font_size = 16
+text = "Aprendiz"
+
+[node name="HSeparador1" type="HSeparator" parent="HUD/PanelCarrera/PanelCredencial"]
+layout_mode = 2
+
+[node name="FilaHoras" type="HBoxContainer" parent="HUD/PanelCarrera/PanelCredencial"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LabelHoras" type="Label" parent="HUD/PanelCarrera/PanelCredencial/FilaHoras"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 14
+text = "Horas de vuelo"
+
+[node name="BotonHorasMenos" type="Button" parent="HUD/PanelCarrera/PanelCredencial/FilaHoras"]
+custom_minimum_size = Vector2(26, 24)
+layout_mode = 2
+text = "－"
+
+[node name="LabelHorasValor" type="Label" parent="HUD/PanelCarrera/PanelCredencial/FilaHoras"]
+custom_minimum_size = Vector2(70, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+text = "0 Hs"
+
+[node name="BotonHorasMas" type="Button" parent="HUD/PanelCarrera/PanelCredencial/FilaHoras"]
+custom_minimum_size = Vector2(26, 24)
+layout_mode = 2
+text = "＋"
+
+[node name="FilaPlataCarrera" type="HBoxContainer" parent="HUD/PanelCarrera/PanelCredencial"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LabelPlataCarrera" type="Label" parent="HUD/PanelCarrera/PanelCredencial/FilaPlataCarrera"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 14
+text = "Billetera"
+
+[node name="BotonPlataMenos" type="Button" parent="HUD/PanelCarrera/PanelCredencial/FilaPlataCarrera"]
+custom_minimum_size = Vector2(26, 24)
+layout_mode = 2
+text = "－"
+
+[node name="LabelPlataValor" type="Label" parent="HUD/PanelCarrera/PanelCredencial/FilaPlataCarrera"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 1, 0.5, 1)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+text = "$0"
+
+[node name="BotonPlataMas" type="Button" parent="HUD/PanelCarrera/PanelCredencial/FilaPlataCarrera"]
+custom_minimum_size = Vector2(26, 24)
+layout_mode = 2
+text = "＋"
+
+[node name="HSeparador2" type="HSeparator" parent="HUD/PanelCarrera/PanelCredencial"]
+layout_mode = 2
+
+[node name="LabelTituloLicencia" type="Label" parent="HUD/PanelCarrera/PanelCredencial"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 15
+text = "🚁 Licencia de Helicóptero"
+horizontal_alignment = 1
+
+[node name="LabelProgresoLicencia" type="Label" parent="HUD/PanelCarrera/PanelCredencial"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 13
+text = "Progreso: 0/3"
+horizontal_alignment = 1
+
+[node name="ScrollLicenciaHelicoptero" type="ScrollContainer" parent="HUD/PanelCarrera/PanelCredencial"]
+custom_minimum_size = Vector2(0, 130)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ListaLicenciaHelicoptero" type="VBoxContainer" parent="HUD/PanelCarrera/PanelCredencial/ScrollLicenciaHelicoptero"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="BotonCambiarPiloto" type="Button" parent="HUD/PanelCarrera/PanelCredencial"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+text = "Cambiar de piloto"
+
+[node name="BotonCerrarCarrera2" type="Button" parent="HUD/PanelCarrera/PanelCredencial"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+text = "Cerrar"
+
+[node name="BotonSalirPantallaCompleta" type="Button" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -34.0
+offset_top = 2.0
+offset_right = -4.0
+offset_bottom = 24.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 13
+text = "✕"
+
+[node name="PanelMusica" type="Panel" parent="HUD"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -130.0
+offset_right = 160.0
+offset_bottom = 130.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxMusica" type="VBoxContainer" parent="HUD/PanelMusica"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = 10.0
+offset_right = -14.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="LabelTituloMusica" type="Label" parent="HUD/PanelMusica/VBoxMusica"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "🎵 Música (elegí un estilo)"
+
+[node name="LabelEstadoMusica" type="Label" parent="HUD/PanelMusica/VBoxMusica"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 13
+text = "Detenida"
+autowrap_mode = 3
+
+[node name="BotonGeneroAmbiental" type="Button" parent="HUD/PanelMusica/VBoxMusica"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+text = "🌙 Ambiental"
+
+[node name="BotonGeneroOrquestal" type="Button" parent="HUD/PanelMusica/VBoxMusica"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+text = "🎻 Orquestal"
+
+[node name="BotonGeneroRock" type="Button" parent="HUD/PanelMusica/VBoxMusica"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+text = "🎸 Rock"
+
+[node name="BotonGeneroElectronica" type="Button" parent="HUD/PanelMusica/VBoxMusica"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+text = "🎹 Electrónica"
+
+[node name="HBoxControlesMusica" type="HBoxContainer" parent="HUD/PanelMusica/VBoxMusica"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BotonAnteriorMusica" type="Button" parent="HUD/PanelMusica/VBoxMusica/HBoxControlesMusica"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "⏮ Anterior"
+
+[node name="BotonPausaMusica" type="Button" parent="HUD/PanelMusica/VBoxMusica/HBoxControlesMusica"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "⏸ Pausa"
+
+[node name="BotonSiguienteMusica" type="Button" parent="HUD/PanelMusica/VBoxMusica/HBoxControlesMusica"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "⏭ Siguiente"
+
+[node name="BotonDetenerMusica" type="Button" parent="HUD/PanelMusica/VBoxMusica"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+text = "⏹ Detener"
+
+[node name="BotonCerrarMusica" type="Button" parent="HUD/PanelMusica/VBoxMusica"]
+custom_minimum_size = Vector2(0, 34)
+layout_mode = 2
+text = "Cerrar"
+
+[node name="SelectorVuelo" type="Panel" parent="HUD" unique_id=320021826]
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -420.0
+offset_top = 300.0
+offset_right = -20.0
+offset_bottom = 622.0
+grow_horizontal = 0
+
+[node name="VBox" type="VBoxContainer" parent="HUD/SelectorVuelo" unique_id=675834856]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = 10.0
+offset_right = -14.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 6
+
+[node name="LabelTitulo" type="Label" parent="HUD/SelectorVuelo/VBox" unique_id=1834347727]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "✈️ Elegir vuelo"
+
+[node name="LabelDesde" type="Label" parent="HUD/SelectorVuelo/VBox" unique_id=439502031]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 16
+text = "Desde:"
+
+[node name="OrigenOption" type="OptionButton" parent="HUD/SelectorVuelo/VBox" unique_id=91700301]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+
+[node name="LabelHasta" type="Label" parent="HUD/SelectorVuelo/VBox" unique_id=1928267435]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 16
+text = "Hasta:"
+
+[node name="DestinoOption" type="OptionButton" parent="HUD/SelectorVuelo/VBox" unique_id=965780534]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+
+[node name="LabelAvion" type="Label" parent="HUD/SelectorVuelo/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 16
+text = "Avión:"
+
+[node name="TipoAvionOption" type="OptionButton" parent="HUD/SelectorVuelo/VBox"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+
+[node name="BotonConfirmar" type="Button" parent="HUD/SelectorVuelo/VBox" unique_id=1852995177]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "✈️ Confirmar viaje"
+
+[node name="PanelMisiones" type="Panel" parent="HUD"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -280.0
+offset_top = -300.0
+offset_right = 280.0
+offset_bottom = 300.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxMisiones" type="VBoxContainer" parent="HUD/PanelMisiones"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = 10.0
+offset_right = -14.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="LabelTituloMisiones" type="Label" parent="HUD/PanelMisiones/VBoxMisiones"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "🚁 Misiones de helicóptero"
+
+[node name="ScrollMisiones" type="ScrollContainer" parent="HUD/PanelMisiones/VBoxMisiones"]
+custom_minimum_size = Vector2(0, 460)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ListaMisiones" type="VBoxContainer" parent="HUD/PanelMisiones/VBoxMisiones/ScrollMisiones"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="BotonCerrarMisiones" type="Button" parent="HUD/PanelMisiones/VBoxMisiones"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Cerrar"
+
+[node name="PanelMarcarLugar" type="Panel" parent="HUD"]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -85.0
+offset_right = 220.0
+offset_bottom = 85.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxMarcarLugar" type="VBoxContainer" parent="HUD/PanelMarcarLugar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = 10.0
+offset_right = -14.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="LabelTituloMarcarLugar" type="Label" parent="HUD/PanelMarcarLugar/VBoxMarcarLugar"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "📍 Marcar este lugar"
+
+[node name="LabelCoordenadasMarcarLugar" type="Label" parent="HUD/PanelMarcarLugar/VBoxMarcarLugar"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 13
+text = "lat, lon"
+
+[node name="CampoNombreLugar" type="LineEdit" parent="HUD/PanelMarcarLugar/VBoxMarcarLugar"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+placeholder_text = "Ej: Helipuerto Hospital Garrahan"
+
+[node name="HBoxBotonesMarcarLugar" type="HBoxContainer" parent="HUD/PanelMarcarLugar/VBoxMarcarLugar"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BotonGuardarLugar" type="Button" parent="HUD/PanelMarcarLugar/VBoxMarcarLugar/HBoxBotonesMarcarLugar"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Guardar"
+
+[node name="BotonCancelarLugar" type="Button" parent="HUD/PanelMarcarLugar/VBoxMarcarLugar/HBoxBotonesMarcarLugar"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Cancelar"
+
+[node name="MinimapaViewport" type="SubViewport" parent="HUD" unique_id=694532420]
+size = Vector2i(240, 240)
+
+[node name="CamaraMinimapa" type="Camera3D" parent="HUD/MinimapaViewport" unique_id=1915954083]
+current = true
+script = ExtResource("3_minimapa")
+
+[node name="MapaViewport" type="SubViewport" parent="HUD"]
+size = Vector2i(340, 340)
+own_world_3d = true
+
+[node name="CesiumGeoreferenceMapa" type="CesiumGeoreference" parent="HUD/MapaViewport"]
+ecefX = 2754016.000116488
+ecefY = -4479461.554926906
+ecefZ = -3597677.6133829528
+latitude = -34.55890000000066
+longitude = -58.41640000000001
+altitude = 4.999999999068677
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
+
+[node name="Cesium3DTilesetMapa" type="Cesium3DTileset" parent="HUD/MapaViewport/CesiumGeoreferenceMapa"]
+maximum_simultaneous_tile_loads = 8
+ion_asset_id = 1
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
+
+[node name="DirectionalLight3DMapa" type="DirectionalLight3D" parent="HUD/MapaViewport"]
+transform = Transform3D(0.707, -0.5, 0.5, 0, 0.707, 0.707, -0.707, -0.5, 0.5, 0, 10, 0)
+
+[node name="CamaraMapa" type="Camera3D" parent="HUD/MapaViewport"]
+current = true
+altura_camara = 19000.0
+script = ExtResource("3_minimapa")
+
+[node name="PeticionMapa" type="HTTPRequest" parent="HUD"]
+
+[node name="MapaRect" type="TextureRect" parent="HUD"]
+offset_left = 20.0
+offset_top = 130.0
+offset_right = 220.0
+offset_bottom = 330.0
+
+[node name="AsaMoverMapa" type="ColorRect" parent="HUD/MapaRect"]
+layout_mode = 0
+anchor_right = 1.0
+offset_bottom = 10.0
+mouse_default_cursor_shape = 13
+color = Color(1, 1, 1, 0.35)
+
+[node name="IconoAvionMapa" type="Control" parent="HUD/MapaRect"]
+offset_left = 158.0
+offset_top = 158.0
+offset_right = 182.0
+offset_bottom = 182.0
+mouse_filter = 2
+script = ExtResource("4_icono_avion")
+
+[node name="AsaMapa" type="ColorRect" parent="HUD/MapaRect"]
+layout_mode = 0
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -18.0
+offset_top = -18.0
+offset_right = 6.0
+offset_bottom = 6.0
+mouse_default_cursor_shape = 12
+color = Color(1, 1, 1, 0.55)
+
+[node name="MinimapaRect" type="TextureRect" parent="HUD" unique_id=1484349478]
+visible = false
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -260.0
+offset_top = -260.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 0
+
+[node name="AsaMinimapa" type="ColorRect" parent="HUD/MinimapaRect"]
+layout_mode = 0
+offset_left = -6.0
+offset_top = -6.0
+offset_right = 18.0
+offset_bottom = 18.0
+mouse_default_cursor_shape = 11
+color = Color(1, 1, 1, 0.55)
+
+[node name="BotonConfiguracion" type="Button" parent="HUD" unique_id=1569654520]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -60.0
+offset_right = 74.0
+offset_bottom = -20.0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 22
+text = "⚙️"
+
+[node name="PanelConfiguracion" type="Panel" parent="HUD" unique_id=249780679]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -260.0
+offset_right = 260.0
+offset_bottom = 260.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxConfig" type="VBoxContainer" parent="HUD/PanelConfiguracion" unique_id=617340680]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 14.0
+offset_right = -16.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="LabelTituloConfig" type="Label" parent="HUD/PanelConfiguracion/VBoxConfig" unique_id=1976057967]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "🕹️ Configuración de joystick"
+
+[node name="LabelEstadoJoystick" type="Label" parent="HUD/PanelConfiguracion/VBoxConfig" unique_id=1572412100]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.7, 0.2, 1)
+theme_override_font_sizes/font_size = 16
+text = "Joystick: no detectado"
+autowrap_mode = 3
+
+[node name="HBoxVolumenMotor" type="HBoxContainer" parent="HUD/PanelConfiguracion/VBoxConfig"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LabelVolumenMotor" type="Label" parent="HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenMotor"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Sonido motores"
+
+[node name="SliderVolumenMotor" type="HSlider" parent="HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenMotor"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CheckControlMouse" type="CheckButton" parent="HUD/PanelConfiguracion/VBoxConfig"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "🖱️ Volar con mouse (como GeoFS) -- el acelerador sigue siendo del teclado"
+
+[node name="ScrollAcciones" type="ScrollContainer" parent="HUD/PanelConfiguracion/VBoxConfig" unique_id=1642781119]
+custom_minimum_size = Vector2(0, 300)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ListaAcciones" type="VBoxContainer" parent="HUD/PanelConfiguracion/VBoxConfig/ScrollAcciones" unique_id=351067299]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="BotonCerrarConfig" type="Button" parent="HUD/PanelConfiguracion/VBoxConfig" unique_id=701777610]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+text = "Cerrar"
+
+[node name="CortinaDeCarga" type="ColorRect" parent="HUD"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.05, 0.07, 0.1, 1)
+
+[node name="VBoxPresentacion" type="VBoxContainer" parent="HUD/CortinaDeCarga"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -80.0
+offset_right = 300.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="LabelTituloPresentacion" type="Label" parent="HUD/CortinaDeCarga/VBoxPresentacion"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.85, 0.68, 0.15, 1)
+theme_override_font_sizes/font_size = 36
+text = "✈️ LexAir"
+horizontal_alignment = 1
+
+[node name="LabelSubtituloPresentacion" type="Label" parent="HUD/CortinaDeCarga/VBoxPresentacion"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+theme_override_font_sizes/font_size = 16
+text = "Argentina entera, en terreno fotorrealista real -- preparando el cielo..."
+horizontal_alignment = 1
+autowrap_mode = 3

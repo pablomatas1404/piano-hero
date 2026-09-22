@@ -1,0 +1,225 @@
+[
+	{
+		"altitud": 24.047324936837,
+		"lat": -34.6338317354298,
+		"lon": -58.366212241872,
+		"nombre": "Estadio de Boca Juniors (Cancha auxiliar)"
+	},
+	{
+		"altitud": 23.150911251083,
+		"lat": -34.6675291760371,
+		"lon": -58.3684602652719,
+		"nombre": "ESTADIO DE RACING CLUB DE AVELLANEDA (adentro)"
+	},
+	{
+		"altitud": 22.4833713909611,
+		"lat": -34.6702036999615,
+		"lon": -58.3709553972648,
+		"nombre": "Estadio de Independiente (Adentro)"
+	},
+	{
+		"altitud": 35.3292145486921,
+		"lat": -34.6033765232351,
+		"lon": -58.3815493289313,
+		"nombre": "Obelisco (Centro de la ciudad)"
+	},
+	{
+		"altitud": 32.6245370870456,
+		"lat": -34.6006617938084,
+		"lon": -58.382897796275,
+		"nombre": "Teatro Colon."
+	},
+	{
+		"altitud": 65.8182145673782,
+		"lat": -34.6017203852364,
+		"lon": -58.385457182003,
+		"nombre": "Tribunales (Techo)"
+	},
+	{
+		"altitud": 30.8463121661916,
+		"lat": -34.6072774426033,
+		"lon": -58.3693545243094,
+		"nombre": "Casa Rosada (Helipuerto)"
+	},
+	{
+		"altitud": 24.9516311390325,
+		"lat": -34.6092507027205,
+		"lon": -58.3662333858193,
+		"nombre": "Puerto Madero (Fragata Sarmiento)"
+	},
+	{
+		"altitud": 103.787431721576,
+		"lat": -34.6209548043447,
+		"lon": -58.3608972797835,
+		"nombre": "Madero Harbor (Edificio de Lujo) Helipuerto."
+	},
+	{
+		"altitud": 183.311407590285,
+		"lat": -34.6121284211702,
+		"lon": -58.3594125315534,
+		"nombre": "Hotel Hilton (Terraza)."
+	},
+	{
+		"altitud": 25.4707296686247,
+		"lat": -34.6067941564482,
+		"lon": -58.3466122893817,
+		"nombre": "Reserva Ecologica Costanera Sur (Vista al rio)."
+	},
+	{
+		"altitud": 42.4971633441746,
+		"lat": -34.6186176961409,
+		"lon": -58.4477442094574,
+		"nombre": "Estadio Ferro Carril Oeste (Caballito)."
+	},
+	{
+		"altitud": 35.3487125169486,
+		"lat": -34.6119389327306,
+		"lon": -58.4443453209025,
+		"nombre": "CASA."
+	},
+	{
+		"altitud": 24.3938705781475,
+		"lat": -34.6704242060742,
+		"lon": -58.4481491850369,
+		"nombre": "Torre del Parque de la Ciudad (Era el punto mas alto de la Ciudad)"
+	},
+	{
+		"altitud": 50.3230302259326,
+		"lat": -33.0087525020559,
+		"lon": -58.6129206261459,
+		"nombre": "Aeropuerto Gualeguaychu - Entre Rios."
+	},
+	{
+		"altitud": 724.798450063914,
+		"lat": -33.2765558892837,
+		"lon": -66.3569762482839,
+		"nombre": "Aeropuerto de San Luis.",
+		"orientacion": 190.068067892332
+	},
+	{
+		"altitud": 447.350202559493,
+		"lat": -33.0837345938044,
+		"lon": -64.259578187267,
+		"nombre": "Aeropuerto Rio Cuarto - Cordoba.",
+		"orientacion": 227.250156772986
+	},
+	{
+		"altitud": 499.887069635093,
+		"lat": -31.3228603321429,
+		"lon": -64.2071143328457,
+		"nombre": "Aeropuerto Cordoba Capital.",
+		"orientacion": 45.5358582480598
+	},
+	{
+		"altitud": 40.4461734620854,
+		"lat": -34.6009427588694,
+		"lon": -58.6171759926138,
+		"nombre": "Pista Palomar Lado A",
+		"orientacion": 161.196338330071
+	},
+	{
+		"altitud": 49.8827434657142,
+		"lat": -34.6182983867754,
+		"lon": -58.6083196699711,
+		"nombre": "Pista Palomar 34",
+		"orientacion": 157.133533262168
+	},
+	{
+		"altitud": 48.0545884827152,
+		"lat": -34.6885488419284,
+		"lon": -58.6462909490502,
+		"nombre": "Moron Pista 02",
+		"orientacion": 236.195271054564
+	},
+	{
+		"altitud": 43.2744749914855,
+		"lat": -34.6641891470396,
+		"lon": -58.6393783149291,
+		"nombre": "Moron contraria",
+		"orientacion": 46.3342164329161
+	},
+	{
+		"altitud": 37.2082823291421,
+		"lat": -34.8190632489792,
+		"lon": -58.5533262507912,
+		"nombre": "Ezeiza Pista 1 A",
+		"orientacion": 103.194681888959
+	},
+	{
+		"altitud": 38.4050613399595,
+		"lat": -34.8253907177614,
+		"lon": -58.518147409345,
+		"nombre": "Ezeiza Pista 1 B (29)",
+		"orientacion": 102.250863335957
+	},
+	{
+		"altitud": 36.6112232338637,
+		"lat": -34.8352106117019,
+		"lon": -58.5245659448607,
+		"nombre": "Ezeiza Pista 2 A",
+		"orientacion": 338.182396514531
+	},
+	{
+		"altitud": 37.6294713849202,
+		"lat": -34.8085286713313,
+		"lon": -58.5338650217645,
+		"nombre": "Ezeiza Pista 2 B",
+		"orientacion": 343.824950238728
+	},
+	{
+		"altitud": 44.9625268978998,
+		"lat": -34.5274077113893,
+		"lon": -58.6722874442012,
+		"nombre": "Campo de Mayo (Pista Militar) lado b",
+		"orientacion": 357.45974750144
+	},
+	{
+		"altitud": 45.1745231309906,
+		"lat": -34.5421162803178,
+		"lon": -58.6715322190383,
+		"nombre": "Campo de Mayo (Pista Militar y Hospital) el otro lado",
+		"orientacion": 177.237607292551
+	},
+	{
+		"altitud": 37.872753161937,
+		"lat": -34.5544970604824,
+		"lon": -59.0763310141286,
+		"nombre": "Aero Club Lujan (Pista de tierra) B",
+		"orientacion": 150.162543402806
+	},
+	{
+		"altitud": 40.5593090755865,
+		"lat": -34.5477829338129,
+		"lon": -59.0808948351915,
+		"nombre": "Aero Club Lujan - Pista 16 Tierra.",
+		"orientacion": 331.063799072472
+	},
+	{
+		"altitud": 64.8651760295033,
+		"lat": -34.9584894215692,
+		"lon": -60.0288016448983,
+		"nombre": "Aerodromo Chivilcoy . Pista 21 A",
+		"orientacion": 33.0266354443533
+	},
+	{
+		"altitud": 65.5044843032956,
+		"lat": -34.9661466452173,
+		"lon": -60.0348295528628,
+		"nombre": "Aerodromo Chivilcoy - Pista 03 A Tierra.",
+		"orientacion": 213.368154962102
+	},
+	{
+		"altitud": 49.031780987978,
+		"lat": -32.9167810491964,
+		"lon": -60.7877080510417,
+		"nombre": "Pista Rosario 20 B",
+		"orientacion": 190.963076891251
+	},
+	{
+		"altitud": 52.070948225446,
+		"lat": -32.8899887834222,
+		"lon": -60.7815807340708,
+		"nombre": "Pista Rosario 20 A",
+		"orientacion": 10.9028243001271
+	}
+]

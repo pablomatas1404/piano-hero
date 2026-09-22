@@ -1,0 +1,6 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Claves de APIs externas (OpenTopography, Mapbox) -- nunca subir esto a ningún lado público.
+api_keys.gd
