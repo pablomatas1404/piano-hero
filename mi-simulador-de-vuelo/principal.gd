@@ -796,6 +796,16 @@ func _ready() -> void:
 	# PASS deja que el evento siga viaje después de pasar por acá.
 	mapa_rect.mouse_filter = Control.MOUSE_FILTER_PASS
 	minimapa_rect.mouse_filter = Control.MOUSE_FILTER_PASS
+	# Explícito a propósito (coincide con el default de Godot, pero lo dejamos
+	# escrito para que quede claro y no dependa de un default implícito):
+	# STRETCH_SCALE ajusta la textura al rectángulo real del control, así que
+	# NUNCA puede desbordar el panel -- confirmado con Gemini y ChatGPT como
+	# la combinación segura, después de que clip_contents + STRETCH_KEEP_
+	# CENTERED (que NO recorta el dibujo propio del TextureRect, solo a sus
+	# hijos) causara 3 bugs visuales distintos (ver mundo.gd / memoria del
+	# proyecto sobre clip_contents).
+	mapa_rect.stretch_mode = TextureRect.STRETCH_SCALE
+	mapa_rect.clip_contents = false
 
 	# La cámara principal NUNCA tiene que ver las baldosas del mapa de
 	# calles (capa 5, ver mundo.gd) -- si no, se verían los dos terrenos
