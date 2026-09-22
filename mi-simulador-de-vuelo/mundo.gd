@@ -44,7 +44,6 @@ extends Node3D
 @onready var camara_mapa: Camera3D = get_node("HUD/MapaViewport/CamaraMapa")
 
 # Coordenadas reales (lat/long en grados, investigadas antes con OurAirports).
-# Quilmes no tiene código OACI propio -- coordenadas aproximadas del pueblo.
 # SEGUNDO INTENTO DE ILS VISUAL (2026-09-21): el primer intento (mismo día,
 # revertido) usaba un rumbo investigado a mano MÁS la coordenada aproximada
 # del aeropuerto -- eso alcanza el rumbo bien pero no garantiza que el punto
@@ -73,7 +72,10 @@ var aeropuertos_lla = [
 	# hospital. Coordenada = punto medio de las dos cabeceras reales que
 	# marcó el usuario (ver aeropuertos_dos_cabeceras).
 	{"nombre": "Campo de Mayo", "lat": -34.53476, "lon": -58.67191},
-	{"nombre": "Quilmes", "lat": -34.7200, "lon": -58.2700},
+	# Coordenadas reales del Aeródromo de Quilmes (OACI SADQ, pista 18/36 de
+	# pasto, 1010m), corregidas 2026-09-22 -- la aproximación anterior
+	# (centro del pueblo) quedaba a ~3km de la pista real y no se encontraba.
+	{"nombre": "Quilmes", "lat": -34.706667, "lon": -58.244444},
 	{"nombre": "La Plata", "lat": -34.9744, "lon": -57.8956},
 	{"nombre": "Villa Gesell", "lat": -37.2344, "lon": -57.0214},
 	{"nombre": "Mar del Plata", "lat": -37.9342, "lon": -57.5733},
