@@ -521,32 +521,19 @@ const MINIMAPA_TAMANO_MAXIMO = 700.0
 const MAPA_TAMANO_MINIMO = 200.0
 const MAPA_TAMANO_MAXIMO = 900.0
 
-# Mosaico de baldosas (pedido explícito, repetido 2026-09-21 y 2026-09-22:
-# "cuando agrando el panel del vértice quiero ver MÁS mapa, no un zoom" --
-# bajamos una grilla de baldosas alrededor de la actual y las mostramos a su
-# tamaño real (TextureRect en modo STRETCH_KEEP_CENTERED, sin estirar) --
-# agrandar el panel desde cualquier esquina solo destapa más mosaico ya
-# bajado, sin cambiar la escala de lo que ya se veía.
-#
-# BUGS REALES del intento anterior (2026-09-21), ya corregidos acá:
-# 1) clip_contents=true recorta TODOS los hijos del panel, incluida la
-#    manija -- si la manija sobresale del borde (como tenía antes, a
-#    propósito, para agarrarla más fácil), queda parcialmente invisible
-#    ("no veo el vértice de abajo"). Solución: las 4 manijas ahora son
-#    cuadraditos TOTALMENTE INTERNOS al panel (no sobresalen ni un píxel),
-#    así el recorte nunca las toca.
-# 2) Si soltás el botón del mouse afuera de la ventana (foco perdido,
-#    arrastre hasta el borde de la pantalla), la bandera de arrastre queda
-#    trabada en `true` para siempre y CUALQUIER movimiento de mouse sigue
-#    agrandando el panel solo. Solución: chequeo activo cada cuadro con
-#    Input.is_mouse_button_pressed() en _input() (ver más abajo), para las
-#    4 banderas, no solo la de antes.
-const TILE_PIXELS = 256
-const LADO_MOSAICO = 5  # impar, para que haya una baldosa central real
-const MITAD_MOSAICO = LADO_MOSAICO / 2  # división entera de Godot, da 2
-var mosaico_cola_pendiente: Array = []   # [[dx,dy,xtile,ytile], ...] -- lo que falta bajar
-var mosaico_imagen: Image = null
-var mosaico_zoom_actual: int = -1
+# El mosaico de baldosas (bajar una grilla 5x5 y mostrarla con
+# STRETCH_KEEP_CENTERED + clip_contents, para "revelar más mapa" al agrandar
+# el panel en vez de hacer zoom) se sacó por completo el 2026-09-22 -- causó
+# tres bugs visuales distintos en tres intentos separados de implementarlo
+# bien (manija tapada, mosaico tapando toda la pantalla al arrancar, mapa
+# desapareciendo y sin volver con el botón). Se sospecha que clip_contents
+# en un TextureRect no recorta la textura propia que dibuja el control, solo
+# a los nodos Control hijos -- sin certeza confirmada, pero el patrón de
+# fallas repetidas justifica priorizar estabilidad. Se volvió al sistema
+# simple de ANTES: una sola baldosa, estirada con el stretch_mode por
+# defecto para llenar el panel -- por definición no puede desbordarlo, sea
+# cual sea su tamaño. Se pierde el efecto "más área sin zoom", pero el panel
+# ya no puede tapar la pantalla ni desaparecer por esto.
 
 # Mover el panel de mapa de calles arrastrando de un bordecito arriba (pedido
 # 2026-09-21) -- sin soltar el tamaño (eso lo sigue haciendo AsaMapa, la
@@ -809,14 +796,6 @@ func _ready() -> void:
 	# PASS deja que el evento siga viaje después de pasar por acá.
 	mapa_rect.mouse_filter = Control.MOUSE_FILTER_PASS
 	minimapa_rect.mouse_filter = Control.MOUSE_FILTER_PASS
-	# "Ver MÁS mapa, no zoom" al agrandar el panel: KEEP_CENTERED muestra el
-	# mosaico a su tamaño real (1 píxel de imagen = 1 píxel de pantalla),
-	# centrado -- agrandar el panel solo destapa más mosaico ya bajado. Junto
-	# con clip_contents=true, que recorta lo que sobra del mosaico a los
-	# bordes del panel (las 4 manijas son totalmente internas, así que el
-	# recorte nunca las tapa -- ver el comentario largo junto a LADO_MOSAICO).
-	mapa_rect.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
-	mapa_rect.clip_contents = true
 
 	# La cámara principal NUNCA tiene que ver las baldosas del mapa de
 	# calles (capa 5, ver mundo.gd) -- si no, se verían los dos terrenos
@@ -1592,60 +1571,30 @@ func _actualizar_mapa_calles(delta: float) -> void:
 	var frac_x: float = clamp(x_exacto - xtile, 0.0, 1.0)
 	var frac_y: float = clamp(y_exacto - ytile, 0.0, 1.0)
 
-	# El ícono va SIEMPRE cerca del centro del panel, no importa qué tan
-	# grande esté -- se desliza dentro de +/- media baldosa alrededor del
-	# centro según en qué parte de la baldosa actual esté el avión (el
-	# mosaico siempre queda centrado en el panel, sea cual sea su tamaño).
-	var centro: Vector2 = mapa_rect.size / 2.0
-	icono_avion_mapa.position = Vector2(
-		centro.x + (frac_x - 0.5) * TILE_PIXELS,
-		centro.y + (frac_y - 0.5) * TILE_PIXELS)
+	# El ícono se desliza dentro de la baldosa actual, en proporción al
+	# tamaño del panel (si el panel es más grande, se desliza más lejos).
+	icono_avion_mapa.position = Vector2(frac_x * mapa_rect.size.x, frac_y * mapa_rect.size.y)
 
 	acumulador_mapa += delta
 	if acumulador_mapa < 0.4:
 		return
 	acumulador_mapa = 0.0
 
-	if xtile == tile_x_mapa and ytile == tile_y_mapa and zoom_mapa == mosaico_zoom_actual:
+	if xtile == tile_x_mapa and ytile == tile_y_mapa:
 		return
 	tile_x_mapa = xtile
 	tile_y_mapa = ytile
-	_iniciar_descarga_mosaico(xtile, ytile)
+	_pedir_baldosa_de_mapa(xtile, ytile)
 
-# Arma la cola de baldosas a bajar (una grilla LADO_MOSAICO x LADO_MOSAICO
-# alrededor de la baldosa central) y arranca la primera -- las demás se
-# van pidiendo de a una a medida que llega cada respuesta (ver
-# _on_peticion_mapa_completada), un solo HTTPRequest a la vez, sin
-# bombardear el servidor de OpenStreetMap con pedidos simultáneos.
-func _iniciar_descarga_mosaico(xtile_centro: int, ytile_centro: int) -> void:
-	mosaico_zoom_actual = zoom_mapa
-	mosaico_imagen = Image.create_empty(LADO_MOSAICO * TILE_PIXELS, LADO_MOSAICO * TILE_PIXELS, false, Image.FORMAT_RGB8)
-	var n_tiles: int = int(pow(2.0, zoom_mapa))
-	mosaico_cola_pendiente.clear()
-	for dy in range(-MITAD_MOSAICO, MITAD_MOSAICO + 1):
-		for dx in range(-MITAD_MOSAICO, MITAD_MOSAICO + 1):
-			# X envuelve alrededor del mundo (longitud -180/180); Y no existe
-			# más allá de los polos, ahí simplemente no hay baldosa (queda
-			# ese hueco del mosaico en blanco, no pasa nada para Argentina).
-			var xt: int = posmod(xtile_centro + dx, n_tiles)
-			var yt: int = ytile_centro + dy
-			if yt < 0 or yt >= n_tiles:
-				continue
-			mosaico_cola_pendiente.append([dx, dy, xt, yt])
-	descargando_mapa = false
-	_pedir_siguiente_baldosa_del_mosaico()
-
-func _pedir_siguiente_baldosa_del_mosaico() -> void:
-	if mosaico_cola_pendiente.is_empty() or descargando_mapa:
+func _pedir_baldosa_de_mapa(xtile: int, ytile: int) -> void:
+	if descargando_mapa:
 		return
 	descargando_mapa = true
-	var siguiente: Array = mosaico_cola_pendiente[0]
-	var url := "https://tile.openstreetmap.org/%d/%d/%d.png" % [mosaico_zoom_actual, siguiente[2], siguiente[3]]
+	var url := "https://tile.openstreetmap.org/%d/%d/%d.png" % [zoom_mapa, xtile, ytile]
 	var error := peticion_mapa.request(url, ["User-Agent: SimuladorDeVueloGodot/1.0"])
 	if error != OK:
 		descargando_mapa = false
-		mosaico_cola_pendiente.pop_front()
-		push_warning("No se pudo iniciar la descarga de una baldosa del mosaico (error %d)" % error)
+		push_warning("No se pudo iniciar la descarga de la baldosa del mapa (error %d)" % error)
 
 # Zoom con la ruedita del mouse -- fuerza que la próxima tesela se pida ya
 # mismo (no espera los 2 segundos normales) y a un nivel de detalle distinto.
@@ -1675,29 +1624,14 @@ func _mapa_rect_gui_input(event: InputEvent) -> void:
 
 func _on_peticion_mapa_completada(_resultado, codigo_respuesta: int, _headers, cuerpo: PackedByteArray) -> void:
 	descargando_mapa = false
-	if mosaico_cola_pendiente.is_empty():
-		return  # llegó una respuesta vieja de un pedido ya descartado (cambio de zoom/baldosa en el medio)
-	var pedido: Array = mosaico_cola_pendiente.pop_front()
-	if codigo_respuesta == 200:
-		var imagen := Image.new()
-		if imagen.load_png_from_buffer(cuerpo) == OK:
-			if imagen.get_format() != Image.FORMAT_RGB8:
-				imagen.convert(Image.FORMAT_RGB8)
-			var dx: int = pedido[0]
-			var dy: int = pedido[1]
-			var destino_px := Vector2i((dx + MITAD_MOSAICO) * TILE_PIXELS, (dy + MITAD_MOSAICO) * TILE_PIXELS)
-			mosaico_imagen.blit_rect(imagen, Rect2i(Vector2i.ZERO, Vector2i(TILE_PIXELS, TILE_PIXELS)), destino_px)
-		else:
-			push_warning("No se pudo decodificar una baldosa del mosaico")
+	if codigo_respuesta != 200:
+		push_warning("El servidor del mapa devolvió código %d" % codigo_respuesta)
+		return
+	var imagen := Image.new()
+	if imagen.load_png_from_buffer(cuerpo) == OK:
+		mapa_rect.texture = ImageTexture.create_from_image(imagen)
 	else:
-		push_warning("El servidor del mapa devolvió código %d en una baldosa del mosaico" % codigo_respuesta)
-
-	if mosaico_cola_pendiente.is_empty():
-		# Mosaico completo -- recién ahora se muestra de una, para no ir
-		# parpadeando baldosa por baldosa mientras se arma.
-		mapa_rect.texture = ImageTexture.create_from_image(mosaico_imagen)
-	else:
-		_pedir_siguiente_baldosa_del_mosaico()
+		push_warning("No se pudo decodificar la baldosa del mapa")
 
 # Cámara "estabilizada": sigue al avión en posición y en RUMBO (hacia dónde
 # va), pero ignora a propósito su inclinación (banco) y cabeceo. Por eso el
