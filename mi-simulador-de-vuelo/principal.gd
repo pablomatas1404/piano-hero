@@ -79,7 +79,10 @@ var contenedor_aros_licencia: Node3D = null
 # Subida/bajada vertical del helicóptero -- pedido explícito, ya tiene sus
 # propios botones de joystick configurados ("vertical_arriba"/"vertical_abajo"
 # en ACCIONES_JOYSTICK) esperando desde que armamos el sistema de mapeo.
-const VELOCIDAD_VERTICAL_HELICOPTERO = 8.0
+# Subido de 8.0 a 20.0 (pedido explícito 2026-09-22, "estoy a 3000 metros y
+# baja un metro por segundo, no termina más") -- a 20 m/s, bajar 3000m tarda
+# 2.5 minutos en vez de más de 6.
+const VELOCIDAD_VERTICAL_HELICOPTERO = 20.0
 
 # Antes esto era una velocidad fija (10.0). Ahora es un acelerador de
 # verdad: arranca despacito (para que el mapa "rinda" en los tramos
@@ -460,6 +463,9 @@ var tecla_reset_mapa_anterior: bool = false
 @onready var mapa_viewport: SubViewport = get_node("../HUD/MapaViewport")
 @onready var mapa_rect: TextureRect = get_node("../HUD/MapaRect")
 @onready var asa_mapa: ColorRect = get_node("../HUD/MapaRect/AsaMapa")
+@onready var asa_mapa_sup_izq: ColorRect = get_node("../HUD/MapaRect/AsaMapaSupIzq")
+@onready var asa_mapa_sup_der: ColorRect = get_node("../HUD/MapaRect/AsaMapaSupDer")
+@onready var asa_mapa_inf_izq: ColorRect = get_node("../HUD/MapaRect/AsaMapaInfIzq")
 @onready var icono_avion_mapa: Control = get_node("../HUD/MapaRect/IconoAvionMapa")
 @onready var peticion_mapa: HTTPRequest = get_node("../HUD/PeticionMapa")
 
@@ -484,14 +490,46 @@ const CAPA_RENDER_MAPA_CALLES = 5
 # Agrandar/achicar los paneles de mapa agarrando de la esquina (pedido
 # explícito, "como en CorelDraw"). El minimapa (fotorrealista, esquina
 # inferior derecha) crece desde su esquina superior izquierda; el panel de
-# mapa de calles (lateral izquierdo) crece desde su esquina inferior
-# derecha -- cada uno queda pegado por el lado opuesto al que se arrastra.
+# mapa de calles (lateral izquierdo) tiene las CUATRO esquinas (pedido
+# 2026-09-22, "vértices para poder agrandarlo de cualquier lado, no solo de
+# abajo") -- cada esquina crece manteniendo fija la esquina OPUESTA a la que
+# se arrastra.
 var _arrastrando_minimapa: bool = false
-var _arrastrando_mapa: bool = false
+var _arrastrando_mapa: bool = false            # esquina inferior derecha (AsaMapa)
+var _arrastrando_mapa_sup_izq: bool = false    # esquina superior izquierda
+var _arrastrando_mapa_sup_der: bool = false    # esquina superior derecha
+var _arrastrando_mapa_inf_izq: bool = false    # esquina inferior izquierda
 const MINIMAPA_TAMANO_MINIMO = 150.0
 const MINIMAPA_TAMANO_MAXIMO = 700.0
 const MAPA_TAMANO_MINIMO = 200.0
 const MAPA_TAMANO_MAXIMO = 900.0
+
+# Mosaico de baldosas (pedido explícito, repetido 2026-09-21 y 2026-09-22:
+# "cuando agrando el panel del vértice quiero ver MÁS mapa, no un zoom" --
+# bajamos una grilla de baldosas alrededor de la actual y las mostramos a su
+# tamaño real (TextureRect en modo STRETCH_KEEP_CENTERED, sin estirar) --
+# agrandar el panel desde cualquier esquina solo destapa más mosaico ya
+# bajado, sin cambiar la escala de lo que ya se veía.
+#
+# BUGS REALES del intento anterior (2026-09-21), ya corregidos acá:
+# 1) clip_contents=true recorta TODOS los hijos del panel, incluida la
+#    manija -- si la manija sobresale del borde (como tenía antes, a
+#    propósito, para agarrarla más fácil), queda parcialmente invisible
+#    ("no veo el vértice de abajo"). Solución: las 4 manijas ahora son
+#    cuadraditos TOTALMENTE INTERNOS al panel (no sobresalen ni un píxel),
+#    así el recorte nunca las toca.
+# 2) Si soltás el botón del mouse afuera de la ventana (foco perdido,
+#    arrastre hasta el borde de la pantalla), la bandera de arrastre queda
+#    trabada en `true` para siempre y CUALQUIER movimiento de mouse sigue
+#    agrandando el panel solo. Solución: chequeo activo cada cuadro con
+#    Input.is_mouse_button_pressed() en _input() (ver más abajo), para las
+#    4 banderas, no solo la de antes.
+const TILE_PIXELS = 256
+const LADO_MOSAICO = 5  # impar, para que haya una baldosa central real
+const MITAD_MOSAICO = LADO_MOSAICO / 2  # división entera de Godot, da 2
+var mosaico_cola_pendiente: Array = []   # [[dx,dy,xtile,ytile], ...] -- lo que falta bajar
+var mosaico_imagen: Image = null
+var mosaico_zoom_actual: int = -1
 
 # Mover el panel de mapa de calles arrastrando de un bordecito arriba (pedido
 # 2026-09-21) -- sin soltar el tamaño (eso lo sigue haciendo AsaMapa, la
@@ -665,11 +703,11 @@ func _ready() -> void:
 	boton_angulo_menos.pressed.connect(func(): _ajustar_sensibilidad("angulo", -2.0, 10.0, 80.0))
 	boton_angulo_mas.pressed.connect(func(): _ajustar_sensibilidad("angulo", 2.0, 10.0, 80.0))
 	boton_vertical_menos.pressed.connect(func():
-		_ajustar_sensibilidad("vertical", -1.0 if _es_helicoptero() else -2.0,
-			2.0 if _es_helicoptero() else 10.0, 20.0 if _es_helicoptero() else 80.0))
+		_ajustar_sensibilidad("vertical", -2.0 if _es_helicoptero() else -2.0,
+			2.0 if _es_helicoptero() else 10.0, 40.0 if _es_helicoptero() else 80.0))
 	boton_vertical_mas.pressed.connect(func():
-		_ajustar_sensibilidad("vertical", 1.0 if _es_helicoptero() else 2.0,
-			2.0 if _es_helicoptero() else 10.0, 20.0 if _es_helicoptero() else 80.0))
+		_ajustar_sensibilidad("vertical", 2.0 if _es_helicoptero() else 2.0,
+			2.0 if _es_helicoptero() else 10.0, 40.0 if _es_helicoptero() else 80.0))
 	# Velocidad mínima/máxima por avión (pedido 2026-09-21, "así voy
 	# delimitando la mínima y la máxima de cada uno hasta que quede como
 	# valor definitivo"). Paso de 10 en 10, sin techo fijo -- el usuario
@@ -735,6 +773,9 @@ func _ready() -> void:
 	boton_mapa.pressed.connect(func():
 		mapa_rect.visible = not mapa_rect.visible)
 	asa_mapa.gui_input.connect(_asa_mapa_gui_input)
+	asa_mapa_sup_izq.gui_input.connect(_asa_mapa_sup_izq_gui_input)
+	asa_mapa_sup_der.gui_input.connect(_asa_mapa_sup_der_gui_input)
+	asa_mapa_inf_izq.gui_input.connect(_asa_mapa_inf_izq_gui_input)
 	asa_mover_mapa.gui_input.connect(_asa_mover_mapa_gui_input)
 	peticion_mapa.request_completed.connect(_on_peticion_mapa_completada)
 	mapa_rect.gui_input.connect(_mapa_rect_gui_input)
@@ -751,6 +792,14 @@ func _ready() -> void:
 	# PASS deja que el evento siga viaje después de pasar por acá.
 	mapa_rect.mouse_filter = Control.MOUSE_FILTER_PASS
 	minimapa_rect.mouse_filter = Control.MOUSE_FILTER_PASS
+	# "Ver MÁS mapa, no zoom" al agrandar el panel: KEEP_CENTERED muestra el
+	# mosaico a su tamaño real (1 píxel de imagen = 1 píxel de pantalla),
+	# centrado -- agrandar el panel solo destapa más mosaico ya bajado. Junto
+	# con clip_contents=true, que recorta lo que sobra del mosaico a los
+	# bordes del panel (las 4 manijas son totalmente internas, así que el
+	# recorte nunca las tapa -- ver el comentario largo junto a LADO_MOSAICO).
+	mapa_rect.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	mapa_rect.clip_contents = true
 
 	# La cámara principal NUNCA tiene que ver las baldosas del mapa de
 	# calles (capa 5, ver mundo.gd) -- si no, se verían los dos terrenos
@@ -796,6 +845,18 @@ func _asa_minimapa_gui_input(event: InputEvent) -> void:
 func _asa_mapa_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		_arrastrando_mapa = event.pressed
+
+func _asa_mapa_sup_izq_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		_arrastrando_mapa_sup_izq = event.pressed
+
+func _asa_mapa_sup_der_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		_arrastrando_mapa_sup_der = event.pressed
+
+func _asa_mapa_inf_izq_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		_arrastrando_mapa_inf_izq = event.pressed
 
 func _asa_mover_mapa_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -857,6 +918,12 @@ func _input(event: InputEvent) -> void:
 		_arrastrando_minimapa = false
 	if _arrastrando_mapa and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		_arrastrando_mapa = false
+	if _arrastrando_mapa_sup_izq and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		_arrastrando_mapa_sup_izq = false
+	if _arrastrando_mapa_sup_der and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		_arrastrando_mapa_sup_der = false
+	if _arrastrando_mapa_inf_izq and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		_arrastrando_mapa_inf_izq = false
 	if _arrastrando_mover_mapa and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		_arrastrando_mover_mapa = false
 
@@ -886,6 +953,42 @@ func _input(event: InputEvent) -> void:
 			return
 		elif event is InputEventMouseButton and not event.pressed:
 			_arrastrando_mapa = false
+			return
+	if _arrastrando_mapa_sup_izq:
+		if event is InputEventMouseMotion:
+			# Ancla fija: esquina inferior derecha (offset_right/offset_bottom
+			# no se tocan). Crece arrastrando hacia arriba-izquierda.
+			var delta = -(event.relative.x + event.relative.y) / 2.0
+			var nuevo = clamp(mapa_rect.size.x + delta, MAPA_TAMANO_MINIMO, MAPA_TAMANO_MAXIMO)
+			mapa_rect.offset_left = mapa_rect.offset_right - nuevo
+			mapa_rect.offset_top = mapa_rect.offset_bottom - nuevo
+			return
+		elif event is InputEventMouseButton and not event.pressed:
+			_arrastrando_mapa_sup_izq = false
+			return
+	if _arrastrando_mapa_sup_der:
+		if event is InputEventMouseMotion:
+			# Ancla fija: esquina inferior izquierda (offset_left/offset_bottom
+			# no se tocan). Crece arrastrando hacia arriba-derecha.
+			var delta = (event.relative.x - event.relative.y) / 2.0
+			var nuevo = clamp(mapa_rect.size.x + delta, MAPA_TAMANO_MINIMO, MAPA_TAMANO_MAXIMO)
+			mapa_rect.offset_right = mapa_rect.offset_left + nuevo
+			mapa_rect.offset_top = mapa_rect.offset_bottom - nuevo
+			return
+		elif event is InputEventMouseButton and not event.pressed:
+			_arrastrando_mapa_sup_der = false
+			return
+	if _arrastrando_mapa_inf_izq:
+		if event is InputEventMouseMotion:
+			# Ancla fija: esquina superior derecha (offset_right/offset_top no
+			# se tocan). Crece arrastrando hacia abajo-izquierda.
+			var delta = (event.relative.y - event.relative.x) / 2.0
+			var nuevo = clamp(mapa_rect.size.x + delta, MAPA_TAMANO_MINIMO, MAPA_TAMANO_MAXIMO)
+			mapa_rect.offset_left = mapa_rect.offset_right - nuevo
+			mapa_rect.offset_bottom = mapa_rect.offset_top + nuevo
+			return
+		elif event is InputEventMouseButton and not event.pressed:
+			_arrastrando_mapa_inf_izq = false
 			return
 	if _arrastrando_mover_mapa:
 		if event is InputEventMouseMotion:
@@ -1347,6 +1450,11 @@ func _process(delta: float) -> void:
 		mapa_rect.offset_top = 130.0
 		mapa_rect.offset_right = 220.0
 		mapa_rect.offset_bottom = 330.0
+		_arrastrando_mapa = false
+		_arrastrando_mapa_sup_izq = false
+		_arrastrando_mapa_sup_der = false
+		_arrastrando_mapa_inf_izq = false
+		_arrastrando_mover_mapa = false
 		cartel_central.text = "🗺️ Mapa restablecido"
 		cartel_central.visible = true
 		get_tree().create_timer(1.5).timeout.connect(func(): cartel_central.visible = false)
@@ -1458,30 +1566,60 @@ func _actualizar_mapa_calles(delta: float) -> void:
 	var frac_x: float = clamp(x_exacto - xtile, 0.0, 1.0)
 	var frac_y: float = clamp(y_exacto - ytile, 0.0, 1.0)
 
-	# El ícono se desliza dentro de la baldosa actual, en proporción al
-	# tamaño del panel (si el panel es más grande, se desliza más lejos).
-	icono_avion_mapa.position = Vector2(frac_x * mapa_rect.size.x, frac_y * mapa_rect.size.y)
+	# El ícono va SIEMPRE cerca del centro del panel, no importa qué tan
+	# grande esté -- se desliza dentro de +/- media baldosa alrededor del
+	# centro según en qué parte de la baldosa actual esté el avión (el
+	# mosaico siempre queda centrado en el panel, sea cual sea su tamaño).
+	var centro: Vector2 = mapa_rect.size / 2.0
+	icono_avion_mapa.position = Vector2(
+		centro.x + (frac_x - 0.5) * TILE_PIXELS,
+		centro.y + (frac_y - 0.5) * TILE_PIXELS)
 
 	acumulador_mapa += delta
 	if acumulador_mapa < 0.4:
 		return
 	acumulador_mapa = 0.0
 
-	if xtile == tile_x_mapa and ytile == tile_y_mapa:
+	if xtile == tile_x_mapa and ytile == tile_y_mapa and zoom_mapa == mosaico_zoom_actual:
 		return
 	tile_x_mapa = xtile
 	tile_y_mapa = ytile
-	_pedir_baldosa_de_mapa(xtile, ytile)
+	_iniciar_descarga_mosaico(xtile, ytile)
 
-func _pedir_baldosa_de_mapa(xtile: int, ytile: int) -> void:
-	if descargando_mapa:
+# Arma la cola de baldosas a bajar (una grilla LADO_MOSAICO x LADO_MOSAICO
+# alrededor de la baldosa central) y arranca la primera -- las demás se
+# van pidiendo de a una a medida que llega cada respuesta (ver
+# _on_peticion_mapa_completada), un solo HTTPRequest a la vez, sin
+# bombardear el servidor de OpenStreetMap con pedidos simultáneos.
+func _iniciar_descarga_mosaico(xtile_centro: int, ytile_centro: int) -> void:
+	mosaico_zoom_actual = zoom_mapa
+	mosaico_imagen = Image.create_empty(LADO_MOSAICO * TILE_PIXELS, LADO_MOSAICO * TILE_PIXELS, false, Image.FORMAT_RGB8)
+	var n_tiles: int = int(pow(2.0, zoom_mapa))
+	mosaico_cola_pendiente.clear()
+	for dy in range(-MITAD_MOSAICO, MITAD_MOSAICO + 1):
+		for dx in range(-MITAD_MOSAICO, MITAD_MOSAICO + 1):
+			# X envuelve alrededor del mundo (longitud -180/180); Y no existe
+			# más allá de los polos, ahí simplemente no hay baldosa (queda
+			# ese hueco del mosaico en blanco, no pasa nada para Argentina).
+			var xt: int = posmod(xtile_centro + dx, n_tiles)
+			var yt: int = ytile_centro + dy
+			if yt < 0 or yt >= n_tiles:
+				continue
+			mosaico_cola_pendiente.append([dx, dy, xt, yt])
+	descargando_mapa = false
+	_pedir_siguiente_baldosa_del_mosaico()
+
+func _pedir_siguiente_baldosa_del_mosaico() -> void:
+	if mosaico_cola_pendiente.is_empty() or descargando_mapa:
 		return
 	descargando_mapa = true
-	var url := "https://tile.openstreetmap.org/%d/%d/%d.png" % [zoom_mapa, xtile, ytile]
+	var siguiente: Array = mosaico_cola_pendiente[0]
+	var url := "https://tile.openstreetmap.org/%d/%d/%d.png" % [mosaico_zoom_actual, siguiente[2], siguiente[3]]
 	var error := peticion_mapa.request(url, ["User-Agent: SimuladorDeVueloGodot/1.0"])
 	if error != OK:
 		descargando_mapa = false
-		push_warning("No se pudo iniciar la descarga de la baldosa del mapa (error %d)" % error)
+		mosaico_cola_pendiente.pop_front()
+		push_warning("No se pudo iniciar la descarga de una baldosa del mosaico (error %d)" % error)
 
 # Zoom con la ruedita del mouse -- fuerza que la próxima tesela se pida ya
 # mismo (no espera los 2 segundos normales) y a un nivel de detalle distinto.
@@ -1496,6 +1634,11 @@ func _mapa_rect_gui_input(event: InputEvent) -> void:
 		mapa_rect.offset_top = 130.0
 		mapa_rect.offset_right = 220.0
 		mapa_rect.offset_bottom = 330.0
+		_arrastrando_mapa = false
+		_arrastrando_mapa_sup_izq = false
+		_arrastrando_mapa_sup_der = false
+		_arrastrando_mapa_inf_izq = false
+		_arrastrando_mover_mapa = false
 		return
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
@@ -1509,14 +1652,29 @@ func _mapa_rect_gui_input(event: InputEvent) -> void:
 
 func _on_peticion_mapa_completada(_resultado, codigo_respuesta: int, _headers, cuerpo: PackedByteArray) -> void:
 	descargando_mapa = false
-	if codigo_respuesta != 200:
-		push_warning("El servidor del mapa devolvió código %d" % codigo_respuesta)
-		return
-	var imagen := Image.new()
-	if imagen.load_png_from_buffer(cuerpo) == OK:
-		mapa_rect.texture = ImageTexture.create_from_image(imagen)
+	if mosaico_cola_pendiente.is_empty():
+		return  # llegó una respuesta vieja de un pedido ya descartado (cambio de zoom/baldosa en el medio)
+	var pedido: Array = mosaico_cola_pendiente.pop_front()
+	if codigo_respuesta == 200:
+		var imagen := Image.new()
+		if imagen.load_png_from_buffer(cuerpo) == OK:
+			if imagen.get_format() != Image.FORMAT_RGB8:
+				imagen.convert(Image.FORMAT_RGB8)
+			var dx: int = pedido[0]
+			var dy: int = pedido[1]
+			var destino_px := Vector2i((dx + MITAD_MOSAICO) * TILE_PIXELS, (dy + MITAD_MOSAICO) * TILE_PIXELS)
+			mosaico_imagen.blit_rect(imagen, Rect2i(Vector2i.ZERO, Vector2i(TILE_PIXELS, TILE_PIXELS)), destino_px)
+		else:
+			push_warning("No se pudo decodificar una baldosa del mosaico")
 	else:
-		push_warning("No se pudo decodificar la baldosa del mapa")
+		push_warning("El servidor del mapa devolvió código %d en una baldosa del mosaico" % codigo_respuesta)
+
+	if mosaico_cola_pendiente.is_empty():
+		# Mosaico completo -- recién ahora se muestra de una, para no ir
+		# parpadeando baldosa por baldosa mientras se arma.
+		mapa_rect.texture = ImageTexture.create_from_image(mosaico_imagen)
+	else:
+		_pedir_siguiente_baldosa_del_mosaico()
 
 # Cámara "estabilizada": sigue al avión en posición y en RUMBO (hacia dónde
 # va), pero ignora a propósito su inclinación (banco) y cabeceo. Por eso el

@@ -188,6 +188,8 @@ var aeropuertos_dos_cabeceras = [
 		"cab2_lat": -34.5477829338129, "cab2_lon": -59.0808948351915, "cab2_alt": 40.5593090755865},
 	{"nombre": "Aeródromo Chivilcoy", "cab1_lat": -34.9584894215692, "cab1_lon": -60.0288016448983, "cab1_alt": 64.8651760295033,
 		"cab2_lat": -34.9661466452173, "cab2_lon": -60.0348295528628, "cab2_alt": 65.5044843032956},
+	{"nombre": "Rosario", "cab1_lat": -32.8899887834222, "cab1_lon": -60.7815807340708, "cab1_alt": 52.070948225446,
+		"cab2_lat": -32.9167810491964, "cab2_lon": -60.7877080510417, "cab2_alt": 49.031780987978},
 ]
 
 # Pueblos y referencias reales a lo largo de las rutas (pedido 2026-09-21,
