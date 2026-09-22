@@ -487,18 +487,35 @@ var acumulador_mapa: float = 0.0
 # los edificios reales (ver _ready()).
 const CAPA_RENDER_MAPA_CALLES = 5
 
-# Agrandar/achicar los paneles de mapa agarrando de la esquina (pedido
-# explícito, "como en CorelDraw"). El minimapa (fotorrealista, esquina
-# inferior derecha) crece desde su esquina superior izquierda; el panel de
-# mapa de calles (lateral izquierdo) tiene las CUATRO esquinas (pedido
-# 2026-09-22, "vértices para poder agrandarlo de cualquier lado, no solo de
-# abajo") -- cada esquina crece manteniendo fija la esquina OPUESTA a la que
-# se arrastra.
+# Agrandar/achicar el panel de mapa agarrando de la esquina (pedido
+# explícito, "como en CorelDraw"). El panel de mapa de calles (lateral
+# izquierdo) tiene las CUATRO esquinas (pedido 2026-09-22, "vértices para
+# poder agrandarlo de cualquier lado, no solo de abajo") -- cada esquina
+# crece manteniendo fija la esquina OPUESTA a la que se arrastra.
 var _arrastrando_minimapa: bool = false
-var _arrastrando_mapa: bool = false            # esquina inferior derecha (AsaMapa)
-var _arrastrando_mapa_sup_izq: bool = false    # esquina superior izquierda
-var _arrastrando_mapa_sup_der: bool = false    # esquina superior derecha
-var _arrastrando_mapa_inf_izq: bool = false    # esquina inferior izquierda
+
+# BUG REAL encontrado 2026-09-22 ("agarro cualquier vértice y salta a mitad
+# de pantalla de golpe", repetido 3 veces): el diseño anterior acumulaba
+# `event.relative` cuadro a cuadro y lo sumaba directo a los offsets. Un
+# análisis con ayuda de Gemini señaló dos problemas reales en ese enfoque:
+# (a) con window/stretch/mode="canvas_items" (ver project.godot) y la
+# resolución base por defecto (1152x648) distinta a la resolución real de
+# la ventana, el mouse y los offsets del Canvas viven en escalas distintas,
+# así que sumar relative crudo desincroniza la proporción; (b) acumular
+# deltas cuadro a cuadro es frágil ante cualquier evento repetido o perdido.
+# SOLUCIÓN: en vez de acumular, cada arrastre guarda la posición del mouse
+# y el rect del panel en el instante del click (_pos_mouse_inicio_mapa /
+# _rect_mapa_inicio), y el tamaño en cada cuadro se calcula siempre como
+# "tamaño inicial + distancia total recorrida desde el click", usando
+# `get_global_transform_with_canvas().affine_inverse()` para pasar la
+# posición del mouse al mismo espacio de coordenadas que los offsets
+# (absorbe cualquier escala de canvas_items automáticamente). Sin
+# acumulación no hay forma de que un evento de más dispare un salto.
+enum ModoResizeMapa { NINGUNO, INF_DER, SUP_IZQ, SUP_DER, INF_IZQ }
+var _modo_resize_mapa: int = ModoResizeMapa.NINGUNO
+var _pos_mouse_inicio_mapa: Vector2 = Vector2.ZERO
+var _rect_mapa_inicio: Rect2 = Rect2()
+
 const MINIMAPA_TAMANO_MINIMO = 150.0
 const MINIMAPA_TAMANO_MAXIMO = 700.0
 const MAPA_TAMANO_MINIMO = 200.0
@@ -842,21 +859,84 @@ func _asa_minimapa_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		_arrastrando_minimapa = event.pressed
 
+# Las 4 manijas comparten esta misma lógica de "click inicial": al presionar,
+# guardamos dónde estaba el mouse y cómo era el panel en ESE instante exacto
+# (_pos_mouse_inicio_mapa / _rect_mapa_inicio) -- todo el cálculo de tamaño en
+# _input() se hace después contra esa foto inicial, nunca acumulando.
+func _iniciar_resize_mapa(modo: int) -> void:
+	_modo_resize_mapa = modo
+	# get_global_mouse_position() ya devuelve la posición del mouse en el
+	# sistema de coordenadas del CANVAS (el mismo que usan offset_left/top/
+	# right/bottom, relativo al HUD) -- absorbe automáticamente cualquier
+	# escala que aplique window/stretch/mode="canvas_items" (ver
+	# project.godot). OJO: no hay que volver a multiplicarla por la
+	# transformada propia de mapa_rect -- esa transformada CAMBIA mientras
+	# arrastramos (es la posición actual del panel), y restarla metería de
+	# vuelta un bucle inestable, exactamente lo que queremos evitar.
+	_pos_mouse_inicio_mapa = mapa_rect.get_global_mouse_position()
+	_rect_mapa_inicio = Rect2(mapa_rect.offset_left, mapa_rect.offset_top, mapa_rect.size.x, mapa_rect.size.y)
+
 func _asa_mapa_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		_arrastrando_mapa = event.pressed
+		if event.pressed:
+			_iniciar_resize_mapa(ModoResizeMapa.INF_DER)
+		elif _modo_resize_mapa == ModoResizeMapa.INF_DER:
+			_modo_resize_mapa = ModoResizeMapa.NINGUNO
 
 func _asa_mapa_sup_izq_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		_arrastrando_mapa_sup_izq = event.pressed
+		if event.pressed:
+			_iniciar_resize_mapa(ModoResizeMapa.SUP_IZQ)
+		elif _modo_resize_mapa == ModoResizeMapa.SUP_IZQ:
+			_modo_resize_mapa = ModoResizeMapa.NINGUNO
 
 func _asa_mapa_sup_der_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		_arrastrando_mapa_sup_der = event.pressed
+		if event.pressed:
+			_iniciar_resize_mapa(ModoResizeMapa.SUP_DER)
+		elif _modo_resize_mapa == ModoResizeMapa.SUP_DER:
+			_modo_resize_mapa = ModoResizeMapa.NINGUNO
 
 func _asa_mapa_inf_izq_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		_arrastrando_mapa_inf_izq = event.pressed
+		if event.pressed:
+			_iniciar_resize_mapa(ModoResizeMapa.INF_IZQ)
+		elif _modo_resize_mapa == ModoResizeMapa.INF_IZQ:
+			_modo_resize_mapa = ModoResizeMapa.NINGUNO
+
+# Calcula el nuevo tamaño del panel de mapa a partir de la distancia TOTAL
+# recorrida por el mouse desde el click inicial (nunca acumulando delta a
+# delta cuadro a cuadro) -- ver el comentario largo junto a ModoResizeMapa.
+func _procesar_resize_mapa() -> void:
+	var pos_actual: Vector2 = mapa_rect.get_global_mouse_position()
+	var delta_mouse: Vector2 = pos_actual - _pos_mouse_inicio_mapa
+	var der_fijo: float = _rect_mapa_inicio.position.x + _rect_mapa_inicio.size.x
+	var bot_fijo: float = _rect_mapa_inicio.position.y + _rect_mapa_inicio.size.y
+	match _modo_resize_mapa:
+		ModoResizeMapa.INF_DER:
+			# Ancla fija: esquina superior izquierda. Crece hacia abajo-derecha.
+			var delta = (delta_mouse.x + delta_mouse.y) / 2.0
+			var nuevo = clamp(_rect_mapa_inicio.size.x + delta, MAPA_TAMANO_MINIMO, MAPA_TAMANO_MAXIMO)
+			mapa_rect.offset_right = _rect_mapa_inicio.position.x + nuevo
+			mapa_rect.offset_bottom = _rect_mapa_inicio.position.y + nuevo
+		ModoResizeMapa.SUP_IZQ:
+			# Ancla fija: esquina inferior derecha. Crece hacia arriba-izquierda.
+			var delta = -(delta_mouse.x + delta_mouse.y) / 2.0
+			var nuevo = clamp(_rect_mapa_inicio.size.x + delta, MAPA_TAMANO_MINIMO, MAPA_TAMANO_MAXIMO)
+			mapa_rect.offset_left = der_fijo - nuevo
+			mapa_rect.offset_top = bot_fijo - nuevo
+		ModoResizeMapa.SUP_DER:
+			# Ancla fija: esquina inferior izquierda. Crece hacia arriba-derecha.
+			var delta = (delta_mouse.x - delta_mouse.y) / 2.0
+			var nuevo = clamp(_rect_mapa_inicio.size.x + delta, MAPA_TAMANO_MINIMO, MAPA_TAMANO_MAXIMO)
+			mapa_rect.offset_right = _rect_mapa_inicio.position.x + nuevo
+			mapa_rect.offset_top = bot_fijo - nuevo
+		ModoResizeMapa.INF_IZQ:
+			# Ancla fija: esquina superior derecha. Crece hacia abajo-izquierda.
+			var delta = (delta_mouse.y - delta_mouse.x) / 2.0
+			var nuevo = clamp(_rect_mapa_inicio.size.x + delta, MAPA_TAMANO_MINIMO, MAPA_TAMANO_MAXIMO)
+			mapa_rect.offset_left = der_fijo - nuevo
+			mapa_rect.offset_bottom = _rect_mapa_inicio.position.y + nuevo
 
 func _asa_mover_mapa_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
@@ -916,14 +996,8 @@ func _input(event: InputEvent) -> void:
 	# físicamente apretado, sin depender de que llegue ningún evento.
 	if _arrastrando_minimapa and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		_arrastrando_minimapa = false
-	if _arrastrando_mapa and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		_arrastrando_mapa = false
-	if _arrastrando_mapa_sup_izq and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		_arrastrando_mapa_sup_izq = false
-	if _arrastrando_mapa_sup_der and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		_arrastrando_mapa_sup_der = false
-	if _arrastrando_mapa_inf_izq and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-		_arrastrando_mapa_inf_izq = false
+	if _modo_resize_mapa != ModoResizeMapa.NINGUNO and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		_modo_resize_mapa = ModoResizeMapa.NINGUNO
 	if _arrastrando_mover_mapa and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		_arrastrando_mover_mapa = false
 
@@ -938,57 +1012,12 @@ func _input(event: InputEvent) -> void:
 		elif event is InputEventMouseButton and not event.pressed:
 			_arrastrando_minimapa = false
 			return
-	if _arrastrando_mapa:
+	if _modo_resize_mapa != ModoResizeMapa.NINGUNO:
 		if event is InputEventMouseMotion:
-			# BUG encontrado 2026-09-20: este cálculo asumía que el panel seguía
-			# anclado al centro vertical (como al principio) -- al moverlo más
-			# abajo para no tapar los botones, quedó anclado arriba-izquierda,
-			# y esta cuenta vieja lo mandaba a una posición/tamaño roto. Ahora
-			# crece desde la esquina inferior derecha dejando fijas
-			# offset_left/offset_top (donde está anclado de verdad).
-			var delta = (event.relative.x + event.relative.y) / 2.0
-			var nuevo = clamp(mapa_rect.size.x + delta, MAPA_TAMANO_MINIMO, MAPA_TAMANO_MAXIMO)
-			mapa_rect.offset_right = mapa_rect.offset_left + nuevo
-			mapa_rect.offset_bottom = mapa_rect.offset_top + nuevo
+			_procesar_resize_mapa()
 			return
 		elif event is InputEventMouseButton and not event.pressed:
-			_arrastrando_mapa = false
-			return
-	if _arrastrando_mapa_sup_izq:
-		if event is InputEventMouseMotion:
-			# Ancla fija: esquina inferior derecha (offset_right/offset_bottom
-			# no se tocan). Crece arrastrando hacia arriba-izquierda.
-			var delta = -(event.relative.x + event.relative.y) / 2.0
-			var nuevo = clamp(mapa_rect.size.x + delta, MAPA_TAMANO_MINIMO, MAPA_TAMANO_MAXIMO)
-			mapa_rect.offset_left = mapa_rect.offset_right - nuevo
-			mapa_rect.offset_top = mapa_rect.offset_bottom - nuevo
-			return
-		elif event is InputEventMouseButton and not event.pressed:
-			_arrastrando_mapa_sup_izq = false
-			return
-	if _arrastrando_mapa_sup_der:
-		if event is InputEventMouseMotion:
-			# Ancla fija: esquina inferior izquierda (offset_left/offset_bottom
-			# no se tocan). Crece arrastrando hacia arriba-derecha.
-			var delta = (event.relative.x - event.relative.y) / 2.0
-			var nuevo = clamp(mapa_rect.size.x + delta, MAPA_TAMANO_MINIMO, MAPA_TAMANO_MAXIMO)
-			mapa_rect.offset_right = mapa_rect.offset_left + nuevo
-			mapa_rect.offset_top = mapa_rect.offset_bottom - nuevo
-			return
-		elif event is InputEventMouseButton and not event.pressed:
-			_arrastrando_mapa_sup_der = false
-			return
-	if _arrastrando_mapa_inf_izq:
-		if event is InputEventMouseMotion:
-			# Ancla fija: esquina superior derecha (offset_right/offset_top no
-			# se tocan). Crece arrastrando hacia abajo-izquierda.
-			var delta = (event.relative.y - event.relative.x) / 2.0
-			var nuevo = clamp(mapa_rect.size.x + delta, MAPA_TAMANO_MINIMO, MAPA_TAMANO_MAXIMO)
-			mapa_rect.offset_left = mapa_rect.offset_right - nuevo
-			mapa_rect.offset_bottom = mapa_rect.offset_top + nuevo
-			return
-		elif event is InputEventMouseButton and not event.pressed:
-			_arrastrando_mapa_inf_izq = false
+			_modo_resize_mapa = ModoResizeMapa.NINGUNO
 			return
 	if _arrastrando_mover_mapa:
 		if event is InputEventMouseMotion:
@@ -1450,10 +1479,7 @@ func _process(delta: float) -> void:
 		mapa_rect.offset_top = 130.0
 		mapa_rect.offset_right = 220.0
 		mapa_rect.offset_bottom = 330.0
-		_arrastrando_mapa = false
-		_arrastrando_mapa_sup_izq = false
-		_arrastrando_mapa_sup_der = false
-		_arrastrando_mapa_inf_izq = false
+		_modo_resize_mapa = ModoResizeMapa.NINGUNO
 		_arrastrando_mover_mapa = false
 		cartel_central.text = "🗺️ Mapa restablecido"
 		cartel_central.visible = true
@@ -1634,10 +1660,7 @@ func _mapa_rect_gui_input(event: InputEvent) -> void:
 		mapa_rect.offset_top = 130.0
 		mapa_rect.offset_right = 220.0
 		mapa_rect.offset_bottom = 330.0
-		_arrastrando_mapa = false
-		_arrastrando_mapa_sup_izq = false
-		_arrastrando_mapa_sup_der = false
-		_arrastrando_mapa_inf_izq = false
+		_modo_resize_mapa = ModoResizeMapa.NINGUNO
 		_arrastrando_mover_mapa = false
 		return
 	if event is InputEventMouseButton and event.pressed:
