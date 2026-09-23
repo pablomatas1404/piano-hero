@@ -196,6 +196,20 @@ var aeropuertos_dos_cabeceras = [
 		"cab2_lat": -34.7110662434358, "cab2_lon": -58.2438698890939, "cab2_alt": 19.3805471602827},
 	{"nombre": "La Plata", "cab1_lat": -34.9617070587302, "cab1_lon": -57.8908018869423, "cab1_alt": 35.0786370728165,
 		"cab2_lat": -34.9755390857504, "cab2_lon": -57.8949704513399, "cab2_alt": 34.4030680740252},
+	# PRUEBA 2026-09-22 (a diferencia de TODAS las entradas de arriba, estas
+	# dos NO se midieron volando -- son coordenadas de umbral tomadas 100% de
+	# SkyVector, para comprobar en vuelo si calzan bien contra la pista real
+	# o si aparece un desfasaje. Si al pasar por acá los aros quedan bien
+	# alineados con el asfalto, confirma que se puede confiar en datos
+	# públicos para mapear aeropuertos nuevos sin medir las dos cabeceras a
+	# mano -- un ahorro grande de tiempo (ver el análisis de patrón de error
+	# hecho por los agentes/Gemini/ChatGPT, que no encontró un desfasaje
+	# sistemático corregible, pero esta es la prueba real, en el propio
+	# simulador, no solo en el papel).
+	{"nombre": "Aeroparque", "cab1_lat": -34.554, "cab1_lon": -58.425333, "cab1_alt": 6.1,
+		"cab2_lat": -34.563833, "cab2_lon": -58.4075, "cab2_alt": 4.88},
+	{"nombre": "Villa Gesell", "cab1_lat": -37.234, "cab1_lon": -57.037667, "cab1_alt": 5.49,
+		"cab2_lat": -37.236833, "cab2_lon": -57.02, "cab2_alt": 5.49},
 ]
 
 # Pueblos y referencias reales a lo largo de las rutas (pedido 2026-09-21,
