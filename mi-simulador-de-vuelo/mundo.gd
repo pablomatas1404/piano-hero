@@ -1001,11 +1001,16 @@ func _orientar_aeropuerto_usuario(nodo: Node3D) -> void:
 #    ("a veces uno no sabe cómo está la pista") -- ahora los DOS lados
 #    quedan siempre visibles a la vez (con colores distintos), y el jugador
 #    elige con cuál alinearse (ver alternar_ils()).
-const DISTANCIAS_GATES_ILS = [6000.0, 4500.0, 3000.0, 2200.0, 1500.0, 900.0, 450.0, 150.0]  # 2 aros más lejos (pedido explícito)
+# Pedido explícito 2026-09-22 ("agrandalos un poco" y "ponele más cantidad
+# de aros... para que la visualización desde lejos se aprecie mejor"):
+# más rings (casi el doble, con huecos más chicos entre cada uno) y más
+# grandes -- esto es puramente visual/de referencia a distancia, no hace
+# falta pasar exactamente por el medio de ninguno para aterrizar bien.
+const DISTANCIAS_GATES_ILS = [6000.0, 5250.0, 4500.0, 3750.0, 3000.0, 2500.0, 2200.0, 1850.0, 1500.0, 1150.0, 900.0, 650.0, 450.0, 300.0, 150.0]
 const DISTANCIA_INICIO_AROS = 1200.0  # fijo y generoso, no depende del largo real de cada pista
 const PENDIENTE_ILS = 0.0524  # tangente de 3°, la misma senda de descenso que usa un ILS real
-const RADIO_INTERNO_GATE_ILS = 46.0  # agrandado de nuevo (pedido 2026-09-21, "entra muy justo")
-const RADIO_EXTERNO_GATE_ILS = 56.0
+const RADIO_INTERNO_GATE_ILS = 65.0  # agrandado (pedido 2026-09-22)
+const RADIO_EXTERNO_GATE_ILS = 80.0
 var contenedores_ils_por_aeropuerto: Array = []  # cada entrada: {"positivo": Node3D, "negativo": Node3D, "nodo": Node3D}
 var ils_activo_global: bool = false
 
