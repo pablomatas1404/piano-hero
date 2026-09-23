@@ -210,6 +210,11 @@ var aeropuertos_dos_cabeceras = [
 		"cab2_lat": -34.563833, "cab2_lon": -58.4075, "cab2_alt": 4.88},
 	{"nombre": "Villa Gesell", "cab1_lat": -37.234, "cab1_lon": -57.037667, "cab1_alt": 5.49,
 		"cab2_lat": -37.236833, "cab2_lon": -57.02, "cab2_alt": 5.49},
+	# Villa Gesell (arriba) dio "precisión quirúrgica" en la prueba en vuelo
+	# 2026-09-22 -- Mar del Plata no tenía ILS agregado (por eso no aparecían
+	# aros), se suma con el mismo método (solo SkyVector, sin medir a mano).
+	{"nombre": "Mar del Plata", "cab1_lat": -37.928833, "cab1_lon": -57.583833, "cab1_alt": 21.64,
+		"cab2_lat": -37.9395, "cab2_lon": -57.562667, "cab2_alt": 21.64},
 ]
 
 # Pueblos y referencias reales a lo largo de las rutas (pedido 2026-09-21,
