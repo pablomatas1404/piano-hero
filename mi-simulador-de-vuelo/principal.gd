@@ -1878,6 +1878,13 @@ func _actualizar_hud(delta: float) -> void:
 	if destinos.is_empty():
 		destinos = mundo.obtener_destinos()
 		if not destinos.is_empty():
+			# Pedido explícito 2026-09-22 ("me volví loco buscando los
+			# aeropuertos... que estén ordenados alfabéticamente") -- se
+			# ordena ACÁ (no en mundo.gd) para no tocar el orden en el que se
+			# generan/reubican los nodos, solo el orden en que aparecen en
+			# los desplegables Desde/Hasta.
+			destinos.sort_custom(func(a, b):
+				return a.get_meta("nombre_bonito", a.name) < b.get_meta("nombre_bonito", b.name))
 			_poblar_selector()
 
 	temporizador_torre += delta
