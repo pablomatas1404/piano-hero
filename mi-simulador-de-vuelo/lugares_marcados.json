@@ -221,5 +221,33 @@
 		"lon": -60.7815807340708,
 		"nombre": "Pista Rosario 20 A",
 		"orientacion": 10.9028243001271
+	},
+	{
+		"altitud": 19.4314980823547,
+		"lat": -34.7010847292481,
+		"lon": -58.2453531748818,
+		"nombre": "Pista Quilmes B - Pista de Cesped.",
+		"orientacion": 5.53498668928521
+	},
+	{
+		"altitud": 19.3805471602827,
+		"lat": -34.7110662434358,
+		"lon": -58.2438698890939,
+		"nombre": "Pista Quilmes A 36 - Cesped.",
+		"orientacion": 177.445102561835
+	},
+	{
+		"altitud": 35.0786370728165,
+		"lat": -34.9617070587302,
+		"lon": -57.8908018869423,
+		"nombre": "Pista La Plata A",
+		"orientacion": 11.9922594382841
+	},
+	{
+		"altitud": 34.4030680740252,
+		"lat": -34.9755390857504,
+		"lon": -57.8949704513399,
+		"nombre": "p",
+		"orientacion": 194.094976779846
 	}
 ]

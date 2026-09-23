@@ -192,6 +192,10 @@ var aeropuertos_dos_cabeceras = [
 		"cab2_lat": -34.9661466452173, "cab2_lon": -60.0348295528628, "cab2_alt": 65.5044843032956},
 	{"nombre": "Rosario", "cab1_lat": -32.8899887834222, "cab1_lon": -60.7815807340708, "cab1_alt": 52.070948225446,
 		"cab2_lat": -32.9167810491964, "cab2_lon": -60.7877080510417, "cab2_alt": 49.031780987978},
+	{"nombre": "Quilmes", "cab1_lat": -34.7010847292481, "cab1_lon": -58.2453531748818, "cab1_alt": 19.4314980823547,
+		"cab2_lat": -34.7110662434358, "cab2_lon": -58.2438698890939, "cab2_alt": 19.3805471602827},
+	{"nombre": "La Plata", "cab1_lat": -34.9617070587302, "cab1_lon": -57.8908018869423, "cab1_alt": 35.0786370728165,
+		"cab2_lat": -34.9755390857504, "cab2_lon": -57.8949704513399, "cab2_alt": 34.4030680740252},
 ]
 
 # Pueblos y referencias reales a lo largo de las rutas (pedido 2026-09-21,
