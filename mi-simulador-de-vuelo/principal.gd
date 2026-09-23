@@ -30,7 +30,9 @@ const TIPOS_AVION = [
 	# detrás del avión mirando hacia adelante, así que si se ve la trompa de
 	# frente es que el modelo tiene el "adelante" invertido. 180° en yaw (Y).
 	{"nombre": "Jet privado", "modelo": "res://modelos_aviones/jet_privado.glb", "helicoptero": false, "escala": 0.9, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
-	{"nombre": "Avión de guerra", "modelo": "res://modelos_aviones/avion_de_guerra.glb", "helicoptero": false, "escala": 0.75, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
+	# Achicado 60% (pedido explícito 2026-09-22, "el alerón de atrás tapa toda
+	# la visión de la pantalla"): 0.75 -> 0.30 (0.75 * 0.4).
+	{"nombre": "Avión de guerra", "modelo": "res://modelos_aviones/avion_de_guerra.glb", "helicoptero": false, "escala": 0.30, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
 	# Orientación ya perfecta -- solo un poco más grande.
 	# SIN sonido de motor (pedido 2026-09-21, "no es constante, es un
 	# helicóptero cuando pasa, no mientras va volando"): el loop de Mixkit que
