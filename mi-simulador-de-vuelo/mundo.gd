@@ -145,6 +145,26 @@ var aeropuertos_pais_lla = [
 	{"nombre": "Mercedes (Uruguay)", "lat": -33.2486, "lon": -58.0728},
 	{"nombre": "Paysandú (Uruguay)", "lat": -32.3631, "lon": -58.0664},
 	{"nombre": "Salto (Uruguay)", "lat": -31.4347, "lon": -57.9842},
+	# Destinos nuevos 2026-09-22 -- aeropuertos importantes/turísticos de
+	# Argentina que faltaban del todo (ni siquiera existían como destino),
+	# investigados a pedido explícito ("aeropuertos importantes que nos estén
+	# faltando, turísticos, los importantes"). Coordenada = punto medio entre
+	# las dos cabeceras reales (ver aeropuertos_dos_cabeceras para el ILS).
+	{"nombre": "Neuquén (Presidente Perón)", "lat": -38.949, "lon": -68.155667},
+	{"nombre": "Comodoro Rivadavia (Gral. Mosconi)", "lat": -45.784667, "lon": -67.460917},
+	{"nombre": "Trelew (Almirante Zar)", "lat": -43.210417, "lon": -65.270417},
+	{"nombre": "Bahía Blanca (Comandante Espora)", "lat": -38.727083, "lon": -62.1535},
+	{"nombre": "Resistencia (Chaco)", "lat": -27.449917, "lon": -59.056},
+	{"nombre": "Formosa (El Pucú)", "lat": -26.212833, "lon": -58.228167},
+	{"nombre": "Santiago del Estero", "lat": -27.765667, "lon": -64.309917},
+	{"nombre": "Santa Rosa (La Pampa)", "lat": -36.588167, "lon": -64.275583},
+	{"nombre": "San Luis (Brig. Mayor César Raúl Ojeda)", "lat": -33.273167, "lon": -66.3565},
+	{"nombre": "Puerto Iguazú (Cataratas del Iguazú)", "lat": -25.73725, "lon": -54.473417},
+	{"nombre": "San Martín de los Andes (Chapelco)", "lat": -40.075333, "lon": -71.13725},
+	{"nombre": "Esquel", "lat": -42.903833, "lon": -71.1355},
+	{"nombre": "San Rafael (Mendoza)", "lat": -34.587833, "lon": -68.403583},
+	{"nombre": "Villa de Merlo (Valle del Conlara)", "lat": -32.3845, "lon": -65.18575},
+	{"nombre": "Río Cuarto (Las Higueras)", "lat": -33.092167, "lon": -64.269333},
 ]
 
 # ILS de dos cabeceras MEDIDAS por el usuario (pedido 2026-09-21) -- después
@@ -215,6 +235,99 @@ var aeropuertos_dos_cabeceras = [
 	# aros), se suma con el mismo método (solo SkyVector, sin medir a mano).
 	{"nombre": "Mar del Plata", "cab1_lat": -37.928833, "cab1_lon": -57.583833, "cab1_alt": 21.64,
 		"cab2_lat": -37.9395, "cab2_lon": -57.562667, "cab2_alt": 21.64},
+	# Tanda grande 2026-09-22 -- ILS para todos los aeropuertos que ya eran
+	# destino en el juego pero no tenían aros (pedido explícito, "todos los
+	# aeropuertos que tenemos lo tienen que tener"), datos de SkyVector, mismo
+	# método/fuente que los de arriba. Quedaron afuera (sin página real de
+	# aeródromo con pista en SkyVector, verificado): Don Torcuato, Necochea/
+	# Quequén, Marcos Juárez, Monte Caseros, Curuzú Cuatiá, Mercedes
+	# (Corrientes), Apóstoles, Alvear, Cañada de Gómez, Bell Ville, Las
+	# Flores, General Madariaga, Chascomús, Rauch, São Borja -- ninguno tiene
+	# ficha de aeródromo en SkyVector pese a estar en la lista de destinos.
+	{"nombre": "San Fernando", "cab1_lat": -34.459167, "cab1_lon": -58.595667, "cab1_alt": 10.06,
+		"cab2_lat": -34.45, "cab2_lon": -58.5855, "cab2_alt": 3.35},
+	{"nombre": "Córdoba (Taravella)", "cab1_lat": -31.3245, "cab1_lon": -64.208167, "cab1_alt": 465.15,
+		"cab2_lat": -31.295667, "cab2_lon": -64.2085, "cab2_alt": 488.99},
+	{"nombre": "Mendoza (El Plumerillo)", "cab1_lat": -32.819167, "cab1_lon": -68.792667, "cab1_alt": 698.02,
+		"cab2_lat": -32.844333, "cab2_lon": -68.793, "cab2_alt": 704.11},
+	{"nombre": "San Carlos de Bariloche", "cab1_lat": -41.146667, "cab1_lon": -71.170667, "cab1_alt": 834.87,
+		"cab2_lat": -41.1555, "cab2_lon": -71.145167, "cab2_alt": 841.57},
+	{"nombre": "Jujuy (Gob. Guzmán)", "cab1_lat": -24.381167, "cab1_lon": -65.105, "cab1_alt": 920.19,
+		"cab2_lat": -24.404333, "cab2_lon": -65.090667, "cab2_alt": 884.83},
+	{"nombre": "El Calafate", "cab1_lat": -50.281333, "cab1_lon": -72.071, "cab1_alt": 197.20,
+		"cab2_lat": -50.279167, "cab2_lon": -72.035333, "cab2_alt": 192.63},
+	{"nombre": "Río Gallegos", "cab1_lat": -51.61, "cab1_lon": -69.337167, "cab1_alt": 18.90,
+		"cab2_lat": -51.607667, "cab2_lon": -69.287167, "cab2_alt": 15.85},
+	{"nombre": "Ushuaia (Malvinas Argentinas)", "cab1_lat": -54.844, "cab1_lon": -68.314667, "cab1_alt": 24.99,
+		"cab2_lat": -54.8425, "cab2_lon": -68.2765, "cab2_alt": 21.03},
+	{"nombre": "San Juan", "cab1_lat": -31.560333, "cab1_lon": -68.418333, "cab1_alt": 593.83,
+		"cab2_lat": -31.5825, "cab2_lon": -68.418167, "cab2_alt": 591.70},
+	{"nombre": "Tandil", "cab1_lat": -37.245833, "cab1_lon": -59.229833, "cab1_alt": 175.56,
+		"cab2_lat": -37.223, "cab2_lon": -59.227333, "cab2_alt": 167.02},
+	{"nombre": "Tucumán", "cab1_lat": -26.853833, "cab1_lon": -65.107333, "cab1_alt": 435.90,
+		"cab2_lat": -26.822667, "cab2_lon": -65.101333, "cab2_alt": 455.40},
+	{"nombre": "Salta", "cab1_lat": -24.872833, "cab1_lon": -65.49, "cab1_alt": 1246.40,
+		"cab2_lat": -24.846333, "cab2_lon": -65.484167, "cab2_alt": 1230.60},
+	{"nombre": "Catamarca", "cab1_lat": -28.6055, "cab1_lon": -65.754167, "cab1_alt": 459.62,
+		"cab2_lat": -28.580833, "cab2_lon": -65.748167, "cab2_alt": 474.24},
+	{"nombre": "La Rioja", "cab1_lat": -29.3915, "cab1_lon": -66.8025, "cab1_alt": 441.30,
+		"cab2_lat": -29.369333, "cab2_lon": -66.788833, "cab2_alt": 428.51},
+	{"nombre": "Gualeguaychú", "cab1_lat": -33.0115, "cab1_lon": -58.613, "cab1_alt": 22.86,
+		"cab2_lat": -32.9995, "cab2_lon": -58.612667, "cab2_alt": 16.16},
+	{"nombre": "Concordia (Entre Ríos)", "cab1_lat": -31.303333, "cab1_lon": -58.0005, "cab1_alt": 34.14,
+		"cab2_lat": -31.2905, "cab2_lon": -57.992667, "cab2_alt": 23.17},
+	{"nombre": "Las Termas de Río Hondo", "cab1_lat": -27.507833, "cab1_lon": -64.9365, "cab1_alt": 278.29,
+		"cab2_lat": -27.485333, "cab2_lon": -64.935333, "cab2_alt": 280.42},
+	{"nombre": "Posadas (Misiones)", "cab1_lat": -27.396, "cab1_lon": -55.970333, "cab1_alt": 130.47,
+		"cab2_lat": -27.375667, "cab2_lon": -55.970667, "cab2_alt": 114.32},
+	{"nombre": "Viedma (Río Negro)", "cab1_lat": -40.867, "cab1_lon": -63.011167, "cab1_alt": 6.10,
+		"cab2_lat": -40.873167, "cab2_lon": -62.982, "cab2_alt": 4.57},
+	{"nombre": "Asunción (Paraguay)", "cab1_lat": -25.254667, "cab1_lon": -57.522667, "cab1_alt": 88.39,
+		"cab2_lat": -25.225, "cab2_lon": -57.5155, "cab2_alt": 75.90},
+	{"nombre": "Foz de Iguazú (Brasil)", "cab1_lat": -25.589333, "cab1_lon": -54.4955, "cab1_alt": 232.28,
+		"cab2_lat": -25.602333, "cab2_lon": -54.479, "cab2_alt": 239.60},
+	{"nombre": "Paysandú (Uruguay)", "cab1_lat": -32.370167, "cab1_lon": -58.063333, "cab1_alt": 49.07,
+		"cab2_lat": -32.356667, "cab2_lon": -58.060833, "cab2_alt": 38.10},
+	{"nombre": "Salto (Uruguay)", "cab1_lat": -31.444, "cab1_lon": -57.9905, "cab1_alt": 42.98,
+		"cab2_lat": -31.432833, "cab2_lon": -57.98, "cab2_alt": 39.02},
+	{"nombre": "Carmelo (Uruguay)", "cab1_lat": -33.9615, "cab1_lon": -58.327167, "cab1_alt": 10.97,
+		"cab2_lat": -33.970667, "cab2_lon": -58.323667, "cab2_alt": 10.06},
+	{"nombre": "Mercedes (Uruguay)", "cab1_lat": -33.242833, "cab1_lon": -58.0775, "cab1_alt": 14.02,
+		"cab2_lat": -33.252667, "cab2_lon": -58.071333, "cab2_alt": 20.12},
+	# Aeropuertos NUEVOS (no existían como destino en absoluto) -- pedido
+	# explícito de completar los importantes/turísticos de Argentina que
+	# faltaban del todo. Mismo método, datos de SkyVector. Se agregan acá Y
+	# como destino nuevo en aeropuertos_pais_lla más abajo.
+	{"nombre": "Neuquén (Presidente Perón)", "cab1_lat": -38.949, "cab1_lon": -68.1705, "cab1_alt": 271.58,
+		"cab2_lat": -38.949, "cab2_lon": -68.140833, "cab2_alt": 271.58},
+	{"nombre": "Comodoro Rivadavia (Gral. Mosconi)", "cab1_lat": -45.786333, "cab1_lon": -67.473833, "cab1_alt": 56.39,
+		"cab2_lat": -45.783, "cab2_lon": -67.448, "cab2_alt": 56.39},
+	{"nombre": "Trelew (Almirante Zar)", "cab1_lat": -43.2145, "cab1_lon": -65.285167, "cab1_alt": 34.75,
+		"cab2_lat": -43.206333, "cab2_lon": -65.255667, "cab2_alt": 33.53},
+	{"nombre": "Bahía Blanca (Comandante Espora)", "cab1_lat": -38.716667, "cab1_lon": -62.157333, "cab1_alt": 75.59,
+		"cab2_lat": -38.7375, "cab2_lon": -62.149667, "cab2_alt": 75.59},
+	{"nombre": "Resistencia (Chaco)", "cab1_lat": -27.461667, "cab1_lon": -59.061, "cab1_alt": 52.12,
+		"cab2_lat": -27.438167, "cab2_lon": -59.051, "cab2_alt": 52.73},
+	{"nombre": "Formosa (El Pucú)", "cab1_lat": -26.220167, "cab1_lon": -58.232, "cab1_alt": 59.14,
+		"cab2_lat": -26.2055, "cab2_lon": -58.224333, "cab2_alt": 59.14},
+	{"nombre": "Santiago del Estero", "cab1_lat": -27.775333, "cab1_lon": -64.315667, "cab1_alt": 200.90,
+		"cab2_lat": -27.756, "cab2_lon": -64.304167, "cab2_alt": 200.90},
+	{"nombre": "Santa Rosa (La Pampa)", "cab1_lat": -36.598333, "cab1_lon": -64.278167, "cab1_alt": 189.88,
+		"cab2_lat": -36.578, "cab2_lon": -64.273, "cab2_alt": 189.88},
+	{"nombre": "San Luis (Brig. Mayor César Raúl Ojeda)", "cab1_lat": -33.286333, "cab1_lon": -66.358333, "cab1_alt": 700.73,
+		"cab2_lat": -33.26, "cab2_lon": -66.354667, "cab2_alt": 710.79},
+	{"nombre": "Puerto Iguazú (Cataratas del Iguazú)", "cab1_lat": -25.731, "cab1_lon": -54.488333, "cab1_alt": 279.20,
+		"cab2_lat": -25.7435, "cab2_lon": -54.4585, "cab2_alt": 279.20},
+	{"nombre": "San Martín de los Andes (Chapelco)", "cab1_lat": -40.0795, "cab1_lon": -71.150833, "cab1_alt": 789.13,
+		"cab2_lat": -40.071167, "cab2_lon": -71.123667, "cab2_alt": 789.13},
+	{"nombre": "Esquel", "cab1_lat": -42.909667, "cab1_lon": -71.147833, "cab1_alt": 799.19,
+		"cab2_lat": -42.898, "cab2_lon": -71.123167, "cab2_alt": 781.20},
+	{"nombre": "San Rafael (Mendoza)", "cab1_lat": -34.584833, "cab1_lon": -68.4145, "cab1_alt": 754.69,
+		"cab2_lat": -34.590833, "cab2_lon": -68.392667, "cab2_alt": 754.69},
+	{"nombre": "Villa de Merlo (Valle del Conlara)", "cab1_lat": -32.3955, "cab1_lon": -65.189833, "cab1_alt": 615.70,
+		"cab2_lat": -32.3735, "cab2_lon": -65.181667, "cab2_alt": 615.70},
+	{"nombre": "Río Cuarto (Las Higueras)", "cab1_lat": -33.0995, "cab1_lon": -64.277833, "cab1_alt": 420.32,
+		"cab2_lat": -33.084833, "cab2_lon": -64.260833, "cab2_alt": 420.32},
 ]
 
 # Pueblos y referencias reales a lo largo de las rutas (pedido 2026-09-21,
