@@ -428,6 +428,15 @@ var _ultimo_debug_rumbo: String = ""
 var debug_rumbo_anterior: bool = false
 var tecla_ils_anterior: bool = false
 var tecla_reset_mapa_anterior: bool = false
+
+# Vista externa SIN el avión visible (pedido 2026-09-22, "no vamos a ver el
+# avión... es como que uno ve lo que ve el que maneja") -- tecla V, mismo
+# patrón de un solo golpe que M/N/I/D/U. Prueba chica y aislada 2026-09-25
+# para descartar/confirmar si algo del ciclo día/noche quedó mal conectado
+# (si esto tampoco se ve al probarlo, el problema es de Godot/build, no del
+# código del ciclo día/noche).
+var tecla_vista_sin_avion_anterior: bool = false
+var vista_sin_avion_activa: bool = false
 @onready var boton_elegir_vuelo: Button = get_node("../HUD/BarraBotones/BotonElegirVuelo")
 
 # Modo Carrera (pedido 2026-09-21, arranque del esqueleto): perfiles de
@@ -1506,6 +1515,23 @@ func _process(delta: float) -> void:
 		cartel_central.visible = true
 		get_tree().create_timer(1.5).timeout.connect(func(): cartel_central.visible = false)
 	tecla_reset_mapa_anterior = tecla_reset_mapa_activa
+
+	# Tecla V: vista externa sin el avión visible/oculto (ver comentario junto
+	# a la declaración de vista_sin_avion_activa, más arriba).
+	var tecla_vista_sin_avion_activa = Input.is_physical_key_pressed(KEY_V)
+	if tecla_vista_sin_avion_activa and not tecla_vista_sin_avion_anterior:
+		vista_sin_avion_activa = not vista_sin_avion_activa
+		modelo_externo.visible = not vista_sin_avion_activa
+		var mostrar_primitivas = TIPOS_AVION[tipo_avion_indice]["modelo"] == "" and not vista_sin_avion_activa
+		pieza_fuselaje.visible = mostrar_primitivas
+		pieza_nariz.visible = mostrar_primitivas
+		pieza_alas.visible = mostrar_primitivas
+		pieza_cola.visible = mostrar_primitivas
+		pieza_timon.visible = mostrar_primitivas
+		cartel_central.text = "👁️ Vista sin avión: ON" if vista_sin_avion_activa else "👁️ Vista sin avión: OFF"
+		cartel_central.visible = true
+		get_tree().create_timer(1.5).timeout.connect(func(): cartel_central.visible = false)
+	tecla_vista_sin_avion_anterior = tecla_vista_sin_avion_activa
 
 	# "Marcar lugar" -- detectado a mano (con flag "anterior") porque
 	# _joystick_activo() devuelve "está apretado ahora", no "recién lo
