@@ -43,6 +43,26 @@ extends Node3D
 @onready var camara_minimapa: Camera3D = get_node("HUD/MinimapaViewport/CamaraMinimapa")
 @onready var camara_mapa: Camera3D = get_node("HUD/MapaViewport/CamaraMapa")
 
+# Ciclo día/noche (pedido 2026-09-25) -- "hora_del_dia" (0.0 a 24.0) maneja
+# TODO: la posición del sol en el cielo, su color/intensidad, y los colores
+# del cielo procedural. Por defecto avanza sola durante el vuelo (un día
+# completo cada SEGUNDOS_POR_DIA_COMPLETO segundos reales), pero también se
+# puede mover a mano desde el panel de Configuración (ver ajustar_hora_del_dia
+# en principal.gd) para probar/demostrar el efecto al instante sin esperar.
+@onready var luz_sol: DirectionalLight3D = get_node("DirectionalLight3D")
+@onready var entorno_mundo: WorldEnvironment = get_node("WorldEnvironment")
+var hora_del_dia: float = 12.0
+var avance_automatico_hora: bool = true
+const SEGUNDOS_POR_DIA_COMPLETO = 1800.0  # 30 minutos reales = 1 día de juego
+const COLOR_CIELO_DIA_ARRIBA = Color(0.385, 0.454, 0.55)
+const COLOR_CIELO_DIA_HORIZONTE = Color(0.646, 0.656, 0.671)
+const COLOR_SUELO_DIA = Color(0.2, 0.169, 0.133)
+const COLOR_CIELO_NOCHE_ARRIBA = Color(0.02, 0.03, 0.08)
+const COLOR_CIELO_NOCHE_HORIZONTE = Color(0.05, 0.06, 0.12)
+const COLOR_SUELO_NOCHE = Color(0.01, 0.01, 0.02)
+const COLOR_LUZ_AMANECER = Color(1.0, 0.55, 0.3)
+const COLOR_LUZ_DIA = Color(1.0, 0.98, 0.92)
+
 # Coordenadas reales (lat/long en grados, investigadas antes con OurAirports).
 # SEGUNDO INTENTO DE ILS VISUAL (2026-09-21): el primer intento (mismo día,
 # revertido) usaba un rumbo investigado a mano MÁS la coordenada aproximada
@@ -590,6 +610,11 @@ var nodos_aeropuertos_usuario: Array = []
 
 func _ready() -> void:
 	randomize()
+	# Duplicamos el material del cielo antes de tocarlo por código -- así lo
+	# que mutamos en tiempo real (colores día/noche) queda aislado a esta
+	# partida, sin arriesgarse a pisar el recurso original de la escena.
+	if entorno_mundo and entorno_mundo.environment and entorno_mundo.environment.sky:
+		entorno_mundo.environment.sky.sky_material = entorno_mundo.environment.sky.sky_material.duplicate()
 	# Lo ponemos por código (no solo en el archivo de la escena) para
 	# asegurarnos de que se aplique bien, en un orden controlado, DESPUÉS
 	# de que el nodo ya se haya inicializado solo.
@@ -685,6 +710,7 @@ func _process(delta: float) -> void:
 	# cuadros (no cada 2 km), como hace el script de ejemplo del plugin
 	# (que jamás mueve una cámara común, mueve el origen directamente).
 	_recentrar_origen_en_avion()
+	_actualizar_ciclo_dia_noche(delta)
 	_actualizar_beacons(delta)
 	_actualizar_ils_dos_cabeceras_frame()
 	if tileset and camara_juego:
@@ -846,6 +872,62 @@ func _recentrar_origen_en_avion() -> void:
 		_orientar_aeropuerto_usuario(nodo_usuario)
 
 	print("🔄 Origen re-centrado -- lat: %.5f, lon: %.5f, alt: %.1f" % [lla[0], lla[1], lla[2]])
+
+# Mueve el sol a lo largo del día y ajusta su color/intensidad + los colores
+# del cielo procedural en base a "hora_del_dia" (0.0 a 24.0). Se llama todos
+# los cuadros, DESPUÉS de _recentrar_origen_en_avion() (necesita
+# arriba_motor_actual/este_motor_actual ya frescos de este cuadro).
+#
+# Geometría: "theta" mide el ángulo del sol arrancando derecho hacia ARRIBA
+# (0°) y rotando hacia el ESTE (90°) -- con eso: mediodía (hora 12) = sol
+# arriba de todo (theta 0°), amanecer (hora 6) = sol en el horizonte al este
+# (theta 90°), atardecer (hora 18) = sol en el horizonte al oeste (theta
+# -90°), medianoche (hora 0/24) = sol abajo de todo, del otro lado del mundo
+# (theta 180°). De ahí sale la fórmula theta = (12 - hora) * 15° (15°/hora,
+# 360° en 24hs). La "elevación" sobre el horizonte es 90° menos el ángulo
+# absoluto desde arriba (90 - |theta|): positiva de día, negativa de noche.
+#
+# MISMA REGLA DE ORO que ya rompió otros bugs en este proyecto (curvatura de
+# la Tierra): la dirección del sol se arma sobre arriba_motor_actual/
+# este_motor_actual (la vertical/horizontal REAL), nunca sobre Vector3.UP
+# crudo -- si no, en Buenos Aires el sol saldría ~34.5° inclinado de más.
+func _actualizar_ciclo_dia_noche(delta: float) -> void:
+	if avance_automatico_hora:
+		hora_del_dia = fposmod(hora_del_dia + (delta / SEGUNDOS_POR_DIA_COMPLETO) * 24.0, 24.0)
+
+	var theta_grados: float = (12.0 - hora_del_dia) * 15.0
+	var theta_rad: float = deg_to_rad(theta_grados)
+	var direccion_al_sol: Vector3 = (cos(theta_rad) * arriba_motor_actual + sin(theta_rad) * este_motor_actual).normalized()
+	# look_at apunta el eje -Z local hacia el punto dado -- como la luz brilla
+	# hacia -Z, mirando hacia "posición menos dirección_al_sol" el rayo de luz
+	# termina viajando en la dirección CONTRARIA al sol (del sol hacia el
+	# suelo), que es justo lo que tiene que hacer.
+	if luz_sol:
+		luz_sol.look_at(luz_sol.global_position - direccion_al_sol, arriba_motor_actual)
+
+	var elevacion_grados: float = 90.0 - abs(theta_grados)
+	var t_dia: float = clamp((elevacion_grados + 6.0) / 26.0, 0.0, 1.0)
+
+	if luz_sol:
+		luz_sol.light_energy = lerp(0.05, 1.0, clamp(elevacion_grados / 60.0, 0.0, 1.0))
+		luz_sol.light_color = COLOR_LUZ_AMANECER.lerp(COLOR_LUZ_DIA, t_dia)
+
+	if entorno_mundo and entorno_mundo.environment and entorno_mundo.environment.sky:
+		var mat_cielo := entorno_mundo.environment.sky.sky_material
+		if mat_cielo is ProceduralSkyMaterial:
+			mat_cielo.sky_top_color = COLOR_CIELO_NOCHE_ARRIBA.lerp(COLOR_CIELO_DIA_ARRIBA, t_dia)
+			mat_cielo.sky_horizon_color = COLOR_CIELO_NOCHE_HORIZONTE.lerp(COLOR_CIELO_DIA_HORIZONTE, t_dia)
+			mat_cielo.ground_bottom_color = COLOR_SUELO_NOCHE.lerp(COLOR_SUELO_DIA, t_dia)
+			mat_cielo.ground_horizon_color = mat_cielo.sky_horizon_color
+
+# Llamado desde el panel de Configuración (botones -/+ de "Hora del día") --
+# +delta_horas para adelantar, negativo para atrasar, con vuelta redonda a
+# las 24hs.
+func ajustar_hora_del_dia(delta_horas: float) -> void:
+	hora_del_dia = fposmod(hora_del_dia + delta_horas, 24.0)
+
+func alternar_avance_automatico_hora(activo: bool) -> void:
+	avance_automatico_hora = activo
 
 # Convierte ECEF a latitud/longitud/altitud (el camino inverso de
 # _lat_lon_alt_a_ecef_xyz), con la misma fórmula estándar que usa el propio

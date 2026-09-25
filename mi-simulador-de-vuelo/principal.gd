@@ -559,6 +559,14 @@ var _arrastrando_mover_mapa: bool = false
 const RUTA_CONFIG_CONTROLES = "user://controles_config.cfg"
 var control_mouse_activo: bool = false
 
+# Ciclo día/noche -- estos botones solo llaman a las funciones de mundo.gd
+# (ahí vive todo el cálculo real, ver ajustar_hora_del_dia/
+# alternar_avance_automatico_hora), acá solo se refleja el valor en pantalla.
+@onready var boton_hora_menos: Button = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxHoraDelDia/BotonHoraMenos")
+@onready var boton_hora_mas: Button = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxHoraDelDia/BotonHoraMas")
+@onready var label_hora_valor: Label = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxHoraDelDia/LabelHoraValor")
+@onready var check_avance_automatico_hora: CheckButton = get_node("../HUD/PanelConfiguracion/VBoxConfig/CheckAvanceAutomaticoHora")
+
 # JOYSTICK -- pedido explícito 2026-09-20. Godot no distingue cable vs.
 # Bluetooth a nivel de código -- el sistema operativo hace el emparejamiento
 # y a Godot le llega igual por la API de "joypad" sea como sea que esté
@@ -831,6 +839,20 @@ func _ready() -> void:
 		control_mouse_activo = activo
 		_guardar_control_mouse())
 
+	boton_hora_menos.focus_mode = Control.FOCUS_NONE
+	boton_hora_mas.focus_mode = Control.FOCUS_NONE
+	check_avance_automatico_hora.focus_mode = Control.FOCUS_NONE
+	check_avance_automatico_hora.button_pressed = mundo.avance_automatico_hora
+	boton_hora_menos.pressed.connect(func():
+		mundo.ajustar_hora_del_dia(-1.0)
+		_actualizar_etiqueta_hora())
+	boton_hora_mas.pressed.connect(func():
+		mundo.ajustar_hora_del_dia(1.0)
+		_actualizar_etiqueta_hora())
+	check_avance_automatico_hora.toggled.connect(func(activo: bool):
+		mundo.alternar_avance_automatico_hora(activo))
+	_actualizar_etiqueta_hora()
+
 	_cargar_mapeo_joystick()
 	_actualizar_estado_joystick()
 	_refrescar_lista_acciones_joystick()
@@ -935,6 +957,14 @@ func _asa_mover_mapa_gui_input(event: InputEvent) -> void:
 
 func _actualizar_etiqueta_velocidad() -> void:
 	etiqueta_velocidad.text = "VEL\n%d" % int(round(velocidad_actual))
+
+func _actualizar_etiqueta_hora() -> void:
+	var horas: int = int(mundo.hora_del_dia)
+	var minutos: int = int(round((mundo.hora_del_dia - horas) * 60.0))
+	if minutos == 60:
+		minutos = 0
+		horas = (horas + 1) % 24
+	label_hora_valor.text = "%02d:%02d" % [horas, minutos]
 
 func _actualizar_estado_joystick() -> void:
 	var conectados = Input.get_connected_joypads()
@@ -1874,6 +1904,8 @@ func _limitar_piso() -> void:
 func _actualizar_hud(delta: float) -> void:
 	var altura = mundo.altitud_avion + position.y - altura_piso
 	etiqueta_altimetro.text = "ALT\n%dm" % int(round(altura))
+	if panel_configuracion.visible:
+		_actualizar_etiqueta_hora()
 
 	if destinos.is_empty():
 		destinos = mundo.obtener_destinos()
