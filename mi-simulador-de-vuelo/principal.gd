@@ -2513,6 +2513,10 @@ func _poblar_selector() -> void:
 		var nombre = nodo.get_meta("nombre_bonito", nodo.name)
 		origen_option.add_item(nombre)
 		destino_option.add_item(nombre)
+	# Modo libre (pedido explícito 2026-09-27): sin "Hasta" real, vuelo sin
+	# plan -- el índice de este ítem es siempre destinos.size() (el último),
+	# se detecta así en _confirmar_viaje().
+	destino_option.add_item("🕊️ Modo libre (sin destino)")
 	# Mismo motivo que boton_confirmar/boton_despegar: un control con foco de
 	# teclado puede reaccionar a ESPACIO -- estos dos quedaron afuera de esa
 	# limpieza en su momento.
@@ -3084,25 +3088,43 @@ func _guardar_lugares_marcados_en_archivo() -> void:
 func _confirmar_viaje() -> void:
 	var idx_origen = origen_option.selected
 	var idx_destino = destino_option.selected
-	if idx_origen < 0 or idx_destino < 0 or idx_origen == idx_destino:
+	# "Modo libre" (pedido explícito 2026-09-27) es siempre el último ítem
+	# del desplegable "Hasta" (índice == destinos.size(), agregado en
+	# _poblar_selector) -- no es un destino real, así que salta la
+	# validación normal de "origen y destino no pueden ser el mismo".
+	var modo_libre: bool = idx_destino == destinos.size()
+	if idx_origen < 0 or idx_destino < 0 or (not modo_libre and idx_origen == idx_destino):
 		return
 
 	var nodo_origen = destinos[idx_origen]
-	var nodo_destino = destinos[idx_destino]
 
 	_aplicar_tipo_avion(tipo_avion_option.selected)
 	global_position = nodo_origen.global_position + Vector3(0, 8, 0)
-	# Vector3.UP otra vez NO -- mismo motivo que en _alinear_con_vertical_real
-	# y _actualizar_camara(): acá se está fijando la orientación completa del
-	# avión, y con el eje fijo del motor quedaría torcido/inclinado respecto
-	# a la vertical real de este punto del mapa.
-	look_at(nodo_destino.global_position, _arriba_real())
+	if modo_libre:
+		# Sin destino hacia el cual orientarse -- arranca mirando al norte
+		# real (no el eje crudo del motor, mismo motivo de siempre: la
+		# Tierra curva el norte real respecto a esos ejes fijos).
+		look_at(global_position + mundo.norte_motor_actual, _arriba_real())
+		indice_destino = -1
+	else:
+		var nodo_destino = destinos[idx_destino]
+		# Vector3.UP otra vez NO -- mismo motivo que en _alinear_con_vertical_real
+		# y _actualizar_camara(): acá se está fijando la orientación completa del
+		# avión, y con el eje fijo del motor quedaría torcido/inclinado respecto
+		# a la vertical real de este punto del mapa.
+		look_at(nodo_destino.global_position, _arriba_real())
+		indice_destino = idx_destino
 	banco_actual = 0.0
 	velocidad_actual = VELOCIDAD_INICIAL
 	_actualizar_etiqueta_velocidad()
-	indice_destino = idx_destino
 	estado = Estado.VOLANDO
 	cartel_central.visible = false
+	# BUG REAL encontrado 2026-09-27 (reportado: "cada vez que entro al
+	# juego tengo que ir a cerrar este panel a mano"): _confirmar_viaje()
+	# nunca ocultaba el panel -- quedaba tapando la pantalla hasta que se
+	# volvía a apretar "Vuelo" a mano. Ahora se cierra solo al confirmar, y
+	# solo vuelve a aparecer si el usuario lo pide de nuevo desde ahí.
+	selector_vuelo.visible = false
 	objetivo_mision = null  # un vuelo de aeropuerto normal cancela cualquier misión activa
 	# BUG REAL encontrado 2026-09-21 (reportado por el usuario: "un par de
 	# viajes de ayer, la línea guía no aparecía"): la línea guía solo
@@ -3301,7 +3323,7 @@ func _actualizar_torre(altura: float) -> void:
 	if objetivo_mision:
 		destino_actual = objetivo_mision
 		nombre_destino = nombre_mision_actual
-	elif not destinos.is_empty() and indice_destino < destinos.size():
+	elif not destinos.is_empty() and indice_destino >= 0 and indice_destino < destinos.size():
 		destino_actual = destinos[indice_destino]
 		nombre_destino = destino_actual.get_meta("nombre_bonito", destino_actual.name)
 
@@ -3318,6 +3340,15 @@ func _actualizar_torre(altura: float) -> void:
 	if destino_actual == null:
 		etiqueta_distancia.text = "DIST\n---"
 		_ocultar_flechas()
+		# Pedido explícito 2026-09-27 (Modo libre): sin destino, normalmente
+		# no hay nada que sugerir -- PERO si el usuario activó el ILS de un
+		# aeropuerto puntual desde el panel Torre, ese rumbo tiene que
+		# aparecer igual (es el único caso en el que Modo libre sí muestra
+		# un rumbo sugerido).
+		if rumbo_guia_override_activo:
+			var rumbo_ils: float = _rumbo_verdadero_hacia(mundo.lat_avion, mundo.lon_avion, rumbo_guia_override_lat, rumbo_guia_override_lon)
+			etiqueta_rumbo_objetivo.text = "Ponete en rumbo %d°" % int(round(rumbo_ils))
+			etiqueta_rumbo_objetivo.visible = true
 		return
 
 	var centro_destino = destino_actual.global_position

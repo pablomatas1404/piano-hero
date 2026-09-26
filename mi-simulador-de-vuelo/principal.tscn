@@ -1329,15 +1329,18 @@ layout_mode = 2
 text = "Cerrar"
 
 [node name="SelectorVuelo" type="Panel" parent="HUD" unique_id=320021826]
-visible = false
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -420.0
-offset_top = 300.0
-offset_right = -20.0
-offset_bottom = 622.0
-grow_horizontal = 0
+visible = true
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -161.0
+offset_right = 200.0
+offset_bottom = 161.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="VBox" type="VBoxContainer" parent="HUD/SelectorVuelo" unique_id=675834856]
 layout_mode = 1
