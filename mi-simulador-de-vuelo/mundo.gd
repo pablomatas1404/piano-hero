@@ -946,7 +946,19 @@ func _actualizar_ciclo_dia_noche(delta: float) -> void:
 		# ve en pantalla por igual, sea "lit" o "unlit", porque no es parte
 		# del cálculo de luces por superficie sino del paso final de
 		# tonemapping. Esto es lo que de verdad oscurece el terreno de noche.
-		env.tonemap_exposure = lerp(0.12, 1.0, t_dia)
+		env.tonemap_exposure = lerp(0.04, 1.0, t_dia)
+
+		# Pedido explícito 2026-09-25 ("se ve como las 7 de la tarde, no como
+		# noche cerrada... GeoFS de noche lo pasa casi a blanco y negro"):
+		# bajar SOLO la exposición no alcanza para que se sienta "noche" de
+		# verdad. Godot tiene un ajuste de color de pantalla completa hecho
+		# para esto (Environment.adjustment_*, activado una sola vez acá) --
+		# bajamos la SATURACIÓN hacia casi cero de noche (el ojo humano ve
+		# poco color con poca luz, el mismo truco que notó el usuario en
+		# GeoFS), sumado a la exposición ya más oscura de arriba.
+		if not env.adjustment_enabled:
+			env.adjustment_enabled = true
+		env.adjustment_saturation = lerp(0.15, 1.0, t_dia)
 
 # Llamado desde el panel de Configuración (botones -/+ de "Hora del día") --
 # +delta_horas para adelantar, negativo para atrasar, con vuelta redonda a
@@ -1446,7 +1458,14 @@ func _actualizar_ils_dos_cabeceras_frame() -> void:
 var contenedor_luces_pista: Array = []
 const ANCHO_MEDIO_PISTA_LUCES = 20.0  # separación de las luces de borde respecto al eje central
 const ESPACIADO_LUCES_PISTA = 60.0    # cada cuántos metros va una luz de borde
-const RADIO_LUZ_PISTA = 1.4
+# Agrandadas (2.5, antes 1.4) y levantadas más del piso (4.0m, antes 0.5m) --
+# reportado que no se ven nada de noche; sospecha principal: al desplazarse
+# 20m a los costados del eje medido, la altura interpolada centro-a-centro
+# puede no coincidir con el terreno real de ese punto (que no es plano) y
+# quedar la esfera enterrada. Más margen vertical + más tamaño mientras se
+# termina de diagnosticar la causa exacta con ayuda externa.
+const RADIO_LUZ_PISTA = 2.5
+const ALTURA_LUCES_SOBRE_PISO = 4.0
 const COLOR_LUZ_PISTA_BORDE = Color(1.0, 0.92, 0.6)   # blanco cálido, como las luces de borde reales
 const COLOR_LUZ_PISTA_UMBRAL = Color(0.25, 1.0, 0.35)  # verde, como las luces de umbral reales
 
@@ -1532,15 +1551,15 @@ func _actualizar_luces_pista_frame() -> void:
 			continue
 		direccion_horizontal = direccion_horizontal.normalized()
 		var perpendicular: Vector3 = direccion_horizontal.cross(arriba_motor_actual).normalized()
-		entrada["mat_borde"].emission_energy_multiplier = 3.0 * factor_noche_actual
-		entrada["mat_umbral"].emission_energy_multiplier = 3.0 * factor_noche_actual
+		entrada["mat_borde"].emission_energy_multiplier = 6.0 * factor_noche_actual
+		entrada["mat_umbral"].emission_energy_multiplier = 6.0 * factor_noche_actual
 
 		for luz in entrada["contenedor"].get_children():
 			var t: float = luz.get_meta("t")
 			var lado: float = luz.get_meta("lado")
 			var punto: Vector3 = p1.lerp(p2, t)
 			punto += perpendicular * (lado * ANCHO_MEDIO_PISTA_LUCES)
-			punto += arriba_motor_actual * 0.5
+			punto += arriba_motor_actual * ALTURA_LUCES_SOBRE_PISO
 			luz.global_position = punto
 
 func alternar_ils(activo: bool) -> void:
