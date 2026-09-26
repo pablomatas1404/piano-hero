@@ -426,10 +426,21 @@ var genero_musica_actual: String = ""
 # sensación de aceleración, sin que quede estruendoso.
 @onready var sonido_motor: AudioStreamPlayer = get_node("SonidoMotor")
 @onready var slider_volumen_motor: HSlider = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenMotor/SliderVolumenMotor")
+# Pedido 2026-09-27 ("en pantalla completa es un lío bajar el volumen de
+# Windows"): sliders propios para música y radio, mismo patrón que el de
+# motor de arriba.
+@onready var slider_volumen_musica: HSlider = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenMusica/SliderVolumenMusica")
+@onready var slider_volumen_radio: HSlider = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenRadio/SliderVolumenRadio")
 const RUTA_CONFIG_AUDIO = "user://audio_config.cfg"
 const VOLUMEN_MOTOR_DB_MINIMO = -40.0  # con el slider en 0, casi inaudible en vez de mudo de golpe
 const VOLUMEN_MOTOR_DB_MAXIMO = -6.0   # con el slider al máximo, presente pero no estruendoso
+const VOLUMEN_MUSICA_DB_MINIMO = -40.0
+const VOLUMEN_MUSICA_DB_MAXIMO = 0.0
+const VOLUMEN_RADIO_DB_MINIMO = -40.0
+const VOLUMEN_RADIO_DB_MAXIMO = 0.0
 var volumen_motor: float = 0.5  # 0..1, lo que muestra/mueve el slider
+var volumen_musica: float = 0.7
+var volumen_radio: float = 0.5  # arranca más bajo (antes sonaba fijo a -12db)
 const PITCH_MOTOR_MINIMO = 0.85
 const PITCH_MOTOR_MAXIMO = 1.25
 @onready var linea_guia: MeshInstance3D = get_node("../LineaGuia")
@@ -772,7 +783,7 @@ func _ready() -> void:
 	if stream_radio is AudioStreamMP3:
 		stream_radio.loop = true
 	sonido_radio.stream = stream_radio
-	sonido_radio.volume_db = -12.0
+	# volume_db ahora lo controla slider_volumen_radio (más abajo en _ready).
 
 	boton_radio_en_vivo.focus_mode = Control.FOCUS_NONE
 	boton_radio_en_vivo.pressed.connect(func(): OS.shell_open(URL_RADIO_ASPEN))
@@ -869,6 +880,24 @@ func _ready() -> void:
 	sonido_motor.volume_db = lerp(VOLUMEN_MOTOR_DB_MINIMO, VOLUMEN_MOTOR_DB_MAXIMO, volumen_motor)
 	_aplicar_sonido_motor(0)
 	sonido_motor.play()
+
+	_cargar_volumen_musica()
+	slider_volumen_musica.min_value = 0.0
+	slider_volumen_musica.max_value = 1.0
+	slider_volumen_musica.step = 0.01
+	slider_volumen_musica.value = volumen_musica
+	slider_volumen_musica.focus_mode = Control.FOCUS_NONE
+	slider_volumen_musica.value_changed.connect(_cambiar_volumen_musica)
+	sonido_musica.volume_db = lerp(VOLUMEN_MUSICA_DB_MINIMO, VOLUMEN_MUSICA_DB_MAXIMO, volumen_musica)
+
+	_cargar_volumen_radio()
+	slider_volumen_radio.min_value = 0.0
+	slider_volumen_radio.max_value = 1.0
+	slider_volumen_radio.step = 0.01
+	slider_volumen_radio.value = volumen_radio
+	slider_volumen_radio.focus_mode = Control.FOCUS_NONE
+	slider_volumen_radio.value_changed.connect(_cambiar_volumen_radio)
+	sonido_radio.volume_db = lerp(VOLUMEN_RADIO_DB_MINIMO, VOLUMEN_RADIO_DB_MAXIMO, volumen_radio)
 
 	boton_guardar_lugar.focus_mode = Control.FOCUS_NONE
 	boton_cancelar_lugar.focus_mode = Control.FOCUS_NONE
@@ -1479,6 +1508,34 @@ func _cargar_volumen_motor() -> void:
 	if cfg.load(RUTA_CONFIG_AUDIO) != OK:
 		return
 	volumen_motor = cfg.get_value("audio", "volumen_motor", volumen_motor)
+
+func _cambiar_volumen_musica(valor: float) -> void:
+	volumen_musica = valor
+	sonido_musica.volume_db = lerp(VOLUMEN_MUSICA_DB_MINIMO, VOLUMEN_MUSICA_DB_MAXIMO, volumen_musica)
+	var cfg = ConfigFile.new()
+	cfg.load(RUTA_CONFIG_AUDIO)
+	cfg.set_value("audio", "volumen_musica", volumen_musica)
+	cfg.save(RUTA_CONFIG_AUDIO)
+
+func _cargar_volumen_musica() -> void:
+	var cfg = ConfigFile.new()
+	if cfg.load(RUTA_CONFIG_AUDIO) != OK:
+		return
+	volumen_musica = cfg.get_value("audio", "volumen_musica", volumen_musica)
+
+func _cambiar_volumen_radio(valor: float) -> void:
+	volumen_radio = valor
+	sonido_radio.volume_db = lerp(VOLUMEN_RADIO_DB_MINIMO, VOLUMEN_RADIO_DB_MAXIMO, volumen_radio)
+	var cfg = ConfigFile.new()
+	cfg.load(RUTA_CONFIG_AUDIO)
+	cfg.set_value("audio", "volumen_radio", volumen_radio)
+	cfg.save(RUTA_CONFIG_AUDIO)
+
+func _cargar_volumen_radio() -> void:
+	var cfg = ConfigFile.new()
+	if cfg.load(RUTA_CONFIG_AUDIO) != OK:
+		return
+	volumen_radio = cfg.get_value("audio", "volumen_radio", volumen_radio)
 
 # Carga el loop que corresponde a la familia de avión (hélice/jet/helicóptero)
 # y lo deja sonando -- se llama al arrancar y cada vez que se cambia de avión
