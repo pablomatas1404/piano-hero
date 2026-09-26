@@ -56,7 +56,7 @@ var avance_automatico_hora: bool = true
 # 0.0 = pleno día, 1.0 = noche cerrada -- publicado para que las luces de
 # pista (más abajo) sepan cuánto brillar sin recalcular la hora ellas mismas.
 var factor_noche_actual: float = 0.0
-const SEGUNDOS_POR_DIA_COMPLETO = 1800.0  # 30 minutos reales = 1 día de juego
+const SEGUNDOS_POR_DIA_COMPLETO = 9000.0  # 2.5 horas reales = 1 día de juego (x5, pedido 2026-09-26)
 const COLOR_CIELO_DIA_ARRIBA = Color(0.385, 0.454, 0.55)
 const COLOR_CIELO_DIA_HORIZONTE = Color(0.646, 0.656, 0.671)
 const COLOR_SUELO_DIA = Color(0.2, 0.169, 0.133)
@@ -1152,8 +1152,11 @@ func _generar_aeropuerto(nombre: String, longitud_pista: float = 150.0) -> Node3
 # largo del vector de posición global de cada beacon -- no hace falta
 # guardar ni pedir la posición del avión para nada.
 var beacons_para_animar: Array = []
-const DIST_BEACON_OCULTO = 150.0
-const DIST_BEACON_DESVANECE = 900.0
+# Estirado 2026-09-26 (pedido explícito, "una vez que ya lo viste, que
+# desaparezca, no lo quiero" -- en las fotos del usuario todavía se veía
+# grande a 319-707m, porque recién se apagaba del todo a los 150m).
+const DIST_BEACON_OCULTO = 700.0
+const DIST_BEACON_DESVANECE = 1400.0
 var _tiempo_beacons: float = 0.0
 func _actualizar_beacons(delta: float) -> void:
 	_tiempo_beacons += delta
@@ -1253,7 +1256,11 @@ func _orientar_aeropuerto_usuario(nodo: Node3D) -> void:
 # excluye la cámara principal y lo dibuja aparte una segunda cámara sin el
 # post-proceso de noche.
 const CAPA_MARCADORES_NOCTURNOS = 6
-const DISTANCIAS_GATES_ILS = [6000.0, 5250.0, 4500.0, 3750.0, 3000.0, 2500.0, 2200.0, 1850.0, 1500.0, 1150.0, 900.0, 650.0, 450.0, 300.0, 150.0]
+# Pedido explícito 2026-09-26 ("una vez que ya estás orientado en la pista
+# ya no hace falta, es preferible que se vea bien la pista"): se sacan los 4
+# aros más cercanos (650/450/300/150m) -- el corredor sigue guiando desde
+# lejos, pero ya no tapa la pista ni el cartel al estar encima aterrizando.
+const DISTANCIAS_GATES_ILS = [6000.0, 5250.0, 4500.0, 3750.0, 3000.0, 2500.0, 2200.0, 1850.0, 1500.0, 1150.0, 900.0]
 const DISTANCIA_INICIO_AROS = 1200.0  # fijo y generoso, no depende del largo real de cada pista
 const PENDIENTE_ILS = 0.0524  # tangente de 3°, la misma senda de descenso que usa un ILS real
 const RADIO_INTERNO_GATE_ILS = 65.0  # agrandado (pedido 2026-09-22)
@@ -1480,6 +1487,7 @@ const ESPACIADO_LUCES_PISTA = 60.0    # cada cuántos metros va una luz de borde
 # ya alcanza un margen chico y seguro sobre el piso (1.0m).
 const RADIO_LUZ_PISTA = 2.5
 const ALTURA_LUCES_SOBRE_PISO = 1.0
+const DESVIO_MAXIMO_RAYCAST_LUCES = 12.0  # metros -- más que esto, se descarta el rayo (ver _actualizar_luces_pista_frame)
 const COLOR_LUZ_PISTA_UMBRAL_DEFECTO = Color(0.25, 1.0, 0.35)  # verde, como las luces de umbral reales
 # De lejos (>3000m de la cámara) las luces de borde quedan a su tamaño
 # normal; acercándose se van achicando hasta un mínimo (nunca desaparecen
@@ -1699,7 +1707,27 @@ func _actualizar_luces_pista_frame() -> void:
 			var destino_rayo: Vector3 = punto_horizontal - arriba_motor_actual * 500.0
 			var consulta := PhysicsRayQueryParameters3D.create(origen_rayo, destino_rayo)
 			var resultado := space_state.intersect_ray(consulta)
-			var punto: Vector3 = (resultado["position"] if resultado else punto_horizontal) + arriba_motor_actual * ALTURA_LUCES_SOBRE_PISO
+			# BUG REAL encontrado 2026-09-26 (reportado: "con el efecto
+			# secuencial, alguna luz suelta parece desviar toda la línea"):
+			# la dirección/eje es IDÉNTICO al de los aros de ILS (que
+			# encajan perfecto con la pista real, confirmado por el
+			# usuario) -- el problema es puntual del raycast: a veces pega
+			# contra un auto/árbol/borde de techo en vez del asfalto, y esa
+			# UNA luz mal ubicada arruina la sensación de línea recta ahora
+			# que el efecto secuencial solo muestra 2-3 luces prendidas a
+			# la vez (antes, con todas prendidas juntas, un error así se
+			# disimulaba entre el resto). Si el rayo pega MUY lejos de la
+			# altura que esperábamos ahí (según la interpolación entre las
+			# dos cabeceras, que sabemos que es confiable a lo largo del
+			# eje de la pista), descartamos ese resultado puntual y usamos
+			# la línea recta en su lugar -- mejor una luz sin acomodar al
+			# milímetro que una luz saltando a un lugar random.
+			var punto_base: Vector3 = punto_horizontal
+			if resultado:
+				var desvio: float = (resultado["position"] - punto_horizontal).dot(arriba_motor_actual)
+				if abs(desvio) <= DESVIO_MAXIMO_RAYCAST_LUCES:
+					punto_base = resultado["position"]
+			var punto: Vector3 = punto_base + arriba_motor_actual * ALTURA_LUCES_SOBRE_PISO
 			luz.global_position = punto
 
 			# Brillo de ESTA luz en este instante, según el "modo" del estilo

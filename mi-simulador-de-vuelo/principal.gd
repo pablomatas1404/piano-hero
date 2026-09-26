@@ -256,6 +256,19 @@ var altura_piso = 0.0
 @onready var pieza_alas: MeshInstance3D = get_node("Alas")
 @onready var pieza_cola: MeshInstance3D = get_node("Cola")
 @onready var pieza_timon: MeshInstance3D = get_node("Timon")
+
+# Luces de navegación del avioncito propio (pedido 2026-09-26, "está muy
+# negro, lo pierdo... que se vea hermoso") -- por ahora solo en este modelo
+# (los otros 4 son GLB externos, cada uno necesitaría su propio ajuste de
+# posición). Convención real de aviación: punta de ala IZQUIERDA = roja,
+# DERECHA = verde, siempre fijas -- más una estroboscópica blanca arriba de
+# todo (parpadeo corto, no suave) y una luz que ilumina el ala como en los
+# aviones reales.
+var luz_punta_ala_izq: MeshInstance3D
+var luz_punta_ala_der: MeshInstance3D
+var luz_estroboscopica: MeshInstance3D
+var luz_iluminacion_ala: SpotLight3D
+var _tiempo_estrobo: float = 0.0
 @onready var boton_despegar: Button = get_node("../HUD/BotonDespegar")
 @onready var flecha_izquierda: Label = get_node("../HUD/FlechaIzquierda")
 @onready var flecha_derecha: Label = get_node("../HUD/FlechaDerecha")
@@ -633,6 +646,7 @@ var selector_poblado: bool = false
 
 func _ready() -> void:
 	print("El avión arrancó bien y el script está corriendo.")
+	_crear_luces_avion_clasico()
 	boton_confirmar.pressed.connect(_confirmar_viaje)
 	boton_despegar.pressed.connect(_despegar)
 	# IMPORTANTE: sin esto, un botón clickeado se queda con el FOCO de
@@ -1491,6 +1505,7 @@ func _alinear_con_vertical_real(delta: float) -> void:
 	global_rotate(eje.normalized(), angulo)
 
 func _process(delta: float) -> void:
+	_actualizar_estroboscopica(delta)
 	# Orientación inicial hacia San Fernando -- ver comentario junto a las
 	# constantes LAT/LON de arriba. Se aplica UNA sola vez, en el primer
 	# cuadro (Godot procesa _process() de arriba hacia abajo en el árbol --
@@ -1991,6 +2006,65 @@ func _poblar_selector() -> void:
 # igual todavía, eso viene después con físicas por tipo). "" = mostrar las
 # piezas primitivas de siempre; cualquier otra cosa = cargar ese GLB con su
 # propia escala/rotación de corrección (ver TIPOS_AVION).
+# Luces del avioncito clásico (ver comentario junto a la declaración de las
+# variables) -- se crean UNA sola vez acá, y _aplicar_tipo_avion() solo las
+# muestra/oculta según el avión elegido.
+func _crear_luces_avion_clasico() -> void:
+	# Punta de ala izquierda (roja) y derecha (verde) -- las alas (BoxMesh de
+	# 5.5 de ancho, centradas en el origen) tienen la punta en X = ±2.75.
+	luz_punta_ala_izq = _crear_luz_navegacion(Vector3(-2.75, 0.05, 0), Color(1.0, 0.1, 0.1))
+	luz_punta_ala_der = _crear_luz_navegacion(Vector3(2.75, 0.05, 0), Color(0.1, 1.0, 0.2))
+
+	# Estroboscópica blanca arriba de todo -- parpadeo CORTO y agudo (no una
+	# onda suave), como un flash real, no una respiración.
+	luz_estroboscopica = _crear_luz_navegacion(Vector3(0, 0.5, 0), Color(1.0, 1.0, 1.0))
+	(luz_estroboscopica.mesh as SphereMesh).radius = 0.09
+	(luz_estroboscopica.mesh as SphereMesh).height = 0.18
+
+	# Luz que ilumina el ala (pedido explícito, "como tienen los aviones
+	# reales que iluminan sobre el ala") -- un SpotLight3D real (acá SÍ vale
+	# la pena, es UN solo avión, no 30 aeropuertos): montada cerca de la
+	# raíz del ala, apuntando hacia afuera y un poco hacia abajo para bañar
+	# la superficie del ala de luz cálida.
+	luz_iluminacion_ala = SpotLight3D.new()
+	luz_iluminacion_ala.name = "LuzIluminacionAla"
+	luz_iluminacion_ala.position = Vector3(0, 0.35, -0.3)
+	luz_iluminacion_ala.rotation_degrees = Vector3(-25, 90, 0)
+	luz_iluminacion_ala.light_color = Color(1.0, 0.95, 0.85)
+	luz_iluminacion_ala.light_energy = 2.5
+	luz_iluminacion_ala.spot_range = 5.0
+	luz_iluminacion_ala.spot_angle = 45.0
+	add_child(luz_iluminacion_ala)
+
+func _crear_luz_navegacion(posicion: Vector3, color: Color) -> MeshInstance3D:
+	var luz = MeshInstance3D.new()
+	var esfera = SphereMesh.new()
+	esfera.radius = 0.07
+	esfera.height = 0.14
+	luz.mesh = esfera
+	var mat = StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = color
+	mat.emission_enabled = true
+	mat.emission = color
+	mat.emission_energy_multiplier = 4.0
+	luz.set_surface_override_material(0, mat)
+	luz.position = posicion
+	add_child(luz)
+	return luz
+
+# Destello CORTO y agudo (no una onda suave) para la estroboscópica -- pow()
+# con exponente alto deja la mayor parte del ciclo casi apagado y solo un
+# pico breve bien brillante, como un flash real de anticolisión.
+const VELOCIDAD_ESTROBOSCOPICA = 0.7
+func _actualizar_estroboscopica(_delta: float) -> void:
+	if not luz_estroboscopica or not luz_estroboscopica.visible:
+		return
+	var t: float = Time.get_ticks_msec() * 0.001
+	var destello: float = pow(max(0.0, sin(t * TAU * VELOCIDAD_ESTROBOSCOPICA)), 12.0)
+	var mat: StandardMaterial3D = luz_estroboscopica.get_surface_override_material(0)
+	mat.emission_energy_multiplier = lerp(0.3, 6.0, destello)
+
 func _aplicar_tipo_avion(indice: int) -> void:
 	if indice < 0 or indice >= TIPOS_AVION.size():
 		return
@@ -2007,6 +2081,11 @@ func _aplicar_tipo_avion(indice: int) -> void:
 	pieza_alas.visible = mostrar_primitivas
 	pieza_cola.visible = mostrar_primitivas
 	pieza_timon.visible = mostrar_primitivas
+	if luz_punta_ala_izq:
+		luz_punta_ala_izq.visible = mostrar_primitivas
+		luz_punta_ala_der.visible = mostrar_primitivas
+		luz_estroboscopica.visible = mostrar_primitivas
+		luz_iluminacion_ala.visible = mostrar_primitivas
 	if not mostrar_primitivas:
 		var escena: PackedScene = load(datos["modelo"])
 		if escena:
