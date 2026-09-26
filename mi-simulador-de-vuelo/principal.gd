@@ -662,6 +662,14 @@ var acumulador_mapa: float = 0.0
 # _mapa_rect_gui_input) -- eso reinicia el cronómetro, dándole ~1 minuto
 # de zoom manual antes de que el automático vuelva a tomar el control.
 const INTERVALO_ZOOM_AUTOMATICO = 8.0  # bajado de 60 a 8 (pedido 2026-09-27, "que actualice rápido")
+
+# Auto-retorno del panel de mapa a su tamaño chico (pedido 2026-09-27, panel
+# de instrumentos abajo: "que a los pocos segundos vuelva a su estado
+# inicial"). Se reinicia en cada resize/movida real (ver _input arriba);
+# cuando pasan estos segundos sin tocarlo, si no está ya en el tamaño chico,
+# vuelve solo.
+const SEGUNDOS_AUTO_RETORNO_MAPA = 4.0
+var _tiempo_desde_interaccion_mapa: float = 0.0
 var mapa_zoom_automatico: bool = true
 var _tiempo_zoom_automatico: float = INTERVALO_ZOOM_AUTOMATICO  # "debido" ya al arrancar, para el primer ajuste rápido
 
@@ -1298,6 +1306,7 @@ func _input(event: InputEvent) -> void:
 	if _modo_resize_mapa != ModoResizeMapa.NINGUNO:
 		if event is InputEventMouseMotion:
 			_procesar_resize_mapa()
+			_tiempo_desde_interaccion_mapa = 0.0
 			return
 		elif event is InputEventMouseButton and not event.pressed:
 			_modo_resize_mapa = ModoResizeMapa.NINGUNO
@@ -1311,6 +1320,7 @@ func _input(event: InputEvent) -> void:
 			mapa_rect.offset_right += event.relative.x
 			mapa_rect.offset_top += event.relative.y
 			mapa_rect.offset_bottom += event.relative.y
+			_tiempo_desde_interaccion_mapa = 0.0
 			return
 		elif event is InputEventMouseButton and not event.pressed:
 			_arrastrando_mover_mapa = false
@@ -2124,6 +2134,17 @@ func _process(delta: float) -> void:
 # avión se movió lo suficiente como para cambiar de tesela -- así no baja una
 # imagen nueva cada cuadro, solo cuando hace falta.
 func _actualizar_mapa_calles(delta: float) -> void:
+	# Auto-retorno al tamaño chico -- ver comentario junto a
+	# SEGUNDOS_AUTO_RETORNO_MAPA. Comparar contra el default evita resetear
+	# offsets todos los cuadros cuando ya está en su tamaño de siempre.
+	_tiempo_desde_interaccion_mapa += delta
+	if _tiempo_desde_interaccion_mapa >= SEGUNDOS_AUTO_RETORNO_MAPA:
+		var ya_en_default: bool = mapa_rect.offset_left == -160.0 and mapa_rect.offset_top == -160.0 \
+			and mapa_rect.offset_right == -10.0 and mapa_rect.offset_bottom == -10.0
+		if not ya_en_default and _modo_resize_mapa == ModoResizeMapa.NINGUNO and not _arrastrando_mover_mapa:
+			_resetear_mapa_a_tamano_default()
+		_tiempo_desde_interaccion_mapa = 0.0
+
 	if mapa_zoom_automatico:
 		_tiempo_zoom_automatico += delta
 		if _tiempo_zoom_automatico >= INTERVALO_ZOOM_AUTOMATICO:
@@ -2196,6 +2217,19 @@ func _pedir_baldosa_de_mapa(xtile: int, ytile: int) -> void:
 
 # Zoom con la ruedita del mouse -- fuerza que la próxima tesela se pida ya
 # mismo (no espera los 2 segundos normales) y a un nivel de detalle distinto.
+# Tamaño/posición chica de siempre del mapa -- pedido 2026-09-27, "que
+# vuelva sola a los pocos segundos de soltarla" (auto-retorno) además del
+# "botón de pánico" de doble clic que ya existía. El mapa vive anclado
+# abajo a la derecha (dentro del panel de instrumentos), así que estos son
+# offsets NEGATIVOS medidos desde ese borde.
+func _resetear_mapa_a_tamano_default() -> void:
+	mapa_rect.offset_left = -160.0
+	mapa_rect.offset_top = -160.0
+	mapa_rect.offset_right = -10.0
+	mapa_rect.offset_bottom = -10.0
+	_modo_resize_mapa = ModoResizeMapa.NINGUNO
+	_arrastrando_mover_mapa = false
+
 func _mapa_rect_gui_input(event: InputEvent) -> void:
 	# Doble clic = "botón de pánico" (pedido explícito 2026-09-21, "no se ve
 	# el vértice de abajo, quiero poder minimizarlo yo mismo"): vuelve al
@@ -2203,12 +2237,7 @@ func _mapa_rect_gui_input(event: InputEvent) -> void:
 	# (no hace falta encontrar la manija), así siempre hay forma de recuperar
 	# el control aunque el panel haya quedado gigante por lo que sea.
 	if event is InputEventMouseButton and event.pressed and event.double_click:
-		mapa_rect.offset_left = 20.0
-		mapa_rect.offset_top = 130.0
-		mapa_rect.offset_right = 220.0
-		mapa_rect.offset_bottom = 330.0
-		_modo_resize_mapa = ModoResizeMapa.NINGUNO
-		_arrastrando_mover_mapa = false
+		_resetear_mapa_a_tamano_default()
 		return
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
