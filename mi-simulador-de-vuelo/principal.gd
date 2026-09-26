@@ -47,15 +47,14 @@ const TIPOS_AVION = [
 	# tras primera prueba en vivo 2026-09-26 (usuario: "50% más chico").
 	{"nombre": "Avión genérico (nuevo)", "modelo": "res://modelos_aviones/plane_generico.glb", "helicoptero": false, "escala": 0.5, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helice.mp3"},
 	# NUEVO 2026-09-26, misma tanda -- estos 3 son .fbx (Godot 4 los importa
-	# nativo, sin necesitar Blender instalado). TERCERA vuelta 2026-09-26:
-	# escala del KF-30 confirmada perfecta -- quedó. Orientación corregida
-	# usando la referencia horaria que dio el usuario (KF-30 apuntaba a las
-	# 9, necesita las 12 -> +90°; Ka-27 y combate apuntaban a las 3,
-	# necesitan las 12 -> -90° cada uno). Ka-27 sigue chico, subida más la
-	# escala.
-	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.2, "rotacion": Vector3(0, 270, 0), "sonido": "res://FX/motor_jet.mp3"},
-	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 0.5, "rotacion": Vector3(0, 0, 0), "sonido": "res://FX/motor_helicoptero.mp3"},
-	{"nombre": "Avión de combate (nuevo)", "modelo": "res://modelos_aviones/fighter_jet_nuevo.fbx", "helicoptero": false, "escala": 0.3, "rotacion": Vector3(0, 0, 0), "sonido": "res://FX/motor_jet.mp3"},
+	# nativo, sin necesitar Blender instalado). CUARTA vuelta 2026-09-26:
+	# tamaño del KF-30 y orientación del combate confirmados bien -- quedan.
+	# KF-30 y Ka-27 quedaron mirando "para el lado del usuario" (de frente a
+	# la cámara) -- giro de 180° sobre lo que ya tenían. Ka-27 duplicado de
+	# tamaño, combate triplicado.
+	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.2, "rotacion": Vector3(0, 90, 0), "sonido": "res://FX/motor_jet.mp3"},
+	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helicoptero.mp3"},
+	{"nombre": "Avión de combate (nuevo)", "modelo": "res://modelos_aviones/fighter_jet_nuevo.fbx", "helicoptero": false, "escala": 0.9, "rotacion": Vector3(0, 0, 0), "sonido": "res://FX/motor_jet.mp3"},
 ]
 var tipo_avion_indice: int = 0
 

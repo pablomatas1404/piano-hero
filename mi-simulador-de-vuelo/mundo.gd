@@ -1133,14 +1133,13 @@ func _generar_aeropuerto(nombre: String, longitud_pista: float = 150.0) -> Node3
 	# `no_depth_test = true` -- lo clave: se dibuja SIEMPRE arriba de todo
 	# (terreno, edificios), como una baliza real, en vez de taparse detrás
 	# del primer edificio que se cruce en el medio.
-	# REDISEÑADO 2026-09-21 (pedido explícito: "de lejos lindo que avise,
-	# pero de cerca las letras gigantes quedan horribles"): dorado con
-	# borde en vez del cian plano de antes, y ahora ANIMADO -- ver
-	# _actualizar_beacons() -- parpadea suave mientras está lejos (para
-	# llamar la atención sin ser una luz fija molesta) y se va apagando de
-	# a poco a medida que uno se acerca, hasta desaparecer del todo cerca
-	# (ahí ya se ve perfectamente el cartel chico de siempre, sin superponerse
-	# con letras gigantes tapando la vista).
+	# CRITERIO DE OCULTAMIENTO corregido 2026-09-26 (pedido explícito: "me
+	# sirve verlo mientras voy en el aire, para orientación -- hay que
+	# sacarlo cuando uno está a baja altura", NO es un tema de distancia
+	# horizontal como se venía probando). Ver _actualizar_beacons(): ahora
+	# se desvanece según la ALTITUD del avión, no la distancia al
+	# aeropuerto -- volando alto ayuda a orientarse, bajo (aterrizando)
+	# molesta y se apaga.
 	var beacon = Label3D.new()
 	beacon.name = "Beacon"
 	beacon.text = nombre.to_upper()
@@ -1179,11 +1178,15 @@ func _generar_aeropuerto(nombre: String, longitud_pista: float = 150.0) -> Node3
 # largo del vector de posición global de cada beacon -- no hace falta
 # guardar ni pedir la posición del avión para nada.
 var beacons_para_animar: Array = []
-# Estirado 2026-09-26 (pedido explícito, "una vez que ya lo viste, que
-# desaparezca, no lo quiero" -- en las fotos del usuario todavía se veía
-# grande a 319-707m, porque recién se apagaba del todo a los 150m).
-const DIST_BEACON_OCULTO = 700.0
-const DIST_BEACON_DESVANECE = 1400.0
+# CRITERIO CAMBIADO 2026-09-26 (pedido explícito: "me sirve verlo mientras
+# voy en el aire, para orientación -- hay que sacarlo cuando uno está a
+# baja altura", no es un tema de qué tan lejos está el aeropuerto). Antes
+# se ocultaba por DISTANCIA horizontal al aeropuerto; ahora se oculta según
+# la ALTITUD del avión sobre el terreno de ESE aeropuerto -- volando alto
+# (crucero) ayuda a orientarse hacia varios aeropuertos a la vez, volando
+# bajo (aproximación/aterrizaje) tapa la vista y se apaga.
+const ALTURA_BEACON_OCULTO = 300.0
+const ALTURA_BEACON_VISIBLE = 900.0
 var _tiempo_beacons: float = 0.0
 func _actualizar_beacons(delta: float) -> void:
 	_tiempo_beacons += delta
@@ -1192,32 +1195,15 @@ func _actualizar_beacons(delta: float) -> void:
 	# quedar tipo cartel de neón roto.
 	var parpadeo: float = 0.775 + 0.225 * sin(_tiempo_beacons * 3.0)
 	for beacon in beacons_para_animar:
-		# BUG REAL encontrado 2026-09-21 (reportado por el usuario: "el
-		# cartel de Aeroparque ocupa toda la pantalla, no se ve ni el
-		# avión"): medía la distancia hasta el BEACON, que está flotando
-		# 300m en el aire (ver posición en _generar_aeropuerto) -- parado en
-		# la pista, esa distancia YA es ~300m, siempre por encima de
-		# DIST_BEACON_OCULTO (150m), así que nunca se llegaba a apagar del
-		# todo por más cerca que estuvieras del aeropuerto real. La
-		# distancia correcta es hasta el aeropuerto (su nodo padre, a nivel
-		# del piso), no hasta el cartel elevado.
-		# BUG REAL encontrado 2026-09-26 (reportado: "cuando estás en la
-		# pista no desaparece el nombre del aeropuerto"): esta distancia
-		# incluía la altura, pero "raiz" se ubica con una altitud FIJA e
-		# inventada (5.0, ver _actualizar_transform_aeropuerto) que no
-		# coincide con el terreno real de Cesium ahí (mismo desfasaje ya
-		# documentado en Aeroparque, donde llegó a ser de 70-80m) -- ese
-		# error vertical se sumaba de lleno a la distancia 3D, así que aun
-		# parado literalmente sobre el asfalto real la distancia calculada
-		# podía seguir por encima de DIST_BEACON_OCULTO. Igual que con los
-		# aros de ILS y las luces de pista, separamos la componente vertical
-		# y medimos solo la distancia HORIZONTAL -- lo que de verdad importa
-		# para "qué tan cerca estás del aeropuerto".
+		# Como el origen SIEMPRE está recentrado en el avión, la posición
+		# del aeropuerto (su nodo padre, a nivel del piso) YA es el vector
+		# aeropuerto->avión invertido -- la componente vertical de ese
+		# vector, con el signo dado vuelta, es cuántos metros por ENCIMA
+		# del piso de ese aeropuerto está el avión ahora mismo.
 		var vector_al_aeropuerto: Vector3 = beacon.get_parent().global_position
-		var vector_horizontal: Vector3 = vector_al_aeropuerto - vector_al_aeropuerto.dot(arriba_motor_actual) * arriba_motor_actual
-		var distancia: float = vector_horizontal.length()
+		var altura_sobre_aeropuerto: float = -vector_al_aeropuerto.dot(arriba_motor_actual)
 		var desvanecimiento: float = clamp(
-			(distancia - DIST_BEACON_OCULTO) / (DIST_BEACON_DESVANECE - DIST_BEACON_OCULTO),
+			(altura_sobre_aeropuerto - ALTURA_BEACON_OCULTO) / (ALTURA_BEACON_VISIBLE - ALTURA_BEACON_OCULTO),
 			0.0, 1.0)
 		beacon.modulate.a = desvanecimiento * parpadeo
 
