@@ -40,6 +40,14 @@ const TIPOS_AVION = [
 	# motor sostenido -- sonaba raro en loop. Se saca hasta encontrar uno que
 	# sí sea un zumbido constante de verdad.
 	{"nombre": "Helicóptero", "modelo": "res://modelos_aviones/helicoptero.glb", "helicoptero": true, "escala": 0.22, "rotacion": Vector3(0, 90, 0), "sonido": ""},
+	# NUEVO 2026-09-26 (pedido explícito, "aunque no tengan partes animadas,
+	# si son lindos los agregamos igual") -- bajado por el usuario de
+	# Sketchfab, único de la nueva tanda que ya venía en .glb (los demás son
+	# .fbx/.obj/.blend, necesitan más trabajo de conversión). Escala y
+	# rotación son un PRIMER INTENTO sin poder verlo en pantalla -- va a
+	# necesitar la misma vuelta de ajuste que tuvieron todos los demás
+	# modelos la primera vez (ver comentarios de Boeing arriba).
+	{"nombre": "Avión genérico (nuevo)", "modelo": "res://modelos_aviones/plane_generico.glb", "helicoptero": false, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helice.mp3"},
 ]
 var tipo_avion_indice: int = 0
 
