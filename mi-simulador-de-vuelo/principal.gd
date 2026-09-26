@@ -47,15 +47,15 @@ const TIPOS_AVION = [
 	# tras primera prueba en vivo 2026-09-26 (usuario: "50% más chico").
 	{"nombre": "Avión genérico (nuevo)", "modelo": "res://modelos_aviones/plane_generico.glb", "helicoptero": false, "escala": 0.5, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helice.mp3"},
 	# NUEVO 2026-09-26, misma tanda -- estos 3 son .fbx (Godot 4 los importa
-	# nativo, sin necesitar Blender instalado). SEGUNDA vuelta de ajuste
-	# 2026-09-26 (segunda prueba en vivo): con 0.05/0.08 seguían siendo "un
-	# puntito" en pantalla -- subidas bastante más. El avión de combate
-	# además apareció "girando, mirando a la izquierda" (su "adelante" no es
-	# el mismo eje que los demás modelos) -- probamos 90° en vez de 180°,
-	# sigue siendo una apuesta a ciegas sin poder verlo en pantalla.
-	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.2, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
-	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 0.25, "rotacion": Vector3(0, 90, 0), "sonido": "res://FX/motor_helicoptero.mp3"},
-	{"nombre": "Avión de combate (nuevo)", "modelo": "res://modelos_aviones/fighter_jet_nuevo.fbx", "helicoptero": false, "escala": 0.3, "rotacion": Vector3(0, 90, 0), "sonido": "res://FX/motor_jet.mp3"},
+	# nativo, sin necesitar Blender instalado). TERCERA vuelta 2026-09-26:
+	# escala del KF-30 confirmada perfecta -- quedó. Orientación corregida
+	# usando la referencia horaria que dio el usuario (KF-30 apuntaba a las
+	# 9, necesita las 12 -> +90°; Ka-27 y combate apuntaban a las 3,
+	# necesitan las 12 -> -90° cada uno). Ka-27 sigue chico, subida más la
+	# escala.
+	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.2, "rotacion": Vector3(0, 270, 0), "sonido": "res://FX/motor_jet.mp3"},
+	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 0.5, "rotacion": Vector3(0, 0, 0), "sonido": "res://FX/motor_helicoptero.mp3"},
+	{"nombre": "Avión de combate (nuevo)", "modelo": "res://modelos_aviones/fighter_jet_nuevo.fbx", "helicoptero": false, "escala": 0.3, "rotacion": Vector3(0, 0, 0), "sonido": "res://FX/motor_jet.mp3"},
 ]
 var tipo_avion_indice: int = 0
 
@@ -2090,6 +2090,12 @@ func _crear_luz_navegacion(posicion: Vector3, color: Color) -> MeshInstance3D:
 	mat.emission_enabled = true
 	mat.emission = color
 	mat.emission_energy_multiplier = 4.0
+	# TRANSPARENCY_ALPHA habilitado acá (no solo en la estroboscópica) para
+	# que el alfa del material pueda animarse -- en un material UNSHADED el
+	# albedo se ve a full brillo SIEMPRE sin importar la emisión, así que
+	# bajar solo emission_energy_multiplier no alcanza para "apagar" una
+	# luz, hace falta bajar también el alfa.
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	luz.set_surface_override_material(0, mat)
 	luz.position = posicion
 	# BUG REAL encontrado 2026-09-26 (reportado: "se ve el circulito pero
@@ -2117,6 +2123,13 @@ func _actualizar_estroboscopica(_delta: float) -> void:
 	var destello: float = pow(max(0.0, sin(t * TAU * VELOCIDAD_ESTROBOSCOPICA)), 12.0)
 	var mat: StandardMaterial3D = luz_estroboscopica.get_surface_override_material(0)
 	mat.emission_energy_multiplier = lerp(0.3, 6.0, destello)
+	# BUG REAL encontrado 2026-09-26 (reportado: "queda una luz blanca
+	# prendida en el medio, no hace flash"): en un material UNSHADED el
+	# albedo_color se ve a brillo completo SIEMPRE, sin importar cuánto baje
+	# emission_energy_multiplier -- por eso la bolita blanca se veía sólida
+	# y fija en vez de apagarse entre destellos. El apagado real tiene que
+	# venir del ALFA del material (habilitado en _crear_luz_navegacion).
+	mat.albedo_color.a = lerp(0.12, 1.0, destello)
 
 func _aplicar_tipo_avion(indice: int) -> void:
 	if indice < 0 or indice >= TIPOS_AVION.size():
@@ -2146,6 +2159,15 @@ func _aplicar_tipo_avion(indice: int) -> void:
 			var instancia = escena.instantiate()
 			instancia.scale = Vector3.ONE * datos["escala"]
 			instancia.rotation_degrees = datos["rotacion"]
+			# BUG REAL encontrado 2026-09-26 (reportado: "hay una base
+			# cuadrada pegada arriba del avión" en el avión de combate) --
+			# el .fbx trae un nodo suelto llamado "Plane" (un plano de
+			# referencia/fondo que quedó del archivo original de Sketchfab,
+			# escalado ~221x) que no es parte del avión real. Se saca de
+			# cualquier modelo que lo traiga, no solo de este.
+			var plano_sobrante = instancia.get_node_or_null("Plane")
+			if plano_sobrante:
+				plano_sobrante.queue_free()
 			modelo_externo.add_child(instancia)
 
 func _es_helicoptero() -> bool:
