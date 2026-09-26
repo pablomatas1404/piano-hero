@@ -544,6 +544,13 @@ var _ultimo_rumbo_actual: float = 0.0
 const VELOCIDAD_FRENO_EMERGENCIA = 200.0
 var freno_emergencia_anterior: bool = false
 
+# Freno progresivo -- ver comentario junto a freno_gradual_activo más abajo.
+const FRENADO_GRADUAL_BASE = 3.0        # primera apretada: unidades/seg de frenado
+const FRENADO_GRADUAL_INCREMENTO = 4.0  # cada apretada extra suma esto
+const FRENADO_GRADUAL_MAXIMO = 40.0     # tope para que nunca sea instantáneo
+var freno_gradual_anterior: bool = false
+var intensidad_frenado_gradual: float = 0.0
+
 # Debug del bug de rumbo (2026-09-20) -- N vuelca UNA línea con los números
 # de este instante a un archivo de texto, en vez de imprimir en la consola
 # todo el tiempo (imposible de copiar, se llenaba de números sin parar).
@@ -741,6 +748,7 @@ const ACCIONES_JOYSTICK = [
 	["vertical_abajo", "Bajar vertical (futuro helicóptero)"],
 	["marcar_lugar", "Marcar lugar (guardar coordenada actual)"],
 	["freno_emergencia", "Freno de emergencia (baja a 200)"],
+	["freno_gradual", "Freno progresivo (baja de a poco, más fuerte con cada apretada)"],
 	["activar_ils", "Activar/desactivar ILS"],
 	# Pedido 2026-09-26: "el otro dejalo, después le daré una función" --
 	# fila reservada, asignable ya mismo, sin comportamiento todavía. Cuando
@@ -1949,6 +1957,25 @@ func _process(delta: float) -> void:
 		get_tree().create_timer(1.5).timeout.connect(func(): cartel_central.visible = false)
 	freno_emergencia_anterior = freno_emergencia_activo
 
+	# Freno progresivo (pedido 2026-09-27, "una vez que ya aterricé necesito
+	# bajar de a poco, no un freno que se clave -- y que cada vez que lo
+	# apriete, frene más rápido"): un solo botón de un golpe (tecla B o
+	# joystick), a diferencia del freno de emergencia (que salta directo a
+	# un valor fijo), este resta velocidad GRADUALMENTE cada cuadro. Cada
+	# apretada ADICIONAL mientras ya está frenando sube la intensidad (más
+	# rápido el descenso), en vez de reiniciarlo -- así "una vez" es un
+	# frenado suave tipo "50, 49, 48...", y varias apretadas seguidas bajan
+	# la velocidad mucho más rápido, hasta el tope.
+	var freno_gradual_activo = Input.is_physical_key_pressed(KEY_B) or _joystick_activo("freno_gradual")
+	if freno_gradual_activo and not freno_gradual_anterior:
+		intensidad_frenado_gradual = clamp(
+			intensidad_frenado_gradual + FRENADO_GRADUAL_INCREMENTO if intensidad_frenado_gradual > 0.0 else FRENADO_GRADUAL_BASE,
+			0.0, FRENADO_GRADUAL_MAXIMO)
+		cartel_central.text = "🛑 Freno progresivo (-%.0f/s)" % intensidad_frenado_gradual
+		cartel_central.visible = true
+		get_tree().create_timer(1.0).timeout.connect(func(): cartel_central.visible = false)
+	freno_gradual_anterior = freno_gradual_activo
+
 	# Tecla I: prender/apagar el ILS sin soltar el mouse a buscar el botón
 	# (pedido explícito, "estoy a oscuras con el teclado, hasta que agarro
 	# el mouse ya me pasé"). Mismo de un solo golpe que M/D de arriba.
@@ -2249,11 +2276,21 @@ func _procesar_vuelo(delta: float) -> void:
 	# rango fijo (arranca despacito, se puede llevar hasta el tope si no
 	# querés bancarte un viaje largo entero).
 	if Input.is_physical_key_pressed(KEY_W) or _joystick_activo("acelerar"):
+		intensidad_frenado_gradual = 0.0  # acelerar cancela el freno progresivo en curso
 		velocidad_actual = min(ajustes["vel_maxima"], velocidad_actual + ACELERACION * delta)
 		_actualizar_etiqueta_velocidad()
 	elif Input.is_physical_key_pressed(KEY_S) or _joystick_activo("frenar"):
 		velocidad_actual = max(ajustes["vel_minima"], velocidad_actual - ACELERACION * delta)
 		_actualizar_etiqueta_velocidad()
+	elif intensidad_frenado_gradual > 0.0:
+		# Freno progresivo: resta velocidad de a poco (nunca de golpe), a un
+		# ritmo que sube con cada apretada extra del botón (ver más arriba).
+		# A diferencia de "S", este SÍ puede llegar hasta 0 -- pensado para
+		# frenar del todo después de aterrizar.
+		velocidad_actual = max(0.0, velocidad_actual - intensidad_frenado_gradual * delta)
+		_actualizar_etiqueta_velocidad()
+		if velocidad_actual <= 0.0:
+			intensidad_frenado_gradual = 0.0
 
 	translate(Vector3(0, 0, -velocidad_actual * delta))
 
@@ -3046,13 +3083,41 @@ func _actualizar_panel_torre(delta: float) -> void:
 		return
 	_acumulador_torre = 0.0
 
+	# Pedido explícito 2026-09-27 ("si tiene dos pistas, que aparezca pista 1
+	# y pista 2 por separado, cada una con su propio ILS individual"):
+	# Ezeiza (y cualquier otro aeropuerto que algún día se sume así) tiene
+	# DOS entradas de ILS reales ("Ezeiza Pista 1"/"Pista 2"), cada una con
+	# su propia posición -- se listan como candidatos SEPARADOS, usando el
+	# punto medio entre sus dos cabeceras. El nodo del aeropuerto "de
+	# siempre" (nodos_aeropuertos, un solo punto por lugar) se salta cuando
+	# ya está representado por al menos una de esas entradas, para no
+	# duplicar "Ezeiza" tres veces en la lista.
 	var arriba_real: Vector3 = _arriba_real()
 	var candidatos: Array = []
+	var nombres_desde_ils: Array = []
+	for entrada in mundo.contenedor_ils_dos_cabeceras:
+		var lat_medio: float = (entrada["cab1_lat"] + entrada["cab2_lat"]) * 0.5
+		var lon_medio: float = (entrada["cab1_lon"] + entrada["cab2_lon"]) * 0.5
+		var p1: Vector3 = mundo._posicion_desde_lat_lon(entrada["cab1_lat"], entrada["cab1_lon"], entrada.get("cab1_alt", 8.0))
+		var p2: Vector3 = mundo._posicion_desde_lat_lon(entrada["cab2_lat"], entrada["cab2_lon"], entrada.get("cab2_alt", 8.0))
+		var medio: Vector3 = (p1 + p2) * 0.5
+		var horizontal: Vector3 = medio - medio.dot(arriba_real) * arriba_real
+		candidatos.append({"nombre": entrada["nombre"], "lat": lat_medio, "lon": lon_medio, "distancia": horizontal.length()})
+		nombres_desde_ils.append(entrada["nombre"])
+
 	for nodo in mundo.obtener_destinos():
 		if not (nodo.has_meta("lat") and nodo.has_meta("lon")):
 			continue
-		var horizontal: Vector3 = nodo.global_position - nodo.global_position.dot(arriba_real) * arriba_real
-		candidatos.append({"nodo": nodo, "distancia": horizontal.length()})
+		var nombre_nodo: String = nodo.get_meta("nombre_bonito", nodo.name)
+		var ya_representado := false
+		for n in nombres_desde_ils:
+			if n == nombre_nodo or n.begins_with(nombre_nodo + " "):
+				ya_representado = true
+				break
+		if ya_representado:
+			continue
+		var horizontal_nodo: Vector3 = nodo.global_position - nodo.global_position.dot(arriba_real) * arriba_real
+		candidatos.append({"nombre": nombre_nodo, "lat": nodo.get_meta("lat"), "lon": nodo.get_meta("lon"), "distancia": horizontal_nodo.length()})
 	candidatos.sort_custom(func(a, b): return a["distancia"] < b["distancia"])
 
 	for i in range(_filas_torre.size()):
@@ -3064,9 +3129,8 @@ func _actualizar_panel_torre(delta: float) -> void:
 			fila["boton"].disabled = true
 			continue
 		var candidato: Dictionary = candidatos[i]
-		var nodo: Node3D = candidato["nodo"]
-		var nombre: String = nodo.get_meta("nombre_bonito", nodo.name)
-		var rumbo_hacia: float = _rumbo_verdadero_hacia(mundo.lat_avion, mundo.lon_avion, nodo.get_meta("lat"), nodo.get_meta("lon"))
+		var nombre: String = candidato["nombre"]
+		var rumbo_hacia: float = _rumbo_verdadero_hacia(mundo.lat_avion, mundo.lon_avion, candidato["lat"], candidato["lon"])
 		var relativo: float = fposmod(rumbo_hacia - _ultimo_rumbo_actual, 360.0)
 
 		fila["nombre"].text = nombre

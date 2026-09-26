@@ -1895,29 +1895,46 @@ func alternar_ils(activo: bool) -> void:
 	for entrada in contenedor_ils_dos_cabeceras:
 		entrada["contenedor"].visible = activo
 
+# BUG REAL encontrado 2026-09-27 (reportado: "en Ezeiza el ILS individual
+# nunca se activa, aunque el general sí lo prende"): Ezeiza tiene DOS pistas
+# reales, registradas como "Ezeiza Pista 1" y "Ezeiza Pista 2" (cada una su
+# propio par de aros), pero el NODO del aeropuerto -- el que usa el panel
+# Torre para saber a quién le tocás el botón -- se llama simplemente
+# "Ezeiza". Una comparación de igualdad exacta (nombre == entrada["nombre"])
+# nunca podía coincidir. Esta función centraliza el criterio: coincide si es
+# el mismo nombre exacto, O si el nombre de la entrada empieza con
+# "<nombre> " (para agrupar "Ezeiza Pista 1"/"Ezeiza Pista 2" bajo "Ezeiza").
+func _nombre_ils_coincide(nombre_entrada: String, nombre_buscado: String) -> bool:
+	return nombre_entrada == nombre_buscado or nombre_entrada.begins_with(nombre_buscado + " ")
+
 # ILS individual por aeropuerto (pedido 2026-09-27, panel "Torre" -- "poder
 # activar/desactivar los ILS de los 3 aeropuertos más cercanos desde ahí"),
 # independiente del interruptor maestro de arriba. Busca por nombre en las
 # DOS listas posibles (dos cabeceras reales, o el sistema viejo de un solo
-# rumbo) y prende/apaga solo esa.
+# rumbo) -- prende/apaga TODAS las que coincidan (un aeropuerto con varias
+# pistas, como Ezeiza, tiene que prender las dos juntas).
 func alternar_ils_aeropuerto(nombre: String, activo: bool) -> void:
+	var encontro_alguna := false
 	for entrada in contenedor_ils_dos_cabeceras:
-		if entrada["nombre"] == nombre:
+		if _nombre_ils_coincide(entrada["nombre"], nombre):
 			entrada["contenedor"].visible = activo
-			return
+			encontro_alguna = true
+	if encontro_alguna:
+		return
 	for par in contenedores_ils_por_aeropuerto:
-		if par["nodo"].get_meta("nombre_bonito", "") == nombre:
+		if _nombre_ils_coincide(par["nodo"].get_meta("nombre_bonito", ""), nombre):
 			par["positivo"].visible = activo
 			par["negativo"].visible = activo
-			return
 
 func ils_activo_en_aeropuerto(nombre: String) -> bool:
 	for entrada in contenedor_ils_dos_cabeceras:
-		if entrada["nombre"] == nombre:
-			return entrada["contenedor"].visible
+		if _nombre_ils_coincide(entrada["nombre"], nombre):
+			if entrada["contenedor"].visible:
+				return true
 	for par in contenedores_ils_por_aeropuerto:
-		if par["nodo"].get_meta("nombre_bonito", "") == nombre:
-			return par["positivo"].visible
+		if _nombre_ils_coincide(par["nodo"].get_meta("nombre_bonito", ""), nombre):
+			if par["positivo"].visible:
+				return true
 	return false
 
 # BUG REAL encontrado 2026-09-27 (reportado: "el botón de ILS individual a
@@ -1932,10 +1949,10 @@ func ils_activo_en_aeropuerto(nombre: String) -> bool:
 # botón como usable.
 func aeropuerto_tiene_ils(nombre: String) -> bool:
 	for entrada in contenedor_ils_dos_cabeceras:
-		if entrada["nombre"] == nombre:
+		if _nombre_ils_coincide(entrada["nombre"], nombre):
 			return true
 	for par in contenedores_ils_por_aeropuerto:
-		if par["nodo"].get_meta("nombre_bonito", "") == nombre:
+		if _nombre_ils_coincide(par["nodo"].get_meta("nombre_bonito", ""), nombre):
 			return true
 	return false
 
