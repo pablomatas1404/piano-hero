@@ -35,4 +35,10 @@ enabled=PackedStringArray("res://addons/cesium_godot/plugin.cfg")
 
 [rendering]
 
-rendering_device/driver.windows="d3d12"
+# PROBANDO 2026-09-26: sacado "d3d12" (vuelve al default de Godot, Vulkan)
+# para probar si es la causa de la pantalla partida/franja negra que
+# apareció al agregar el primer SubViewport transparente del proyecto
+# (MarcadoresViewport, en principal.tscn) -- combo conocido por dar
+# problemas de compositing de transparencia. Si esto NO lo arregla, hay
+# que revertir esta línea (rendering_device/driver.windows="d3d12") y
+# seguir buscando por otro lado.
