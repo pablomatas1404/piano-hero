@@ -386,11 +386,25 @@ const COLOR_LUZ_APAGADA = Color(0.25, 0.25, 0.25, 1.0)
 # del botón de radio de ambiente. Link encontrado inspeccionando el
 # reproductor oficial de fmaspen.com (usa la infraestructura StreamTheWorld).
 const URL_RADIO_ASPEN = "https://playerservices.streamtheworld.com/api/livestream-redirect/ASPENAAC.aac"
-const RUTA_RADIO_FONDO = "res://FX/radio_fondo.mp3"
 @onready var boton_radio: Button = get_node("../HUD/BarraBotones/BotonRadio")
 @onready var boton_radio_en_vivo: Button = get_node("../HUD/BarraBotones/BotonRadioEnVivo")
 @onready var sonido_radio: AudioStreamPlayer = get_node("SonidoRadio")
 var radio_activa: bool = false
+
+# Selector de emisoras de radio (pedido 2026-09-27, "un selector tipo con la
+# música" -- antes había un solo archivo fijo de fondo). Mismo patrón que
+# CARPETAS_MUSICA/playlist_musica: escanea la carpeta, arma una lista para
+# elegir, y guarda la última emisora elegida para la próxima partida.
+const CARPETA_RADIO = "res://FX/Radio"
+const RUTA_CONFIG_RADIO = "user://radio_config.cfg"
+const EMISORA_POR_DEFECTO = "Córdoba Torre (SACO)"  # pedido explícito, "que quede predeterminado el de Córdoba"
+@onready var panel_radio: Panel = get_node("../HUD/PanelRadio")
+@onready var boton_emisoras: Button = get_node("../HUD/BarraBotones/BotonEmisoras")
+@onready var lista_emisoras_radio: VBoxContainer = get_node("../HUD/PanelRadio/VBoxRadio/ScrollEmisoras/ListaEmisoras")
+@onready var boton_detener_radio: Button = get_node("../HUD/PanelRadio/VBoxRadio/BotonDetenerRadio")
+@onready var boton_cerrar_radio: Button = get_node("../HUD/PanelRadio/VBoxRadio/BotonCerrarRadio")
+var playlist_radio: Array = []
+var ruta_emisora_actual: String = ""
 
 # Botón para salir de pantalla completa sin depender de ESCAPE (pedido
 # 2026-09-21, la tecla no le funcionaba en su notebook).
@@ -817,14 +831,24 @@ func _ready() -> void:
 
 	boton_radio.focus_mode = Control.FOCUS_NONE
 	boton_radio.pressed.connect(_alternar_radio)
-	var stream_radio: AudioStream = load(RUTA_RADIO_FONDO)
-	if stream_radio is AudioStreamMP3:
-		stream_radio.loop = true
-	sonido_radio.stream = stream_radio
 	# volume_db ahora lo controla slider_volumen_radio (más abajo en _ready).
 
 	boton_radio_en_vivo.focus_mode = Control.FOCUS_NONE
 	boton_radio_en_vivo.pressed.connect(func(): OS.shell_open(URL_RADIO_ASPEN))
+
+	boton_emisoras.focus_mode = Control.FOCUS_NONE
+	boton_emisoras.pressed.connect(func():
+		panel_radio.visible = not panel_radio.visible
+		if panel_radio.visible:
+			_refrescar_lista_emisoras_radio())
+	boton_detener_radio.focus_mode = Control.FOCUS_NONE
+	boton_detener_radio.pressed.connect(func():
+		sonido_radio.stop()
+		radio_activa = false
+		boton_radio.text = "📻 Radio: OFF")
+	boton_cerrar_radio.focus_mode = Control.FOCUS_NONE
+	boton_cerrar_radio.pressed.connect(func(): panel_radio.visible = false)
+	_cargar_emisora_radio()
 
 	# Botón "✕" (pedido 2026-09-21, "la tecla escape no me funciona en la
 	# notebook"): mismo efecto que ESCAPE cuando no hay ningún panel abierto
@@ -1571,11 +1595,101 @@ func _poblar_lista_licencia_helicoptero() -> void:
 func _alternar_radio() -> void:
 	radio_activa = not radio_activa
 	if radio_activa:
+		if sonido_radio.stream == null and ruta_emisora_actual != "":
+			_cargar_stream_emisora(ruta_emisora_actual)
 		sonido_radio.play()
 		boton_radio.text = "📻 Radio: ON"
 	else:
 		sonido_radio.stop()
 		boton_radio.text = "📻 Radio: OFF"
+
+# Escanea FX/Radio y arma la lista de emisoras para elegir (mismo patrón que
+# _refrescar_lista_temas_musica). Cada botón carga y arranca ESA emisora al
+# toque, en loop, y queda guardada como preferida para la próxima vez.
+func _refrescar_lista_emisoras_radio() -> void:
+	playlist_radio.clear()
+	var dir := DirAccess.open(CARPETA_RADIO)
+	if dir:
+		dir.list_dir_begin()
+		var archivo := dir.get_next()
+		while archivo != "":
+			if not dir.current_is_dir() and archivo.to_lower().ends_with(".mp3"):
+				playlist_radio.append(CARPETA_RADIO + "/" + archivo)
+			archivo = dir.get_next()
+		dir.list_dir_end()
+	playlist_radio.sort()
+	for hijo in lista_emisoras_radio.get_children():
+		hijo.queue_free()
+	for i in range(playlist_radio.size()):
+		var boton := Button.new()
+		boton.text = playlist_radio[i].get_file().trim_suffix(".mp3")
+		boton.focus_mode = Control.FOCUS_NONE
+		boton.custom_minimum_size = Vector2(0, 20)
+		boton.add_theme_font_size_override("font_size", 11)
+		boton.clip_text = true
+		boton.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		if playlist_radio[i] == ruta_emisora_actual:
+			boton.modulate = Color(0.5, 1.0, 0.5, 1.0)
+		boton.pressed.connect(_seleccionar_emisora_radio.bind(playlist_radio[i]))
+		lista_emisoras_radio.add_child(boton)
+
+func _seleccionar_emisora_radio(ruta: String) -> void:
+	_cargar_stream_emisora(ruta)
+	ruta_emisora_actual = ruta
+	radio_activa = true
+	sonido_radio.play()
+	boton_radio.text = "📻 Radio: ON"
+	_guardar_emisora_radio()
+	_refrescar_lista_emisoras_radio()
+
+# Mismo truco que la música (ver _reproducir_siguiente_musica): lee los
+# bytes a mano con FileAccess en vez de load(), así una emisora nueva que se
+# copie a la carpeta suena de una sin pasar antes por el editor de Godot.
+func _cargar_stream_emisora(ruta: String) -> void:
+	var bytes: PackedByteArray = FileAccess.get_file_as_bytes(ruta)
+	if bytes.is_empty():
+		return
+	var mp3 := AudioStreamMP3.new()
+	mp3.data = bytes
+	mp3.loop = true
+	sonido_radio.stream = mp3
+
+func _guardar_emisora_radio() -> void:
+	var cfg = ConfigFile.new()
+	cfg.load(RUTA_CONFIG_RADIO)
+	cfg.set_value("radio", "emisora", ruta_emisora_actual)
+	cfg.save(RUTA_CONFIG_RADIO)
+
+# Elige la emisora preferida guardada, o la de Córdoba por defecto (pedido
+# explícito) si es la primera vez o esa ruta ya no existe. Solo prepara
+# ruta_emisora_actual -- el audio en sí recién se carga cuando se prende la
+# radio (_alternar_radio) o se abre el selector, para no gastar de arranque.
+func _cargar_emisora_radio() -> void:
+	var dir := DirAccess.open(CARPETA_RADIO)
+	if not dir:
+		return
+	dir.list_dir_begin()
+	var archivo := dir.get_next()
+	var candidatos: Array = []
+	while archivo != "":
+		if not dir.current_is_dir() and archivo.to_lower().ends_with(".mp3"):
+			candidatos.append(CARPETA_RADIO + "/" + archivo)
+		archivo = dir.get_next()
+	dir.list_dir_end()
+	if candidatos.is_empty():
+		return
+	var cfg = ConfigFile.new()
+	var guardada: String = ""
+	if cfg.load(RUTA_CONFIG_RADIO) == OK:
+		guardada = cfg.get_value("radio", "emisora", "")
+	if guardada != "" and candidatos.has(guardada):
+		ruta_emisora_actual = guardada
+		return
+	for ruta in candidatos:
+		if ruta.get_file().trim_suffix(".mp3") == EMISORA_POR_DEFECTO:
+			ruta_emisora_actual = ruta
+			return
+	ruta_emisora_actual = candidatos[0]
 
 func _cargar_control_mouse() -> void:
 	var cfg = ConfigFile.new()
