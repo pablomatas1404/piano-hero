@@ -267,8 +267,11 @@ var aeropuertos_dos_cabeceras = [
 	# (Corrientes), Apóstoles, Alvear, Cañada de Gómez, Bell Ville, Las
 	# Flores, General Madariaga, Chascomús, Rauch, São Borja -- ninguno tiene
 	# ficha de aeródromo en SkyVector pese a estar en la lista de destinos.
+	# ancho_medio_pista: medido por el usuario con "Marcar lugar" (puntos
+	# "sanfer 5"/"sanfer 6" en lugares_marcados.json) -- ~33m de ancho real
+	# de punta a punta, la mitad para el offset desde el eje central.
 	{"nombre": "San Fernando", "cab1_lat": -34.459167, "cab1_lon": -58.595667, "cab1_alt": 10.06,
-		"cab2_lat": -34.45, "cab2_lon": -58.5855, "cab2_alt": 3.35},
+		"cab2_lat": -34.45, "cab2_lon": -58.5855, "cab2_alt": 3.35, "ancho_medio_pista": 16.5},
 	{"nombre": "Córdoba (Taravella)", "cab1_lat": -31.3245, "cab1_lon": -64.208167, "cab1_alt": 465.15,
 		"cab2_lat": -31.295667, "cab2_lon": -64.2085, "cab2_alt": 488.99},
 	{"nombre": "Mendoza (El Plumerillo)", "cab1_lat": -32.819167, "cab1_lon": -68.792667, "cab1_alt": 698.02,
@@ -1518,12 +1521,21 @@ const PRESETS_LUCES_PISTA = {
 		"color_borde": Color(1.0, 1.0, 1.0), "modo": "pulso_conjunto",
 		"velocidad": 1.6, "ancho_pulso": 0.12,
 	},
+	# Pedido explícito 2026-09-25 ("tipo Palomar, que esas estén fijas, pero
+	# que también tenga un efecto de que vaya y venga por arriba"): mismo
+	# celeste de Palomar, pero las luces quedan SIEMPRE prendidas (brillo
+	# base) y por encima pasa un destello más brillante que recorre la
+	# pista de punta a punta y vuelve (no en bucle hacia un solo lado).
+	"neon_celeste_vaiven": {
+		"color_borde": Color(0.25, 0.85, 1.0), "modo": "fijo_con_viajero",
+		"velocidad": 0.4, "ancho_pulso": 0.22, "brillo_base": 0.55,
+	},
 }
 const ASIGNACION_ESTILO_PRUEBA = {
 	"Morón": "clasico_dorado",
 	"El Palomar": "neon_celeste",
 	"San Fernando": "secuencial_doble_rosa",
-	"Aeroparque": "estroboscopico_blanco",
+	"Aeroparque": "neon_celeste_vaiven",
 }
 const ESTILO_POR_DEFECTO = "clasico_dorado"
 
@@ -1535,6 +1547,9 @@ func _generar_luces_pista(datos: Dictionary) -> void:
 	var nombre_estilo: String = ASIGNACION_ESTILO_PRUEBA.get(datos["nombre"], ESTILO_POR_DEFECTO)
 	var estilo: Dictionary = PRESETS_LUCES_PISTA[nombre_estilo]
 	var color_borde: Color = estilo["color_borde"]
+	# Ancho real de pista, cuando el usuario lo midió a mano (pedido
+	# 2026-09-25) -- si no está el dato, se usa el genérico de siempre.
+	var ancho_medio: float = datos.get("ancho_medio_pista", ANCHO_MEDIO_PISTA_LUCES)
 
 	var mat_umbral = StandardMaterial3D.new()
 	mat_umbral.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -1597,6 +1612,7 @@ func _generar_luces_pista(datos: Dictionary) -> void:
 		"cab1_lat": datos["cab1_lat"], "cab1_lon": datos["cab1_lon"], "cab1_alt": datos.get("cab1_alt", 8.0),
 		"cab2_lat": datos["cab2_lat"], "cab2_lon": datos["cab2_lon"], "cab2_alt": datos.get("cab2_alt", 8.0),
 		"estilo": estilo,
+		"ancho_medio_pista": ancho_medio,
 		"contenedor": contenedor,
 		"mat_umbral": mat_umbral,
 	})
@@ -1622,6 +1638,16 @@ func _brillo_luz_pista(t: float, tiempo: float, estilo: Dictionary) -> float:
 			var fase_doble: float = fposmod(t_plegado - tiempo * velocidad, 1.0)
 			var distancia_doble: float = min(fase_doble, 1.0 - fase_doble)
 			return clamp(1.0 - distancia_doble / (ancho_pulso * 0.5), 0.0, 1.0)
+		"fijo_con_viajero":
+			# Brillo base SIEMPRE prendido (no llega nunca a apagarse del
+			# todo) + un destello más fuerte que recorre la pista de punta a
+			# punta y VUELVE (onda triangular, no en bucle hacia un solo
+			# lado -- por eso "va y viene").
+			var brillo_base: float = estilo.get("brillo_base", 0.5)
+			var t_viajero: float = abs(fposmod(tiempo * velocidad, 2.0) - 1.0)
+			var distancia_viajero: float = abs(t - t_viajero)
+			var onda: float = clamp(1.0 - distancia_viajero / (ancho_pulso * 0.5), 0.0, 1.0)
+			return clamp(brillo_base + onda * (1.0 - brillo_base), 0.0, 1.0)
 		_:  # "secuencial" -- una sola luz viajando de punta a punta, en bucle
 			var fase: float = fposmod(t - tiempo * velocidad, 1.0)
 			var distancia: float = min(fase, 1.0 - fase)
@@ -1668,7 +1694,7 @@ func _actualizar_luces_pista_frame() -> void:
 		for luz in entrada["contenedor"].get_children():
 			var t: float = luz.get_meta("t")
 			var lado: float = luz.get_meta("lado")
-			var punto_horizontal: Vector3 = p1.lerp(p2, t) + perpendicular * (lado * ANCHO_MEDIO_PISTA_LUCES)
+			var punto_horizontal: Vector3 = p1.lerp(p2, t) + perpendicular * (lado * entrada["ancho_medio_pista"])
 			var origen_rayo: Vector3 = punto_horizontal + arriba_motor_actual * 500.0
 			var destino_rayo: Vector3 = punto_horizontal - arriba_motor_actual * 500.0
 			var consulta := PhysicsRayQueryParameters3D.create(origen_rayo, destino_rayo)
@@ -1707,6 +1733,32 @@ var contenedor_faros: Array = []
 const ALTURA_FARO_SOBRE_PISO = 45.0  # por encima de los edificios más altos típicos
 const RADIO_FARO = 25.0
 const VELOCIDAD_DESTELLO_FARO = 0.22  # ~1 destello cada 4.5s, como un faro real
+var _textura_destello_faro: ImageTexture = null
+
+# BUG REAL encontrado 2026-09-25 (reportado: "aparece un cuadrado blanco"):
+# el faro era un QuadMesh con color sólido -- sin ninguna textura con
+# transparencia, un quad SIEMPRE se ve como lo que es, un cuadrado con bordes
+# duros, por más "transparency = ALPHA" que tenga el material (eso solo
+# habilita la transparencia, no la crea sola). Generamos acá una textura
+# chiquita con un degradado radial (blanco en el centro, totalmente
+# transparente en el borde) para que se vea como un destello/resplandor
+# real y no como un bloque. Se genera UNA sola vez y se reusa en todos los
+# faros (son todos iguales).
+func _obtener_textura_destello_faro() -> ImageTexture:
+	if _textura_destello_faro:
+		return _textura_destello_faro
+	const LADO = 64
+	var imagen := Image.create_empty(LADO, LADO, false, Image.FORMAT_RGBA8)
+	var centro := Vector2(LADO / 2.0, LADO / 2.0)
+	var radio_max: float = LADO / 2.0
+	for y in range(LADO):
+		for x in range(LADO):
+			var distancia: float = Vector2(x + 0.5, y + 0.5).distance_to(centro) / radio_max
+			var alfa: float = clamp(1.0 - distancia, 0.0, 1.0)
+			alfa = alfa * alfa  # cae más suave hacia el borde, no lineal
+			imagen.set_pixel(x, y, Color(1.0, 1.0, 1.0, alfa))
+	_textura_destello_faro = ImageTexture.create_from_image(imagen)
+	return _textura_destello_faro
 
 func _generar_faro_aeropuerto(datos: Dictionary) -> void:
 	var lat_medio: float = (datos["cab1_lat"] + datos["cab2_lat"]) / 2.0
@@ -1721,11 +1773,16 @@ func _generar_faro_aeropuerto(datos: Dictionary) -> void:
 
 	var mat_faro = StandardMaterial3D.new()
 	mat_faro.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat_faro.albedo_color = Color(1.0, 1.0, 1.0, 0.9)
+	mat_faro.albedo_color = Color(1.0, 1.0, 1.0, 1.0)
+	mat_faro.albedo_texture = _obtener_textura_destello_faro()
 	mat_faro.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat_faro.emission_enabled = true
 	mat_faro.emission = Color(1.0, 1.0, 0.9)
 	mat_faro.emission_energy_multiplier = 2.0
+	# El "glow" aditivo suma luz en vez de tapar lo de atrás con un
+	# cuadrado -- junto con la textura radial, esto es lo que da el
+	# aspecto de destello real en vez de bloque sólido.
+	mat_faro.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	mat_faro.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 	faro.set_surface_override_material(0, mat_faro)
 	faro.set_layer_mask_value(1, false)

@@ -1265,10 +1265,13 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
+# Agrandado 520x520 -> 520x600 (pedido explícito, "las letras están fuera
+# del recuadro"): las filas de Hora del día/Avance automático que se
+# agregaron el 2026-09-25 no entraban en el tamaño fijo de antes.
 offset_left = -260.0
-offset_top = -260.0
+offset_top = -300.0
 offset_right = 260.0
-offset_bottom = 260.0
+offset_bottom = 300.0
 grow_horizontal = 2
 grow_vertical = 2
 
