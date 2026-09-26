@@ -138,6 +138,8 @@ surface_material_override/0 = SubResource("StandardMaterial3D_avion")
 
 [node name="SonidoMusica" type="AudioStreamPlayer" parent="Avion" unique_id=1658680523]
 
+[node name="SonidoInstrucciones" type="AudioStreamPlayer" parent="Avion"]
+
 [node name="Marker3D" type="Marker3D" parent="Avion" unique_id=44204222]
 
 [node name="LineaGuia" type="MeshInstance3D" parent="." unique_id=1113207452]
@@ -422,6 +424,12 @@ custom_minimum_size = Vector2(0, 22)
 layout_mode = 2
 theme_override_font_sizes/font_size = 11
 text = "🎙️ Emisoras"
+
+[node name="BotonInstrucciones" type="Button" parent="HUD/BarraBotones"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "🦺 Instrucciones"
 
 [node name="BotonRadioEnVivo" type="Button" parent="HUD/BarraBotones" unique_id=859343576]
 custom_minimum_size = Vector2(0, 22)

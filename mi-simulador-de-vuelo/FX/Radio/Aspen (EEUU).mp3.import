@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bc431ldhgou67"
+path="res://.godot/imported/Aspen (EEUU).mp3-7fee7778f6aeafcee8c76cc71ad7d8d1.mp3str"
+
+[deps]
+
+source_file="res://FX/Radio/Aspen (EEUU).mp3"
+dest_files=["res://.godot/imported/Aspen (EEUU).mp3-7fee7778f6aeafcee8c76cc71ad7d8d1.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

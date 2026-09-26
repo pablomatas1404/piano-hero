@@ -406,6 +406,15 @@ const EMISORA_POR_DEFECTO = "Córdoba Torre (SACO)"  # pedido explícito, "que q
 var playlist_radio: Array = []
 var ruta_emisora_actual: String = ""
 
+# Audio de instrucciones de seguridad (pedido 2026-09-27) -- a propósito
+# MUCHO más simple que música/radio: un solo archivo fijo, play/stop nada
+# más, sin selector. "Cuando encontremos uno mejor, directamente
+# reemplazamos el archivo" -- por eso no hay lista, solo se busca el primer
+# .mp3 que haya en la carpeta.
+const CARPETA_INSTRUCCIONES = "res://FX/Instrucciones"
+@onready var boton_instrucciones: Button = get_node("../HUD/BarraBotones/BotonInstrucciones")
+@onready var sonido_instrucciones: AudioStreamPlayer = get_node("SonidoInstrucciones")
+
 # Botón para salir de pantalla completa sin depender de ESCAPE (pedido
 # 2026-09-21, la tecla no le funcionaba en su notebook).
 @onready var boton_salir_pantalla_completa: Button = get_node("../HUD/BotonSalirPantallaCompleta")
@@ -857,6 +866,9 @@ func _ready() -> void:
 	boton_cerrar_radio.focus_mode = Control.FOCUS_NONE
 	boton_cerrar_radio.pressed.connect(func(): panel_radio.visible = false)
 	_cargar_emisora_radio()
+
+	boton_instrucciones.focus_mode = Control.FOCUS_NONE
+	boton_instrucciones.pressed.connect(_alternar_instrucciones)
 
 	# Botón "✕" (pedido 2026-09-21, "la tecla escape no me funciona en la
 	# notebook"): mismo efecto que ESCAPE cuando no hay ningún panel abierto
@@ -1698,6 +1710,39 @@ func _cargar_emisora_radio() -> void:
 			ruta_emisora_actual = ruta
 			return
 	ruta_emisora_actual = candidatos[0]
+
+# Play/stop simple, sin selector (pedido explícito: "que no sea tanto
+# trabajo, play/stop nada más, no como la música que tiene para elegir").
+# Busca el primer .mp3 que encuentre en la carpeta -- cuando se reemplace
+# el archivo por uno mejor, no hace falta tocar código, solo el archivo.
+func _alternar_instrucciones() -> void:
+	if sonido_instrucciones.playing:
+		sonido_instrucciones.stop()
+		boton_instrucciones.text = "🦺 Instrucciones"
+		return
+	if sonido_instrucciones.stream == null:
+		var dir := DirAccess.open(CARPETA_INSTRUCCIONES)
+		if not dir:
+			return
+		dir.list_dir_begin()
+		var archivo := dir.get_next()
+		var ruta := ""
+		while archivo != "":
+			if not dir.current_is_dir() and archivo.to_lower().ends_with(".mp3"):
+				ruta = CARPETA_INSTRUCCIONES + "/" + archivo
+				break
+			archivo = dir.get_next()
+		dir.list_dir_end()
+		if ruta == "":
+			return
+		var bytes: PackedByteArray = FileAccess.get_file_as_bytes(ruta)
+		if bytes.is_empty():
+			return
+		var mp3 := AudioStreamMP3.new()
+		mp3.data = bytes
+		sonido_instrucciones.stream = mp3
+	sonido_instrucciones.play()
+	boton_instrucciones.text = "🦺 Instrucciones: ON"
 
 func _cargar_control_mouse() -> void:
 	var cfg = ConfigFile.new()
