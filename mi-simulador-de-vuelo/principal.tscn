@@ -1711,6 +1711,21 @@ custom_minimum_size = Vector2(0, 24)
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="HBoxVolumenInstrucciones" type="HBoxContainer" parent="HUD/PanelConfiguracion/VBoxConfig"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LabelVolumenInstrucciones" type="Label" parent="HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenInstrucciones"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Volumen instrucciones"
+
+[node name="SliderVolumenInstrucciones" type="HSlider" parent="HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenInstrucciones"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+
 [node name="CheckControlMouse" type="CheckButton" parent="HUD/PanelConfiguracion/VBoxConfig" unique_id=1248500775]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14

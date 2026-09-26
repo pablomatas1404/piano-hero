@@ -1109,6 +1109,7 @@ func _generar_aeropuerto(nombre: String, longitud_pista: float = 150.0) -> Node3
 	etiqueta.outline_size = 14
 	etiqueta.position = Vector3(-28, 14, -75)
 	raiz.add_child(etiqueta)
+	etiquetas_cercanas.append(etiqueta)
 
 	var mat_poste = StandardMaterial3D.new()
 	mat_poste.albedo_color = Color(0.9, 0.15, 0.15)
@@ -1185,9 +1186,16 @@ var beacons_para_animar: Array = []
 # la ALTITUD del avión sobre el terreno de ESE aeropuerto -- volando alto
 # (crucero) ayuda a orientarse hacia varios aeropuertos a la vez, volando
 # bajo (aproximación/aterrizaje) tapa la vista y se apaga.
-const ALTURA_BEACON_OCULTO = 300.0
-const ALTURA_BEACON_VISIBLE = 900.0
+const ALTURA_BEACON_OCULTO = 500.0
+const ALTURA_BEACON_VISIBLE = 800.0
 var _tiempo_beacons: float = 0.0
+# Pedido explícito 2026-09-27 ("a los 500 metros que desaparezcan TODOS los
+# carteles que interrumpan la visual de los aeropuertos", repetido varias
+# veces -- el cartel CHICO de cerca (etiqueta) se había quedado afuera de
+# este sistema, "no lo tocamos" de un pedido viejo que ya no aplica: ahora
+# molesta tanto como el gigante cuando estás aterrizando de verdad. Mismo
+# criterio de altitud que el beacon, sin parpadeo (es chico, no hace falta).
+var etiquetas_cercanas: Array = []
 func _actualizar_beacons(delta: float) -> void:
 	_tiempo_beacons += delta
 	# Parpadeo lento (medio ciclo por segundo aprox.), nunca llega a apagarse
@@ -1206,6 +1214,11 @@ func _actualizar_beacons(delta: float) -> void:
 			(altura_sobre_aeropuerto - ALTURA_BEACON_OCULTO) / (ALTURA_BEACON_VISIBLE - ALTURA_BEACON_OCULTO),
 			0.0, 1.0)
 		beacon.modulate.a = desvanecimiento * parpadeo
+
+	for etiqueta in etiquetas_cercanas:
+		var vector_al_aeropuerto_2: Vector3 = etiqueta.get_parent().global_position
+		var altura_2: float = -vector_al_aeropuerto_2.dot(arriba_motor_actual)
+		etiqueta.visible = altura_2 >= ALTURA_BEACON_OCULTO
 
 # Aeropuerto marcado por el usuario en pleno vuelo (pedido 2026-09-21) --
 # mismo cartel/pista que _generar_aeropuerto, pero en su PROPIA lista (no se

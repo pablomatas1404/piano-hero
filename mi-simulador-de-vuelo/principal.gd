@@ -316,6 +316,15 @@ var altura_piso = 0.0
 # _ready() con referencias a los nodos de la escena; _actualizar_panel_torre()
 # solo actualiza texto/rotación/metadata cada tanto (ver INTERVALO_TORRE).
 var _filas_torre: Array = []
+# Pedido explícito 2026-09-27: activar un ILS individual desde el panel
+# Torre pisa el rumbo sugerido ("Ponete en rumbo X°"), apuntando a ESE
+# aeropuerto en vez de al plan de vuelo Origen/Destino. Se apaga solo si
+# se vuelve a apretar el mismo botón (apagándolo) -- ahí vuelve al plan de
+# vuelo de siempre.
+var rumbo_guia_override_activo: bool = false
+var rumbo_guia_override_lat: float = 0.0
+var rumbo_guia_override_lon: float = 0.0
+var rumbo_guia_override_nombre: String = ""
 var _acumulador_torre: float = 999.0
 const INTERVALO_TORRE = 0.5  # bajado de 2.0 (pedido 2026-09-27, "paso por arriba y la distancia no se actualizó")
 @onready var cartel_central: Label = get_node("../HUD/CartelCentral")
@@ -477,6 +486,7 @@ var genero_musica_actual: String = ""
 # motor de arriba.
 @onready var slider_volumen_musica: HSlider = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenMusica/SliderVolumenMusica")
 @onready var slider_volumen_radio: HSlider = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenRadio/SliderVolumenRadio")
+@onready var slider_volumen_instrucciones: HSlider = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenInstrucciones/SliderVolumenInstrucciones")
 const RUTA_CONFIG_AUDIO = "user://audio_config.cfg"
 const VOLUMEN_MOTOR_DB_MINIMO = -40.0  # con el slider en 0, casi inaudible en vez de mudo de golpe
 const VOLUMEN_MOTOR_DB_MAXIMO = -6.0   # con el slider al máximo, presente pero no estruendoso
@@ -484,9 +494,12 @@ const VOLUMEN_MUSICA_DB_MINIMO = -40.0
 const VOLUMEN_MUSICA_DB_MAXIMO = 0.0
 const VOLUMEN_RADIO_DB_MINIMO = -40.0
 const VOLUMEN_RADIO_DB_MAXIMO = 0.0
+const VOLUMEN_INSTRUCCIONES_DB_MINIMO = -40.0
+const VOLUMEN_INSTRUCCIONES_DB_MAXIMO = 0.0
 var volumen_motor: float = 0.5  # 0..1, lo que muestra/mueve el slider
 var volumen_musica: float = 0.7
 var volumen_radio: float = 0.5  # arranca más bajo (antes sonaba fijo a -12db)
+var volumen_instrucciones: float = 0.4  # pedido explícito: "está muy fuerte"
 const PITCH_MOTOR_MINIMO = 0.85
 const PITCH_MOTOR_MAXIMO = 1.25
 @onready var linea_guia: MeshInstance3D = get_node("../LineaGuia")
@@ -554,9 +567,14 @@ const VELOCIDAD_FRENO_EMERGENCIA = 200.0
 var freno_emergencia_anterior: bool = false
 
 # Freno progresivo -- ver comentario junto a freno_gradual_activo más abajo.
-const FRENADO_GRADUAL_BASE = 3.0        # primera apretada: unidades/seg de frenado
-const FRENADO_GRADUAL_INCREMENTO = 4.0  # cada apretada extra suma esto
-const FRENADO_GRADUAL_MAXIMO = 40.0     # tope para que nunca sea instantáneo
+# AJUSTADO 2026-09-27 (reportado: "con dos apretadas ya llega a cero, queda
+# clavado -- tiene que hacer falta un montón de apretadas para que sea
+# rápido"): valores bajados bastante. Con 200 de velocidad y 2 apretadas
+# (0.5+1.0=1.5/seg) tarda más de dos minutos en parar -- recién con muchas
+# apretadas seguidas se acerca al tope y para rápido de verdad.
+const FRENADO_GRADUAL_BASE = 0.5        # primera apretada: unidades/seg de frenado
+const FRENADO_GRADUAL_INCREMENTO = 1.0  # cada apretada extra suma esto
+const FRENADO_GRADUAL_MAXIMO = 20.0     # tope para que nunca sea instantáneo
 var freno_gradual_anterior: bool = false
 var intensidad_frenado_gradual: float = 0.0
 
@@ -984,6 +1002,15 @@ func _ready() -> void:
 	slider_volumen_radio.focus_mode = Control.FOCUS_NONE
 	slider_volumen_radio.value_changed.connect(_cambiar_volumen_radio)
 	sonido_radio.volume_db = lerp(VOLUMEN_RADIO_DB_MINIMO, VOLUMEN_RADIO_DB_MAXIMO, volumen_radio)
+
+	_cargar_volumen_instrucciones()
+	slider_volumen_instrucciones.min_value = 0.0
+	slider_volumen_instrucciones.max_value = 1.0
+	slider_volumen_instrucciones.step = 0.01
+	slider_volumen_instrucciones.value = volumen_instrucciones
+	slider_volumen_instrucciones.focus_mode = Control.FOCUS_NONE
+	slider_volumen_instrucciones.value_changed.connect(_cambiar_volumen_instrucciones)
+	sonido_instrucciones.volume_db = lerp(VOLUMEN_INSTRUCCIONES_DB_MINIMO, VOLUMEN_INSTRUCCIONES_DB_MAXIMO, volumen_instrucciones)
 
 	boton_guardar_lugar.focus_mode = Control.FOCUS_NONE
 	boton_cancelar_lugar.focus_mode = Control.FOCUS_NONE
@@ -1806,6 +1833,20 @@ func _cargar_volumen_radio() -> void:
 	if cfg.load(RUTA_CONFIG_AUDIO) != OK:
 		return
 	volumen_radio = cfg.get_value("audio", "volumen_radio", volumen_radio)
+
+func _cambiar_volumen_instrucciones(valor: float) -> void:
+	volumen_instrucciones = valor
+	sonido_instrucciones.volume_db = lerp(VOLUMEN_INSTRUCCIONES_DB_MINIMO, VOLUMEN_INSTRUCCIONES_DB_MAXIMO, volumen_instrucciones)
+	var cfg = ConfigFile.new()
+	cfg.load(RUTA_CONFIG_AUDIO)
+	cfg.set_value("audio", "volumen_instrucciones", volumen_instrucciones)
+	cfg.save(RUTA_CONFIG_AUDIO)
+
+func _cargar_volumen_instrucciones() -> void:
+	var cfg = ConfigFile.new()
+	if cfg.load(RUTA_CONFIG_AUDIO) != OK:
+		return
+	volumen_instrucciones = cfg.get_value("audio", "volumen_instrucciones", volumen_instrucciones)
 
 # Carga el loop que corresponde a la familia de avión (hélice/jet/helicóptero)
 # y lo deja sonando -- se llama al arrancar y cada vez que se cambia de avión
@@ -3192,6 +3233,8 @@ func _actualizar_panel_torre(delta: float) -> void:
 		fila["flecha"].visible = true
 		fila["flecha"].rotation_degrees = relativo
 		fila["boton"].set_meta("nombre_aeropuerto", nombre)
+		fila["boton"].set_meta("lat_aeropuerto", candidato["lat"])
+		fila["boton"].set_meta("lon_aeropuerto", candidato["lon"])
 		if not mundo.aeropuerto_tiene_ils(nombre):
 			# Sin datos de ILS cargados para este -- deshabilitado en vez de
 			# dejarlo "prenderse" un instante y apagarse solo (ver comentario
@@ -3215,6 +3258,20 @@ func _alternar_ils_torre(indice: int) -> void:
 	# Refresco inmediato del botón (no esperar los 2s del próximo ciclo).
 	boton.text = "ILS" if activo else "ILS ON"
 	boton.modulate = Color(1, 1, 1, 1) if activo else Color(0.5, 1.0, 0.5, 1.0)
+
+	if activo:
+		# Se estaba apagando este mismo -- si era el que tenía el rumbo
+		# tomado, soltarlo y volver al plan de vuelo de siempre.
+		if rumbo_guia_override_nombre == nombre:
+			rumbo_guia_override_activo = false
+			rumbo_guia_override_nombre = ""
+	else:
+		# Se está prendiendo -- este pasa a ser el que manda en el rumbo
+		# sugerido de arriba.
+		rumbo_guia_override_activo = true
+		rumbo_guia_override_nombre = nombre
+		rumbo_guia_override_lat = boton.get_meta("lat_aeropuerto", 0.0)
+		rumbo_guia_override_lon = boton.get_meta("lon_aeropuerto", 0.0)
 
 func _actualizar_torre(altura: float) -> void:
 	# BUG REAL encontrado 2026-09-20 (el "reloj" del RUMBO, sospechado
@@ -3315,9 +3372,16 @@ func _actualizar_torre(altura: float) -> void:
 	# pasar por los ejes del motor para nada, así que este error no puede
 	# volver a pasar más.
 	var rumbo_objetivo = rumbo_actual
-	if destino_actual.has_meta("lat") and destino_actual.has_meta("lon"):
-		var lat_destino = destino_actual.get_meta("lat")
-		var lon_destino = destino_actual.get_meta("lon")
+	# Pedido explícito 2026-09-27: al activar el ILS individual de un
+	# aeropuerto puntual desde el panel Torre, el rumbo que se sugiere arriba
+	# ("Ponete en rumbo X°") tiene que apuntar a ESE aeropuerto, ignorando el
+	# plan de vuelo Origen/Destino elegido -- así uno se guía por el ILS que
+	# realmente está usando, no por un destino que quedó seleccionado antes.
+	# Solo pisa el NÚMERO de rumbo; la distancia/línea guía siguen atadas al
+	# plan de vuelo de siempre (eso no es lo que pidió cambiar).
+	if rumbo_guia_override_activo or (destino_actual.has_meta("lat") and destino_actual.has_meta("lon")):
+		var lat_destino: float = rumbo_guia_override_lat if rumbo_guia_override_activo else destino_actual.get_meta("lat")
+		var lon_destino: float = rumbo_guia_override_lon if rumbo_guia_override_activo else destino_actual.get_meta("lon")
 		rumbo_objetivo = _rumbo_verdadero_hacia(
 			mundo.lat_avion, mundo.lon_avion, lat_destino, lon_destino)
 		# DEBUG TEMPORAL (vuelta 3) -- ya no se imprime solo (inundaba la
