@@ -32,7 +32,9 @@ const TIPOS_AVION = [
 	# detrás del avión mirando hacia adelante, así que si se ve la trompa de
 	# frente es que el modelo tiene el "adelante" invertido. 180° en yaw (Y).
 	{"nombre": "Jet privado", "modelo": "res://modelos_aviones/jet_privado.glb", "helicoptero": false, "escala": 0.9, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
-	{"nombre": "Avión de guerra", "modelo": "res://modelos_aviones/avion_de_guerra.glb", "helicoptero": false, "escala": 0.75, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
+	# Escala +40% (pedido 2026-09-27) -- las luces son hijas del modelo, así
+	# que escalan proporcionalmente y quedan en el mismo lugar relativo.
+	{"nombre": "Avión de guerra", "modelo": "res://modelos_aviones/avion_de_guerra.glb", "helicoptero": false, "escala": 1.05, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
 	# Orientación ya perfecta -- solo un poco más grande.
 	# SIN sonido de motor (pedido 2026-09-21, "no es constante, es un
 	# helicóptero cuando pasa, no mientras va volando"): el loop de Mixkit que
@@ -85,7 +87,8 @@ const TIPOS_AVION = [
 	# 90 es el valor matemáticamente correcto, no 270.
 	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.2, "rotacion": Vector3(0, 90, 0), "sonido": "res://FX/motor_jet.mp3",
 		"luces_manual": {"izq": Vector3(-3.2927, 3.8327, -10.863), "der": Vector3(-3.2927, 3.8049, 11.127), "estrobo": Vector3(-6.7517, 4.313, -0.73291)}},
-	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helicoptero.mp3",
+	# Escala +40% (pedido 2026-09-27, mismo motivo que "Avión de guerra").
+	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 1.4, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helicoptero.mp3",
 		"luces_manual": {"izq": Vector3(-1.673, 0.0, -0.044), "der": Vector3(1.576, 0.0, -0.044), "estrobo": Vector3(0.0, 0.716, -0.044)}},
 	{"nombre": "Avión de combate (nuevo)", "modelo": "res://modelos_aviones/fighter_jet_nuevo.fbx", "helicoptero": false, "escala": 0.9, "rotacion": Vector3(0, 0, 0), "sonido": "res://FX/motor_jet.mp3",
 		"luces_manual": {"izq": Vector3(-1.144, 0.244, 0.809), "der": Vector3(1.156, 0.244, 0.809), "estrobo": Vector3(0.0, 0.95, 1.5)}},

@@ -1946,8 +1946,13 @@ func _generar_marcador_pueblo(nombre: String) -> Node3D:
 	etiqueta.pixel_size = 0.05
 	etiqueta.font_size = 46
 	etiqueta.outline_size = 7
-	etiqueta.modulate = Color(0.65, 0.85, 1.0, 1.0)
-	etiqueta.outline_modulate = Color(0.05, 0.1, 0.2, 1.0)
+	# Rojo (pedido 2026-09-27, "de noche se confunden con los aeropuertos" --
+	# antes eran celestes, muy parecido de lejos/desaturado de noche al
+	# dorado del cartel de los aeropuertos reales). Rojo no se usa en ningún
+	# otro cartel del juego, así que ahora un pueblo no se puede confundir
+	# con un aeropuerto con ILS.
+	etiqueta.modulate = Color(1.0, 0.25, 0.2, 1.0)
+	etiqueta.outline_modulate = Color(0.2, 0.02, 0.0, 1.0)
 	etiqueta.position = Vector3(0, 20, 0)
 	raiz.add_child(etiqueta)
 
