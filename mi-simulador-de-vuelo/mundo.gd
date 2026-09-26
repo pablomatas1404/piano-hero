@@ -1920,6 +1920,25 @@ func ils_activo_en_aeropuerto(nombre: String) -> bool:
 			return par["positivo"].visible
 	return false
 
+# BUG REAL encontrado 2026-09-27 (reportado: "el botón de ILS individual a
+# veces no funciona o demora"): el panel Torre mostraba el botón "ILS"
+# igual de activo para CUALQUIER aeropuerto cercano, pero varios de la
+# lista de destinos no tienen NINGÚN dato de ILS cargado (ver
+# project_ils_pendientes.md) -- al apretar, alternar_ils_aeropuerto() no
+# encontraba nada que prender, así que el botón parecía "prenderse" un
+# instante (actualización optimista) y se apagaba solo 0.5s después,
+# cuando el refresco periódico confirmaba que en realidad nunca se activó
+# nada. Con esto el panel puede consultar antes si vale la pena mostrar el
+# botón como usable.
+func aeropuerto_tiene_ils(nombre: String) -> bool:
+	for entrada in contenedor_ils_dos_cabeceras:
+		if entrada["nombre"] == nombre:
+			return true
+	for par in contenedores_ils_por_aeropuerto:
+		if par["nodo"].get_meta("nombre_bonito", "") == nombre:
+			return true
+	return false
+
 # Marcador de misión (hospital o punto de interés para sobrevolar) -- versión
 # liviana del de aeropuerto, SIN pista (no hay dónde aterrizar de verdad,
 # todavía) -- pedido explícito: "no sé si aterrizar, pero sobrevolar". Los

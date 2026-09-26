@@ -305,7 +305,7 @@ var altura_piso = 0.0
 # solo actualiza texto/rotación/metadata cada tanto (ver INTERVALO_TORRE).
 var _filas_torre: Array = []
 var _acumulador_torre: float = 999.0
-const INTERVALO_TORRE = 2.0
+const INTERVALO_TORRE = 0.5  # bajado de 2.0 (pedido 2026-09-27, "paso por arriba y la distancia no se actualizó")
 @onready var cartel_central: Label = get_node("../HUD/CartelCentral")
 @onready var origen_option: OptionButton = get_node("../HUD/SelectorVuelo/VBox/OrigenOption")
 @onready var destino_option: OptionButton = get_node("../HUD/SelectorVuelo/VBox/DestinoOption")
@@ -598,7 +598,7 @@ var acumulador_mapa: float = 0.0
 # ruedita del mouse para override manual en cualquier momento (ver
 # _mapa_rect_gui_input) -- eso reinicia el cronómetro, dándole ~1 minuto
 # de zoom manual antes de que el automático vuelva a tomar el control.
-const INTERVALO_ZOOM_AUTOMATICO = 60.0
+const INTERVALO_ZOOM_AUTOMATICO = 8.0  # bajado de 60 a 8 (pedido 2026-09-27, "que actualice rápido")
 var mapa_zoom_automatico: bool = true
 var _tiempo_zoom_automatico: float = INTERVALO_ZOOM_AUTOMATICO  # "debido" ya al arrancar, para el primer ajuste rápido
 
@@ -942,7 +942,7 @@ func _ready() -> void:
 		boton_mapa_auto.text = "🔍 Zoom: Auto" if mapa_zoom_automatico else "🔍 Zoom: Manual"
 		_tiempo_zoom_automatico = INTERVALO_ZOOM_AUTOMATICO)
 
-	for i in range(1, 4):
+	for i in range(1, 7):
 		var fila := {
 			"flecha": get_node("../HUD/PanelTorre/VBoxTorre/FilaTorre%d/FlechaTorre%d" % [i, i]),
 			"nombre": get_node("../HUD/PanelTorre/VBoxTorre/FilaTorre%d/NombreTorre%d" % [i, i]),
@@ -1347,13 +1347,22 @@ func _reproducir_genero_musica(genero: String) -> void:
 # ESE tema y la reproducción automática sigue de ahí en más, en el mismo
 # orden de la lista.
 func _refrescar_lista_temas_musica() -> void:
+	# BUG REAL encontrado 2026-09-27 (reportado con foto: "letrones, no se ve
+	# el nombre completo, quiero que entren todas sin scroll salvo que la
+	# lista sea muy larga"): los botones usaban el tamaño de fuente default
+	# (grande) sin recortar texto largo. Achicado + clip_text para que el
+	# nombre se corte con "..." en vez de desbordar, y filas más bajas para
+	# que entren más de una vez en el mismo espacio visible.
 	for hijo in lista_temas_musica.get_children():
 		hijo.queue_free()
 	for i in range(playlist_musica.size()):
 		var boton := Button.new()
 		boton.text = playlist_musica[i].get_file().trim_suffix(".mp3")
 		boton.focus_mode = Control.FOCUS_NONE
-		boton.custom_minimum_size = Vector2(0, 26)
+		boton.custom_minimum_size = Vector2(0, 20)
+		boton.add_theme_font_size_override("font_size", 11)
+		boton.clip_text = true
+		boton.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		boton.pressed.connect(_seleccionar_tema_musica.bind(i))
 		lista_temas_musica.add_child(boton)
 
@@ -1912,18 +1921,13 @@ func _actualizar_mapa_calles(delta: float) -> void:
 # a 500-1000m, pero no perder el mapa completo si vuela alto"). Niveles de
 # zoom estándar de OpenStreetMap (más alto = más detalle/más cerca).
 func _zoom_mapa_para_altura(altura: float) -> int:
-	# Escalones "a medida" pedidos 2026-09-27 (Zoom 1..5 del usuario, calle
-	# hasta 1000m y de ahí cada tanto más lejos).
-	if altura < 1000.0:
-		return 17  # Zoom 1: nivel calle
-	elif altura < 3000.0:
-		return 15  # Zoom 2
-	elif altura < 5000.0:
-		return 13  # Zoom 3
-	elif altura < 6000.0:
-		return 11  # Zoom 4
-	else:
-		return 9   # Zoom 5
+	# REAJUSTADO 2026-09-27: el usuario vuela seguido a 1500-2000m entre
+	# aeropuertos cercanos (sin margen para subir mucho porque enseguida hay
+	# que bajar de nuevo) -- con escalones de a 1000-2000m ahí se quedaba
+	# pegado en un solo nivel todo el vuelo. Ahora un escalón cada 500m,
+	# nivel calle por debajo de 500m.
+	var escalon: int = int(floor(altura / 500.0))
+	return clamp(17 - escalon, ZOOM_MAPA_MINIMO, 17)
 
 func _pedir_baldosa_de_mapa(xtile: int, ytile: int) -> void:
 	if descargando_mapa:
@@ -2932,11 +2936,19 @@ func _actualizar_panel_torre(delta: float) -> void:
 		fila["distancia"].text = "%.1f km" % (candidato["distancia"] / 1000.0)
 		fila["flecha"].visible = true
 		fila["flecha"].rotation_degrees = relativo
-		fila["boton"].disabled = false
 		fila["boton"].set_meta("nombre_aeropuerto", nombre)
-		var ils_activo: bool = mundo.ils_activo_en_aeropuerto(nombre)
-		fila["boton"].text = "ILS ON" if ils_activo else "ILS"
-		fila["boton"].modulate = Color(0.5, 1.0, 0.5, 1.0) if ils_activo else Color(1, 1, 1, 1)
+		if not mundo.aeropuerto_tiene_ils(nombre):
+			# Sin datos de ILS cargados para este -- deshabilitado en vez de
+			# dejarlo "prenderse" un instante y apagarse solo (ver comentario
+			# en aeropuerto_tiene_ils, mundo.gd).
+			fila["boton"].disabled = true
+			fila["boton"].text = "Sin ILS"
+			fila["boton"].modulate = Color(0.5, 0.5, 0.5, 1.0)
+		else:
+			fila["boton"].disabled = false
+			var ils_activo: bool = mundo.ils_activo_en_aeropuerto(nombre)
+			fila["boton"].text = "ILS ON" if ils_activo else "ILS"
+			fila["boton"].modulate = Color(0.5, 1.0, 0.5, 1.0) if ils_activo else Color(1, 1, 1, 1)
 
 func _alternar_ils_torre(indice: int) -> void:
 	var boton: Button = _filas_torre[indice]["boton"]

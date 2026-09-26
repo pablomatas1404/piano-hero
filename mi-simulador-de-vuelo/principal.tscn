@@ -476,7 +476,7 @@ anchor_right = 1.0
 offset_left = -270.0
 offset_top = 270.0
 offset_right = -14.0
-offset_bottom = 470.0
+offset_bottom = 620.0
 grow_horizontal = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
 
@@ -600,6 +600,111 @@ text = "--"
 horizontal_alignment = 2
 
 [node name="BotonIlsTorre3" type="Button" parent="HUD/PanelTorre/VBoxTorre/FilaTorre3"]
+custom_minimum_size = Vector2(36, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "ILS"
+
+[node name="FilaTorre4" type="HBoxContainer" parent="HUD/PanelTorre/VBoxTorre"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="FlechaTorre4" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre4"]
+custom_minimum_size = Vector2(18, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "➤"
+horizontal_alignment = 1
+pivot_offset = Vector2(9, 9)
+
+[node name="NombreTorre4" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre4"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+text = "---"
+clip_text = true
+
+[node name="DistanciaTorre4" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre4"]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "--"
+horizontal_alignment = 2
+
+[node name="BotonIlsTorre4" type="Button" parent="HUD/PanelTorre/VBoxTorre/FilaTorre4"]
+custom_minimum_size = Vector2(36, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "ILS"
+
+[node name="FilaTorre5" type="HBoxContainer" parent="HUD/PanelTorre/VBoxTorre"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="FlechaTorre5" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre5"]
+custom_minimum_size = Vector2(18, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "➤"
+horizontal_alignment = 1
+pivot_offset = Vector2(9, 9)
+
+[node name="NombreTorre5" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre5"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+text = "---"
+clip_text = true
+
+[node name="DistanciaTorre5" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre5"]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "--"
+horizontal_alignment = 2
+
+[node name="BotonIlsTorre5" type="Button" parent="HUD/PanelTorre/VBoxTorre/FilaTorre5"]
+custom_minimum_size = Vector2(36, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "ILS"
+
+[node name="FilaTorre6" type="HBoxContainer" parent="HUD/PanelTorre/VBoxTorre"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="FlechaTorre6" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre6"]
+custom_minimum_size = Vector2(18, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "➤"
+horizontal_alignment = 1
+pivot_offset = Vector2(9, 9)
+
+[node name="NombreTorre6" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre6"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+text = "---"
+clip_text = true
+
+[node name="DistanciaTorre6" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre6"]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "--"
+horizontal_alignment = 2
+
+[node name="BotonIlsTorre6" type="Button" parent="HUD/PanelTorre/VBoxTorre/FilaTorre6"]
 custom_minimum_size = Vector2(36, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
@@ -1084,7 +1189,7 @@ text = "🎹 Electrónica"
 
 [node name="ScrollListaTemas" type="ScrollContainer" parent="HUD/PanelMusica/VBoxMusica"]
 visible = false
-custom_minimum_size = Vector2(0, 140)
+custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
 
 [node name="ListaTemas" type="VBoxContainer" parent="HUD/PanelMusica/VBoxMusica/ScrollListaTemas"]
