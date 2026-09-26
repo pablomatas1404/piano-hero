@@ -47,13 +47,15 @@ const TIPOS_AVION = [
 	# tras primera prueba en vivo 2026-09-26 (usuario: "50% más chico").
 	{"nombre": "Avión genérico (nuevo)", "modelo": "res://modelos_aviones/plane_generico.glb", "helicoptero": false, "escala": 0.5, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helice.mp3"},
 	# NUEVO 2026-09-26, misma tanda -- estos 3 son .fbx (Godot 4 los importa
-	# nativo, sin necesitar Blender instalado). Escalas ajustadas tras
-	# primera prueba en vivo: KF-30 se veía "una hormiguita apenas visible"
-	# (pidió 5x más grande); Ka-27 y el avión de combate "ni se ven, un
-	# pixel" (subidos más agresivo, van a necesitar otra vuelta de ajuste).
-	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.05, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
-	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 0.08, "rotacion": Vector3(0, 90, 0), "sonido": "res://FX/motor_helicoptero.mp3"},
-	{"nombre": "Avión de combate (nuevo)", "modelo": "res://modelos_aviones/fighter_jet_nuevo.fbx", "helicoptero": false, "escala": 0.08, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
+	# nativo, sin necesitar Blender instalado). SEGUNDA vuelta de ajuste
+	# 2026-09-26 (segunda prueba en vivo): con 0.05/0.08 seguían siendo "un
+	# puntito" en pantalla -- subidas bastante más. El avión de combate
+	# además apareció "girando, mirando a la izquierda" (su "adelante" no es
+	# el mismo eje que los demás modelos) -- probamos 90° en vez de 180°,
+	# sigue siendo una apuesta a ciegas sin poder verlo en pantalla.
+	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.2, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
+	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 0.25, "rotacion": Vector3(0, 90, 0), "sonido": "res://FX/motor_helicoptero.mp3"},
+	{"nombre": "Avión de combate (nuevo)", "modelo": "res://modelos_aviones/fighter_jet_nuevo.fbx", "helicoptero": false, "escala": 0.3, "rotacion": Vector3(0, 90, 0), "sonido": "res://FX/motor_jet.mp3"},
 ]
 var tipo_avion_indice: int = 0
 
@@ -2088,6 +2090,17 @@ func _crear_luz_navegacion(posicion: Vector3, color: Color) -> MeshInstance3D:
 	mat.emission_energy_multiplier = 4.0
 	luz.set_surface_override_material(0, mat)
 	luz.position = posicion
+	# BUG REAL encontrado 2026-09-26 (reportado: "se ve el circulito pero
+	# como que el LED no está prendido", y la estroboscópica "no aparece"):
+	# estas lucecitas se quedaron en la capa normal (1), así que el mismo
+	# post-proceso de noche que apagaba/desaturaba el cartel gigante del
+	# aeropuerto (ver CAPA_MARCADORES_NOCTURNOS en mundo.gd) las apaga a
+	# ELLAS también -- justo lo opuesto de lo que tiene que pasar con luces
+	# de navegación reales, que se tienen que VER más de noche, no menos.
+	# Mismo arreglo: pasarlas a la capa de marcadores (la cámara/Environment
+	# aparte que ya usan ILS/luces de pista/beacon, sin el post-proceso).
+	luz.set_layer_mask_value(1, false)
+	luz.set_layer_mask_value(CAPA_MARCADORES_NOCTURNOS, true)
 	add_child(luz)
 	return luz
 
