@@ -249,11 +249,13 @@ var aeropuertos_dos_cabeceras = [
 	# hecho por los agentes/Gemini/ChatGPT, que no encontró un desfasaje
 	# sistemático corregible, pero esta es la prueba real, en el propio
 	# simulador, no solo en el papel).
-	# ancho_medio_pista: confirmado por fuentes públicas (SkyVector/AIP) que
-	# la pista 13/31 real mide 45m de ancho de punta a punta -- no son los
-	# 33m de San Fernando (pedido 2026-09-26, "fíjate si no son más anchas").
+	# ancho_medio_pista: el dato oficial (SkyVector/AIP, 45m) dejó las luces
+	# vivas todavía angostas contra el asfalto real de Cesium (comparación
+	# del usuario: "como un carril y medio de una autopista de tres" -- hay
+	# que duplicar). Subido a ojo por encima del dato oficial, prioridad a
+	# la prueba real en el simulador.
 	{"nombre": "Aeroparque", "cab1_lat": -34.554, "cab1_lon": -58.425333, "cab1_alt": 6.1,
-		"cab2_lat": -34.563833, "cab2_lon": -58.4075, "cab2_alt": 4.88, "ancho_medio_pista": 22.5},
+		"cab2_lat": -34.563833, "cab2_lon": -58.4075, "cab2_alt": 4.88, "ancho_medio_pista": 45.0},
 	{"nombre": "Villa Gesell", "cab1_lat": -37.234, "cab1_lon": -57.037667, "cab1_alt": 5.49,
 		"cab2_lat": -37.236833, "cab2_lon": -57.02, "cab2_alt": 5.49},
 	# Villa Gesell (arriba) dio "precisión quirúrgica" en la prueba en vuelo
@@ -279,8 +281,13 @@ var aeropuertos_dos_cabeceras = [
 	# falta era girar TODO el conjunto 12° hacia la izquierda (antihorario)
 	# respecto de esa última posición, o sea volver exactamente a las cab1/
 	# cab2 ORIGINALES (~42°). Revertido.
+	# ANCHO: el usuario reporta que necesita bastante más que Aeroparque
+	# (que solo pedía "un poquito de cada lado" y quedó en 45.0) -- acá
+	# describió "muy angostas", así que sube proporcionalmente más que los
+	# 33m medidos con "sanfer 5"/"sanfer 6". A ojo, pendiente de otra
+	# vuelta de ajuste en vivo.
 	{"nombre": "San Fernando", "cab1_lat": -34.459167, "cab1_lon": -58.595667, "cab1_alt": 10.06,
-		"cab2_lat": -34.45, "cab2_lon": -58.5855, "cab2_alt": 3.35, "ancho_medio_pista": 16.5},
+		"cab2_lat": -34.45, "cab2_lon": -58.5855, "cab2_alt": 3.35, "ancho_medio_pista": 40.0},
 	{"nombre": "Córdoba (Taravella)", "cab1_lat": -31.3245, "cab1_lon": -64.208167, "cab1_alt": 465.15,
 		"cab2_lat": -31.295667, "cab2_lon": -64.2085, "cab2_alt": 488.99},
 	{"nombre": "Mendoza (El Plumerillo)", "cab1_lat": -32.819167, "cab1_lon": -68.792667, "cab1_alt": 698.02,

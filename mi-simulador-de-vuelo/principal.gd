@@ -286,6 +286,13 @@ var luz_estroboscopica: MeshInstance3D
 var luz_iluminacion_ala: SpotLight3D
 var luz_iluminacion_ala_2: SpotLight3D
 var _tiempo_estrobo: float = 0.0
+
+# Estroboscópica del modelo EXTERNO actual (glb/fbx elegido), si hay uno
+# cargado -- se recrea cada vez que se cambia de avión en _aplicar_tipo_avion
+# (pedido 2026-09-26: "esas mismas luces agregalas a todos los aviones,
+# porque de noche si no es el avioncito tuyo todos se ven como una cosa
+# negra"). null cuando el avión elegido es el primitivo "Avioncito clásico".
+var luz_estroboscopica_externa: MeshInstance3D = null
 @onready var boton_despegar: Button = get_node("../HUD/BotonDespegar")
 @onready var flecha_izquierda: Label = get_node("../HUD/FlechaIzquierda")
 @onready var flecha_derecha: Label = get_node("../HUD/FlechaDerecha")
@@ -635,6 +642,12 @@ const ACCIONES_JOYSTICK = [
 	["vertical_abajo", "Bajar vertical (futuro helicóptero)"],
 	["marcar_lugar", "Marcar lugar (guardar coordenada actual)"],
 	["freno_emergencia", "Freno de emergencia (baja a 200)"],
+	["activar_ils", "Activar/desactivar ILS"],
+	# Pedido 2026-09-26: "el otro dejalo, después le daré una función" --
+	# fila reservada, asignable ya mismo, sin comportamiento todavía. Cuando
+	# se defina qué hace, agregar el chequeo con _joystick_activo("reservado_1")
+	# donde corresponda (mismo patrón que activar_ils/marcar_lugar arriba).
+	["reservado_1", "Reservado (función futura)"],
 ]
 var joystick_id: int = -1
 var mapeo_joystick: Dictionary = {}   # nombre_accion -> {"tipo":"boton","indice":N} o {"tipo":"eje","indice":N,"signo":1.0}
@@ -1621,7 +1634,9 @@ func _process(delta: float) -> void:
 	# Tecla I: prender/apagar el ILS sin soltar el mouse a buscar el botón
 	# (pedido explícito, "estoy a oscuras con el teclado, hasta que agarro
 	# el mouse ya me pasé"). Mismo de un solo golpe que M/D de arriba.
-	var tecla_ils_activa = Input.is_physical_key_pressed(KEY_I)
+	# Pedido 2026-09-26: mismo toggle asignable a un botón de joystick
+	# ("así no tengo que usar más mouse, activo/desactivo desde acá").
+	var tecla_ils_activa = Input.is_physical_key_pressed(KEY_I) or _joystick_activo("activar_ils")
 	if tecla_ils_activa and not tecla_ils_anterior:
 		ils_activo = not ils_activo
 		mundo.alternar_ils(ils_activo)
@@ -2078,11 +2093,13 @@ func _crear_luces_avion_clasico() -> void:
 	luz_iluminacion_ala_2.spot_angle = 45.0
 	add_child(luz_iluminacion_ala_2)
 
-func _crear_luz_navegacion(posicion: Vector3, color: Color) -> MeshInstance3D:
+func _crear_luz_navegacion(posicion: Vector3, color: Color, padre: Node3D = null, radio: float = 0.09) -> MeshInstance3D:
+	if padre == null:
+		padre = self
 	var luz = MeshInstance3D.new()
 	var esfera = SphereMesh.new()
-	esfera.radius = 0.09
-	esfera.height = 0.18
+	esfera.radius = radio
+	esfera.height = radio * 2.0
 	luz.mesh = esfera
 	var mat = StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -2109,7 +2126,7 @@ func _crear_luz_navegacion(posicion: Vector3, color: Color) -> MeshInstance3D:
 	# aparte que ya usan ILS/luces de pista/beacon, sin el post-proceso).
 	luz.set_layer_mask_value(1, false)
 	luz.set_layer_mask_value(CAPA_MARCADORES_NOCTURNOS, true)
-	add_child(luz)
+	padre.add_child(luz)
 	return luz
 
 # Destello CORTO y agudo (no una onda suave) para la estroboscópica -- pow()
@@ -2117,19 +2134,90 @@ func _crear_luz_navegacion(posicion: Vector3, color: Color) -> MeshInstance3D:
 # pico breve bien brillante, como un flash real de anticolisión.
 const VELOCIDAD_ESTROBOSCOPICA = 0.7
 func _actualizar_estroboscopica(_delta: float) -> void:
-	if not luz_estroboscopica or not luz_estroboscopica.visible:
-		return
 	var t: float = Time.get_ticks_msec() * 0.001
 	var destello: float = pow(max(0.0, sin(t * TAU * VELOCIDAD_ESTROBOSCOPICA)), 12.0)
-	var mat: StandardMaterial3D = luz_estroboscopica.get_surface_override_material(0)
-	mat.emission_energy_multiplier = lerp(0.3, 6.0, destello)
-	# BUG REAL encontrado 2026-09-26 (reportado: "queda una luz blanca
-	# prendida en el medio, no hace flash"): en un material UNSHADED el
-	# albedo_color se ve a brillo completo SIEMPRE, sin importar cuánto baje
-	# emission_energy_multiplier -- por eso la bolita blanca se veía sólida
-	# y fija en vez de apagarse entre destellos. El apagado real tiene que
-	# venir del ALFA del material (habilitado en _crear_luz_navegacion).
-	mat.albedo_color.a = lerp(0.12, 1.0, destello)
+	# Actualiza la del avioncito primitivo (si está activa) Y la del modelo
+	# externo actual (si hay uno cargado) -- solo una de las dos existe/está
+	# visible a la vez según el avión elegido, pero no cuesta nada chequear
+	# ambas acá en vez de duplicar esta función.
+	for luz in [luz_estroboscopica, luz_estroboscopica_externa]:
+		if not luz or not luz.visible:
+			continue
+		var mat: StandardMaterial3D = luz.get_surface_override_material(0)
+		mat.emission_energy_multiplier = lerp(0.3, 6.0, destello)
+		# BUG REAL encontrado 2026-09-26 (reportado: "queda una luz blanca
+		# prendida en el medio, no hace flash"): en un material UNSHADED el
+		# albedo_color se ve a brillo completo SIEMPRE, sin importar cuánto
+		# baje emission_energy_multiplier -- por eso la bolita blanca se
+		# veía sólida y fija en vez de apagarse entre destellos. El apagado
+		# real tiene que venir del ALFA del material (habilitado en
+		# _crear_luz_navegacion).
+		mat.albedo_color.a = lerp(0.12, 1.0, destello)
+
+# Calcula el AABB combinado de todos los MeshInstance3D bajo "raiz", en el
+# espacio LOCAL de "raiz" (sin aplicar la propia transform de "raiz") --
+# así las luces que se agreguen como hijas directas de "raiz" usando estas
+# mismas coordenadas locales quedan bien ubicadas sin importar la escala o
+# rotación que "raiz" tenga aplicada.
+func _calcular_aabb_local(raiz: Node3D) -> AABB:
+	var caja := AABB()
+	var alguna := false
+	var pila: Array = [[raiz, Transform3D.IDENTITY]]
+	while not pila.is_empty():
+		var item = pila.pop_back()
+		var nodo: Node3D = item[0]
+		var transform_acumulado: Transform3D = item[1]
+		if nodo != raiz:
+			transform_acumulado = transform_acumulado * nodo.transform
+		if nodo is MeshInstance3D and nodo.mesh:
+			var aabb_local: AABB = nodo.mesh.get_aabb()
+			for i in range(8):
+				var punto: Vector3 = transform_acumulado * aabb_local.get_endpoint(i)
+				if alguna:
+					caja = caja.expand(punto)
+				else:
+					caja = AABB(punto, Vector3.ZERO)
+					alguna = true
+		for hijo in nodo.get_children():
+			if hijo is Node3D:
+				pila.append([hijo, transform_acumulado])
+	return caja
+
+# Pedido explícito 2026-09-26 ("esas mismas luces agregalas a todos los
+# aviones, porque de noche si no es el avioncito tuyo todos se ven como una
+# cosa negra"): genera nav lights (rojo/verde en las puntas, estroboscópica
+# arriba) + luces de iluminación de ala para CUALQUIER modelo externo
+# (glb/fbx), calculando las posiciones a partir de su propio AABB en vez de
+# coordenadas fijas (que solo tienen sentido para el mesh primitivo). Es una
+# aproximación razonable para una forma "de avión" (ancho en X = envergadura,
+# ya que todos los modelos se rotan para mirar hacia -Z), no va a quedar
+# perfecto en formas raras (ej. un helicóptero), pero es mucho mejor que
+# quedar como una silueta negra de noche.
+func _generar_luces_para_modelo_externo(instancia: Node3D) -> void:
+	var caja: AABB = _calcular_aabb_local(instancia)
+	if caja.size.length() < 0.001:
+		return
+	var x_izq: float = caja.position.x
+	var x_der: float = caja.end.x
+	var y_medio: float = caja.position.y + caja.size.y * 0.55
+	var y_arriba: float = caja.end.y + caja.size.y * 0.08
+	var z_medio: float = caja.position.z + caja.size.z * 0.5
+	var radio_luz: float = clamp(caja.size.length() * 0.012, 0.03, 0.4)
+
+	_crear_luz_navegacion(Vector3(x_izq, y_medio, z_medio), Color(1.0, 0.1, 0.1), instancia, radio_luz)
+	_crear_luz_navegacion(Vector3(x_der, y_medio, z_medio), Color(0.1, 1.0, 0.2), instancia, radio_luz)
+	luz_estroboscopica_externa = _crear_luz_navegacion(Vector3(caja.position.x + caja.size.x * 0.5, y_arriba, z_medio), Color(1.0, 1.0, 1.0), instancia, radio_luz * 1.2)
+
+	var rango_spot: float = clamp(caja.size.length() * 0.35, 1.0, 8.0)
+	for signo in [1.0, -1.0]:
+		var spot := SpotLight3D.new()
+		spot.position = Vector3(0, y_medio, z_medio)
+		spot.rotation_degrees = Vector3(-25, 90.0 * signo, 0)
+		spot.light_color = Color(1.0, 0.95, 0.85)
+		spot.light_energy = 3.5
+		spot.spot_range = rango_spot
+		spot.spot_angle = 45.0
+		instancia.add_child(spot)
 
 func _aplicar_tipo_avion(indice: int) -> void:
 	if indice < 0 or indice >= TIPOS_AVION.size():
@@ -2141,6 +2229,11 @@ func _aplicar_tipo_avion(indice: int) -> void:
 	var datos = TIPOS_AVION[indice]
 	for hijo in modelo_externo.get_children():
 		hijo.queue_free()
+	# El modelo externo viejo (si había uno) se está por liberar junto con
+	# su estroboscópica -- limpiar la referencia ACÁ, no solo cuando se crea
+	# una nueva, para que _actualizar_estroboscopica no toque un nodo
+	# liberado en el frame en que se cambia a "Avioncito clásico".
+	luz_estroboscopica_externa = null
 	var mostrar_primitivas = datos["modelo"] == ""
 	pieza_fuselaje.visible = mostrar_primitivas
 	pieza_nariz.visible = mostrar_primitivas
@@ -2169,6 +2262,10 @@ func _aplicar_tipo_avion(indice: int) -> void:
 			if plano_sobrante:
 				plano_sobrante.queue_free()
 			modelo_externo.add_child(instancia)
+			# Pedido explícito 2026-09-26: las mismas luces de navegación del
+			# avioncito clásico, para TODOS los aviones (de noche se veían
+			# "como una cosa negra" sin esto).
+			_generar_luces_para_modelo_externo(instancia)
 
 func _es_helicoptero() -> bool:
 	return TIPOS_AVION[tipo_avion_indice]["helicoptero"]
