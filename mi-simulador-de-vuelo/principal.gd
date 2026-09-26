@@ -410,6 +410,8 @@ var _mostrar_sugerencia_ils: bool = false
 @onready var boton_genero_orquestal: Button = get_node("../HUD/PanelMusica/VBoxMusica/BotonGeneroOrquestal")
 @onready var boton_genero_rock: Button = get_node("../HUD/PanelMusica/VBoxMusica/BotonGeneroRock")
 @onready var boton_genero_electronica: Button = get_node("../HUD/PanelMusica/VBoxMusica/BotonGeneroElectronica")
+@onready var scroll_lista_temas: ScrollContainer = get_node("../HUD/PanelMusica/VBoxMusica/ScrollListaTemas")
+@onready var lista_temas_musica: VBoxContainer = get_node("../HUD/PanelMusica/VBoxMusica/ScrollListaTemas/ListaTemas")
 @onready var boton_anterior_musica: Button = get_node("../HUD/PanelMusica/VBoxMusica/HBoxControlesMusica/BotonAnteriorMusica")
 @onready var boton_pausa_musica: Button = get_node("../HUD/PanelMusica/VBoxMusica/HBoxControlesMusica/BotonPausaMusica")
 @onready var boton_siguiente_musica: Button = get_node("../HUD/PanelMusica/VBoxMusica/HBoxControlesMusica/BotonSiguienteMusica")
@@ -1326,18 +1328,43 @@ func _reproducir_genero_musica(genero: String) -> void:
 				playlist_musica.append(carpeta + "/" + archivo)
 			archivo = dir.get_next()
 		dir.list_dir_end()
-	playlist_musica.shuffle()
-	indice_musica = 0
+	# Orden alfabético fijo (SIN shuffle) -- pedido explícito 2026-09-27:
+	# "cuando pongo electrónica siempre tira el primero, quiero poder elegir
+	# de una lista". Con orden fijo, la lista que se ve coincide siempre con
+	# lo que realmente suena; antes se mezclaba al azar cada vez.
+	playlist_musica.sort()
 	if playlist_musica.is_empty():
 		label_estado_musica.text = "No encontré temas en esa carpeta"
+		scroll_lista_temas.visible = false
 		return
+	_refrescar_lista_temas_musica()
+	scroll_lista_temas.visible = true
+	label_estado_musica.text = "%s: elegí un tema de la lista" % genero_musica_actual
+
+# Lista de botones, uno por tema, dentro del panel de música (pedido
+# explícito 2026-09-27, "para no tener que ir pasando de a uno con
+# siguiente cuando tenga 30 canciones cargadas"). Al elegir uno, arranca
+# ESE tema y la reproducción automática sigue de ahí en más, en el mismo
+# orden de la lista.
+func _refrescar_lista_temas_musica() -> void:
+	for hijo in lista_temas_musica.get_children():
+		hijo.queue_free()
+	for i in range(playlist_musica.size()):
+		var boton := Button.new()
+		boton.text = playlist_musica[i].get_file().trim_suffix(".mp3")
+		boton.focus_mode = Control.FOCUS_NONE
+		boton.custom_minimum_size = Vector2(0, 26)
+		boton.pressed.connect(_seleccionar_tema_musica.bind(i))
+		lista_temas_musica.add_child(boton)
+
+func _seleccionar_tema_musica(indice: int) -> void:
+	indice_musica = indice
 	_reproducir_siguiente_musica()
 
 func _reproducir_siguiente_musica() -> void:
 	if playlist_musica.is_empty():
 		return
 	if indice_musica >= playlist_musica.size():
-		playlist_musica.shuffle()
 		indice_musica = 0
 	var ruta: String = playlist_musica[indice_musica]
 	indice_musica += 1
@@ -1389,6 +1416,7 @@ func _detener_musica() -> void:
 	genero_musica_actual = ""
 	label_estado_musica.text = "Detenida"
 	boton_pausa_musica.text = "⏸ Pausa"
+	scroll_lista_temas.visible = false
 
 func _abrir_panel_carrera() -> void:
 	panel_carrera.visible = true
@@ -1884,16 +1912,18 @@ func _actualizar_mapa_calles(delta: float) -> void:
 # a 500-1000m, pero no perder el mapa completo si vuela alto"). Niveles de
 # zoom estándar de OpenStreetMap (más alto = más detalle/más cerca).
 func _zoom_mapa_para_altura(altura: float) -> int:
-	if altura < 400.0:
-		return 17
-	elif altura < 900.0:
-		return 15
-	elif altura < 2000.0:
-		return 13
+	# Escalones "a medida" pedidos 2026-09-27 (Zoom 1..5 del usuario, calle
+	# hasta 1000m y de ahí cada tanto más lejos).
+	if altura < 1000.0:
+		return 17  # Zoom 1: nivel calle
+	elif altura < 3000.0:
+		return 15  # Zoom 2
 	elif altura < 5000.0:
-		return 11
+		return 13  # Zoom 3
+	elif altura < 6000.0:
+		return 11  # Zoom 4
 	else:
-		return 9
+		return 9   # Zoom 5
 
 func _pedir_baldosa_de_mapa(xtile: int, ytile: int) -> void:
 	if descargando_mapa:
