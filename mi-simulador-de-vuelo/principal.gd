@@ -757,7 +757,7 @@ const ACCIONES_JOYSTICK = [
 	["vertical_abajo", "Bajar vertical (futuro helicóptero)"],
 	["marcar_lugar", "Marcar lugar (guardar coordenada actual)"],
 	["freno_emergencia", "Freno de emergencia (baja a 200)"],
-	["freno_gradual", "Freno progresivo (baja de a poco, más fuerte con cada apretada)"],
+	["freno_gradual", "Freno progresivo"],
 	["activar_ils", "Activar/desactivar ILS"],
 	# Pedido 2026-09-26: "el otro dejalo, después le daré una función" --
 	# fila reservada, asignable ya mismo, sin comportamiento todavía. Cuando
@@ -1346,6 +1346,15 @@ func _refrescar_lista_acciones_joystick() -> void:
 		var label = Label.new()
 		label.text = etiqueta_texto
 		label.custom_minimum_size = Vector2(230, 0)
+		# BUG REAL encontrado 2026-09-27 (reportado: "el botón Asignar no
+		# aparece, quedó fuera de la pantalla"): sin recorte, un texto más
+		# largo que 230px hacía crecer el Label horizontalmente, empujando
+		# el botón "Asignar" fuera del panel. Con autowrap, un texto largo
+		# simplemente ocupa más líneas hacia ABAJO en vez de invadir el
+		# ancho de al lado -- pase lo que pase con el largo del texto, el
+		# botón nunca se vuelve a mover.
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		label.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		label.add_theme_font_size_override("font_size", 13)
 		fila.add_child(label)
 
