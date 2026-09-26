@@ -2307,7 +2307,24 @@ func _generar_luces_para_modelo_externo(instancia: Node3D, datos: Dictionary) ->
 	var caja: AABB = _calcular_aabb_local(instancia)
 	if caja.size.length() < 0.001:
 		return
-	var radio_luz: float = clamp(caja.size.length() * 0.012, 0.03, 0.4)
+	# BUG REAL encontrado 2026-09-27 (reportado: "el Boeing y los demás
+	# aviones viejos no tienen luces de noche"): el radio/alcance se
+	# calculaba sobre el tamaño NATIVO del modelo (caja.size, en las
+	# unidades del archivo original), sin tener en cuenta la "escala" que
+	# después se le aplica a "instancia" -- el Boeing mide ~1500 unidades en
+	# su archivo original y se compensa con escala 0.006, así que un radio
+	# calculado en esas unidades nativas (aunque tope en el clamp máximo de
+	# 0.4) terminaba en 0.4*0.006 = 0.0024 al escalarse -- una luz
+	# microscópica, invisible. Ahora se calcula el tamaño en unidades REALES
+	# de mundo (caja * escala) y se vuelve a dividir por la escala al final,
+	# para que el tamaño FINAL ya escalado quede siempre en un rango
+	# razonable sin importar cuán grandes/chicas sean las unidades nativas
+	# de cada modelo.
+	var escala: float = datos.get("escala", 1.0)
+	if escala <= 0.0:
+		escala = 1.0
+	var tamano_mundo: float = caja.size.length() * escala
+	var radio_luz: float = clamp(tamano_mundo * 0.012, 0.03, 0.4) / escala
 	var y_medio: float = caja.position.y + caja.size.y * 0.55
 	var z_medio: float = caja.position.z + caja.size.z * 0.5
 
@@ -2332,7 +2349,7 @@ func _generar_luces_para_modelo_externo(instancia: Node3D, datos: Dictionary) ->
 		_crear_luz_navegacion(Vector3(x_der, y_medio, z_medio), Color(0.1, 1.0, 0.2), instancia, radio_luz)
 		luz_estroboscopica_externa = _crear_luz_navegacion(Vector3(caja.position.x + caja.size.x * 0.5, y_arriba, z_medio), Color(1.0, 1.0, 1.0), instancia, radio_luz * 1.2)
 
-	var rango_spot: float = clamp(caja.size.length() * 0.35, 1.0, 8.0)
+	var rango_spot: float = clamp(tamano_mundo * 0.35, 1.0, 8.0) / escala
 	for signo in [1.0, -1.0]:
 		var spot := SpotLight3D.new()
 		spot.position = Vector3(0, y_medio, z_medio)
