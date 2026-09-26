@@ -48,6 +48,13 @@ const TIPOS_AVION = [
 	# necesitar la misma vuelta de ajuste que tuvieron todos los demás
 	# modelos la primera vez (ver comentarios de Boeing arriba).
 	{"nombre": "Avión genérico (nuevo)", "modelo": "res://modelos_aviones/plane_generico.glb", "helicoptero": false, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helice.mp3"},
+	# NUEVO 2026-09-26, misma tanda -- estos 3 son .fbx (Godot 4 los importa
+	# nativo, sin necesitar Blender instalado). PRIMER INTENTO de escala/
+	# rotación sin poder verlos en pantalla todavía -- van a necesitar la
+	# misma vuelta de ajuste que tuvieron todos los demás modelos.
+	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.01, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
+	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 0.01, "rotacion": Vector3(0, 90, 0), "sonido": "res://FX/motor_helicoptero.mp3"},
+	{"nombre": "Avión de combate (nuevo)", "modelo": "res://modelos_aviones/fighter_jet_nuevo.fbx", "helicoptero": false, "escala": 0.01, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
 ]
 var tipo_avion_indice: int = 0
 
