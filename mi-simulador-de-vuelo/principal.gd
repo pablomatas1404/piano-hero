@@ -67,7 +67,12 @@ const TIPOS_AVION = [
 	# Posiciones de luces reemplazadas 2026-09-26 por las medidas a mano en
 	# Blender (ver prompt_mapeo_luces_blender.txt) -- mucho más precisas que
 	# la estimación anterior sacada de オブジェクト_014/015.
-	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.2, "rotacion": Vector3(0, 270, 0), "sonido": "res://FX/motor_jet.mp3",
+	# ROTACIÓN 2026-09-26: tanto 90 como 270 fueron reportados como "mirando
+	# para el lado del usuario" -- dos valores OPUESTOS dando el mismo
+	# resultado no cierra con un simple giro de yaw, así que en vez de seguir
+	# sumando/restando 90 a ciegas se prueba el único valor no probado desde
+	# que el modelo tiene el tamaño/luces definitivos: 180.
+	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.2, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3",
 		"luces_manual": {"izq": Vector3(-3.2927, 3.8327, -10.863), "der": Vector3(-3.2927, 3.8049, 11.127), "estrobo": Vector3(-6.7517, 4.313, -0.73291)}},
 	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helicoptero.mp3",
 		"luces_manual": {"izq": Vector3(-1.673, 0.0, -0.044), "der": Vector3(1.576, 0.0, -0.044), "estrobo": Vector3(0.0, 0.716, -0.044)}},
