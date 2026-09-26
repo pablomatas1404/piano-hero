@@ -238,6 +238,15 @@ func _ajustes_por_defecto(indice: int) -> Dictionary:
 		"vertical": VELOCIDAD_VERTICAL_HELICOPTERO if TIPOS_AVION[indice]["helicoptero"] else CABECEO_MAXIMO,
 		"vel_minima": VELOCIDAD_MINIMA,
 		"vel_maxima": VELOCIDAD_MAXIMA,
+		# Pedido explícito 2026-09-27: "cada avión tiene su propia manera de
+		# subir/bajar la nariz o girar" -- multiplicador de la velocidad con
+		# la que la animación visual de cabeceo/banco se acerca a su
+		# objetivo (VELOCIDAD_CABECEO_*/VELOCIDAD_BANCO_* de más arriba).
+		# 1.0 = como está calibrado por defecto; menos que 1 = más suave/
+		# lento (Boeing, jet privado); más que 1 = más brusco/ágil (Cessna,
+		# avión de guerra). Independiente por avión, igual que el resto de
+		# este panel.
+		"velocidad_animacion": 1.0,
 	}
 
 func _ajustes_avion_actual() -> Dictionary:
@@ -257,6 +266,7 @@ func _cargar_sensibilidad_aviones() -> void:
 			"vertical": cfg.get_value(nombre_avion, "vertical", CABECEO_MAXIMO),
 			"vel_minima": cfg.get_value(nombre_avion, "vel_minima", VELOCIDAD_MINIMA),
 			"vel_maxima": cfg.get_value(nombre_avion, "vel_maxima", VELOCIDAD_MAXIMA),
+			"velocidad_animacion": cfg.get_value(nombre_avion, "velocidad_animacion", 1.0),
 		}
 
 func _guardar_sensibilidad_aviones() -> void:
@@ -269,6 +279,7 @@ func _guardar_sensibilidad_aviones() -> void:
 	cfg.set_value(nombre, "vertical", ajustes["vertical"])
 	cfg.set_value(nombre, "vel_minima", ajustes["vel_minima"])
 	cfg.set_value(nombre, "vel_maxima", ajustes["vel_maxima"])
+	cfg.set_value(nombre, "velocidad_animacion", ajustes["velocidad_animacion"])
 	cfg.save(RUTA_CONFIG_SENSIBILIDAD)
 
 func _refrescar_panel_sensibilidad() -> void:
@@ -283,6 +294,7 @@ func _refrescar_panel_sensibilidad() -> void:
 		label_vertical_valor.text = "%.0f°" % ajustes["vertical"]
 	label_vel_minima_valor.text = "%.0f" % ajustes["vel_minima"]
 	label_vel_maxima_valor.text = "%.0f" % ajustes["vel_maxima"]
+	label_velocidad_animacion_valor.text = "%.1fx" % ajustes["velocidad_animacion"]
 
 func _ajustar_sensibilidad(clave: String, delta_valor: float, minimo: float, maximo: float) -> void:
 	var ajustes := _ajustes_avion_actual()
@@ -471,6 +483,9 @@ const PITCH_MOTOR_MAXIMO = 1.25
 @onready var label_vel_maxima_valor: Label = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMaxima/LabelVelMaximaValor")
 @onready var boton_vel_maxima_menos: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMaxima/BotonVelMaximaMenos")
 @onready var boton_vel_maxima_mas: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMaxima/BotonVelMaximaMas")
+@onready var label_velocidad_animacion_valor: Label = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion/LabelVelocidadAnimacionValor")
+@onready var boton_velocidad_animacion_menos: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion/BotonVelocidadAnimacionMenos")
+@onready var boton_velocidad_animacion_mas: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion/BotonVelocidadAnimacionMas")
 var ayuda_visual_activa: bool = false
 # CAMBIADO 2026-09-21 (pedido explícito, "es como un láser en los ojos,
 # pegado al avión como una bandita elástica"): antes la línea salía siempre
@@ -862,6 +877,10 @@ func _ready() -> void:
 	boton_vel_minima_mas.pressed.connect(func(): _ajustar_sensibilidad("vel_minima", 10.0, 0.0, 100000.0))
 	boton_vel_maxima_menos.pressed.connect(func(): _ajustar_sensibilidad("vel_maxima", -10.0, 0.0, 100000.0))
 	boton_vel_maxima_mas.pressed.connect(func(): _ajustar_sensibilidad("vel_maxima", 10.0, 0.0, 100000.0))
+	boton_velocidad_animacion_menos.focus_mode = Control.FOCUS_NONE
+	boton_velocidad_animacion_mas.focus_mode = Control.FOCUS_NONE
+	boton_velocidad_animacion_menos.pressed.connect(func(): _ajustar_sensibilidad("velocidad_animacion", -0.1, 0.2, 3.0))
+	boton_velocidad_animacion_mas.pressed.connect(func(): _ajustar_sensibilidad("velocidad_animacion", 0.1, 0.2, 3.0))
 	_refrescar_panel_sensibilidad()
 
 	boton_musica.focus_mode = Control.FOCUS_NONE
@@ -2069,7 +2088,11 @@ func _procesar_vuelo(delta: float) -> void:
 		elif Input.is_action_pressed("ui_right") or _joystick_activo("alabeo_derecha"):
 			banco_objetivo = -ajustes["angulo"]
 
-	var velocidad_cabeceo_efectiva = VELOCIDAD_CABECEO_ENTRADA if cabeceo_objetivo != 0.0 else VELOCIDAD_CABECEO_SALIDA
+	# Multiplicador por avión (pedido 2026-09-27, panel de Sensibilidad,
+	# "Vel. animación") -- cada avión puede tener su propia suavidad/
+	# agresividad en cómo la nariz sube/baja o el avión se inclina, sin
+	# tocar las constantes globales de arriba.
+	var velocidad_cabeceo_efectiva = (VELOCIDAD_CABECEO_ENTRADA if cabeceo_objetivo != 0.0 else VELOCIDAD_CABECEO_SALIDA) * ajustes["velocidad_animacion"]
 	var cabeceo_anterior = cabeceo_actual
 	cabeceo_actual = move_toward(cabeceo_actual, cabeceo_objetivo, velocidad_cabeceo_efectiva * delta)
 	var delta_cabeceo = cabeceo_actual - cabeceo_anterior
@@ -2077,7 +2100,7 @@ func _procesar_vuelo(delta: float) -> void:
 		# Mismo signo que antes: "ui_up" (cabeceo positivo) sube la nariz.
 		rotate_object_local(Vector3.RIGHT, -deg_to_rad(delta_cabeceo))
 
-	var velocidad_banco = VELOCIDAD_BANCO_ENTRADA if banco_objetivo != 0.0 else VELOCIDAD_BANCO_SALIDA
+	var velocidad_banco = (VELOCIDAD_BANCO_ENTRADA if banco_objetivo != 0.0 else VELOCIDAD_BANCO_SALIDA) * ajustes["velocidad_animacion"]
 	var banco_anterior = banco_actual
 	banco_actual = move_toward(banco_actual, banco_objetivo, velocidad_banco * delta)
 	var delta_banco = banco_actual - banco_anterior

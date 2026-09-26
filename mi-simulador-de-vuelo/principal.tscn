@@ -474,9 +474,9 @@ anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -270.0
-offset_top = 270.0
+offset_top = 300.0
 offset_right = -14.0
-offset_bottom = 620.0
+offset_bottom = 650.0
 grow_horizontal = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
 
@@ -717,7 +717,7 @@ anchor_right = 1.0
 offset_left = -190.0
 offset_top = 100.0
 offset_right = -14.0
-offset_bottom = 260.0
+offset_bottom = 290.0
 grow_horizontal = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
 
@@ -894,6 +894,38 @@ text = "1500"
 horizontal_alignment = 1
 
 [node name="BotonVelMaximaMas" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMaxima" unique_id=1889606734]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "＋"
+
+[node name="FilaVelocidadAnimacion" type="HBoxContainer" parent="HUD/PanelSensibilidad/VBoxSensibilidad"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="LabelVelocidadAnimacion" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion"]
+custom_minimum_size = Vector2(58, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "Vel. animación"
+autowrap_mode = 3
+
+[node name="BotonVelocidadAnimacionMenos" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion"]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "－"
+
+[node name="LabelVelocidadAnimacionValor" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion"]
+custom_minimum_size = Vector2(34, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "1.0x"
+horizontal_alignment = 1
+
+[node name="BotonVelocidadAnimacionMas" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion"]
 custom_minimum_size = Vector2(22, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
