@@ -249,8 +249,11 @@ var aeropuertos_dos_cabeceras = [
 	# hecho por los agentes/Gemini/ChatGPT, que no encontró un desfasaje
 	# sistemático corregible, pero esta es la prueba real, en el propio
 	# simulador, no solo en el papel).
+	# ancho_medio_pista: confirmado por fuentes públicas (SkyVector/AIP) que
+	# la pista 13/31 real mide 45m de ancho de punta a punta -- no son los
+	# 33m de San Fernando (pedido 2026-09-26, "fíjate si no son más anchas").
 	{"nombre": "Aeroparque", "cab1_lat": -34.554, "cab1_lon": -58.425333, "cab1_alt": 6.1,
-		"cab2_lat": -34.563833, "cab2_lon": -58.4075, "cab2_alt": 4.88},
+		"cab2_lat": -34.563833, "cab2_lon": -58.4075, "cab2_alt": 4.88, "ancho_medio_pista": 22.5},
 	{"nombre": "Villa Gesell", "cab1_lat": -37.234, "cab1_lon": -57.037667, "cab1_alt": 5.49,
 		"cab2_lat": -37.236833, "cab2_lon": -57.02, "cab2_alt": 5.49},
 	# Villa Gesell (arriba) dio "precisión quirúrgica" en la prueba en vuelo
@@ -1136,6 +1139,17 @@ func _generar_aeropuerto(nombre: String, longitud_pista: float = 150.0) -> Node3
 	beacon.modulate = Color(1.0, 0.82, 0.25, 1.0)
 	beacon.outline_modulate = Color(0.25, 0.15, 0.0, 1.0)
 	beacon.position = Vector3(0, 300, 0)
+	# BUG REAL encontrado 2026-09-26 (reportado: "se ve poco iluminada desde
+	# el aire, cuesta saber dónde está cada aeropuerto"): este cartel se
+	# quedó en la capa 1 de siempre, así que el post-proceso de noche
+	# (tonemap_exposure/adjustment_saturation) lo apaga y desatura igual que
+	# al terreno en cualquier horario que no sea pleno mediodía -- nunca se
+	# lo pasó a la capa de marcadores (CAPA_MARCADORES_NOCTURNOS) como sí se
+	# hizo con los aros de ILS/luces de pista/faro. Con esto vuelve a verse
+	# siempre a full brillo/color, como antes de que existiera el ciclo
+	# día/noche.
+	beacon.set_layer_mask_value(1, false)
+	beacon.set_layer_mask_value(CAPA_MARCADORES_NOCTURNOS, true)
 	raiz.add_child(beacon)
 	beacons_para_animar.append(beacon)
 
@@ -1174,7 +1188,21 @@ func _actualizar_beacons(delta: float) -> void:
 		# todo por más cerca que estuvieras del aeropuerto real. La
 		# distancia correcta es hasta el aeropuerto (su nodo padre, a nivel
 		# del piso), no hasta el cartel elevado.
-		var distancia: float = beacon.get_parent().global_position.length()
+		# BUG REAL encontrado 2026-09-26 (reportado: "cuando estás en la
+		# pista no desaparece el nombre del aeropuerto"): esta distancia
+		# incluía la altura, pero "raiz" se ubica con una altitud FIJA e
+		# inventada (5.0, ver _actualizar_transform_aeropuerto) que no
+		# coincide con el terreno real de Cesium ahí (mismo desfasaje ya
+		# documentado en Aeroparque, donde llegó a ser de 70-80m) -- ese
+		# error vertical se sumaba de lleno a la distancia 3D, así que aun
+		# parado literalmente sobre el asfalto real la distancia calculada
+		# podía seguir por encima de DIST_BEACON_OCULTO. Igual que con los
+		# aros de ILS y las luces de pista, separamos la componente vertical
+		# y medimos solo la distancia HORIZONTAL -- lo que de verdad importa
+		# para "qué tan cerca estás del aeropuerto".
+		var vector_al_aeropuerto: Vector3 = beacon.get_parent().global_position
+		var vector_horizontal: Vector3 = vector_al_aeropuerto - vector_al_aeropuerto.dot(arriba_motor_actual) * arriba_motor_actual
+		var distancia: float = vector_horizontal.length()
 		var desvanecimiento: float = clamp(
 			(distancia - DIST_BEACON_OCULTO) / (DIST_BEACON_DESVANECE - DIST_BEACON_OCULTO),
 			0.0, 1.0)

@@ -43,18 +43,17 @@ const TIPOS_AVION = [
 	# NUEVO 2026-09-26 (pedido explícito, "aunque no tengan partes animadas,
 	# si son lindos los agregamos igual") -- bajado por el usuario de
 	# Sketchfab, único de la nueva tanda que ya venía en .glb (los demás son
-	# .fbx/.obj/.blend, necesitan más trabajo de conversión). Escala y
-	# rotación son un PRIMER INTENTO sin poder verlo en pantalla -- va a
-	# necesitar la misma vuelta de ajuste que tuvieron todos los demás
-	# modelos la primera vez (ver comentarios de Boeing arriba).
-	{"nombre": "Avión genérico (nuevo)", "modelo": "res://modelos_aviones/plane_generico.glb", "helicoptero": false, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helice.mp3"},
+	# .fbx/.obj/.blend, necesitan más trabajo de conversión). Escala ajustada
+	# tras primera prueba en vivo 2026-09-26 (usuario: "50% más chico").
+	{"nombre": "Avión genérico (nuevo)", "modelo": "res://modelos_aviones/plane_generico.glb", "helicoptero": false, "escala": 0.5, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helice.mp3"},
 	# NUEVO 2026-09-26, misma tanda -- estos 3 son .fbx (Godot 4 los importa
-	# nativo, sin necesitar Blender instalado). PRIMER INTENTO de escala/
-	# rotación sin poder verlos en pantalla todavía -- van a necesitar la
-	# misma vuelta de ajuste que tuvieron todos los demás modelos.
-	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.01, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
-	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 0.01, "rotacion": Vector3(0, 90, 0), "sonido": "res://FX/motor_helicoptero.mp3"},
-	{"nombre": "Avión de combate (nuevo)", "modelo": "res://modelos_aviones/fighter_jet_nuevo.fbx", "helicoptero": false, "escala": 0.01, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
+	# nativo, sin necesitar Blender instalado). Escalas ajustadas tras
+	# primera prueba en vivo: KF-30 se veía "una hormiguita apenas visible"
+	# (pidió 5x más grande); Ka-27 y el avión de combate "ni se ven, un
+	# pixel" (subidos más agresivo, van a necesitar otra vuelta de ajuste).
+	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.05, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
+	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 0.08, "rotacion": Vector3(0, 90, 0), "sonido": "res://FX/motor_helicoptero.mp3"},
+	{"nombre": "Avión de combate (nuevo)", "modelo": "res://modelos_aviones/fighter_jet_nuevo.fbx", "helicoptero": false, "escala": 0.08, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
 ]
 var tipo_avion_indice: int = 0
 
@@ -283,6 +282,7 @@ var luz_punta_ala_izq: MeshInstance3D
 var luz_punta_ala_der: MeshInstance3D
 var luz_estroboscopica: MeshInstance3D
 var luz_iluminacion_ala: SpotLight3D
+var luz_iluminacion_ala_2: SpotLight3D
 var _tiempo_estrobo: float = 0.0
 @onready var boton_despegar: Button = get_node("../HUD/BotonDespegar")
 @onready var flecha_izquierda: Label = get_node("../HUD/FlechaIzquierda")
@@ -1572,6 +1572,12 @@ func _process(delta: float) -> void:
 		pieza_alas.visible = mostrar_primitivas
 		pieza_cola.visible = mostrar_primitivas
 		pieza_timon.visible = mostrar_primitivas
+		if luz_punta_ala_izq:
+			luz_punta_ala_izq.visible = mostrar_primitivas
+			luz_punta_ala_der.visible = mostrar_primitivas
+			luz_estroboscopica.visible = mostrar_primitivas
+			luz_iluminacion_ala.visible = mostrar_primitivas
+			luz_iluminacion_ala_2.visible = mostrar_primitivas
 		cartel_central.text = "👁️ Vista sin avión: ON" if vista_sin_avion_activa else "👁️ Vista sin avión: OFF"
 		cartel_central.visible = true
 		get_tree().create_timer(1.5).timeout.connect(func(): cartel_central.visible = false)
@@ -2027,35 +2033,52 @@ func _poblar_selector() -> void:
 func _crear_luces_avion_clasico() -> void:
 	# Punta de ala izquierda (roja) y derecha (verde) -- las alas (BoxMesh de
 	# 5.5 de ancho, centradas en el origen) tienen la punta en X = ±2.75.
-	luz_punta_ala_izq = _crear_luz_navegacion(Vector3(-2.75, 0.05, 0), Color(1.0, 0.1, 0.1))
-	luz_punta_ala_der = _crear_luz_navegacion(Vector3(2.75, 0.05, 0), Color(0.1, 1.0, 0.2))
+	# BUG REAL encontrado 2026-09-26 (reportado: "las luces rojas y verdes no
+	# aparecen"): el ala mide solo 0.15 de alto (Y de -0.075 a +0.075) pero
+	# la esfera estaba centrada en Y=0.05 con radio 0.07 -- más de la mitad
+	# quedaba ENTERRADA dentro del BoxMesh sólido del ala, visible apenas
+	# como un borde de 4-5cm. Subida por encima del ala (Y=0.14, con margen)
+	# y agrandada un poco para que se note de verdad.
+	luz_punta_ala_izq = _crear_luz_navegacion(Vector3(-2.75, 0.14, 0), Color(1.0, 0.1, 0.1))
+	luz_punta_ala_der = _crear_luz_navegacion(Vector3(2.75, 0.14, 0), Color(0.1, 1.0, 0.2))
 
 	# Estroboscópica blanca arriba de todo -- parpadeo CORTO y agudo (no una
 	# onda suave), como un flash real, no una respiración.
-	luz_estroboscopica = _crear_luz_navegacion(Vector3(0, 0.5, 0), Color(1.0, 1.0, 1.0))
-	(luz_estroboscopica.mesh as SphereMesh).radius = 0.09
-	(luz_estroboscopica.mesh as SphereMesh).height = 0.18
+	luz_estroboscopica = _crear_luz_navegacion(Vector3(0, 0.55, 0), Color(1.0, 1.0, 1.0))
+	(luz_estroboscopica.mesh as SphereMesh).radius = 0.11
+	(luz_estroboscopica.mesh as SphereMesh).height = 0.22
 
 	# Luz que ilumina el ala (pedido explícito, "como tienen los aviones
 	# reales que iluminan sobre el ala") -- un SpotLight3D real (acá SÍ vale
 	# la pena, es UN solo avión, no 30 aeropuertos): montada cerca de la
 	# raíz del ala, apuntando hacia afuera y un poco hacia abajo para bañar
-	# la superficie del ala de luz cálida.
+	# la superficie del ala de luz cálida. Pedido 2026-09-26: más intensidad
+	# y que cubra las DOS alas (antes solo había una, apuntando a un lado).
 	luz_iluminacion_ala = SpotLight3D.new()
 	luz_iluminacion_ala.name = "LuzIluminacionAla"
 	luz_iluminacion_ala.position = Vector3(0, 0.35, -0.3)
 	luz_iluminacion_ala.rotation_degrees = Vector3(-25, 90, 0)
 	luz_iluminacion_ala.light_color = Color(1.0, 0.95, 0.85)
-	luz_iluminacion_ala.light_energy = 2.5
+	luz_iluminacion_ala.light_energy = 3.5
 	luz_iluminacion_ala.spot_range = 5.0
 	luz_iluminacion_ala.spot_angle = 45.0
 	add_child(luz_iluminacion_ala)
 
+	luz_iluminacion_ala_2 = SpotLight3D.new()
+	luz_iluminacion_ala_2.name = "LuzIluminacionAla2"
+	luz_iluminacion_ala_2.position = Vector3(0, 0.35, -0.3)
+	luz_iluminacion_ala_2.rotation_degrees = Vector3(-25, -90, 0)
+	luz_iluminacion_ala_2.light_color = Color(1.0, 0.95, 0.85)
+	luz_iluminacion_ala_2.light_energy = 3.5
+	luz_iluminacion_ala_2.spot_range = 5.0
+	luz_iluminacion_ala_2.spot_angle = 45.0
+	add_child(luz_iluminacion_ala_2)
+
 func _crear_luz_navegacion(posicion: Vector3, color: Color) -> MeshInstance3D:
 	var luz = MeshInstance3D.new()
 	var esfera = SphereMesh.new()
-	esfera.radius = 0.07
-	esfera.height = 0.14
+	esfera.radius = 0.09
+	esfera.height = 0.18
 	luz.mesh = esfera
 	var mat = StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -2101,6 +2124,7 @@ func _aplicar_tipo_avion(indice: int) -> void:
 		luz_punta_ala_der.visible = mostrar_primitivas
 		luz_estroboscopica.visible = mostrar_primitivas
 		luz_iluminacion_ala.visible = mostrar_primitivas
+		luz_iluminacion_ala_2.visible = mostrar_primitivas
 	if not mostrar_primitivas:
 		var escena: PackedScene = load(datos["modelo"])
 		if escena:
