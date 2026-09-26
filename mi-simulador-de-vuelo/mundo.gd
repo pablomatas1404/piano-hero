@@ -1477,26 +1477,70 @@ const ESPACIADO_LUCES_PISTA = 60.0    # cada cuántos metros va una luz de borde
 # ya alcanza un margen chico y seguro sobre el piso (1.0m).
 const RADIO_LUZ_PISTA = 2.5
 const ALTURA_LUCES_SOBRE_PISO = 1.0
-const COLOR_LUZ_PISTA_BORDE = Color(1.0, 0.92, 0.6)   # blanco cálido, como las luces de borde reales
-const COLOR_LUZ_PISTA_UMBRAL = Color(0.25, 1.0, 0.35)  # verde, como las luces de umbral reales
+const COLOR_LUZ_PISTA_UMBRAL_DEFECTO = Color(0.25, 1.0, 0.35)  # verde, como las luces de umbral reales
+# De lejos (>3000m de la cámara) las luces de borde quedan a su tamaño
+# normal; acercándose se van achicando hasta un mínimo (nunca desaparecen
+# del todo) -- pedido explícito, "de cerca quedan como bolitas feas".
+const DISTANCIA_ACHIQUE_LUCES_PISTA = 3000.0
+const ESCALA_MINIMA_LUCES_PISTA = 0.35
+
+# PRUEBA A/B/C/D (pedido explícito 2026-09-25, "hacemos cuatro diferentes...
+# el que se vea más lindo desde arriba lo aplicamos a todos"): en vez de un
+# selector manual (mucho más trabajo, se deja para más adelante si hace
+# falta), 4 aeropuertos ya mapeados se llevan un estilo bien distinto entre
+# sí para comparar de una. El resto de los aeropuertos usa "clasico_dorado"
+# (el más parecido a lo que ya había) hasta que se elija un ganador.
+#
+# "modo":
+#   "secuencial"        -- una sola luz "viaja" de punta a punta de la pista,
+#                          en bucle (como las luces de aproximación reales).
+#   "secuencial_doble"  -- dos ondas arrancan de cada punta y se cruzan en el
+#                          medio, en bucle.
+#   "pulso_conjunto"     -- todas las luces de borde prenden/apagan juntas
+#                          (como si la pista entera "respirara").
+# "velocidad": ciclos completos por segundo a lo largo de TODA la pista.
+# "ancho_pulso": fracción de la pista que queda "encendida" a la vez (más
+#   chico = destello más agudo y corto, como un flash real).
+const PRESETS_LUCES_PISTA = {
+	"clasico_dorado": {
+		"color_borde": Color(1.0, 0.85, 0.4), "modo": "secuencial",
+		"velocidad": 0.35, "ancho_pulso": 0.22,
+	},
+	"neon_celeste": {
+		"color_borde": Color(0.25, 0.85, 1.0), "modo": "pulso_conjunto",
+		"velocidad": 0.5, "ancho_pulso": 1.0,
+	},
+	"secuencial_doble_rosa": {
+		"color_borde": Color(1.0, 0.35, 0.75), "modo": "secuencial_doble",
+		"velocidad": 0.55, "ancho_pulso": 0.18,
+	},
+	"estroboscopico_blanco": {
+		"color_borde": Color(1.0, 1.0, 1.0), "modo": "pulso_conjunto",
+		"velocidad": 1.6, "ancho_pulso": 0.12,
+	},
+}
+const ASIGNACION_ESTILO_PRUEBA = {
+	"Morón": "clasico_dorado",
+	"El Palomar": "neon_celeste",
+	"San Fernando": "secuencial_doble_rosa",
+	"Aeroparque": "estroboscopico_blanco",
+}
+const ESTILO_POR_DEFECTO = "clasico_dorado"
 
 func _generar_luces_pista(datos: Dictionary) -> void:
 	var contenedor = Node3D.new()
 	contenedor.name = "LucesPista_%s" % datos["nombre"].replace(" ", "")
 	add_child(contenedor)
 
-	var mat_borde = StandardMaterial3D.new()
-	mat_borde.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat_borde.albedo_color = COLOR_LUZ_PISTA_BORDE
-	mat_borde.emission_enabled = true
-	mat_borde.emission = COLOR_LUZ_PISTA_BORDE
-	mat_borde.emission_energy_multiplier = 3.0
+	var nombre_estilo: String = ASIGNACION_ESTILO_PRUEBA.get(datos["nombre"], ESTILO_POR_DEFECTO)
+	var estilo: Dictionary = PRESETS_LUCES_PISTA[nombre_estilo]
+	var color_borde: Color = estilo["color_borde"]
 
 	var mat_umbral = StandardMaterial3D.new()
 	mat_umbral.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat_umbral.albedo_color = COLOR_LUZ_PISTA_UMBRAL
+	mat_umbral.albedo_color = COLOR_LUZ_PISTA_UMBRAL_DEFECTO
 	mat_umbral.emission_enabled = true
-	mat_umbral.emission = COLOR_LUZ_PISTA_UMBRAL
+	mat_umbral.emission = COLOR_LUZ_PISTA_UMBRAL_DEFECTO
 	mat_umbral.emission_energy_multiplier = 3.0
 
 	# Largo aproximado SOLO para decidir cuántas luces de borde poner (no
@@ -1514,7 +1558,18 @@ func _generar_luces_pista(datos: Dictionary) -> void:
 			esfera.radius = RADIO_LUZ_PISTA
 			esfera.height = RADIO_LUZ_PISTA * 2.0
 			luz.mesh = esfera
-			luz.set_surface_override_material(0, mat_borde)
+			# Material PROPIO por luz (no compartido) -- necesario para que
+			# cada una pueda tener su propio brillo en cada instante (la
+			# esencia del efecto "viajando"/secuencial). Antes todas las
+			# luces de borde compartían un único material, así que solo se
+			# podían prender/apagar todas juntas.
+			var mat_luz = StandardMaterial3D.new()
+			mat_luz.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			mat_luz.albedo_color = color_borde
+			mat_luz.emission_enabled = true
+			mat_luz.emission = color_borde
+			mat_luz.emission_energy_multiplier = 0.0
+			luz.set_surface_override_material(0, mat_luz)
 			luz.set_layer_mask_value(1, false)
 			luz.set_layer_mask_value(CAPA_MARCADORES_NOCTURNOS, true)
 			luz.set_meta("t", t)
@@ -1522,7 +1577,8 @@ func _generar_luces_pista(datos: Dictionary) -> void:
 			contenedor.add_child(luz)
 
 	# 2 luces de umbral verdes por cabecera (izquierda y derecha del eje),
-	# marcando exactamente dónde empieza/termina la pista de verdad.
+	# marcando exactamente dónde empieza/termina la pista de verdad -- estas
+	# quedan FIJAS (no siguen el estilo de la prueba), como las reales.
 	for t_umbral in [0.0, 1.0]:
 		for lado in [1.0, -1.0]:
 			var luz_umbral = MeshInstance3D.new()
@@ -1540,10 +1596,36 @@ func _generar_luces_pista(datos: Dictionary) -> void:
 	contenedor_luces_pista.append({
 		"cab1_lat": datos["cab1_lat"], "cab1_lon": datos["cab1_lon"], "cab1_alt": datos.get("cab1_alt", 8.0),
 		"cab2_lat": datos["cab2_lat"], "cab2_lon": datos["cab2_lon"], "cab2_alt": datos.get("cab2_alt", 8.0),
+		"estilo": estilo,
 		"contenedor": contenedor,
-		"mat_borde": mat_borde,
 		"mat_umbral": mat_umbral,
 	})
+
+# Calcula cuánto tiene que brillar (0.0 a 1.0) la luz de borde que está en la
+# posición "t" (0=cabecera 1, 1=cabecera 2) de la pista, en el instante
+# "tiempo", según el "modo" del estilo asignado a ese aeropuerto.
+func _brillo_luz_pista(t: float, tiempo: float, estilo: Dictionary) -> float:
+	var velocidad: float = estilo["velocidad"]
+	var ancho_pulso: float = max(estilo["ancho_pulso"], 0.02)
+	match estilo["modo"]:
+		"pulso_conjunto":
+			# Todas las luces de la pista comparten el mismo valor -- no
+			# depende de "t", la pista entera "respira" o destella junta.
+			var fase_conjunta: float = fposmod(tiempo * velocidad, 1.0)
+			var distancia_conjunta: float = min(fase_conjunta, 1.0 - fase_conjunta)
+			return clamp(1.0 - distancia_conjunta / (ancho_pulso * 0.5), 0.0, 1.0)
+		"secuencial_doble":
+			# "Pliega" la pista al medio (t=0 y t=1 quedan en 1.0, t=0.5 en
+			# 0.0) -- una misma onda viajera aplicada sobre esta coordenada
+			# plegada aparenta dos ondas saliendo de cada punta a la vez.
+			var t_plegado: float = abs(t - 0.5) * 2.0
+			var fase_doble: float = fposmod(t_plegado - tiempo * velocidad, 1.0)
+			var distancia_doble: float = min(fase_doble, 1.0 - fase_doble)
+			return clamp(1.0 - distancia_doble / (ancho_pulso * 0.5), 0.0, 1.0)
+		_:  # "secuencial" -- una sola luz viajando de punta a punta, en bucle
+			var fase: float = fposmod(t - tiempo * velocidad, 1.0)
+			var distancia: float = min(fase, 1.0 - fase)
+			return clamp(1.0 - distancia / (ancho_pulso * 0.5), 0.0, 1.0)
 
 # Recentra y prende/apaga las luces de pista cada cuadro -- mismo patrón de
 # "separar horizontal de vertical" que ya resolvió los bugs de los aros de
@@ -1566,8 +1648,10 @@ func _actualizar_luces_pista_frame() -> void:
 			continue
 		direccion_horizontal = direccion_horizontal.normalized()
 		var perpendicular: Vector3 = direccion_horizontal.cross(arriba_motor_actual).normalized()
-		entrada["mat_borde"].emission_energy_multiplier = 6.0 * factor_noche_actual
 		entrada["mat_umbral"].emission_energy_multiplier = 6.0 * factor_noche_actual
+
+		var estilo: Dictionary = entrada["estilo"]
+		var tiempo: float = Time.get_ticks_msec() * 0.001
 
 		# SOLUCIÓN DEFINITIVA 2026-09-25 (confirmada por Gemini y ChatGPT):
 		# la altura interpolada linealmente entre las dos cabeceras (p1.lerp
@@ -1591,6 +1675,24 @@ func _actualizar_luces_pista_frame() -> void:
 			var resultado := space_state.intersect_ray(consulta)
 			var punto: Vector3 = (resultado["position"] if resultado else punto_horizontal) + arriba_motor_actual * ALTURA_LUCES_SOBRE_PISO
 			luz.global_position = punto
+
+			# Brillo de ESTA luz en este instante, según el "modo" del estilo
+			# asignado al aeropuerto (ver PRESETS_LUCES_PISTA) -- esto es lo
+			# que arma el efecto de "luces viajando" en vez de todas fijas.
+			var brillo: float = _brillo_luz_pista(t, tiempo, estilo)
+			var mat_luz: StandardMaterial3D = luz.get_surface_override_material(0)
+			mat_luz.emission_energy_multiplier = lerp(0.4, 8.0, brillo) * factor_noche_actual
+
+			# Pedido explícito ("de cerca quedan como bolitas amarillas
+			# feas... que se achiquen, no las necesitamos tanto"): de lejos
+			# quedan a su tamaño normal (se ven como lucecitas de ciudad,
+			# que ya gustó); acercándose al avión se van achicando, sin
+			# desaparecer del todo, para un efecto más "destello" y menos
+			# "bolita sólida".
+			if camara_juego:
+				var distancia_camara: float = camara_juego.global_position.distance_to(punto)
+				var escala: float = clamp(distancia_camara / DISTANCIA_ACHIQUE_LUCES_PISTA, ESCALA_MINIMA_LUCES_PISTA, 1.0)
+				luz.scale = Vector3.ONE * escala
 
 # Faro giratorio de aeropuerto (pedido explícito 2026-09-25: "desde
 # Aeroparque se tendrían que ver las de Quilmes o Palomar... como que
