@@ -64,8 +64,11 @@ const TIPOS_AVION = [
 	# que sigue siendo una estimación a partir de su caja general.
 	# ROTACIÓN 2026-09-26: en 90° quedaba mirando "para las 6", pedido giro
 	# de 180° más sobre eso para llegar a las 12 -> 270°.
+	# Posiciones de luces reemplazadas 2026-09-26 por las medidas a mano en
+	# Blender (ver prompt_mapeo_luces_blender.txt) -- mucho más precisas que
+	# la estimación anterior sacada de オブジェクト_014/015.
 	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.2, "rotacion": Vector3(0, 270, 0), "sonido": "res://FX/motor_jet.mp3",
-		"luces_manual": {"izq": Vector3(-5.033, 3.7, -12.231), "der": Vector3(-5.209, 3.7, 12.16), "estrobo": Vector3(-10.0, 10.0, 0.0)}},
+		"luces_manual": {"izq": Vector3(-3.2927, 3.8327, -10.863), "der": Vector3(-3.2927, 3.8049, 11.127), "estrobo": Vector3(-6.7517, 4.313, -0.73291)}},
 	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helicoptero.mp3",
 		"luces_manual": {"izq": Vector3(-1.673, 0.0, -0.044), "der": Vector3(1.576, 0.0, -0.044), "estrobo": Vector3(0.0, 0.716, -0.044)}},
 	{"nombre": "Avión de combate (nuevo)", "modelo": "res://modelos_aviones/fighter_jet_nuevo.fbx", "helicoptero": false, "escala": 0.9, "rotacion": Vector3(0, 0, 0), "sonido": "res://FX/motor_jet.mp3",
