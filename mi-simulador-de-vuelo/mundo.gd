@@ -912,13 +912,27 @@ func _actualizar_ciclo_dia_noche(delta: float) -> void:
 		luz_sol.light_energy = lerp(0.05, 1.0, clamp(elevacion_grados / 60.0, 0.0, 1.0))
 		luz_sol.light_color = COLOR_LUZ_AMANECER.lerp(COLOR_LUZ_DIA, t_dia)
 
-	if entorno_mundo and entorno_mundo.environment and entorno_mundo.environment.sky:
-		var mat_cielo := entorno_mundo.environment.sky.sky_material
-		if mat_cielo is ProceduralSkyMaterial:
-			mat_cielo.sky_top_color = COLOR_CIELO_NOCHE_ARRIBA.lerp(COLOR_CIELO_DIA_ARRIBA, t_dia)
-			mat_cielo.sky_horizon_color = COLOR_CIELO_NOCHE_HORIZONTE.lerp(COLOR_CIELO_DIA_HORIZONTE, t_dia)
-			mat_cielo.ground_bottom_color = COLOR_SUELO_NOCHE.lerp(COLOR_SUELO_DIA, t_dia)
-			mat_cielo.ground_horizon_color = mat_cielo.sky_horizon_color
+	if entorno_mundo and entorno_mundo.environment:
+		var env := entorno_mundo.environment
+		if env.sky:
+			var mat_cielo := env.sky.sky_material
+			if mat_cielo is ProceduralSkyMaterial:
+				mat_cielo.sky_top_color = COLOR_CIELO_NOCHE_ARRIBA.lerp(COLOR_CIELO_DIA_ARRIBA, t_dia)
+				mat_cielo.sky_horizon_color = COLOR_CIELO_NOCHE_HORIZONTE.lerp(COLOR_CIELO_DIA_HORIZONTE, t_dia)
+				mat_cielo.ground_bottom_color = COLOR_SUELO_NOCHE.lerp(COLOR_SUELO_DIA, t_dia)
+				mat_cielo.ground_horizon_color = mat_cielo.sky_horizon_color
+		# BUG REAL encontrado 2026-09-25 (reportado: "de noche el cielo se
+		# pone negro pero la ciudad sigue igual de iluminada que de día"):
+		# solo tocábamos el color del cielo (que alimenta la luz ambiente de
+		# forma indirecta) y la energía del sol, pero el edificio real de
+		# Cesium (foto ya iluminada de fábrica) se ve casi igual de claro
+		# aunque la luz directa/ambiente bajen un poco. Forzamos acá un
+		# segundo control DIRECTO sobre la energía ambiente -- de noche cae
+		# fuerte (0.12), de día vuelve a su valor normal (1.0) -- así el
+		# oscurecimiento se nota de verdad, no depende de que el color del
+		# cielo alcance por sí solo.
+		env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+		env.ambient_light_energy = lerp(0.12, 1.0, t_dia)
 
 # Llamado desde el panel de Configuración (botones -/+ de "Hora del día") --
 # +delta_horas para adelantar, negativo para atrasar, con vuelta redonda a
