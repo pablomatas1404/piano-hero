@@ -927,18 +927,26 @@ func _actualizar_ciclo_dia_noche(delta: float) -> void:
 				mat_cielo.sky_horizon_color = COLOR_CIELO_NOCHE_HORIZONTE.lerp(COLOR_CIELO_DIA_HORIZONTE, t_dia)
 				mat_cielo.ground_bottom_color = COLOR_SUELO_NOCHE.lerp(COLOR_SUELO_DIA, t_dia)
 				mat_cielo.ground_horizon_color = mat_cielo.sky_horizon_color
-		# BUG REAL encontrado 2026-09-25 (reportado: "de noche el cielo se
-		# pone negro pero la ciudad sigue igual de iluminada que de día"):
-		# solo tocábamos el color del cielo (que alimenta la luz ambiente de
-		# forma indirecta) y la energía del sol, pero el edificio real de
-		# Cesium (foto ya iluminada de fábrica) se ve casi igual de claro
-		# aunque la luz directa/ambiente bajen un poco. Forzamos acá un
-		# segundo control DIRECTO sobre la energía ambiente -- de noche cae
-		# fuerte (0.12), de día vuelve a su valor normal (1.0) -- así el
-		# oscurecimiento se nota de verdad, no depende de que el color del
-		# cielo alcance por sí solo.
 		env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 		env.ambient_light_energy = lerp(0.12, 1.0, t_dia)
+
+		# BUG REAL, causa de fondo encontrada 2026-09-25 (reportado en vivo:
+		# "el avión se oscurece de noche pero el terreno de Cesium queda
+		# igual de claro, ni el cielo cambia"), confirmada con ayuda de
+		# Gemini: las baldosas de Google Photorealistic 3D Tiles vienen con
+		# la extensión glTF KHR_materials_unlit -- la iluminación ya está
+		# "horneada" en la foto satelital, así que el plugin de Cesium las
+		# dibuja SIN responder a ninguna luz de Godot (ni DirectionalLight3D
+		# ni ambient_light_energy les hace nada, por diseño). Por eso ARRIBA
+		# el avión (con material normal, sí sensible a la luz) se oscurecía
+		# bien pero el terreno no se movía un pixel.
+		# SOLUCIÓN (la misma que recomendó Gemini): bajar la EXPOSICIÓN
+		# global de la escena (tonemap_exposure), que es un multiplicador
+		# aplicado al frame entero ya renderizado -- afecta a TODO lo que se
+		# ve en pantalla por igual, sea "lit" o "unlit", porque no es parte
+		# del cálculo de luces por superficie sino del paso final de
+		# tonemapping. Esto es lo que de verdad oscurece el terreno de noche.
+		env.tonemap_exposure = lerp(0.12, 1.0, t_dia)
 
 # Llamado desde el panel de Configuración (botones -/+ de "Hora del día") --
 # +delta_horas para adelantar, negativo para atrasar, con vuelta redonda a
