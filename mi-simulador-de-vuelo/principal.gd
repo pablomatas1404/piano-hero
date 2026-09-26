@@ -1274,7 +1274,24 @@ func _reproducir_siguiente_musica() -> void:
 		indice_musica = 0
 	var ruta: String = playlist_musica[indice_musica]
 	indice_musica += 1
-	var stream: AudioStream = load(ruta)
+	# BUG REAL encontrado 2026-09-27 (reportado: "agregué temas míos a la
+	# carpeta y no suenan, los viejos tenían un archivito de 1kb al lado que
+	# los nuevos no tienen"): load(ruta) pasa por el sistema de import de
+	# Godot, que necesita ese archivo ".import" -- se genera solo cuando el
+	# EDITOR ve el archivo por primera vez, nunca si se copia un mp3 nuevo
+	# directo por Windows y se juega sin pasar por el editor antes. Leyendo
+	# los bytes crudos del archivo a mano (FileAccess) y armando el
+	# AudioStreamMP3 directamente evita el sistema de import por completo --
+	# cualquier mp3 que se copie a la carpeta suena al toque, sin depender
+	# de que el editor lo haya "notado" antes.
+	var bytes: PackedByteArray = FileAccess.get_file_as_bytes(ruta)
+	var stream: AudioStream
+	if bytes.is_empty():
+		stream = null
+	else:
+		var mp3 := AudioStreamMP3.new()
+		mp3.data = bytes
+		stream = mp3
 	sonido_musica.stream = stream
 	sonido_musica.stream_paused = false
 	sonido_musica.play()
