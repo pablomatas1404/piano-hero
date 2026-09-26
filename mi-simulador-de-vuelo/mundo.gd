@@ -1458,14 +1458,12 @@ func _actualizar_ils_dos_cabeceras_frame() -> void:
 var contenedor_luces_pista: Array = []
 const ANCHO_MEDIO_PISTA_LUCES = 20.0  # separación de las luces de borde respecto al eje central
 const ESPACIADO_LUCES_PISTA = 60.0    # cada cuántos metros va una luz de borde
-# Agrandadas (2.5, antes 1.4) y levantadas más del piso (4.0m, antes 0.5m) --
-# reportado que no se ven nada de noche; sospecha principal: al desplazarse
-# 20m a los costados del eje medido, la altura interpolada centro-a-centro
-# puede no coincidir con el terreno real de ese punto (que no es plano) y
-# quedar la esfera enterrada. Más margen vertical + más tamaño mientras se
-# termina de diagnosticar la causa exacta con ayuda externa.
+# Agrandadas (2.5, antes 1.4) -- confirmada la causa real por Gemini/ChatGPT:
+# quedaban enterradas por confiar en altura interpolada en vez de la
+# colisión física real (ver _actualizar_luces_pista_frame). Con el rayo real
+# ya alcanza un margen chico y seguro sobre el piso (1.0m).
 const RADIO_LUZ_PISTA = 2.5
-const ALTURA_LUCES_SOBRE_PISO = 4.0
+const ALTURA_LUCES_SOBRE_PISO = 1.0
 const COLOR_LUZ_PISTA_BORDE = Color(1.0, 0.92, 0.6)   # blanco cálido, como las luces de borde reales
 const COLOR_LUZ_PISTA_UMBRAL = Color(0.25, 1.0, 0.35)  # verde, como las luces de umbral reales
 
@@ -1554,12 +1552,27 @@ func _actualizar_luces_pista_frame() -> void:
 		entrada["mat_borde"].emission_energy_multiplier = 6.0 * factor_noche_actual
 		entrada["mat_umbral"].emission_energy_multiplier = 6.0 * factor_noche_actual
 
+		# SOLUCIÓN DEFINITIVA 2026-09-25 (confirmada por Gemini y ChatGPT):
+		# la altura interpolada linealmente entre las dos cabeceras (p1.lerp
+		# p2) es una buena aproximación SOBRE el eje de la pista (por eso
+		# funciona bien para los aros de ILS, que nunca se despegan de ese
+		# eje), pero acá las luces de BORDE se desplazan 20m a los costados
+		# -- ahí el terreno real de Cesium (pasto, banquina, lomos) puede no
+		# coincidir con esa altura interpolada, y quedaban enterradas. En vez
+		# de confiar en la interpolación, tiramos un rayo real hacia abajo
+		# contra la colisión física del terreno (mismo patrón que
+		# principal.gd::_limitar_piso() ya usa para el avión) y apoyamos la
+		# luz ahí, con un margen chico y seguro.
+		var space_state := get_world_3d().direct_space_state
 		for luz in entrada["contenedor"].get_children():
 			var t: float = luz.get_meta("t")
 			var lado: float = luz.get_meta("lado")
-			var punto: Vector3 = p1.lerp(p2, t)
-			punto += perpendicular * (lado * ANCHO_MEDIO_PISTA_LUCES)
-			punto += arriba_motor_actual * ALTURA_LUCES_SOBRE_PISO
+			var punto_horizontal: Vector3 = p1.lerp(p2, t) + perpendicular * (lado * ANCHO_MEDIO_PISTA_LUCES)
+			var origen_rayo: Vector3 = punto_horizontal + arriba_motor_actual * 500.0
+			var destino_rayo: Vector3 = punto_horizontal - arriba_motor_actual * 500.0
+			var consulta := PhysicsRayQueryParameters3D.create(origen_rayo, destino_rayo)
+			var resultado := space_state.intersect_ray(consulta)
+			var punto: Vector3 = (resultado["position"] if resultado else punto_horizontal) + arriba_motor_actual * ALTURA_LUCES_SOBRE_PISO
 			luz.global_position = punto
 
 func alternar_ils(activo: bool) -> void:
