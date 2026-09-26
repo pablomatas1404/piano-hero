@@ -273,8 +273,13 @@ var aeropuertos_dos_cabeceras = [
 	# ancho_medio_pista: medido por el usuario con "Marcar lugar" (puntos
 	# "sanfer 5"/"sanfer 6" en lugares_marcados.json) -- ~33m de ancho real
 	# de punta a punta, la mitad para el offset desde el eje central.
-	{"nombre": "San Fernando", "cab1_lat": -34.459167, "cab1_lon": -58.595667, "cab1_alt": 10.06,
-		"cab2_lat": -34.45, "cab2_lon": -58.5855, "cab2_alt": 3.35, "ancho_medio_pista": 16.5},
+	# ORIENTACIÓN corregida 2026-09-26 (pedido explícito: "como uso horario
+	# de reloj, dos minutos hacia la derecha" -- 2 minutos de reloj = 12°,
+	# sentido horario). cab1/cab2 originales rotados 12° alrededor del punto
+	# medio (mismo largo real ~1381m, mismo centro, rumbo verdadero pasa de
+	# ~42° a ~54°).
+	{"nombre": "San Fernando", "cab1_lat": -34.458195, "cab1_lon": -58.596712, "cab1_alt": 10.06,
+		"cab2_lat": -34.450971, "cab2_lon": -58.584455, "cab2_alt": 3.35, "ancho_medio_pista": 16.5},
 	{"nombre": "Córdoba (Taravella)", "cab1_lat": -31.3245, "cab1_lon": -64.208167, "cab1_alt": 465.15,
 		"cab2_lat": -31.295667, "cab2_lon": -64.2085, "cab2_alt": 488.99},
 	{"nombre": "Mendoza (El Plumerillo)", "cab1_lat": -32.819167, "cab1_lon": -68.792667, "cab1_alt": 698.02,
