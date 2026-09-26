@@ -557,6 +557,7 @@ var vista_sin_avion_activa: bool = false
 @onready var marcadores_rect: TextureRect = get_node("../HUD/MarcadoresRect")
 @onready var asa_minimapa: ColorRect = get_node("../HUD/MinimapaRect/AsaMinimapa")
 @onready var boton_mapa: Button = get_node("../HUD/BarraBotones/BotonMapa")
+@onready var boton_mapa_auto: Button = get_node("../HUD/BarraBotones/BotonMapaAuto")
 @onready var mapa_viewport: SubViewport = get_node("../HUD/MapaViewport")
 @onready var mapa_rect: TextureRect = get_node("../HUD/MapaRect")
 @onready var asa_mapa: ColorRect = get_node("../HUD/MapaRect/AsaMapa")
@@ -578,6 +579,17 @@ var tile_x_mapa: int = -999999
 var tile_y_mapa: int = -999999
 var descargando_mapa: bool = false
 var acumulador_mapa: float = 0.0
+
+# Zoom automático del mapa según altitud (pedido 2026-09-27): en modo
+# automático, cada INTERVALO_ZOOM_AUTOMATICO segundos se recalcula el zoom
+# según la altura actual del avión -- así de bajo se ven las calles, de
+# crucero se ve un área más amplia. El usuario puede seguir usando la
+# ruedita del mouse para override manual en cualquier momento (ver
+# _mapa_rect_gui_input) -- eso reinicia el cronómetro, dándole ~1 minuto
+# de zoom manual antes de que el automático vuelva a tomar el control.
+const INTERVALO_ZOOM_AUTOMATICO = 60.0
+var mapa_zoom_automatico: bool = true
+var _tiempo_zoom_automatico: float = INTERVALO_ZOOM_AUTOMATICO  # "debido" ya al arrancar, para el primer ajuste rápido
 
 # Misma capa que usa mundo.gd para las baldosas del mapa de calles -- la
 # cámara principal la excluye de su cull_mask para no verlas encimadas con
@@ -913,6 +925,11 @@ func _ready() -> void:
 	boton_mapa.focus_mode = Control.FOCUS_NONE
 	boton_mapa.pressed.connect(func():
 		mapa_rect.visible = not mapa_rect.visible)
+	boton_mapa_auto.focus_mode = Control.FOCUS_NONE
+	boton_mapa_auto.pressed.connect(func():
+		mapa_zoom_automatico = not mapa_zoom_automatico
+		boton_mapa_auto.text = "🔍 Zoom: Auto" if mapa_zoom_automatico else "🔍 Zoom: Manual"
+		_tiempo_zoom_automatico = INTERVALO_ZOOM_AUTOMATICO)
 	asa_mapa.gui_input.connect(_asa_mapa_gui_input)
 	asa_mapa_sup_izq.gui_input.connect(_asa_mapa_sup_izq_gui_input)
 	asa_mapa_sup_der.gui_input.connect(_asa_mapa_sup_der_gui_input)
@@ -1794,6 +1811,17 @@ func _process(delta: float) -> void:
 # avión se movió lo suficiente como para cambiar de tesela -- así no baja una
 # imagen nueva cada cuadro, solo cuando hace falta.
 func _actualizar_mapa_calles(delta: float) -> void:
+	if mapa_zoom_automatico:
+		_tiempo_zoom_automatico += delta
+		if _tiempo_zoom_automatico >= INTERVALO_ZOOM_AUTOMATICO:
+			_tiempo_zoom_automatico = 0.0
+			var altura_actual: float = mundo.altitud_avion + position.y - altura_piso
+			var nuevo_zoom: int = _zoom_mapa_para_altura(altura_actual)
+			if nuevo_zoom != zoom_mapa:
+				zoom_mapa = nuevo_zoom
+				tile_x_mapa = -999999
+				acumulador_mapa = 999.0
+
 	var adelante_mapa = -global_transform.basis.z
 	adelante_mapa.y = 0
 	adelante_mapa = adelante_mapa.normalized()
@@ -1831,6 +1859,21 @@ func _actualizar_mapa_calles(delta: float) -> void:
 	tile_y_mapa = ytile
 	_pedir_baldosa_de_mapa(xtile, ytile)
 
+# "Topes" de zoom según altura (pedido 2026-09-27, "que se vean las calles
+# a 500-1000m, pero no perder el mapa completo si vuela alto"). Niveles de
+# zoom estándar de OpenStreetMap (más alto = más detalle/más cerca).
+func _zoom_mapa_para_altura(altura: float) -> int:
+	if altura < 400.0:
+		return 17
+	elif altura < 900.0:
+		return 15
+	elif altura < 2000.0:
+		return 13
+	elif altura < 5000.0:
+		return 11
+	else:
+		return 9
+
 func _pedir_baldosa_de_mapa(xtile: int, ytile: int) -> void:
 	if descargando_mapa:
 		return
@@ -1864,6 +1907,10 @@ func _mapa_rect_gui_input(event: InputEvent) -> void:
 			zoom_mapa = clamp(zoom_mapa - 1, ZOOM_MAPA_MINIMO, ZOOM_MAPA_MAXIMO)
 		else:
 			return
+		# Zoom manual con la ruedita = override temporal del automático (si
+		# está activo): reinicia el cronómetro, dándole ~1 minuto de zoom
+		# manual antes de que el automático vuelva a ajustar según altura.
+		_tiempo_zoom_automatico = 0.0
 		tile_x_mapa = -999999
 		acumulador_mapa = 999.0
 
