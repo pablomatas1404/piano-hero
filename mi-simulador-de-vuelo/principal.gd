@@ -2509,14 +2509,18 @@ func _poblar_selector() -> void:
 	if selector_poblado:
 		return
 	selector_poblado = true
+	# Modo libre (pedido explícito 2026-09-27): sin "Hasta" real, vuelo sin
+	# plan. BUG REAL encontrado 2026-09-27 (reportado: "no aparece esa
+	# opción"): agregarlo al final de una lista de ~180 aeropuertos lo
+	# dejaba enterrado al fondo del desplegable, había que scrollear mucho
+	# para encontrarlo -- parecía que no estaba. Puesto primero en la lista,
+	# bien a la vista. El índice de este ítem sigue siendo destinos.size()
+	# (se detecta por posición, no por índice fijo -- ver _confirmar_viaje()).
+	destino_option.add_item("🕊️ Modo libre (sin destino)")
 	for nodo in destinos:
 		var nombre = nodo.get_meta("nombre_bonito", nodo.name)
 		origen_option.add_item(nombre)
 		destino_option.add_item(nombre)
-	# Modo libre (pedido explícito 2026-09-27): sin "Hasta" real, vuelo sin
-	# plan -- el índice de este ítem es siempre destinos.size() (el último),
-	# se detecta así en _confirmar_viaje().
-	destino_option.add_item("🕊️ Modo libre (sin destino)")
 	# Mismo motivo que boton_confirmar/boton_despegar: un control con foco de
 	# teclado puede reaccionar a ESPACIO -- estos dos quedaron afuera de esa
 	# limpieza en su momento.
@@ -2527,7 +2531,9 @@ func _poblar_selector() -> void:
 	# código lo tomaba como "no elegiste nada" y no hacía nada -- por eso
 	# parecía que el botón "no funcionaba".
 	origen_option.select(0)
-	destino_option.select(1)  # por default, "Hasta" apunta al segundo (no Aeroparque)
+	# "Hasta" ahora tiene "Modo libre" en el índice 0 (agregado arriba), así
+	# que el segundo destino real (no Aeroparque) quedó en el índice 2, no 1.
+	destino_option.select(2)  # por default, "Hasta" apunta al segundo destino real (no Aeroparque)
 
 # Cambia el modelo visible del avión (por ahora SOLO visual -- todos vuelan
 # igual todavía, eso viene después con físicas por tipo). "" = mostrar las
@@ -3087,13 +3093,16 @@ func _guardar_lugares_marcados_en_archivo() -> void:
 # elegido, orientado hacia el destino, y la Torre empieza a guiarte para allá.
 func _confirmar_viaje() -> void:
 	var idx_origen = origen_option.selected
-	var idx_destino = destino_option.selected
-	# "Modo libre" (pedido explícito 2026-09-27) es siempre el último ítem
-	# del desplegable "Hasta" (índice == destinos.size(), agregado en
-	# _poblar_selector) -- no es un destino real, así que salta la
-	# validación normal de "origen y destino no pueden ser el mismo".
-	var modo_libre: bool = idx_destino == destinos.size()
-	if idx_origen < 0 or idx_destino < 0 or (not modo_libre and idx_origen == idx_destino):
+	var idx_destino_crudo = destino_option.selected
+	# "Modo libre" (pedido explícito 2026-09-27) es siempre el PRIMER ítem
+	# del desplegable "Hasta" (índice 0, agregado en _poblar_selector) --
+	# no es un destino real, así que salta la validación normal de "origen
+	# y destino no pueden ser el mismo". Como ocupa el índice 0, todos los
+	# aeropuertos reales quedan corridos +1 en este desplegable (a
+	# diferencia de "Desde", que no tiene Modo libre y no se corre).
+	var modo_libre: bool = idx_destino_crudo == 0
+	var idx_destino: int = idx_destino_crudo - 1  # -1 en modo libre (no se usa), si no, índice real en destinos[]
+	if idx_origen < 0 or idx_destino_crudo < 0 or (not modo_libre and idx_origen == idx_destino):
 		return
 
 	var nodo_origen = destinos[idx_origen]
