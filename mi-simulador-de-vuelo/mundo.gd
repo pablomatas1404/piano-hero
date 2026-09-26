@@ -665,6 +665,7 @@ func _ready() -> void:
 	for datos_dos_cabeceras in aeropuertos_dos_cabeceras:
 		_generar_ils_dos_cabeceras(datos_dos_cabeceras)
 		_generar_luces_pista(datos_dos_cabeceras)
+		_generar_faro_aeropuerto(datos_dos_cabeceras)
 
 	for datos_pueblo in pueblos_lla:
 		var nodo_pueblo = _generar_marcador_pueblo(datos_pueblo["nombre"])
@@ -718,6 +719,7 @@ func _process(delta: float) -> void:
 	_actualizar_beacons(delta)
 	_actualizar_ils_dos_cabeceras_frame()
 	_actualizar_luces_pista_frame()
+	_actualizar_faros_frame()
 	if tileset and camara_juego:
 		var camara_xform_ecef = georeferencia.get_tx_engine_to_ecef() * camara_juego.global_transform
 		tileset.update_tileset(camara_xform_ecef)
@@ -1241,6 +1243,13 @@ func _orientar_aeropuerto_usuario(nodo: Node3D) -> void:
 # más rings (casi el doble, con huecos más chicos entre cada uno) y más
 # grandes -- esto es puramente visual/de referencia a distancia, no hace
 # falta pasar exactamente por el medio de ninguno para aterrizar bien.
+# Capa aparte para que el ILS, las luces de pista y el faro de aeropuerto
+# mantengan SIEMPRE su color/brillo real, de día o de noche (pedido
+# 2026-09-25, "el ILS se pone en blanco y negro también y se pierde") -- ver
+# el comentario largo en camara_marcadores.gd. Todo lo de esta capa lo
+# excluye la cámara principal y lo dibuja aparte una segunda cámara sin el
+# post-proceso de noche.
+const CAPA_MARCADORES_NOCTURNOS = 6
 const DISTANCIAS_GATES_ILS = [6000.0, 5250.0, 4500.0, 3750.0, 3000.0, 2500.0, 2200.0, 1850.0, 1500.0, 1150.0, 900.0, 650.0, 450.0, 300.0, 150.0]
 const DISTANCIA_INICIO_AROS = 1200.0  # fijo y generoso, no depende del largo real de cada pista
 const PENDIENTE_ILS = 0.0524  # tangente de 3°, la misma senda de descenso que usa un ILS real
@@ -1287,6 +1296,8 @@ func _generar_un_lado_de_ils(nodo: Node3D, signo: float, orientacion_de_este_lad
 		malla_aro.outer_radius = RADIO_EXTERNO_GATE_ILS
 		aro.mesh = malla_aro
 		aro.set_surface_override_material(0, mat_aro)
+		aro.set_layer_mask_value(1, false)
+		aro.set_layer_mask_value(CAPA_MARCADORES_NOCTURNOS, true)
 		# El agujero del TorusMesh atraviesa su propio eje Y local -- para que
 		# mire a lo largo de la pista (eje Z local del nodo padre, ya
 		# orientado hacia el rumbo real) hace falta pararlo con este giro fijo.
@@ -1357,6 +1368,8 @@ func _generar_ils_dos_cabeceras(datos: Dictionary) -> void:
 			malla_aro.outer_radius = RADIO_EXTERNO_GATE_ILS
 			aro.mesh = malla_aro
 			aro.set_surface_override_material(0, mat_aro)
+			aro.set_layer_mask_value(1, false)
+			aro.set_layer_mask_value(CAPA_MARCADORES_NOCTURNOS, true)
 			# Guardamos la distancia real en METROS más allá de la cabecera
 			# correspondiente (no una fracción -- eso se calcula cada cuadro
 			# con el largo REAL medido entre las dos cabeceras, ver
@@ -1502,6 +1515,8 @@ func _generar_luces_pista(datos: Dictionary) -> void:
 			esfera.height = RADIO_LUZ_PISTA * 2.0
 			luz.mesh = esfera
 			luz.set_surface_override_material(0, mat_borde)
+			luz.set_layer_mask_value(1, false)
+			luz.set_layer_mask_value(CAPA_MARCADORES_NOCTURNOS, true)
 			luz.set_meta("t", t)
 			luz.set_meta("lado", lado)
 			contenedor.add_child(luz)
@@ -1516,6 +1531,8 @@ func _generar_luces_pista(datos: Dictionary) -> void:
 			esfera_umbral.height = RADIO_LUZ_PISTA * 2.6
 			luz_umbral.mesh = esfera_umbral
 			luz_umbral.set_surface_override_material(0, mat_umbral)
+			luz_umbral.set_layer_mask_value(1, false)
+			luz_umbral.set_layer_mask_value(CAPA_MARCADORES_NOCTURNOS, true)
 			luz_umbral.set_meta("t", t_umbral)
 			luz_umbral.set_meta("lado", lado)
 			contenedor.add_child(luz_umbral)
@@ -1574,6 +1591,82 @@ func _actualizar_luces_pista_frame() -> void:
 			var resultado := space_state.intersect_ray(consulta)
 			var punto: Vector3 = (resultado["position"] if resultado else punto_horizontal) + arriba_motor_actual * ALTURA_LUCES_SOBRE_PISO
 			luz.global_position = punto
+
+# Faro giratorio de aeropuerto (pedido explícito 2026-09-25: "desde
+# Aeroparque se tendrían que ver las de Quilmes o Palomar... como que
+# prendan y apagan con un color muy intenso") -- un billboard emisivo por
+# aeropuerto, pensado para verse desde 20-30km, no para aterrizar (para eso
+# están las luces de pista/ILS). Recomendado por Gemini y ChatGPT: nada de
+# luces dinámicas reales de Godot (con ~30 aeropuertos sería un desastre de
+# rendimiento) -- un quad con material emisivo, sin sombreado, siempre
+# mirando a la cámara (billboard), con la energía de emisión pulsando fuerte
+# para simular el destello.
+var contenedor_faros: Array = []
+const ALTURA_FARO_SOBRE_PISO = 45.0  # por encima de los edificios más altos típicos
+const RADIO_FARO = 25.0
+const VELOCIDAD_DESTELLO_FARO = 0.22  # ~1 destello cada 4.5s, como un faro real
+
+func _generar_faro_aeropuerto(datos: Dictionary) -> void:
+	var lat_medio: float = (datos["cab1_lat"] + datos["cab2_lat"]) / 2.0
+	var lon_medio: float = (datos["cab1_lon"] + datos["cab2_lon"]) / 2.0
+	var alt_medio: float = (datos.get("cab1_alt", 8.0) + datos.get("cab2_alt", 8.0)) / 2.0
+
+	var faro = MeshInstance3D.new()
+	faro.name = "Faro_%s" % datos["nombre"].replace(" ", "")
+	var quad = QuadMesh.new()
+	quad.size = Vector2(RADIO_FARO, RADIO_FARO)
+	faro.mesh = quad
+
+	var mat_faro = StandardMaterial3D.new()
+	mat_faro.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat_faro.albedo_color = Color(1.0, 1.0, 1.0, 0.9)
+	mat_faro.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat_faro.emission_enabled = true
+	mat_faro.emission = Color(1.0, 1.0, 0.9)
+	mat_faro.emission_energy_multiplier = 2.0
+	mat_faro.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	faro.set_surface_override_material(0, mat_faro)
+	faro.set_layer_mask_value(1, false)
+	faro.set_layer_mask_value(CAPA_MARCADORES_NOCTURNOS, true)
+	add_child(faro)
+
+	contenedor_faros.append({
+		"lat": lat_medio, "lon": lon_medio, "alt": alt_medio,
+		"nodo": faro,
+	})
+
+func _actualizar_faros_frame() -> void:
+	var visibles: bool = factor_noche_actual > 0.03
+	var space_state := get_world_3d().direct_space_state
+	var t: float = Time.get_ticks_msec() * 0.001
+	# Pulso agudo (potencia alta) en vez de una onda suave -- se ve como un
+	# "flash" corto, no como una respiración lenta.
+	var destello: float = pow(max(0.0, sin(t * TAU * VELOCIDAD_DESTELLO_FARO)), 8.0)
+	for entrada in contenedor_faros:
+		var faro: MeshInstance3D = entrada["nodo"]
+		faro.visible = visibles
+		if not visibles:
+			continue
+		var punto_horizontal: Vector3 = _posicion_desde_lat_lon(entrada["lat"], entrada["lon"], entrada["alt"])
+		var origen_rayo: Vector3 = punto_horizontal + arriba_motor_actual * 500.0
+		var destino_rayo: Vector3 = punto_horizontal - arriba_motor_actual * 500.0
+		var consulta := PhysicsRayQueryParameters3D.create(origen_rayo, destino_rayo)
+		var resultado := space_state.intersect_ray(consulta)
+		var base: Vector3 = (resultado["position"] if resultado else punto_horizontal)
+		faro.global_position = base + arriba_motor_actual * ALTURA_FARO_SOBRE_PISO
+
+		# Un billboard normal se achica con la distancia como cualquier
+		# objeto 3D -- a 20-30km ocuparía menos de un píxel y desaparecería.
+		# Lo agrandamos en proporción a la distancia a la cámara para que
+		# mantenga un tamaño APARENTE mínimo en pantalla, sin importar qué
+		# tan lejos esté (esto es justamente lo que pidió el usuario: verse
+		# desde Aeroparque hasta Quilmes o El Palomar).
+		if camara_juego:
+			var distancia: float = camara_juego.global_position.distance_to(faro.global_position)
+			faro.scale = Vector3.ONE * max(1.0, distancia / 700.0)
+
+		var mat: StandardMaterial3D = faro.get_surface_override_material(0)
+		mat.emission_energy_multiplier = lerp(2.0, 35.0, destello)
 
 func alternar_ils(activo: bool) -> void:
 	ils_activo_global = activo

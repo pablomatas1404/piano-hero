@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://ce4ubwtvpciuk" path="res://minimapa_camara.gd" id="3_minimapa"]
 [ext_resource type="Script" path="res://icono_avion_mapa.gd" id="4_icono_avion"]
 [ext_resource type="Script" path="res://insignia_piloto.gd" id="5_insignia"]
+[ext_resource type="Script" path="res://camara_marcadores.gd" id="6_camara_marcadores"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_linea_guia"]
 size = Vector3(0.25, 0.25, 1.0)
@@ -159,6 +160,24 @@ near = 0.1
 far = 100000.0
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=605988918]
+
+[node name="MarcadoresViewport" type="SubViewport" parent="HUD"]
+transparent_bg = true
+size = Vector2i(1280, 720)
+render_target_update_mode = 4
+
+[node name="CamaraMarcadores" type="Camera3D" parent="HUD/MarcadoresViewport"]
+script = ExtResource("6_camara_marcadores")
+
+[node name="MarcadoresRect" type="TextureRect" parent="HUD"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
 
 [node name="PanelInstrumentos" type="HBoxContainer" parent="HUD"]
 offset_left = 20.0

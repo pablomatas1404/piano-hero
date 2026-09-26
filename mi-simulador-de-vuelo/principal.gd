@@ -469,6 +469,8 @@ var vista_sin_avion_activa: bool = false
 @onready var selector_vuelo: Panel = get_node("../HUD/SelectorVuelo")
 @onready var minimapa_viewport: SubViewport = get_node("../HUD/MinimapaViewport")
 @onready var minimapa_rect: TextureRect = get_node("../HUD/MinimapaRect")
+@onready var marcadores_viewport: SubViewport = get_node("../HUD/MarcadoresViewport")
+@onready var marcadores_rect: TextureRect = get_node("../HUD/MarcadoresRect")
 @onready var asa_minimapa: ColorRect = get_node("../HUD/MinimapaRect/AsaMinimapa")
 @onready var boton_mapa: Button = get_node("../HUD/BarraBotones/BotonMapa")
 @onready var mapa_viewport: SubViewport = get_node("../HUD/MapaViewport")
@@ -497,6 +499,13 @@ var acumulador_mapa: float = 0.0
 # cámara principal la excluye de su cull_mask para no verlas encimadas con
 # los edificios reales (ver _ready()).
 const CAPA_RENDER_MAPA_CALLES = 5
+
+# Marcadores propios que tienen que mantener SIEMPRE su color/brillo real
+# (aros de ILS, luces de pista, faro de aeropuerto -- ver mundo.gd y
+# camara_marcadores.gd) -- la cámara principal los excluye de su cull_mask
+# porque los dibuja aparte una segunda cámara sin el post-proceso de noche,
+# y ese resultado se superpone encima (MarcadoresRect en el HUD).
+const CAPA_MARCADORES_NOCTURNOS = 6
 
 # Agrandar/achicar el panel de mapa agarrando de la esquina (pedido
 # explícito, "como en CorelDraw"). El panel de mapa de calles (lateral
@@ -830,6 +839,11 @@ func _ready() -> void:
 	# calles (capa 5, ver mundo.gd) -- si no, se verían los dos terrenos
 	# encimados en la vista de vuelo normal.
 	camara.set_cull_mask_value(CAPA_RENDER_MAPA_CALLES, false)
+	# Tampoco tiene que ver los marcadores propios (capa 6) -- esos los
+	# dibuja la cámara de camara_marcadores.gd, sin el filtro de noche, y el
+	# resultado se superpone encima (ver MarcadoresRect/MarcadoresViewport).
+	camara.set_cull_mask_value(CAPA_MARCADORES_NOCTURNOS, false)
+	marcadores_rect.texture = marcadores_viewport.get_texture()
 
 	# Mismo motivo que arriba (foco de teclado robando el ESPACIO) -- estos
 	# botones nuevos también necesitan FOCUS_NONE.
