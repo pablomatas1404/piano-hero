@@ -53,6 +53,9 @@ extends Node3D
 @onready var entorno_mundo: WorldEnvironment = get_node("WorldEnvironment")
 var hora_del_dia: float = 12.0
 var avance_automatico_hora: bool = true
+# 0.0 = pleno día, 1.0 = noche cerrada -- publicado para que las luces de
+# pista (más abajo) sepan cuánto brillar sin recalcular la hora ellas mismas.
+var factor_noche_actual: float = 0.0
 const SEGUNDOS_POR_DIA_COMPLETO = 1800.0  # 30 minutos reales = 1 día de juego
 const COLOR_CIELO_DIA_ARRIBA = Color(0.385, 0.454, 0.55)
 const COLOR_CIELO_DIA_HORIZONTE = Color(0.646, 0.656, 0.671)
@@ -661,6 +664,7 @@ func _ready() -> void:
 
 	for datos_dos_cabeceras in aeropuertos_dos_cabeceras:
 		_generar_ils_dos_cabeceras(datos_dos_cabeceras)
+		_generar_luces_pista(datos_dos_cabeceras)
 
 	for datos_pueblo in pueblos_lla:
 		var nodo_pueblo = _generar_marcador_pueblo(datos_pueblo["nombre"])
@@ -713,6 +717,7 @@ func _process(delta: float) -> void:
 	_actualizar_ciclo_dia_noche(delta)
 	_actualizar_beacons(delta)
 	_actualizar_ils_dos_cabeceras_frame()
+	_actualizar_luces_pista_frame()
 	if tileset and camara_juego:
 		var camara_xform_ecef = georeferencia.get_tx_engine_to_ecef() * camara_juego.global_transform
 		tileset.update_tileset(camara_xform_ecef)
@@ -907,6 +912,7 @@ func _actualizar_ciclo_dia_noche(delta: float) -> void:
 
 	var elevacion_grados: float = 90.0 - abs(theta_grados)
 	var t_dia: float = clamp((elevacion_grados + 6.0) / 26.0, 0.0, 1.0)
+	factor_noche_actual = 1.0 - t_dia
 
 	if luz_sol:
 		luz_sol.light_energy = lerp(0.05, 1.0, clamp(elevacion_grados / 60.0, 0.0, 1.0))
@@ -1415,6 +1421,119 @@ func _actualizar_ils_dos_cabeceras_frame() -> void:
 			# cuadro), así el aro sube derecho de verdad.
 			punto += arriba_motor_actual * aro.get_meta("altura")
 			aro.global_transform = Transform3D(base_aros, punto)
+
+# Luces de pista reales (pedido 2026-09-25, "que las pistas aparezcan con la
+# iluminación que tienen las pistas reales de noche") -- investigado un
+# overlay real de Cesium ion para esto (asset 3812, "Earth at Night"/NASA
+# Black Marble), pero NO SIRVE para la vista principal: como dice el
+# comentario grande al principio de este archivo, las baldosas de Google
+# Photorealistic 3D Tiles no soportan overlays pintados encima (por eso el
+# mapa de calles vive en su propio terreno aparte). En vez de eso, se
+# generan luces DE VERDAD (mesh emisivos chiquitos, sin costo de luces
+# dinámicas reales de Godot) a lo largo de cada pista que ya tenemos medida
+# con precisión en aeropuertos_dos_cabeceras -- mismo patrón de
+# recentrado-cada-cuadro que los aros de ILS (ver _actualizar_luces_pista_frame),
+# pero SIN depender de que el ILS esté activado: son luces de la pista en sí,
+# siempre están (solo se ven de noche, moduladas por factor_noche_actual).
+var contenedor_luces_pista: Array = []
+const ANCHO_MEDIO_PISTA_LUCES = 20.0  # separación de las luces de borde respecto al eje central
+const ESPACIADO_LUCES_PISTA = 60.0    # cada cuántos metros va una luz de borde
+const RADIO_LUZ_PISTA = 1.4
+const COLOR_LUZ_PISTA_BORDE = Color(1.0, 0.92, 0.6)   # blanco cálido, como las luces de borde reales
+const COLOR_LUZ_PISTA_UMBRAL = Color(0.25, 1.0, 0.35)  # verde, como las luces de umbral reales
+
+func _generar_luces_pista(datos: Dictionary) -> void:
+	var contenedor = Node3D.new()
+	contenedor.name = "LucesPista_%s" % datos["nombre"].replace(" ", "")
+	add_child(contenedor)
+
+	var mat_borde = StandardMaterial3D.new()
+	mat_borde.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat_borde.albedo_color = COLOR_LUZ_PISTA_BORDE
+	mat_borde.emission_enabled = true
+	mat_borde.emission = COLOR_LUZ_PISTA_BORDE
+	mat_borde.emission_energy_multiplier = 3.0
+
+	var mat_umbral = StandardMaterial3D.new()
+	mat_umbral.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat_umbral.albedo_color = COLOR_LUZ_PISTA_UMBRAL
+	mat_umbral.emission_enabled = true
+	mat_umbral.emission = COLOR_LUZ_PISTA_UMBRAL
+	mat_umbral.emission_energy_multiplier = 3.0
+
+	# Largo aproximado SOLO para decidir cuántas luces de borde poner (no
+	# necesita ser exacto -- se recalcula la posición real cada cuadro en
+	# _actualizar_luces_pista_frame, esto solo define la cantidad de puntos).
+	var largo_aprox: float = _posicion_desde_lat_lon(datos["cab1_lat"], datos["cab1_lon"], datos.get("cab1_alt", 8.0)).distance_to(
+		_posicion_desde_lat_lon(datos["cab2_lat"], datos["cab2_lon"], datos.get("cab2_alt", 8.0)))
+	var cantidad_luces: int = max(2, int(largo_aprox / ESPACIADO_LUCES_PISTA))
+
+	for i in range(cantidad_luces + 1):
+		var t: float = float(i) / float(cantidad_luces)
+		for lado in [1.0, -1.0]:
+			var luz = MeshInstance3D.new()
+			var esfera = SphereMesh.new()
+			esfera.radius = RADIO_LUZ_PISTA
+			esfera.height = RADIO_LUZ_PISTA * 2.0
+			luz.mesh = esfera
+			luz.set_surface_override_material(0, mat_borde)
+			luz.set_meta("t", t)
+			luz.set_meta("lado", lado)
+			contenedor.add_child(luz)
+
+	# 2 luces de umbral verdes por cabecera (izquierda y derecha del eje),
+	# marcando exactamente dónde empieza/termina la pista de verdad.
+	for t_umbral in [0.0, 1.0]:
+		for lado in [1.0, -1.0]:
+			var luz_umbral = MeshInstance3D.new()
+			var esfera_umbral = SphereMesh.new()
+			esfera_umbral.radius = RADIO_LUZ_PISTA * 1.3
+			esfera_umbral.height = RADIO_LUZ_PISTA * 2.6
+			luz_umbral.mesh = esfera_umbral
+			luz_umbral.set_surface_override_material(0, mat_umbral)
+			luz_umbral.set_meta("t", t_umbral)
+			luz_umbral.set_meta("lado", lado)
+			contenedor.add_child(luz_umbral)
+
+	contenedor_luces_pista.append({
+		"cab1_lat": datos["cab1_lat"], "cab1_lon": datos["cab1_lon"], "cab1_alt": datos.get("cab1_alt", 8.0),
+		"cab2_lat": datos["cab2_lat"], "cab2_lon": datos["cab2_lon"], "cab2_alt": datos.get("cab2_alt", 8.0),
+		"contenedor": contenedor,
+		"mat_borde": mat_borde,
+		"mat_umbral": mat_umbral,
+	})
+
+# Recentra y prende/apaga las luces de pista cada cuadro -- mismo patrón de
+# "separar horizontal de vertical" que ya resolvió los bugs de los aros de
+# ILS (ver comentarios ahí), reusado acá para el offset lateral (ancho de
+# pista) y la altura sobre el piso.
+func _actualizar_luces_pista_frame() -> void:
+	var visibles: bool = factor_noche_actual > 0.03
+	for entrada in contenedor_luces_pista:
+		entrada["contenedor"].visible = visibles
+		if not visibles:
+			continue
+		var p1: Vector3 = _posicion_desde_lat_lon(entrada["cab1_lat"], entrada["cab1_lon"], entrada["cab1_alt"])
+		var p2: Vector3 = _posicion_desde_lat_lon(entrada["cab2_lat"], entrada["cab2_lon"], entrada["cab2_alt"])
+		var direccion: Vector3 = (p2 - p1)
+		if direccion.length_squared() < 1.0:
+			continue
+		direccion = direccion.normalized()
+		var direccion_horizontal: Vector3 = direccion - direccion.dot(arriba_motor_actual) * arriba_motor_actual
+		if direccion_horizontal.length_squared() < 0.0001:
+			continue
+		direccion_horizontal = direccion_horizontal.normalized()
+		var perpendicular: Vector3 = direccion_horizontal.cross(arriba_motor_actual).normalized()
+		entrada["mat_borde"].emission_energy_multiplier = 3.0 * factor_noche_actual
+		entrada["mat_umbral"].emission_energy_multiplier = 3.0 * factor_noche_actual
+
+		for luz in entrada["contenedor"].get_children():
+			var t: float = luz.get_meta("t")
+			var lado: float = luz.get_meta("lado")
+			var punto: Vector3 = p1.lerp(p2, t)
+			punto += perpendicular * (lado * ANCHO_MEDIO_PISTA_LUCES)
+			punto += arriba_motor_actual * 0.5
+			luz.global_position = punto
 
 func alternar_ils(activo: bool) -> void:
 	ils_activo_global = activo
