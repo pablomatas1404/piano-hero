@@ -35,3 +35,4 @@ enabled=PackedStringArray("res://addons/cesium_godot/plugin.cfg")
 
 [rendering]
 
+rendering_device/driver.windows="d3d12"
