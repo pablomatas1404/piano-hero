@@ -610,10 +610,10 @@ var control_mouse_activo: bool = false
 # Ciclo día/noche -- estos botones solo llaman a las funciones de mundo.gd
 # (ahí vive todo el cálculo real, ver ajustar_hora_del_dia/
 # alternar_avance_automatico_hora), acá solo se refleja el valor en pantalla.
-@onready var boton_hora_menos: Button = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxHoraDelDia/BotonHoraMenos")
-@onready var boton_hora_mas: Button = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxHoraDelDia/BotonHoraMas")
-@onready var label_hora_valor: Label = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxHoraDelDia/LabelHoraValor")
-@onready var check_avance_automatico_hora: CheckButton = get_node("../HUD/PanelConfiguracion/VBoxConfig/CheckAvanceAutomaticoHora")
+@onready var boton_hora_menos: Button = get_node("../HUD/BarraBotones/HBoxHoraBarra/BotonHoraMenos")
+@onready var boton_hora_mas: Button = get_node("../HUD/BarraBotones/HBoxHoraBarra/BotonHoraMas")
+@onready var label_hora_valor: Label = get_node("../HUD/BarraBotones/HBoxHoraBarra/LabelHoraValor")
+@onready var check_avance_automatico_hora: CheckButton = get_node("../HUD/BarraBotones/CheckAvanceAutomaticoHora")
 
 # JOYSTICK -- pedido explícito 2026-09-20. Godot no distingue cable vs.
 # Bluetooth a nivel de código -- el sistema operativo hace el emparejamiento
@@ -1982,8 +1982,10 @@ func _limitar_piso() -> void:
 func _actualizar_hud(delta: float) -> void:
 	var altura = mundo.altitud_avion + position.y - altura_piso
 	etiqueta_altimetro.text = "ALT\n%dm" % int(round(altura))
-	if panel_configuracion.visible:
-		_actualizar_etiqueta_hora()
+	# Antes solo se actualizaba con el panel de Configuración abierto (ahí
+	# vivía el reloj) -- ahora que se movió a la barra de arriba (siempre
+	# visible), tiene que refrescarse siempre.
+	_actualizar_etiqueta_hora()
 
 	if destinos.is_empty():
 		destinos = mundo.obtener_destinos()
