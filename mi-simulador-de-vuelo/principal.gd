@@ -297,6 +297,15 @@ var altura_piso = 0.0
 @onready var etiqueta_altimetro: Label = get_node("../HUD/PanelInstrumentos/CajaAltitud/AltimetroLabel")
 @onready var etiqueta_rumbo: Label = get_node("../HUD/PanelInstrumentos/CajaRumbo/RumboLabel")
 @onready var etiqueta_distancia: Label = get_node("../HUD/PanelInstrumentos/CajaDistancia/DistanciaLabel")
+
+# Panel "Torre" (pedido 2026-09-27): muestra los 3 aeropuertos más cercanos
+# con distancia real y permite prender/apagar el ILS de cada uno por
+# separado, sin usar el interruptor global. _filas_torre se arma UNA vez en
+# _ready() con referencias a los nodos de la escena; _actualizar_panel_torre()
+# solo actualiza texto/rotación/metadata cada tanto (ver INTERVALO_TORRE).
+var _filas_torre: Array = []
+var _acumulador_torre: float = 999.0
+const INTERVALO_TORRE = 2.0
 @onready var cartel_central: Label = get_node("../HUD/CartelCentral")
 @onready var origen_option: OptionButton = get_node("../HUD/SelectorVuelo/VBox/OrigenOption")
 @onready var destino_option: OptionButton = get_node("../HUD/SelectorVuelo/VBox/DestinoOption")
@@ -930,6 +939,18 @@ func _ready() -> void:
 		mapa_zoom_automatico = not mapa_zoom_automatico
 		boton_mapa_auto.text = "🔍 Zoom: Auto" if mapa_zoom_automatico else "🔍 Zoom: Manual"
 		_tiempo_zoom_automatico = INTERVALO_ZOOM_AUTOMATICO)
+
+	for i in range(1, 4):
+		var fila := {
+			"flecha": get_node("../HUD/PanelTorre/VBoxTorre/FilaTorre%d/FlechaTorre%d" % [i, i]),
+			"nombre": get_node("../HUD/PanelTorre/VBoxTorre/FilaTorre%d/NombreTorre%d" % [i, i]),
+			"distancia": get_node("../HUD/PanelTorre/VBoxTorre/FilaTorre%d/DistanciaTorre%d" % [i, i]),
+			"boton": get_node("../HUD/PanelTorre/VBoxTorre/FilaTorre%d/BotonIlsTorre%d" % [i, i]),
+		}
+		fila["boton"].focus_mode = Control.FOCUS_NONE
+		fila["boton"].disabled = true
+		fila["boton"].pressed.connect(_alternar_ils_torre.bind(_filas_torre.size()))
+		_filas_torre.append(fila)
 	asa_mapa.gui_input.connect(_asa_mapa_gui_input)
 	asa_mapa_sup_izq.gui_input.connect(_asa_mapa_sup_izq_gui_input)
 	asa_mapa_sup_der.gui_input.connect(_asa_mapa_sup_der_gui_input)
@@ -2176,6 +2197,8 @@ func _actualizar_hud(delta: float) -> void:
 		temporizador_torre = 0.0
 		_actualizar_torre(altura)
 
+	_actualizar_panel_torre(delta)
+
 # Llena los dos desplegables ("Desde" / "Hasta") con los nombres de todos los
 # aeropuertos que existan en Mundo -- así, si mañana agregás uno nuevo ahí,
 # automáticamente aparece acá también, sin tocar nada más.
@@ -2837,6 +2860,64 @@ func _rumbo_verdadero_hacia(lat1_deg: float, lon1_deg: float, lat2_deg: float, l
 	var y = sin(dlon) * cos(lat2)
 	var x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dlon)
 	return fposmod(rad_to_deg(atan2(y, x)), 360.0)
+
+# Panel "Torre" (pedido 2026-09-27): recalcula cada INTERVALO_TORRE segundos
+# (no todos los cuadros -- recorre TODOS los aeropuertos/pueblos cargados,
+# sería carísimo hacerlo cada frame) los 3 más cercanos, con distancia real
+# (misma técnica de siempre: como el origen está recentrado en el avión, la
+# posición de cada nodo YA es el vector avión->aeropuerto, separamos la
+# componente vertical igual que en todos lados de este archivo) y la
+# flechita apuntando al rumbo relativo (rumbo verdadero hacia el aeropuerto
+# menos el rumbo actual del avión).
+func _actualizar_panel_torre(delta: float) -> void:
+	_acumulador_torre += delta
+	if _acumulador_torre < INTERVALO_TORRE:
+		return
+	_acumulador_torre = 0.0
+
+	var arriba_real: Vector3 = _arriba_real()
+	var candidatos: Array = []
+	for nodo in mundo.obtener_destinos():
+		if not (nodo.has_meta("lat") and nodo.has_meta("lon")):
+			continue
+		var horizontal: Vector3 = nodo.global_position - nodo.global_position.dot(arriba_real) * arriba_real
+		candidatos.append({"nodo": nodo, "distancia": horizontal.length()})
+	candidatos.sort_custom(func(a, b): return a["distancia"] < b["distancia"])
+
+	for i in range(_filas_torre.size()):
+		var fila: Dictionary = _filas_torre[i]
+		if i >= candidatos.size():
+			fila["nombre"].text = "---"
+			fila["distancia"].text = "--"
+			fila["flecha"].visible = false
+			fila["boton"].disabled = true
+			continue
+		var candidato: Dictionary = candidatos[i]
+		var nodo: Node3D = candidato["nodo"]
+		var nombre: String = nodo.get_meta("nombre_bonito", nodo.name)
+		var rumbo_hacia: float = _rumbo_verdadero_hacia(mundo.lat_avion, mundo.lon_avion, nodo.get_meta("lat"), nodo.get_meta("lon"))
+		var relativo: float = fposmod(rumbo_hacia - _ultimo_rumbo_actual, 360.0)
+
+		fila["nombre"].text = nombre
+		fila["distancia"].text = "%.1f km" % (candidato["distancia"] / 1000.0)
+		fila["flecha"].visible = true
+		fila["flecha"].rotation_degrees = relativo
+		fila["boton"].disabled = false
+		fila["boton"].set_meta("nombre_aeropuerto", nombre)
+		var ils_activo: bool = mundo.ils_activo_en_aeropuerto(nombre)
+		fila["boton"].text = "ILS ON" if ils_activo else "ILS"
+		fila["boton"].modulate = Color(0.5, 1.0, 0.5, 1.0) if ils_activo else Color(1, 1, 1, 1)
+
+func _alternar_ils_torre(indice: int) -> void:
+	var boton: Button = _filas_torre[indice]["boton"]
+	var nombre: String = boton.get_meta("nombre_aeropuerto", "")
+	if nombre == "":
+		return
+	var activo: bool = mundo.ils_activo_en_aeropuerto(nombre)
+	mundo.alternar_ils_aeropuerto(nombre, not activo)
+	# Refresco inmediato del botón (no esperar los 2s del próximo ciclo).
+	boton.text = "ILS" if activo else "ILS ON"
+	boton.modulate = Color(1, 1, 1, 1) if activo else Color(0.5, 1.0, 0.5, 1.0)
 
 func _actualizar_torre(altura: float) -> void:
 	# BUG REAL encontrado 2026-09-20 (el "reloj" del RUMBO, sospechado

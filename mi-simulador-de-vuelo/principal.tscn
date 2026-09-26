@@ -469,6 +469,142 @@ theme_override_font_sizes/font_size = 11
 button_pressed = true
 text = "🕐 Auto"
 
+[node name="PanelTorre" type="Panel" parent="HUD"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -270.0
+offset_top = 270.0
+offset_right = -14.0
+offset_bottom = 470.0
+grow_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="VBoxTorre" type="VBoxContainer" parent="HUD/PanelTorre"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = -8.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 6
+
+[node name="LabelTituloTorre" type="Label" parent="HUD/PanelTorre/VBoxTorre"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_override_font_sizes/font_size = 11
+text = "📡 Torre -- aeropuertos cercanos"
+autowrap_mode = 3
+
+[node name="FilaTorre1" type="HBoxContainer" parent="HUD/PanelTorre/VBoxTorre"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="FlechaTorre1" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre1"]
+custom_minimum_size = Vector2(18, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "➤"
+horizontal_alignment = 1
+pivot_offset = Vector2(9, 9)
+
+[node name="NombreTorre1" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre1"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+text = "---"
+clip_text = true
+
+[node name="DistanciaTorre1" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre1"]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "--"
+horizontal_alignment = 2
+
+[node name="BotonIlsTorre1" type="Button" parent="HUD/PanelTorre/VBoxTorre/FilaTorre1"]
+custom_minimum_size = Vector2(36, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "ILS"
+
+[node name="FilaTorre2" type="HBoxContainer" parent="HUD/PanelTorre/VBoxTorre"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="FlechaTorre2" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre2"]
+custom_minimum_size = Vector2(18, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "➤"
+horizontal_alignment = 1
+pivot_offset = Vector2(9, 9)
+
+[node name="NombreTorre2" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre2"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+text = "---"
+clip_text = true
+
+[node name="DistanciaTorre2" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre2"]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "--"
+horizontal_alignment = 2
+
+[node name="BotonIlsTorre2" type="Button" parent="HUD/PanelTorre/VBoxTorre/FilaTorre2"]
+custom_minimum_size = Vector2(36, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "ILS"
+
+[node name="FilaTorre3" type="HBoxContainer" parent="HUD/PanelTorre/VBoxTorre"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="FlechaTorre3" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre3"]
+custom_minimum_size = Vector2(18, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "➤"
+horizontal_alignment = 1
+pivot_offset = Vector2(9, 9)
+
+[node name="NombreTorre3" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre3"]
+custom_minimum_size = Vector2(90, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 11
+text = "---"
+clip_text = true
+
+[node name="DistanciaTorre3" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre3"]
+custom_minimum_size = Vector2(40, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 11
+text = "--"
+horizontal_alignment = 2
+
+[node name="BotonIlsTorre3" type="Button" parent="HUD/PanelTorre/VBoxTorre/FilaTorre3"]
+custom_minimum_size = Vector2(36, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "ILS"
+
 [node name="PanelSensibilidad" type="Panel" parent="HUD" unique_id=2013309407]
 anchors_preset = 1
 anchor_left = 1.0

@@ -1425,8 +1425,13 @@ func _generar_ils_dos_cabeceras(datos: Dictionary) -> void:
 	})
 
 func _actualizar_ils_dos_cabeceras_frame() -> void:
-	if not ils_activo_global:
-		return
+	# Pedido 2026-09-27 (panel "Torre", ILS individual por aeropuerto
+	# cercano): antes este chequeo global cortaba TODO si el interruptor
+	# maestro estaba apagado, así que un ILS prendido a mano en un solo
+	# aeropuerto (con alternar_ils_aeropuerto) nunca se actualizaba de
+	# posición mientras el global estuviera off. Ahora cada aro ya se salta
+	# solo si SU contenedor puntual está apagado (la línea de abajo), así
+	# que no hace falta el gate global acá.
 	for entrada in contenedor_ils_dos_cabeceras:
 		if not entrada["contenedor"].visible:
 			continue
@@ -1889,6 +1894,31 @@ func alternar_ils(activo: bool) -> void:
 		par["negativo"].visible = activo
 	for entrada in contenedor_ils_dos_cabeceras:
 		entrada["contenedor"].visible = activo
+
+# ILS individual por aeropuerto (pedido 2026-09-27, panel "Torre" -- "poder
+# activar/desactivar los ILS de los 3 aeropuertos más cercanos desde ahí"),
+# independiente del interruptor maestro de arriba. Busca por nombre en las
+# DOS listas posibles (dos cabeceras reales, o el sistema viejo de un solo
+# rumbo) y prende/apaga solo esa.
+func alternar_ils_aeropuerto(nombre: String, activo: bool) -> void:
+	for entrada in contenedor_ils_dos_cabeceras:
+		if entrada["nombre"] == nombre:
+			entrada["contenedor"].visible = activo
+			return
+	for par in contenedores_ils_por_aeropuerto:
+		if par["nodo"].get_meta("nombre_bonito", "") == nombre:
+			par["positivo"].visible = activo
+			par["negativo"].visible = activo
+			return
+
+func ils_activo_en_aeropuerto(nombre: String) -> bool:
+	for entrada in contenedor_ils_dos_cabeceras:
+		if entrada["nombre"] == nombre:
+			return entrada["contenedor"].visible
+	for par in contenedores_ils_por_aeropuerto:
+		if par["nodo"].get_meta("nombre_bonito", "") == nombre:
+			return par["positivo"].visible
+	return false
 
 # Marcador de misión (hospital o punto de interés para sobrevolar) -- versión
 # liviana del de aeropuerto, SIN pista (no hay dónde aterrizar de verdad,
