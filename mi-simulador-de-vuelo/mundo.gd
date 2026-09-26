@@ -1198,9 +1198,14 @@ var _tiempo_beacons: float = 0.0
 var etiquetas_cercanas: Array = []
 func _actualizar_beacons(delta: float) -> void:
 	_tiempo_beacons += delta
-	# Parpadeo lento (medio ciclo por segundo aprox.), nunca llega a apagarse
-	# del todo -- oscila entre 55% y 100% de opacidad, para que se note sin
-	# quedar tipo cartel de neón roto.
+	# Parpadeo lento (medio ciclo por segundo aprox.) SOLO mientras está
+	# realmente visible -- pedido explícito 2026-09-28 ("lo único que hace
+	# cuando te acercás es opacarse, quiero que DESAPAREZCA"): antes el fade
+	# bajaba el alpha a 0 pero el nodo seguía "visible=true" técnicamente, y
+	# en ese rango de transición (500-800m) todavía se veía tenue tapando la
+	# pista. Ahora por debajo de ALTURA_BEACON_OCULTO se apaga con
+	# visible=false de una, igual que el cartel chico -- ya no hay zona
+	# intermedia de "medio visible".
 	var parpadeo: float = 0.775 + 0.225 * sin(_tiempo_beacons * 3.0)
 	for beacon in beacons_para_animar:
 		# Como el origen SIEMPRE está recentrado en el avión, la posición
@@ -1210,10 +1215,12 @@ func _actualizar_beacons(delta: float) -> void:
 		# del piso de ese aeropuerto está el avión ahora mismo.
 		var vector_al_aeropuerto: Vector3 = beacon.get_parent().global_position
 		var altura_sobre_aeropuerto: float = -vector_al_aeropuerto.dot(arriba_motor_actual)
-		var desvanecimiento: float = clamp(
-			(altura_sobre_aeropuerto - ALTURA_BEACON_OCULTO) / (ALTURA_BEACON_VISIBLE - ALTURA_BEACON_OCULTO),
-			0.0, 1.0)
-		beacon.modulate.a = desvanecimiento * parpadeo
+		beacon.visible = altura_sobre_aeropuerto >= ALTURA_BEACON_OCULTO
+		if beacon.visible:
+			var desvanecimiento: float = clamp(
+				(altura_sobre_aeropuerto - ALTURA_BEACON_OCULTO) / (ALTURA_BEACON_VISIBLE - ALTURA_BEACON_OCULTO),
+				0.0, 1.0)
+			beacon.modulate.a = desvanecimiento * parpadeo
 
 	for etiqueta in etiquetas_cercanas:
 		var vector_al_aeropuerto_2: Vector3 = etiqueta.get_parent().global_position

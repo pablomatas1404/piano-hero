@@ -330,6 +330,8 @@ const INTERVALO_TORRE = 0.5  # bajado de 2.0 (pedido 2026-09-27, "paso por arrib
 @onready var cartel_central: Label = get_node("../HUD/CartelCentral")
 @onready var origen_option: OptionButton = get_node("../HUD/SelectorVuelo/VBox/OrigenOption")
 @onready var destino_option: OptionButton = get_node("../HUD/SelectorVuelo/VBox/DestinoOption")
+@onready var label_hasta: Label = get_node("../HUD/SelectorVuelo/VBox/LabelHasta")
+@onready var check_vuelo_libre: CheckBox = get_node("../HUD/SelectorVuelo/VBox/CheckVueloLibre")
 @onready var boton_confirmar: Button = get_node("../HUD/SelectorVuelo/VBox/BotonConfirmar")
 @onready var tipo_avion_option: OptionButton = get_node("../HUD/SelectorVuelo/VBox/TipoAvionOption")
 @onready var modelo_externo: Node3D = get_node("ModeloExterno")
@@ -503,25 +505,25 @@ var volumen_instrucciones: float = 0.4  # pedido explícito: "está muy fuerte"
 const PITCH_MOTOR_MINIMO = 0.85
 const PITCH_MOTOR_MAXIMO = 1.25
 @onready var linea_guia: MeshInstance3D = get_node("../LineaGuia")
-@onready var label_giro_valor: Label = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaGiro/LabelGiroValor")
-@onready var boton_giro_menos: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaGiro/BotonGiroMenos")
-@onready var boton_giro_mas: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaGiro/BotonGiroMas")
-@onready var label_angulo_valor: Label = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaAngulo/LabelAnguloValor")
-@onready var boton_angulo_menos: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaAngulo/BotonAnguloMenos")
-@onready var boton_angulo_mas: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaAngulo/BotonAnguloMas")
-@onready var label_vertical_titulo: Label = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVertical/LabelVertical")
-@onready var label_vertical_valor: Label = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVertical/LabelVerticalValor")
-@onready var boton_vertical_menos: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVertical/BotonVerticalMenos")
-@onready var boton_vertical_mas: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVertical/BotonVerticalMas")
-@onready var label_vel_minima_valor: Label = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMinima/LabelVelMinimaValor")
-@onready var boton_vel_minima_menos: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMinima/BotonVelMinimaMenos")
-@onready var boton_vel_minima_mas: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMinima/BotonVelMinimaMas")
-@onready var label_vel_maxima_valor: Label = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMaxima/LabelVelMaximaValor")
-@onready var boton_vel_maxima_menos: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMaxima/BotonVelMaximaMenos")
-@onready var boton_vel_maxima_mas: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMaxima/BotonVelMaximaMas")
-@onready var label_velocidad_animacion_valor: Label = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion/LabelVelocidadAnimacionValor")
-@onready var boton_velocidad_animacion_menos: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion/BotonVelocidadAnimacionMenos")
-@onready var boton_velocidad_animacion_mas: Button = get_node("../HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion/BotonVelocidadAnimacionMas")
+@onready var label_giro_valor: Label = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaGiro/LabelGiroValor")
+@onready var boton_giro_menos: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaGiro/BotonGiroMenos")
+@onready var boton_giro_mas: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaGiro/BotonGiroMas")
+@onready var label_angulo_valor: Label = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaAngulo/LabelAnguloValor")
+@onready var boton_angulo_menos: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaAngulo/BotonAnguloMenos")
+@onready var boton_angulo_mas: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaAngulo/BotonAnguloMas")
+@onready var label_vertical_titulo: Label = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVertical/LabelVertical")
+@onready var label_vertical_valor: Label = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVertical/LabelVerticalValor")
+@onready var boton_vertical_menos: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVertical/BotonVerticalMenos")
+@onready var boton_vertical_mas: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVertical/BotonVerticalMas")
+@onready var label_vel_minima_valor: Label = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelMinima/LabelVelMinimaValor")
+@onready var boton_vel_minima_menos: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelMinima/BotonVelMinimaMenos")
+@onready var boton_vel_minima_mas: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelMinima/BotonVelMinimaMas")
+@onready var label_vel_maxima_valor: Label = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelMaxima/LabelVelMaximaValor")
+@onready var boton_vel_maxima_menos: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelMaxima/BotonVelMaximaMenos")
+@onready var boton_vel_maxima_mas: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelMaxima/BotonVelMaximaMas")
+@onready var label_velocidad_animacion_valor: Label = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion/LabelVelocidadAnimacionValor")
+@onready var boton_velocidad_animacion_menos: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion/BotonVelocidadAnimacionMenos")
+@onready var boton_velocidad_animacion_mas: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion/BotonVelocidadAnimacionMas")
 var ayuda_visual_activa: bool = false
 # CAMBIADO 2026-09-21 (pedido explícito, "es como un láser en los ojos,
 # pegado al avión como una bandita elástica"): antes la línea salía siempre
@@ -634,6 +636,8 @@ var vista_sin_avion_activa: bool = false
 @onready var boton_mapa_auto: Button = get_node("../HUD/BarraBotones/BotonMapaAuto")
 @onready var mapa_viewport: SubViewport = get_node("../HUD/MapaViewport")
 @onready var mapa_rect: TextureRect = get_node("../HUD/MapaRect")
+@onready var boton_transparencia_mapa: Button = get_node("../HUD/BotonTransparenciaMapa")
+var mapa_transparente: bool = false
 @onready var asa_mapa: ColorRect = get_node("../HUD/MapaRect/AsaMapa")
 @onready var asa_mapa_sup_izq: ColorRect = get_node("../HUD/MapaRect/AsaMapaSupIzq")
 @onready var asa_mapa_sup_der: ColorRect = get_node("../HUD/MapaRect/AsaMapaSupDer")
@@ -668,8 +672,6 @@ const INTERVALO_ZOOM_AUTOMATICO = 8.0  # bajado de 60 a 8 (pedido 2026-09-27, "q
 # inicial"). Se reinicia en cada resize/movida real (ver _input arriba);
 # cuando pasan estos segundos sin tocarlo, si no está ya en el tamaño chico,
 # vuelve solo.
-const SEGUNDOS_AUTO_RETORNO_MAPA = 4.0
-var _tiempo_desde_interaccion_mapa: float = 0.0
 var mapa_zoom_automatico: bool = true
 var _tiempo_zoom_automatico: float = INTERVALO_ZOOM_AUTOMATICO  # "debido" ya al arrancar, para el primer ajuste rápido
 
@@ -1034,6 +1036,12 @@ func _ready() -> void:
 	boton_mapa.focus_mode = Control.FOCUS_NONE
 	boton_mapa.pressed.connect(func():
 		mapa_rect.visible = not mapa_rect.visible)
+	# Botón "T" (pedido 2026-09-28): transparenta el mapa al 30% para ver el
+	# terreno de fondo a través, útil mientras se reacomoda/agranda el panel.
+	boton_transparencia_mapa.focus_mode = Control.FOCUS_NONE
+	boton_transparencia_mapa.pressed.connect(func():
+		mapa_transparente = not mapa_transparente
+		mapa_rect.modulate.a = 0.3 if mapa_transparente else 1.0)
 	boton_mapa_auto.focus_mode = Control.FOCUS_NONE
 	boton_mapa_auto.pressed.connect(func():
 		mapa_zoom_automatico = not mapa_zoom_automatico
@@ -1042,10 +1050,10 @@ func _ready() -> void:
 
 	for i in range(1, 7):
 		var fila := {
-			"flecha": get_node("../HUD/PanelTorre/VBoxTorre/FilaTorre%d/FlechaTorre%d" % [i, i]),
-			"nombre": get_node("../HUD/PanelTorre/VBoxTorre/FilaTorre%d/NombreTorre%d" % [i, i]),
-			"distancia": get_node("../HUD/PanelTorre/VBoxTorre/FilaTorre%d/DistanciaTorre%d" % [i, i]),
-			"boton": get_node("../HUD/PanelTorre/VBoxTorre/FilaTorre%d/BotonIlsTorre%d" % [i, i]),
+			"flecha": get_node("../HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre%d/FlechaTorre%d" % [i, i]),
+			"nombre": get_node("../HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre%d/NombreTorre%d" % [i, i]),
+			"distancia": get_node("../HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre%d/DistanciaTorre%d" % [i, i]),
+			"boton": get_node("../HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre%d/BotonIlsTorre%d" % [i, i]),
 		}
 		fila["boton"].focus_mode = Control.FOCUS_NONE
 		fila["boton"].disabled = true
@@ -1306,7 +1314,6 @@ func _input(event: InputEvent) -> void:
 	if _modo_resize_mapa != ModoResizeMapa.NINGUNO:
 		if event is InputEventMouseMotion:
 			_procesar_resize_mapa()
-			_tiempo_desde_interaccion_mapa = 0.0
 			return
 		elif event is InputEventMouseButton and not event.pressed:
 			_modo_resize_mapa = ModoResizeMapa.NINGUNO
@@ -1320,7 +1327,6 @@ func _input(event: InputEvent) -> void:
 			mapa_rect.offset_right += event.relative.x
 			mapa_rect.offset_top += event.relative.y
 			mapa_rect.offset_bottom += event.relative.y
-			_tiempo_desde_interaccion_mapa = 0.0
 			return
 		elif event is InputEventMouseButton and not event.pressed:
 			_arrastrando_mover_mapa = false
@@ -2134,17 +2140,6 @@ func _process(delta: float) -> void:
 # avión se movió lo suficiente como para cambiar de tesela -- así no baja una
 # imagen nueva cada cuadro, solo cuando hace falta.
 func _actualizar_mapa_calles(delta: float) -> void:
-	# Auto-retorno al tamaño chico -- ver comentario junto a
-	# SEGUNDOS_AUTO_RETORNO_MAPA. Comparar contra el default evita resetear
-	# offsets todos los cuadros cuando ya está en su tamaño de siempre.
-	_tiempo_desde_interaccion_mapa += delta
-	if _tiempo_desde_interaccion_mapa >= SEGUNDOS_AUTO_RETORNO_MAPA:
-		var ya_en_default: bool = mapa_rect.offset_left == -160.0 and mapa_rect.offset_top == -160.0 \
-			and mapa_rect.offset_right == -10.0 and mapa_rect.offset_bottom == -10.0
-		if not ya_en_default and _modo_resize_mapa == ModoResizeMapa.NINGUNO and not _arrastrando_mover_mapa:
-			_resetear_mapa_a_tamano_default()
-		_tiempo_desde_interaccion_mapa = 0.0
-
 	if mapa_zoom_automatico:
 		_tiempo_zoom_automatico += delta
 		if _tiempo_zoom_automatico >= INTERVALO_ZOOM_AUTOMATICO:
@@ -2223,8 +2218,8 @@ func _pedir_baldosa_de_mapa(xtile: int, ytile: int) -> void:
 # abajo a la derecha (dentro del panel de instrumentos), así que estos son
 # offsets NEGATIVOS medidos desde ese borde.
 func _resetear_mapa_a_tamano_default() -> void:
-	mapa_rect.offset_left = -160.0
-	mapa_rect.offset_top = -160.0
+	mapa_rect.offset_left = -130.0
+	mapa_rect.offset_top = -130.0
 	mapa_rect.offset_right = -10.0
 	mapa_rect.offset_bottom = -10.0
 	_modo_resize_mapa = ModoResizeMapa.NINGUNO
@@ -2538,14 +2533,6 @@ func _poblar_selector() -> void:
 	if selector_poblado:
 		return
 	selector_poblado = true
-	# Modo libre (pedido explícito 2026-09-27): sin "Hasta" real, vuelo sin
-	# plan. BUG REAL encontrado 2026-09-27 (reportado: "no aparece esa
-	# opción"): agregarlo al final de una lista de ~180 aeropuertos lo
-	# dejaba enterrado al fondo del desplegable, había que scrollear mucho
-	# para encontrarlo -- parecía que no estaba. Puesto primero en la lista,
-	# bien a la vista. El índice de este ítem sigue siendo destinos.size()
-	# (se detecta por posición, no por índice fijo -- ver _confirmar_viaje()).
-	destino_option.add_item("🕊️ Modo libre (sin destino)")
 	for nodo in destinos:
 		var nombre = nodo.get_meta("nombre_bonito", nodo.name)
 		origen_option.add_item(nombre)
@@ -2560,9 +2547,11 @@ func _poblar_selector() -> void:
 	# código lo tomaba como "no elegiste nada" y no hacía nada -- por eso
 	# parecía que el botón "no funcionaba".
 	origen_option.select(0)
-	# "Hasta" ahora tiene "Modo libre" en el índice 0 (agregado arriba), así
-	# que el segundo destino real (no Aeroparque) quedó en el índice 2, no 1.
-	destino_option.select(2)  # por default, "Hasta" apunta al segundo destino real (no Aeroparque)
+	destino_option.select(1)  # por default, "Hasta" apunta al segundo destino real (no Aeroparque)
+	check_vuelo_libre.focus_mode = Control.FOCUS_NONE
+	check_vuelo_libre.toggled.connect(func(activo: bool):
+		destino_option.disabled = activo
+		label_hasta.modulate.a = 0.4 if activo else 1.0)
 
 # Cambia el modelo visible del avión (por ahora SOLO visual -- todos vuelan
 # igual todavía, eso viene después con físicas por tipo). "" = mostrar las
@@ -3122,16 +3111,12 @@ func _guardar_lugares_marcados_en_archivo() -> void:
 # elegido, orientado hacia el destino, y la Torre empieza a guiarte para allá.
 func _confirmar_viaje() -> void:
 	var idx_origen = origen_option.selected
-	var idx_destino_crudo = destino_option.selected
-	# "Modo libre" (pedido explícito 2026-09-27) es siempre el PRIMER ítem
-	# del desplegable "Hasta" (índice 0, agregado en _poblar_selector) --
-	# no es un destino real, así que salta la validación normal de "origen
-	# y destino no pueden ser el mismo". Como ocupa el índice 0, todos los
-	# aeropuertos reales quedan corridos +1 en este desplegable (a
-	# diferencia de "Desde", que no tiene Modo libre y no se corre).
-	var modo_libre: bool = idx_destino_crudo == 0
-	var idx_destino: int = idx_destino_crudo - 1  # -1 en modo libre (no se usa), si no, índice real en destinos[]
-	if idx_origen < 0 or idx_destino_crudo < 0 or (not modo_libre and idx_origen == idx_destino):
+	var idx_destino = destino_option.selected
+	# Modo libre (pedido explícito 2026-09-28, "que sea un tilde chiquito
+	# aparte, no un ítem escondido en el desplegable de 180 aeropuertos"):
+	# ahora es un checkbox propio en el panel, no un ítem más de "Hasta".
+	var modo_libre: bool = check_vuelo_libre.button_pressed
+	if idx_origen < 0 or (not modo_libre and (idx_destino < 0 or idx_origen == idx_destino)):
 		return
 
 	var nodo_origen = destinos[idx_origen]

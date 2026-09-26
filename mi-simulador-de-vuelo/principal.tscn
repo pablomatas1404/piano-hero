@@ -53,6 +53,11 @@ emission_energy_multiplier = 0.6
 [sub_resource type="BoxMesh" id="BoxMesh_linea_guia"]
 size = Vector3(0.25, 0.25, 1)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dashboard"]
+bg_color = Color(0.03, 0.03, 0.03, 1)
+border_width_top = 2
+border_color = Color(0.15, 0.15, 0.15, 1)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_digital"]
 bg_color = Color(0.03, 0.03, 0.03, 0.92)
 border_width_left = 2
@@ -488,22 +493,22 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -360.0
+offset_top = -150.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+theme_override_styles/panel = SubResource("StyleBoxFlat_dashboard")
 
 [node name="PanelTorre" type="Panel" parent="HUD"]
 anchors_preset = 3
 anchor_left = 0.0
 anchor_top = 1.0
-anchor_right = 0.0
+anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 220.0
-offset_top = -350.0
-offset_right = 490.0
+offset_top = -140.0
+offset_right = -170.0
 offset_bottom = -10.0
-grow_horizontal = 1
+grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
 
@@ -513,12 +518,12 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 8.0
-offset_top = 6.0
+offset_top = 4.0
 offset_right = -8.0
-offset_bottom = -6.0
+offset_bottom = -4.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 
 [node name="LabelTituloTorre" type="Label" parent="HUD/PanelTorre/VBoxTorre"]
 layout_mode = 2
@@ -527,12 +532,18 @@ theme_override_font_sizes/font_size = 11
 text = "📡 Torre -- aeropuertos cercanos"
 autowrap_mode = 3
 
-[node name="FilaTorre1" type="HBoxContainer" parent="HUD/PanelTorre/VBoxTorre"]
+[node name="HBoxTorre" type="HBoxContainer" parent="HUD/PanelTorre/VBoxTorre"]
 layout_mode = 2
-theme_override_constants/separation = 4
+size_flags_vertical = 3
+theme_override_constants/separation = 6
 
-[node name="FlechaTorre1" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre1"]
-custom_minimum_size = Vector2(18, 0)
+[node name="TarjetaTorre1" type="VBoxContainer" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre"]
+custom_minimum_size = Vector2(105, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 1
+
+[node name="FlechaTorre1" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre1"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
 theme_override_font_sizes/font_size = 14
@@ -540,34 +551,35 @@ text = "➤"
 horizontal_alignment = 1
 pivot_offset = Vector2(9, 9)
 
-[node name="NombreTorre1" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre1"]
-custom_minimum_size = Vector2(90, 0)
+[node name="NombreTorre1" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre1"]
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 11
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 10
 text = "---"
+horizontal_alignment = 1
+autowrap_mode = 2
 clip_text = true
 
-[node name="DistanciaTorre1" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre1"]
-custom_minimum_size = Vector2(40, 0)
+[node name="DistanciaTorre1" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre1"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "--"
-horizontal_alignment = 2
+horizontal_alignment = 1
 
-[node name="BotonIlsTorre1" type="Button" parent="HUD/PanelTorre/VBoxTorre/FilaTorre1"]
-custom_minimum_size = Vector2(36, 20)
+[node name="BotonIlsTorre1" type="Button" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre1"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "ILS"
 
-[node name="FilaTorre2" type="HBoxContainer" parent="HUD/PanelTorre/VBoxTorre"]
+[node name="TarjetaTorre2" type="VBoxContainer" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre"]
+custom_minimum_size = Vector2(105, 0)
 layout_mode = 2
-theme_override_constants/separation = 4
+size_flags_horizontal = 3
+theme_override_constants/separation = 1
 
-[node name="FlechaTorre2" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre2"]
-custom_minimum_size = Vector2(18, 0)
+[node name="FlechaTorre2" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre2"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
 theme_override_font_sizes/font_size = 14
@@ -575,34 +587,35 @@ text = "➤"
 horizontal_alignment = 1
 pivot_offset = Vector2(9, 9)
 
-[node name="NombreTorre2" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre2"]
-custom_minimum_size = Vector2(90, 0)
+[node name="NombreTorre2" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre2"]
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 11
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 10
 text = "---"
+horizontal_alignment = 1
+autowrap_mode = 2
 clip_text = true
 
-[node name="DistanciaTorre2" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre2"]
-custom_minimum_size = Vector2(40, 0)
+[node name="DistanciaTorre2" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre2"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "--"
-horizontal_alignment = 2
+horizontal_alignment = 1
 
-[node name="BotonIlsTorre2" type="Button" parent="HUD/PanelTorre/VBoxTorre/FilaTorre2"]
-custom_minimum_size = Vector2(36, 20)
+[node name="BotonIlsTorre2" type="Button" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre2"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "ILS"
 
-[node name="FilaTorre3" type="HBoxContainer" parent="HUD/PanelTorre/VBoxTorre"]
+[node name="TarjetaTorre3" type="VBoxContainer" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre"]
+custom_minimum_size = Vector2(105, 0)
 layout_mode = 2
-theme_override_constants/separation = 4
+size_flags_horizontal = 3
+theme_override_constants/separation = 1
 
-[node name="FlechaTorre3" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre3"]
-custom_minimum_size = Vector2(18, 0)
+[node name="FlechaTorre3" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre3"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
 theme_override_font_sizes/font_size = 14
@@ -610,34 +623,35 @@ text = "➤"
 horizontal_alignment = 1
 pivot_offset = Vector2(9, 9)
 
-[node name="NombreTorre3" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre3"]
-custom_minimum_size = Vector2(90, 0)
+[node name="NombreTorre3" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre3"]
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 11
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 10
 text = "---"
+horizontal_alignment = 1
+autowrap_mode = 2
 clip_text = true
 
-[node name="DistanciaTorre3" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre3"]
-custom_minimum_size = Vector2(40, 0)
+[node name="DistanciaTorre3" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre3"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "--"
-horizontal_alignment = 2
+horizontal_alignment = 1
 
-[node name="BotonIlsTorre3" type="Button" parent="HUD/PanelTorre/VBoxTorre/FilaTorre3"]
-custom_minimum_size = Vector2(36, 20)
+[node name="BotonIlsTorre3" type="Button" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre3"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "ILS"
 
-[node name="FilaTorre4" type="HBoxContainer" parent="HUD/PanelTorre/VBoxTorre"]
+[node name="TarjetaTorre4" type="VBoxContainer" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre"]
+custom_minimum_size = Vector2(105, 0)
 layout_mode = 2
-theme_override_constants/separation = 4
+size_flags_horizontal = 3
+theme_override_constants/separation = 1
 
-[node name="FlechaTorre4" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre4"]
-custom_minimum_size = Vector2(18, 0)
+[node name="FlechaTorre4" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre4"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
 theme_override_font_sizes/font_size = 14
@@ -645,34 +659,35 @@ text = "➤"
 horizontal_alignment = 1
 pivot_offset = Vector2(9, 9)
 
-[node name="NombreTorre4" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre4"]
-custom_minimum_size = Vector2(90, 0)
+[node name="NombreTorre4" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre4"]
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 11
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 10
 text = "---"
+horizontal_alignment = 1
+autowrap_mode = 2
 clip_text = true
 
-[node name="DistanciaTorre4" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre4"]
-custom_minimum_size = Vector2(40, 0)
+[node name="DistanciaTorre4" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre4"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "--"
-horizontal_alignment = 2
+horizontal_alignment = 1
 
-[node name="BotonIlsTorre4" type="Button" parent="HUD/PanelTorre/VBoxTorre/FilaTorre4"]
-custom_minimum_size = Vector2(36, 20)
+[node name="BotonIlsTorre4" type="Button" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre4"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "ILS"
 
-[node name="FilaTorre5" type="HBoxContainer" parent="HUD/PanelTorre/VBoxTorre"]
+[node name="TarjetaTorre5" type="VBoxContainer" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre"]
+custom_minimum_size = Vector2(105, 0)
 layout_mode = 2
-theme_override_constants/separation = 4
+size_flags_horizontal = 3
+theme_override_constants/separation = 1
 
-[node name="FlechaTorre5" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre5"]
-custom_minimum_size = Vector2(18, 0)
+[node name="FlechaTorre5" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre5"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
 theme_override_font_sizes/font_size = 14
@@ -680,34 +695,35 @@ text = "➤"
 horizontal_alignment = 1
 pivot_offset = Vector2(9, 9)
 
-[node name="NombreTorre5" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre5"]
-custom_minimum_size = Vector2(90, 0)
+[node name="NombreTorre5" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre5"]
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 11
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 10
 text = "---"
+horizontal_alignment = 1
+autowrap_mode = 2
 clip_text = true
 
-[node name="DistanciaTorre5" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre5"]
-custom_minimum_size = Vector2(40, 0)
+[node name="DistanciaTorre5" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre5"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "--"
-horizontal_alignment = 2
+horizontal_alignment = 1
 
-[node name="BotonIlsTorre5" type="Button" parent="HUD/PanelTorre/VBoxTorre/FilaTorre5"]
-custom_minimum_size = Vector2(36, 20)
+[node name="BotonIlsTorre5" type="Button" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre5"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "ILS"
 
-[node name="FilaTorre6" type="HBoxContainer" parent="HUD/PanelTorre/VBoxTorre"]
+[node name="TarjetaTorre6" type="VBoxContainer" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre"]
+custom_minimum_size = Vector2(105, 0)
 layout_mode = 2
-theme_override_constants/separation = 4
+size_flags_horizontal = 3
+theme_override_constants/separation = 1
 
-[node name="FlechaTorre6" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre6"]
-custom_minimum_size = Vector2(18, 0)
+[node name="FlechaTorre6" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre6"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
 theme_override_font_sizes/font_size = 14
@@ -715,24 +731,24 @@ text = "➤"
 horizontal_alignment = 1
 pivot_offset = Vector2(9, 9)
 
-[node name="NombreTorre6" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre6"]
-custom_minimum_size = Vector2(90, 0)
+[node name="NombreTorre6" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre6"]
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 11
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 10
 text = "---"
+horizontal_alignment = 1
+autowrap_mode = 2
 clip_text = true
 
-[node name="DistanciaTorre6" type="Label" parent="HUD/PanelTorre/VBoxTorre/FilaTorre6"]
-custom_minimum_size = Vector2(40, 0)
+[node name="DistanciaTorre6" type="Label" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre6"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "--"
-horizontal_alignment = 2
+horizontal_alignment = 1
 
-[node name="BotonIlsTorre6" type="Button" parent="HUD/PanelTorre/VBoxTorre/FilaTorre6"]
-custom_minimum_size = Vector2(36, 20)
+[node name="BotonIlsTorre6" type="Button" parent="HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre6"]
+custom_minimum_size = Vector2(0, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 text = "ILS"
@@ -744,14 +760,14 @@ anchor_top = 1.0
 anchor_right = 0.0
 anchor_bottom = 1.0
 offset_left = 10.0
-offset_top = -210.0
+offset_top = -140.0
 offset_right = 210.0
 offset_bottom = -10.0
 grow_horizontal = 1
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
 
-[node name="VBoxSensibilidad" type="VBoxContainer" parent="HUD/PanelSensibilidad" unique_id=1043225041]
+[node name="ScrollSensibilidad" type="ScrollContainer" parent="HUD/PanelSensibilidad"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -762,33 +778,38 @@ offset_right = -8.0
 offset_bottom = -6.0
 grow_horizontal = 2
 grow_vertical = 2
+horizontal_scroll_mode = 0
+
+[node name="VBoxSensibilidad" type="VBoxContainer" parent="HUD/PanelSensibilidad/ScrollSensibilidad" unique_id=1043225041]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="LabelTituloSensibilidad" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad" unique_id=1698603297]
+[node name="LabelTituloSensibilidad" type="Label" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad" unique_id=1698603297]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
 theme_override_font_sizes/font_size = 11
 text = "🛠️ Sensibilidad (avión actual)"
 autowrap_mode = 3
 
-[node name="FilaGiro" type="HBoxContainer" parent="HUD/PanelSensibilidad/VBoxSensibilidad" unique_id=596931465]
+[node name="FilaGiro" type="HBoxContainer" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad" unique_id=596931465]
 layout_mode = 2
 theme_override_constants/separation = 3
 
-[node name="LabelGiro" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaGiro" unique_id=231186589]
+[node name="LabelGiro" type="Label" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaGiro" unique_id=231186589]
 custom_minimum_size = Vector2(58, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
 theme_override_font_sizes/font_size = 11
 text = "Giro"
 
-[node name="BotonGiroMenos" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaGiro" unique_id=257172733]
+[node name="BotonGiroMenos" type="Button" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaGiro" unique_id=257172733]
 custom_minimum_size = Vector2(22, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "－"
 
-[node name="LabelGiroValor" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaGiro" unique_id=429828861]
+[node name="LabelGiroValor" type="Label" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaGiro" unique_id=429828861]
 custom_minimum_size = Vector2(34, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
@@ -796,30 +817,30 @@ theme_override_font_sizes/font_size = 11
 text = "0.60"
 horizontal_alignment = 1
 
-[node name="BotonGiroMas" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaGiro" unique_id=998102757]
+[node name="BotonGiroMas" type="Button" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaGiro" unique_id=998102757]
 custom_minimum_size = Vector2(22, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "＋"
 
-[node name="FilaAngulo" type="HBoxContainer" parent="HUD/PanelSensibilidad/VBoxSensibilidad" unique_id=2064194480]
+[node name="FilaAngulo" type="HBoxContainer" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad" unique_id=2064194480]
 layout_mode = 2
 theme_override_constants/separation = 3
 
-[node name="LabelAngulo" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaAngulo" unique_id=329529880]
+[node name="LabelAngulo" type="Label" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaAngulo" unique_id=329529880]
 custom_minimum_size = Vector2(58, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
 theme_override_font_sizes/font_size = 11
 text = "Ángulo"
 
-[node name="BotonAnguloMenos" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaAngulo" unique_id=192363719]
+[node name="BotonAnguloMenos" type="Button" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaAngulo" unique_id=192363719]
 custom_minimum_size = Vector2(22, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "－"
 
-[node name="LabelAnguloValor" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaAngulo" unique_id=154542534]
+[node name="LabelAnguloValor" type="Label" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaAngulo" unique_id=154542534]
 custom_minimum_size = Vector2(34, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
@@ -827,17 +848,17 @@ theme_override_font_sizes/font_size = 11
 text = "45°"
 horizontal_alignment = 1
 
-[node name="BotonAnguloMas" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaAngulo" unique_id=1978625396]
+[node name="BotonAnguloMas" type="Button" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaAngulo" unique_id=1978625396]
 custom_minimum_size = Vector2(22, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "＋"
 
-[node name="FilaVertical" type="HBoxContainer" parent="HUD/PanelSensibilidad/VBoxSensibilidad" unique_id=25094150]
+[node name="FilaVertical" type="HBoxContainer" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad" unique_id=25094150]
 layout_mode = 2
 theme_override_constants/separation = 3
 
-[node name="LabelVertical" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVertical" unique_id=1465478436]
+[node name="LabelVertical" type="Label" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVertical" unique_id=1465478436]
 custom_minimum_size = Vector2(58, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
@@ -845,13 +866,13 @@ theme_override_font_sizes/font_size = 11
 text = "Subir/bajar"
 autowrap_mode = 3
 
-[node name="BotonVerticalMenos" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVertical" unique_id=2093426974]
+[node name="BotonVerticalMenos" type="Button" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVertical" unique_id=2093426974]
 custom_minimum_size = Vector2(22, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "－"
 
-[node name="LabelVerticalValor" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVertical" unique_id=1881070553]
+[node name="LabelVerticalValor" type="Label" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVertical" unique_id=1881070553]
 custom_minimum_size = Vector2(34, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
@@ -859,17 +880,17 @@ theme_override_font_sizes/font_size = 11
 text = "40°"
 horizontal_alignment = 1
 
-[node name="BotonVerticalMas" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVertical" unique_id=200056386]
+[node name="BotonVerticalMas" type="Button" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVertical" unique_id=200056386]
 custom_minimum_size = Vector2(22, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "＋"
 
-[node name="FilaVelMinima" type="HBoxContainer" parent="HUD/PanelSensibilidad/VBoxSensibilidad" unique_id=325078910]
+[node name="FilaVelMinima" type="HBoxContainer" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad" unique_id=325078910]
 layout_mode = 2
 theme_override_constants/separation = 3
 
-[node name="LabelVelMinima" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMinima" unique_id=1276842473]
+[node name="LabelVelMinima" type="Label" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelMinima" unique_id=1276842473]
 custom_minimum_size = Vector2(58, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
@@ -877,13 +898,13 @@ theme_override_font_sizes/font_size = 11
 text = "Vel. mínima"
 autowrap_mode = 3
 
-[node name="BotonVelMinimaMenos" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMinima" unique_id=1273637072]
+[node name="BotonVelMinimaMenos" type="Button" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelMinima" unique_id=1273637072]
 custom_minimum_size = Vector2(22, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "－"
 
-[node name="LabelVelMinimaValor" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMinima" unique_id=1922563407]
+[node name="LabelVelMinimaValor" type="Label" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelMinima" unique_id=1922563407]
 custom_minimum_size = Vector2(34, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
@@ -891,17 +912,17 @@ theme_override_font_sizes/font_size = 11
 text = "0"
 horizontal_alignment = 1
 
-[node name="BotonVelMinimaMas" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMinima" unique_id=1368678811]
+[node name="BotonVelMinimaMas" type="Button" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelMinima" unique_id=1368678811]
 custom_minimum_size = Vector2(22, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "＋"
 
-[node name="FilaVelMaxima" type="HBoxContainer" parent="HUD/PanelSensibilidad/VBoxSensibilidad" unique_id=1386158782]
+[node name="FilaVelMaxima" type="HBoxContainer" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad" unique_id=1386158782]
 layout_mode = 2
 theme_override_constants/separation = 3
 
-[node name="LabelVelMaxima" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMaxima" unique_id=763647797]
+[node name="LabelVelMaxima" type="Label" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelMaxima" unique_id=763647797]
 custom_minimum_size = Vector2(58, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
@@ -909,13 +930,13 @@ theme_override_font_sizes/font_size = 11
 text = "Vel. máxima"
 autowrap_mode = 3
 
-[node name="BotonVelMaximaMenos" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMaxima" unique_id=341103998]
+[node name="BotonVelMaximaMenos" type="Button" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelMaxima" unique_id=341103998]
 custom_minimum_size = Vector2(22, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "－"
 
-[node name="LabelVelMaximaValor" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMaxima" unique_id=1675896671]
+[node name="LabelVelMaximaValor" type="Label" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelMaxima" unique_id=1675896671]
 custom_minimum_size = Vector2(34, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
@@ -923,17 +944,17 @@ theme_override_font_sizes/font_size = 11
 text = "1500"
 horizontal_alignment = 1
 
-[node name="BotonVelMaximaMas" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelMaxima" unique_id=1889606734]
+[node name="BotonVelMaximaMas" type="Button" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelMaxima" unique_id=1889606734]
 custom_minimum_size = Vector2(22, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "＋"
 
-[node name="FilaVelocidadAnimacion" type="HBoxContainer" parent="HUD/PanelSensibilidad/VBoxSensibilidad"]
+[node name="FilaVelocidadAnimacion" type="HBoxContainer" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad"]
 layout_mode = 2
 theme_override_constants/separation = 3
 
-[node name="LabelVelocidadAnimacion" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion"]
+[node name="LabelVelocidadAnimacion" type="Label" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion"]
 custom_minimum_size = Vector2(58, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
@@ -941,13 +962,13 @@ theme_override_font_sizes/font_size = 11
 text = "Vel. animación"
 autowrap_mode = 3
 
-[node name="BotonVelocidadAnimacionMenos" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion"]
+[node name="BotonVelocidadAnimacionMenos" type="Button" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion"]
 custom_minimum_size = Vector2(22, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "－"
 
-[node name="LabelVelocidadAnimacionValor" type="Label" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion"]
+[node name="LabelVelocidadAnimacionValor" type="Label" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion"]
 custom_minimum_size = Vector2(34, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
@@ -955,7 +976,7 @@ theme_override_font_sizes/font_size = 11
 text = "1.0x"
 horizontal_alignment = 1
 
-[node name="BotonVelocidadAnimacionMas" type="Button" parent="HUD/PanelSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion"]
+[node name="BotonVelocidadAnimacionMas" type="Button" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion"]
 custom_minimum_size = Vector2(22, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
@@ -1351,10 +1372,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -161.0
-offset_right = 200.0
-offset_bottom = 161.0
+offset_left = -150.0
+offset_top = -122.0
+offset_right = 150.0
+offset_bottom = 122.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -1363,53 +1384,62 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 14.0
-offset_top = 10.0
-offset_right = -14.0
-offset_bottom = -10.0
+offset_left = 12.0
+offset_top = 8.0
+offset_right = -12.0
+offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 
 [node name="LabelTitulo" type="Label" parent="HUD/SelectorVuelo/VBox" unique_id=1834347727]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 15
 text = "✈️ Elegir vuelo"
 
 [node name="LabelDesde" type="Label" parent="HUD/SelectorVuelo/VBox" unique_id=439502031]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 12
 text = "Desde:"
 
 [node name="OrigenOption" type="OptionButton" parent="HUD/SelectorVuelo/VBox" unique_id=91700301]
-custom_minimum_size = Vector2(0, 36)
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 
 [node name="LabelHasta" type="Label" parent="HUD/SelectorVuelo/VBox" unique_id=1928267435]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 12
 text = "Hasta:"
 
 [node name="DestinoOption" type="OptionButton" parent="HUD/SelectorVuelo/VBox" unique_id=965780534]
-custom_minimum_size = Vector2(0, 36)
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
+
+[node name="CheckVueloLibre" type="CheckBox" parent="HUD/SelectorVuelo/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+text = "🕊️ Vuelo libre (sin destino)"
 
 [node name="LabelAvion" type="Label" parent="HUD/SelectorVuelo/VBox" unique_id=1376842937]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 12
 text = "Avión:"
 
 [node name="TipoAvionOption" type="OptionButton" parent="HUD/SelectorVuelo/VBox" unique_id=2094005766]
-custom_minimum_size = Vector2(0, 36)
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 
 [node name="BotonConfirmar" type="Button" parent="HUD/SelectorVuelo/VBox" unique_id=1852995177]
-custom_minimum_size = Vector2(0, 40)
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
+theme_override_font_sizes/font_size = 13
 text = "✈️ Confirmar viaje"
 
 [node name="PanelMisiones" type="Panel" parent="HUD" unique_id=632391127]
@@ -1560,8 +1590,8 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -160.0
-offset_top = -160.0
+offset_left = -130.0
+offset_top = -130.0
 offset_right = -10.0
 offset_bottom = -10.0
 grow_horizontal = 0
@@ -1589,15 +1619,15 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -20.0
-offset_top = -20.0
+offset_left = -9.0
+offset_top = -9.0
 mouse_default_cursor_shape = 12
 color = Color(1, 1, 1, 0.55)
 
 [node name="AsaMapaSupIzq" type="ColorRect" parent="HUD/MapaRect" unique_id=1432148550]
 layout_mode = 0
-offset_right = 20.0
-offset_bottom = 20.0
+offset_right = 9.0
+offset_bottom = 9.0
 mouse_default_cursor_shape = 12
 color = Color(1, 1, 1, 0.55)
 
@@ -1605,8 +1635,8 @@ color = Color(1, 1, 1, 0.55)
 layout_mode = 0
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -20.0
-offset_bottom = 20.0
+offset_left = -9.0
+offset_bottom = 9.0
 mouse_default_cursor_shape = 11
 color = Color(1, 1, 1, 0.55)
 
@@ -1614,10 +1644,26 @@ color = Color(1, 1, 1, 0.55)
 layout_mode = 0
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_top = -20.0
-offset_right = 20.0
+offset_top = -9.0
+offset_right = 9.0
 mouse_default_cursor_shape = 11
 color = Color(1, 1, 1, 0.55)
+
+[node name="BotonTransparenciaMapa" type="Button" parent="HUD" unique_id=1000000101]
+anchors_preset = 12
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -12.0
+offset_top = -18.0
+offset_right = 12.0
+offset_bottom = -2.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 11
+text = "T"
+tooltip_text = "Transparencia del mapa"
 
 [node name="MinimapaRect" type="TextureRect" parent="HUD" unique_id=1484349478]
 visible = false
