@@ -52,9 +52,22 @@ const TIPOS_AVION = [
 	# KF-30 y Ka-27 quedaron mirando "para el lado del usuario" (de frente a
 	# la cámara) -- giro de 180° sobre lo que ya tenían. Ka-27 duplicado de
 	# tamaño, combate triplicado.
-	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.2, "rotacion": Vector3(0, 90, 0), "sonido": "res://FX/motor_jet.mp3"},
-	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helicoptero.mp3"},
-	{"nombre": "Avión de combate (nuevo)", "modelo": "res://modelos_aviones/fighter_jet_nuevo.fbx", "helicoptero": false, "escala": 0.9, "rotacion": Vector3(0, 0, 0), "sonido": "res://FX/motor_jet.mp3"},
+	# "luces_manual" 2026-09-26: posiciones EXACTAS (no calculadas por AABB
+	# genérico) sacadas de piezas de referencia que ya traía cada modelo --
+	# el AABB automático suponía "ancho siempre en X", pero cada .fbx tiene
+	# su propio eje de envergadura según cómo lo armó el autor original
+	# (confirmado con un dump de la escena: KF-30 mide su largo en X y su
+	# envergadura en Z; el avión de combate al revés). Para KF-30 se usó la
+	# posición real de sus propias lucecitas de punta de ala (オブジェクト_014/
+	# 015); para el avión de combate, la posición de los misiles bajo el ala
+	# (rocket/rocket_001). Ka-27 no tenía piezas de referencia parecidas, así
+	# que sigue siendo una estimación a partir de su caja general.
+	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.2, "rotacion": Vector3(0, 90, 0), "sonido": "res://FX/motor_jet.mp3",
+		"luces_manual": {"izq": Vector3(-5.033, 3.7, -12.231), "der": Vector3(-5.209, 3.7, 12.16), "estrobo": Vector3(-10.0, 10.0, 0.0)}},
+	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helicoptero.mp3",
+		"luces_manual": {"izq": Vector3(-1.673, 0.0, -0.044), "der": Vector3(1.576, 0.0, -0.044), "estrobo": Vector3(0.0, 0.716, -0.044)}},
+	{"nombre": "Avión de combate (nuevo)", "modelo": "res://modelos_aviones/fighter_jet_nuevo.fbx", "helicoptero": false, "escala": 0.9, "rotacion": Vector3(0, 0, 0), "sonido": "res://FX/motor_jet.mp3",
+		"luces_manual": {"izq": Vector3(-1.144, 0.244, 0.809), "der": Vector3(1.156, 0.244, 0.809), "estrobo": Vector3(0.0, 0.95, 1.5)}},
 ]
 var tipo_avion_indice: int = 0
 
@@ -2192,20 +2205,34 @@ func _calcular_aabb_local(raiz: Node3D) -> AABB:
 # ya que todos los modelos se rotan para mirar hacia -Z), no va a quedar
 # perfecto en formas raras (ej. un helicóptero), pero es mucho mejor que
 # quedar como una silueta negra de noche.
-func _generar_luces_para_modelo_externo(instancia: Node3D) -> void:
+func _generar_luces_para_modelo_externo(instancia: Node3D, datos: Dictionary) -> void:
 	var caja: AABB = _calcular_aabb_local(instancia)
 	if caja.size.length() < 0.001:
 		return
-	var x_izq: float = caja.position.x
-	var x_der: float = caja.end.x
-	var y_medio: float = caja.position.y + caja.size.y * 0.55
-	var y_arriba: float = caja.end.y + caja.size.y * 0.08
-	var z_medio: float = caja.position.z + caja.size.z * 0.5
 	var radio_luz: float = clamp(caja.size.length() * 0.012, 0.03, 0.4)
+	var y_medio: float = caja.position.y + caja.size.y * 0.55
+	var z_medio: float = caja.position.z + caja.size.z * 0.5
 
-	_crear_luz_navegacion(Vector3(x_izq, y_medio, z_medio), Color(1.0, 0.1, 0.1), instancia, radio_luz)
-	_crear_luz_navegacion(Vector3(x_der, y_medio, z_medio), Color(0.1, 1.0, 0.2), instancia, radio_luz)
-	luz_estroboscopica_externa = _crear_luz_navegacion(Vector3(caja.position.x + caja.size.x * 0.5, y_arriba, z_medio), Color(1.0, 1.0, 1.0), instancia, radio_luz * 1.2)
+	# "luces_manual" 2026-09-26 (reportado: "las luces aparecen arriba o de
+	# costado, nada que ver"): el cálculo automático de más abajo asume que
+	# la envergadura siempre está en el eje X del modelo, pero cada .fbx
+	# trae sus propios ejes según cómo lo armó el autor original -- para
+	# KF-30 la envergadura real está en Z, no en X. En vez de seguir
+	# adivinando el eje para cada modelo nuevo, se puede definir la posición
+	# EXACTA por avión en TIPOS_AVION (sacada con un dump de la escena real,
+	# usando piezas de referencia del propio modelo cuando las tenía).
+	if datos.has("luces_manual"):
+		var lm: Dictionary = datos["luces_manual"]
+		_crear_luz_navegacion(lm["izq"], Color(1.0, 0.1, 0.1), instancia, radio_luz)
+		_crear_luz_navegacion(lm["der"], Color(0.1, 1.0, 0.2), instancia, radio_luz)
+		luz_estroboscopica_externa = _crear_luz_navegacion(lm["estrobo"], Color(1.0, 1.0, 1.0), instancia, radio_luz * 1.2)
+	else:
+		var x_izq: float = caja.position.x
+		var x_der: float = caja.end.x
+		var y_arriba: float = caja.end.y + caja.size.y * 0.08
+		_crear_luz_navegacion(Vector3(x_izq, y_medio, z_medio), Color(1.0, 0.1, 0.1), instancia, radio_luz)
+		_crear_luz_navegacion(Vector3(x_der, y_medio, z_medio), Color(0.1, 1.0, 0.2), instancia, radio_luz)
+		luz_estroboscopica_externa = _crear_luz_navegacion(Vector3(caja.position.x + caja.size.x * 0.5, y_arriba, z_medio), Color(1.0, 1.0, 1.0), instancia, radio_luz * 1.2)
 
 	var rango_spot: float = clamp(caja.size.length() * 0.35, 1.0, 8.0)
 	for signo in [1.0, -1.0]:
@@ -2264,7 +2291,7 @@ func _aplicar_tipo_avion(indice: int) -> void:
 			# Pedido explícito 2026-09-26: las mismas luces de navegación del
 			# avioncito clásico, para TODOS los aviones (de noche se veían
 			# "como una cosa negra" sin esto).
-			_generar_luces_para_modelo_externo(instancia)
+			_generar_luces_para_modelo_externo(instancia, datos)
 
 func _es_helicoptero() -> bool:
 	return TIPOS_AVION[tipo_avion_indice]["helicoptero"]
