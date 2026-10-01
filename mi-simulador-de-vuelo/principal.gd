@@ -2863,10 +2863,6 @@ func _aplicar_tipo_avion(indice: int) -> void:
 			if plano_sobrante:
 				plano_sobrante.queue_free()
 			modelo_externo.add_child(instancia)
-			# Pedido explícito 2026-09-26: las mismas luces de navegación del
-			# avioncito clásico, para TODOS los aviones (de noche se veían
-			# "como una cosa negra" sin esto).
-			_generar_luces_para_modelo_externo(instancia, datos)
 			# Piper PA-18 (pedido 2026-10-01, "los colores de la textura no
 			# aparecieron"): investigado el .fbx a mano -- NO trae ninguna
 			# referencia a archivo de textura adentro (el exportador la dejó
@@ -2875,6 +2871,14 @@ func _aplicar_tipo_avion(indice: int) -> void:
 			# "textura" en TIPOS_AVION fuerza la textura a mano sobre TODAS las
 			# mallas del modelo -- sirve para este caso y cualquier .fbx futuro
 			# con el mismo problema.
+			# BUG REAL encontrado 2026-10-01 (reportado: "las luces de colores
+			# aparecen NEGRAS hasta de día"): esto se ejecutaba DESPUÉS de
+			# _generar_luces_para_modelo_externo, así que el material forzado
+			# (sin emisión) se les pisaba por encima a las bolitas de
+			# navegación de colores TAMBIÉN -- son MeshInstance3D como
+			# cualquier otra del modelo, _aplicar_material_recursivo no sabía
+			# distinguirlas. Ahora la textura se fuerza ANTES de crear las
+			# luces, así nunca las toca.
 			if datos.has("textura"):
 				# BUG REAL encontrado 2026-10-01 (reportado: "al darle a volar
 				# se cuelga"): acá estaba tipado como "Image", pero load() de
@@ -2889,6 +2893,10 @@ func _aplicar_tipo_avion(indice: int) -> void:
 					var material_forzado := StandardMaterial3D.new()
 					material_forzado.albedo_texture = textura
 					_aplicar_material_recursivo(instancia, material_forzado)
+			# Pedido explícito 2026-09-26: las mismas luces de navegación del
+			# avioncito clásico, para TODOS los aviones (de noche se veían
+			# "como una cosa negra" sin esto).
+			_generar_luces_para_modelo_externo(instancia, datos)
 
 func _aplicar_material_recursivo(nodo: Node, material: Material) -> void:
 	if nodo is MeshInstance3D and nodo.mesh:
