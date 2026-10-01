@@ -96,7 +96,7 @@ const TIPOS_AVION = [
 	# rotación SIN verificar todavía (valores de partida típicos para un
 	# avión chico de este tamaño real) -- ajustar según cómo se vea en
 	# juego, mismo proceso que KF-30/Ka-27 (probar y corregir con feedback).
-	{"nombre": "Piper PA-18 (nuevo)", "modelo": "res://modelos_aviones/piper_pa18.fbx", "helicoptero": false, "escala": 1.0, "rotacion": Vector3(0, 0, 0), "sonido": "res://FX/motor_helice.mp3"},
+	{"nombre": "Piper PA-18 (nuevo)", "modelo": "res://modelos_aviones/piper_pa18.fbx", "helicoptero": false, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helice.mp3"},
 ]
 var tipo_avion_indice: int = 0
 
