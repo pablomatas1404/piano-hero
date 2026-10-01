@@ -97,7 +97,8 @@ const TIPOS_AVION = [
 	# avión chico de este tamaño real) -- ajustar según cómo se vea en
 	# juego, mismo proceso que KF-30/Ka-27 (probar y corregir con feedback).
 	{"nombre": "Piper PA-18 (nuevo)", "modelo": "res://modelos_aviones/piper_pa18.fbx", "helicoptero": false, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helice.mp3",
-		"textura": "res://modelos_aviones/piper_diffuse.jpg", "ajuste_luces": Vector3(0.01, 0.01, 0.0)},
+		"textura": "res://modelos_aviones/piper_diffuse.jpg",
+		"ajuste_izq": Vector3(-0.01, 0.01, 0.0), "ajuste_der": Vector3(0.01, 0.01, 0.0), "ajuste_estrobo": Vector3(0.0, -0.01, 0.0)},
 ]
 var tipo_avion_indice: int = 0
 
@@ -2771,19 +2772,23 @@ func _generar_luces_para_modelo_externo(instancia: Node3D, datos: Dictionary) ->
 		_crear_luz_navegacion(lm["der"], Color(0.1, 1.0, 0.2), instancia, radio_luz)
 		luz_estroboscopica_externa = _crear_luz_navegacion(lm["estrobo"], Color(1.0, 1.0, 1.0), instancia, radio_luz * 1.2)
 	else:
-		# "ajuste_luces" (pedido 2026-10-01, Piper: "quedaron desacompasadas,
-		# un centímetro para arriba y hacia adentro otro centímetro"): nudge
-		# chiquito en unidades nativas (mismas que "escala", se mide con el
-		# avión en escala 1.0 y después se achica todo junto) para corregir el
-		# cálculo automático SOLO en el avión que lo necesite -- el resto
-		# sigue exactamente igual que antes (Vector3.ZERO no cambia nada).
-		var ajuste: Vector3 = datos.get("ajuste_luces", Vector3.ZERO)
-		var x_izq: float = caja.position.x + ajuste.x
-		var x_der: float = caja.end.x - ajuste.x
+		# "ajuste_izq"/"ajuste_der"/"ajuste_estrobo" (pedido 2026-10-01, Piper:
+		# la roja y la verde un centímetro para arriba y un centímetro hacia
+		# afuera CADA UNA para su lado, la blanca -estroboscópica- un
+		# centímetro para abajo) -- cada luz necesita su propio ajuste, no uno
+		# solo compartido (antes "ajuste_luces" único no podía mandar la
+		# estroboscópica para un lado distinto al de las otras dos). Unidades
+		# nativas, medidas con el avión en escala 1.0. Vector3.ZERO en los tres
+		# para cualquier otro avión no cambia nada.
+		var ajuste_izq: Vector3 = datos.get("ajuste_izq", Vector3.ZERO)
+		var ajuste_der: Vector3 = datos.get("ajuste_der", Vector3.ZERO)
+		var ajuste_estrobo: Vector3 = datos.get("ajuste_estrobo", Vector3.ZERO)
+		var x_izq: float = caja.position.x + ajuste_izq.x
+		var x_der: float = caja.end.x + ajuste_der.x
 		var y_arriba: float = caja.end.y + caja.size.y * 0.08
-		_crear_luz_navegacion(Vector3(x_izq, y_medio + ajuste.y, z_medio + ajuste.z), Color(1.0, 0.1, 0.1), instancia, radio_luz)
-		_crear_luz_navegacion(Vector3(x_der, y_medio + ajuste.y, z_medio + ajuste.z), Color(0.1, 1.0, 0.2), instancia, radio_luz)
-		luz_estroboscopica_externa = _crear_luz_navegacion(Vector3(caja.position.x + caja.size.x * 0.5, y_arriba + ajuste.y, z_medio + ajuste.z), Color(1.0, 1.0, 1.0), instancia, radio_luz * 1.2)
+		_crear_luz_navegacion(Vector3(x_izq, y_medio + ajuste_izq.y, z_medio + ajuste_izq.z), Color(1.0, 0.1, 0.1), instancia, radio_luz)
+		_crear_luz_navegacion(Vector3(x_der, y_medio + ajuste_der.y, z_medio + ajuste_der.z), Color(0.1, 1.0, 0.2), instancia, radio_luz)
+		luz_estroboscopica_externa = _crear_luz_navegacion(Vector3(caja.position.x + caja.size.x * 0.5 + ajuste_estrobo.x, y_arriba + ajuste_estrobo.y, z_medio + ajuste_estrobo.z), Color(1.0, 1.0, 1.0), instancia, radio_luz * 1.2)
 
 	var rango_spot: float = clamp(tamano_mundo * 0.35, 1.0, 8.0) / escala
 	for signo in [1.0, -1.0]:
