@@ -2560,16 +2560,21 @@ func _poblar_selector() -> void:
 	# usuario lo tocara a mano, y al apretar "Confirmar viaje" sin tocarlo el
 	# código lo tomaba como "no elegiste nada" y no hacía nada -- por eso
 	# parecía que el botón "no funcionaba".
+	# Vuelo predeterminado (pedido 2026-10-01): Aeroparque -> Ezeiza. BUG REAL
+	# encontrado 2026-10-01 (reportado: "en origen aparece Luján todavía"):
+	# el índice 0 NO es Aeroparque -- se asumió que el orden alfabético lo
+	# dejaba primero, pero no es así. Buscado por nombre, igual que "Hasta",
+	# para no depender de en qué posición caiga cada uno.
 	origen_option.select(0)
-	# Vuelo predeterminado (pedido 2026-10-01): Aeroparque -> Ezeiza. "Desde"
-	# ya cae en Aeroparque solo por orden alfabético (índice 0); "Hasta" se
-	# busca por nombre, no por índice fijo, para no depender de dónde quede
-	# Ezeiza en el orden alfabético si el listado de aeropuertos cambia.
+	var indice_origen_default: int = 0
 	var indice_destino_default: int = 1
 	for i in destinos.size():
-		if destinos[i].get_meta("nombre_bonito", destinos[i].name) == "Ezeiza":
+		var nombre_destino: String = destinos[i].get_meta("nombre_bonito", destinos[i].name)
+		if nombre_destino == "Aeroparque":
+			indice_origen_default = i
+		elif nombre_destino == "Ezeiza":
 			indice_destino_default = i
-			break
+	origen_option.select(indice_origen_default)
 	destino_option.select(indice_destino_default)
 	check_vuelo_libre.focus_mode = Control.FOCUS_NONE
 	check_vuelo_libre.toggled.connect(func(activo: bool):
@@ -2847,14 +2852,22 @@ func _aplicar_tipo_avion(indice: int) -> void:
 			# mallas del modelo -- sirve para este caso y cualquier .fbx futuro
 			# con el mismo problema.
 			if datos.has("textura"):
-				var imagen_textura: Image = load(datos["textura"])
-				if imagen_textura:
+				# BUG REAL encontrado 2026-10-01 (reportado: "al darle a volar
+				# se cuelga"): acá estaba tipado como "Image", pero load() de
+				# un .jpg YA IMPORTADO devuelve una Texture2D (CompressedTexture2D),
+				# no una Image -- el choque de tipos rompía esta función (y de
+				# paso el `is MeshInstance3D` después de queue_free() de la
+				# etiqueta "Plane" en modelos raros). Sin el paso intermedio por
+				# Image hace falta: load() ya da directamente lo que
+				# albedo_texture necesita.
+				var textura: Texture2D = load(datos["textura"])
+				if textura:
 					var material_forzado := StandardMaterial3D.new()
-					material_forzado.albedo_texture = ImageTexture.create_from_image(imagen_textura)
+					material_forzado.albedo_texture = textura
 					_aplicar_material_recursivo(instancia, material_forzado)
 
 func _aplicar_material_recursivo(nodo: Node, material: Material) -> void:
-	if nodo is MeshInstance3D:
+	if nodo is MeshInstance3D and nodo.mesh:
 		for i in nodo.mesh.get_surface_count():
 			nodo.set_surface_override_material(i, material)
 	for hijo in nodo.get_children():
