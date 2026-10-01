@@ -96,7 +96,8 @@ const TIPOS_AVION = [
 	# rotación SIN verificar todavía (valores de partida típicos para un
 	# avión chico de este tamaño real) -- ajustar según cómo se vea en
 	# juego, mismo proceso que KF-30/Ka-27 (probar y corregir con feedback).
-	{"nombre": "Piper PA-18 (nuevo)", "modelo": "res://modelos_aviones/piper_pa18.fbx", "helicoptero": false, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helice.mp3"},
+	{"nombre": "Piper PA-18 (nuevo)", "modelo": "res://modelos_aviones/piper_pa18.fbx", "helicoptero": false, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helice.mp3",
+		"textura": "res://modelos_aviones/piper_diffuse.jpg", "ajuste_luces": Vector3(0.01, 0.01, 0.0)},
 ]
 var tipo_avion_indice: int = 0
 
@@ -848,7 +849,15 @@ func _ready() -> void:
 
 	for tipo in TIPOS_AVION:
 		tipo_avion_option.add_item(tipo["nombre"])
-	tipo_avion_option.select(0)
+	# Avión por defecto al arrancar (pedido 2026-10-01): el Piper, no el
+	# avioncito clásico de siempre -- buscado por nombre, no por índice fijo,
+	# para no romperse si el orden de TIPOS_AVION cambia.
+	var indice_avion_default: int = 0
+	for i in TIPOS_AVION.size():
+		if TIPOS_AVION[i]["nombre"] == "Piper PA-18 (nuevo)":
+			indice_avion_default = i
+			break
+	tipo_avion_option.select(indice_avion_default)
 	tipo_avion_option.focus_mode = Control.FOCUS_NONE
 
 	# Misiones de helicóptero (pedido 2026-09-20) -- esqueleto jugable: elegís
@@ -2552,7 +2561,16 @@ func _poblar_selector() -> void:
 	# código lo tomaba como "no elegiste nada" y no hacía nada -- por eso
 	# parecía que el botón "no funcionaba".
 	origen_option.select(0)
-	destino_option.select(1)  # por default, "Hasta" apunta al segundo destino real (no Aeroparque)
+	# Vuelo predeterminado (pedido 2026-10-01): Aeroparque -> Ezeiza. "Desde"
+	# ya cae en Aeroparque solo por orden alfabético (índice 0); "Hasta" se
+	# busca por nombre, no por índice fijo, para no depender de dónde quede
+	# Ezeiza en el orden alfabético si el listado de aeropuertos cambia.
+	var indice_destino_default: int = 1
+	for i in destinos.size():
+		if destinos[i].get_meta("nombre_bonito", destinos[i].name) == "Ezeiza":
+			indice_destino_default = i
+			break
+	destino_option.select(indice_destino_default)
 	check_vuelo_libre.focus_mode = Control.FOCUS_NONE
 	check_vuelo_libre.toggled.connect(func(activo: bool):
 		destino_option.disabled = activo
@@ -2748,12 +2766,19 @@ func _generar_luces_para_modelo_externo(instancia: Node3D, datos: Dictionary) ->
 		_crear_luz_navegacion(lm["der"], Color(0.1, 1.0, 0.2), instancia, radio_luz)
 		luz_estroboscopica_externa = _crear_luz_navegacion(lm["estrobo"], Color(1.0, 1.0, 1.0), instancia, radio_luz * 1.2)
 	else:
-		var x_izq: float = caja.position.x
-		var x_der: float = caja.end.x
+		# "ajuste_luces" (pedido 2026-10-01, Piper: "quedaron desacompasadas,
+		# un centímetro para arriba y hacia adentro otro centímetro"): nudge
+		# chiquito en unidades nativas (mismas que "escala", se mide con el
+		# avión en escala 1.0 y después se achica todo junto) para corregir el
+		# cálculo automático SOLO en el avión que lo necesite -- el resto
+		# sigue exactamente igual que antes (Vector3.ZERO no cambia nada).
+		var ajuste: Vector3 = datos.get("ajuste_luces", Vector3.ZERO)
+		var x_izq: float = caja.position.x + ajuste.x
+		var x_der: float = caja.end.x - ajuste.x
 		var y_arriba: float = caja.end.y + caja.size.y * 0.08
-		_crear_luz_navegacion(Vector3(x_izq, y_medio, z_medio), Color(1.0, 0.1, 0.1), instancia, radio_luz)
-		_crear_luz_navegacion(Vector3(x_der, y_medio, z_medio), Color(0.1, 1.0, 0.2), instancia, radio_luz)
-		luz_estroboscopica_externa = _crear_luz_navegacion(Vector3(caja.position.x + caja.size.x * 0.5, y_arriba, z_medio), Color(1.0, 1.0, 1.0), instancia, radio_luz * 1.2)
+		_crear_luz_navegacion(Vector3(x_izq, y_medio + ajuste.y, z_medio + ajuste.z), Color(1.0, 0.1, 0.1), instancia, radio_luz)
+		_crear_luz_navegacion(Vector3(x_der, y_medio + ajuste.y, z_medio + ajuste.z), Color(0.1, 1.0, 0.2), instancia, radio_luz)
+		luz_estroboscopica_externa = _crear_luz_navegacion(Vector3(caja.position.x + caja.size.x * 0.5, y_arriba + ajuste.y, z_medio + ajuste.z), Color(1.0, 1.0, 1.0), instancia, radio_luz * 1.2)
 
 	var rango_spot: float = clamp(tamano_mundo * 0.35, 1.0, 8.0) / escala
 	for signo in [1.0, -1.0]:
@@ -2813,6 +2838,27 @@ func _aplicar_tipo_avion(indice: int) -> void:
 			# avioncito clásico, para TODOS los aviones (de noche se veían
 			# "como una cosa negra" sin esto).
 			_generar_luces_para_modelo_externo(instancia, datos)
+			# Piper PA-18 (pedido 2026-10-01, "los colores de la textura no
+			# aparecieron"): investigado el .fbx a mano -- NO trae ninguna
+			# referencia a archivo de textura adentro (el exportador la dejó
+			# afuera del todo), así que Godot no tiene de dónde auto-resolverla
+			# aunque el .jpg esté al lado con el nombre correcto. Clave
+			# "textura" en TIPOS_AVION fuerza la textura a mano sobre TODAS las
+			# mallas del modelo -- sirve para este caso y cualquier .fbx futuro
+			# con el mismo problema.
+			if datos.has("textura"):
+				var imagen_textura: Image = load(datos["textura"])
+				if imagen_textura:
+					var material_forzado := StandardMaterial3D.new()
+					material_forzado.albedo_texture = ImageTexture.create_from_image(imagen_textura)
+					_aplicar_material_recursivo(instancia, material_forzado)
+
+func _aplicar_material_recursivo(nodo: Node, material: Material) -> void:
+	if nodo is MeshInstance3D:
+		for i in nodo.mesh.get_surface_count():
+			nodo.set_surface_override_material(i, material)
+	for hijo in nodo.get_children():
+		_aplicar_material_recursivo(hijo, material)
 
 func _es_helicoptero() -> bool:
 	return TIPOS_AVION[tipo_avion_indice]["helicoptero"]
