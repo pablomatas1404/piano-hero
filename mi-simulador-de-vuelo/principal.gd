@@ -92,6 +92,11 @@ const TIPOS_AVION = [
 		"luces_manual": {"izq": Vector3(-1.673, 0.0, -0.044), "der": Vector3(1.576, 0.0, -0.044), "estrobo": Vector3(0.0, 0.716, -0.044)}},
 	{"nombre": "Avión de combate (nuevo)", "modelo": "res://modelos_aviones/fighter_jet_nuevo.fbx", "helicoptero": false, "escala": 0.9, "rotacion": Vector3(0, 0, 0), "sonido": "res://FX/motor_jet.mp3",
 		"luces_manual": {"izq": Vector3(-1.144, 0.244, 0.809), "der": Vector3(1.156, 0.244, 0.809), "estrobo": Vector3(0.0, 0.95, 1.5)}},
+	# Piper PA-18 (pedido 2026-10-01, bajado de CGTrader en FBX). Escala y
+	# rotación SIN verificar todavía (valores de partida típicos para un
+	# avión chico de este tamaño real) -- ajustar según cómo se vea en
+	# juego, mismo proceso que KF-30/Ka-27 (probar y corregir con feedback).
+	{"nombre": "Piper PA-18 (nuevo)", "modelo": "res://modelos_aviones/piper_pa18.fbx", "helicoptero": false, "escala": 1.0, "rotacion": Vector3(0, 0, 0), "sonido": "res://FX/motor_helice.mp3"},
 ]
 var tipo_avion_indice: int = 0
 
