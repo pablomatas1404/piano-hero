@@ -99,6 +99,13 @@ const TIPOS_AVION = [
 	{"nombre": "Piper PA-18 (nuevo)", "modelo": "res://modelos_aviones/piper_pa18.fbx", "helicoptero": false, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helice.mp3",
 		"textura": "res://modelos_aviones/piper_diffuse.jpg",
 		"ajuste_izq": Vector3(-0.01, 0.01, 0.0), "ajuste_der": Vector3(0.01, 0.01, 0.0), "ajuste_estrobo": Vector3(0.0, -0.01, 0.0)},
+	# F-16 EXP (pedido 2026-10-01, bajado completo con todas las texturas
+	# PBR -- a diferencia del Piper, este .fbx SÍ trae el nombre de archivo
+	# de cada textura adentro y vive en la misma carpeta que ellas, así que
+	# Godot las debería resolver solo, sin forzar nada a mano. Rotación 180°
+	# de entrada por pedido explícito ("como todos aparecen mal, ya lo
+	# rotaría directamente") -- confirmar/corregir con el juego en vivo.
+	{"nombre": "F-16 (nuevo)", "modelo": "res://modelos_aviones/f16/F-16 EXP.fbm/F-16 EXP.fbx", "helicoptero": false, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
 ]
 var tipo_avion_indice: int = 0
 
@@ -2667,6 +2674,18 @@ func _crear_luz_navegacion(posicion: Vector3, color: Color, padre: Node3D = null
 	luz.set_layer_mask_value(1, false)
 	luz.set_layer_mask_value(CAPA_MARCADORES_NOCTURNOS, true)
 	padre.add_child(luz)
+	# Pedido explícito 2026-10-01 ("las bolitas se ven, pero no iluminan el
+	# avión"): hasta ahora la bolita era solo una malla que brilla ELLA
+	# MISMA (emission), sin ningún Light3D real -- no alumbraba nada
+	# alrededor. Un OmniLight3D chiquito y de corto alcance, del mismo
+	# color, hace que el ala/fuselaje cercano se vea tenuemente iluminado
+	# de noche, como en un avión real.
+	var omni := OmniLight3D.new()
+	omni.light_color = color
+	omni.light_energy = 1.2
+	omni.omni_range = radio * 6.0
+	omni.position = posicion
+	padre.add_child(omni)
 	return luz
 
 # Destello CORTO y agudo (no una onda suave) para la estroboscópica -- pow()
