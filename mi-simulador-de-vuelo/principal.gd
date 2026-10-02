@@ -137,32 +137,32 @@ const RADIO_DETECCION_CITY_TOUR = 220.0  # generoso -- el aro mide ~240m de radi
 const ALTURA_INICIO_CITY_TOUR = 2000.0
 const ALTURA_ARO_CITY_TOUR = 400.0
 var modo_city_tour: bool = false
-var indice_city_tour: int = -1  # -1 = inactivo, 0..3 = checkpoint actual, 4 = volviendo a Aeroparque a aterrizar
-var aro_city_tour: Label3D = null
-var estrellas_city_tour: Array = [false, false, false, false, false]
+# Pedido explícito 2026-10-01 ("poneme estrella en los cuatro aeropuertos",
+# todas visibles a la vez, no una por vez): un array por checkpoint en vez de
+# un único "actual" -- cada índice 0..3 corresponde a RUTA_CITY_TOUR[i].
+var estrellas_city_tour: Array = [false, false, false, false, false]  # [0..3] checkpoints, [4] aterrizaje final
+var city_tour_estrellas_mundo: Array = [null, null, null, null]  # Label3D de cada checkpoint, null una vez pasado
+var city_tour_lats: Array = [0.0, 0.0, 0.0, 0.0]
+var city_tour_lons: Array = [0.0, 0.0, 0.0, 0.0]
 # Trackeado a mano (pedido explícito 2026-10-01, "como vos no vas a saber
 # calcular cuando pasa DIRECTAMENTE por el medio, te aprieto un botón justo
 # ahí y te marco la coordenada exacta"): mientras un checkpoint no esté
-# trackeado, se usa la detección genérica por distancia al aro (más laxa,
-# "o te acercaste bastante"); una vez trackeado, se usa ESA coordenada real
-# con un radio bastante más chico -- mucho más preciso que cualquier cálculo.
+# trackeado, se usa la detección genérica por distancia a la estrella (más
+# laxa, "o te acercaste bastante"); una vez trackeado, se usa ESA coordenada
+# real con un radio bastante más chico -- mucho más preciso que cualquier
+# cálculo.
 var city_tour_trackeado: Array = [null, null, null, null]  # null o {"lat","lon","alt"}
+var halos_city_tour: Array = [null, null, null, null]  # esfera translúcida por checkpoint trackeado
 # BUG REAL encontrado 2026-10-01 (reportado: "se aleja como la Luna, no está
 # en un punto fijo"): el nodo "mundo" (raíz, script mundo.gd) es HERMANO del
 # CesiumGeoreference, no su hijo -- nada que se agregue como hijo de "mundo"
 # se recentra solo con el floating-origin del addon. TODO lo que sí funciona
 # bien (aeropuertos, aros de ILS, etc.) se recalcula A MANO desde lat/lon
 # todos los cuadros (ver _actualizar_ils_dos_cabeceras_frame en mundo.gd) --
-# fijar el aro UNA sola vez con global_position lo dejaba clavado en el
+# fijar una estrella UNA sola vez con global_position la dejaba clavada en el
 # espacio crudo del motor mientras el origen se recentraba en el avión cada
-# cuadro. Se guardan acá lat/lon del checkpoint actual y del siguiente, y el
-# aro se reposiciona TODOS los cuadros en _actualizar_city_tour, igual que
-# el resto del mundo.
-var city_tour_lat_actual: float = 0.0
-var city_tour_lon_actual: float = 0.0
-var city_tour_lat_siguiente: float = 0.0
-var city_tour_lon_siguiente: float = 0.0
-var halo_city_tour: MeshInstance3D = null
+# cuadro. Por eso se guardan lat/lon arriba y todas se reposicionan TODOS los
+# cuadros en _actualizar_city_tour, igual que el resto del mundo.
 var tecla_trackear_anterior: bool = false
 const RADIO_DETECCION_CITY_TOUR_TRACKEADO = 60.0
 var estrellas_city_tour_labels: Array = []
@@ -3695,7 +3695,7 @@ func _actualizar_torre(altura: float) -> void:
 			estado = Estado.LLEGADA
 			cartel_central.text = "✅ ¡LLEGASTE A %s!\n\nApretá ESPACIO para frenar" % nombre_destino.to_upper()
 			cartel_central.visible = true
-			if modo_city_tour and indice_city_tour >= RUTA_CITY_TOUR.size() and nombre_destino == "Aeroparque":
+			if modo_city_tour and nombre_destino == "Aeroparque":
 				_completar_city_tour()
 
 	if estado != Estado.VOLANDO and estado != Estado.LLEGADA:
@@ -3846,6 +3846,10 @@ func _iniciar_city_tour() -> void:
 	panel_misiones.visible = false
 	objetivo_mision = null
 	indice_destino = -1
+	# Pedido explícito 2026-10-01 ("poneme estrella en los cuatro
+	# aeropuertos", todas juntas desde el arranque, no una por vez): sin un
+	# único "próximo" destino no tiene sentido un solo rumbo sugerido -- las
+	# 4 estrellas son gigantes y se ven solas, navegación a ojo.
 	rumbo_guia_override_activo = false
 	# Arranca en el aire, no en pista (pedido explícito, "así no tenemos
 	# quilombo") -- mismo patrón que _confirmar_viaje para teletransportar.
@@ -3863,25 +3867,51 @@ func _iniciar_city_tour() -> void:
 	_actualizar_etiqueta_velocidad()
 	estado = Estado.VOLANDO
 	modo_city_tour = true
-	indice_city_tour = 0
 	estrellas_city_tour = [false, false, false, false, false]
 	city_tour_trackeado = [null, null, null, null]
 	_refrescar_estrellas_city_tour()
 	hbox_estrellas_city_tour.visible = true
-	_activar_siguiente_aro_city_tour()
+	for i in RUTA_CITY_TOUR.size():
+		if city_tour_estrellas_mundo[i] and is_instance_valid(city_tour_estrellas_mundo[i]):
+			city_tour_estrellas_mundo[i].queue_free()
+		if halos_city_tour[i] and is_instance_valid(halos_city_tour[i]):
+			halos_city_tour[i].queue_free()
+		halos_city_tour[i] = null
+		var nodo := _buscar_destino_por_nombre(RUTA_CITY_TOUR[i])
+		if not nodo:
+			city_tour_estrellas_mundo[i] = null
+			continue
+		city_tour_lats[i] = nodo.get_meta("lat")
+		city_tour_lons[i] = nodo.get_meta("lon")
+		city_tour_estrellas_mundo[i] = _crear_estrella_city_tour()
 
+# Trackea a mano la estrella INCOMPLETA mas cercana al avion en este momento
+# -- con las 4 dando vueltas a la vez no hay un "checkpoint actual" unico,
+# asi que se asume que el jugador esta marcando la que tiene mas cerca
+# (pedido explicito: "paso, lo trackeo" uno por uno, volando la vuelta).
 func _trackear_checkpoint_city_tour() -> void:
-	if not modo_city_tour or indice_city_tour < 0 or indice_city_tour >= RUTA_CITY_TOUR.size():
+	if not modo_city_tour:
 		return
-	city_tour_trackeado[indice_city_tour] = {
+	var indice_mas_cercano: int = -1
+	var distancia_mas_cercana: float = INF
+	for i in RUTA_CITY_TOUR.size():
+		if estrellas_city_tour[i] or not city_tour_estrellas_mundo[i] or not is_instance_valid(city_tour_estrellas_mundo[i]):
+			continue
+		var distancia: float = global_position.distance_to(city_tour_estrellas_mundo[i].global_position)
+		if distancia < distancia_mas_cercana:
+			distancia_mas_cercana = distancia
+			indice_mas_cercano = i
+	if indice_mas_cercano < 0:
+		return
+	city_tour_trackeado[indice_mas_cercano] = {
 		"lat": mundo.lat_avion, "lon": mundo.lon_avion, "alt": mundo.altitud_avion}
-	# BUG REAL encontrado 2026-10-01 (reportado: "se colgó el juego y perdí
-	# los 2 trackeos que había hecho"): antes esto vivía solo en memoria de
-	# esa partida, sin guardarse en ningún lado -- mismo motivo por el que
-	# el editor de luces SÍ escribe a un archivo (ajustes_luces_debug.txt).
-	# Ahora cada trackeo de City Tour se anota también, no se pierde más.
+	# BUG REAL encontrado 2026-10-01 (reportado: "se colgo el juego y perdi
+	# los 2 trackeos que habia hecho"): antes esto vivia solo en memoria de
+	# esa partida, sin guardarse en ningun lado -- mismo motivo por el que
+	# el editor de luces SI escribe a un archivo (ajustes_luces_debug.txt).
+	# Ahora cada trackeo de City Tour se anota tambien, no se pierde mas.
 	var texto_trackeo := "\n# City Tour \"%s\" -- %s\n\"lat\": %.6f, \"lon\": %.6f, \"alt\": %.2f\n" % [
-		RUTA_CITY_TOUR[indice_city_tour], Time.get_datetime_string_from_system(),
+		RUTA_CITY_TOUR[indice_mas_cercano], Time.get_datetime_string_from_system(),
 		mundo.lat_avion, mundo.lon_avion, mundo.altitud_avion]
 	var existente_trackeo := ""
 	if FileAccess.file_exists(RUTA_AJUSTES_LUCES_DEBUG):
@@ -3889,97 +3919,46 @@ func _trackear_checkpoint_city_tour() -> void:
 	var archivo_trackeo := FileAccess.open(RUTA_AJUSTES_LUCES_DEBUG, FileAccess.WRITE)
 	archivo_trackeo.store_string(existente_trackeo + texto_trackeo)
 	archivo_trackeo.close()
-	cartel_central.text = "📍 Checkpoint trackeado"
+	cartel_central.text = "📍 %s trackeado" % RUTA_CITY_TOUR[indice_mas_cercano]
 	cartel_central.visible = true
 	get_tree().create_timer(1.0).timeout.connect(func():
 		if modo_city_tour:
 			cartel_central.visible = false)
-	# Pedido explícito 2026-10-01 ("ponele una aureola a la posición
-	# trackeada, no es más fácil eso"): una vez trackeado, la detección es
-	# por distancia a un punto (no por "pasar por el medio" de un aro
-	# orientado) -- no importa desde qué lado te acerques. Una esfera
-	# translúcida del mismo tamaño que el radio de detección muestra
-	# exactamente dónde apuntar la próxima vuelta, reemplaza al aro gigante
-	# (que ya cumplió su función de guía aproximada).
-	if aro_city_tour and is_instance_valid(aro_city_tour):
-		aro_city_tour.queue_free()
-		aro_city_tour = null
-	if halo_city_tour and is_instance_valid(halo_city_tour):
-		halo_city_tour.queue_free()
-	halo_city_tour = _crear_halo_city_tour()
+	# Pedido explicito 2026-10-01 ("ponele una aureola a la posicion
+	# trackeada"): una vez trackeada, la deteccion de ESA estrella es por
+	# distancia a un punto real (no por acercarse a la estrella en si, que
+	# puede tener algo de holgura de renderizado) -- no importa desde que
+	# lado te acerques.
+	if halos_city_tour[indice_mas_cercano] and is_instance_valid(halos_city_tour[indice_mas_cercano]):
+		halos_city_tour[indice_mas_cercano].queue_free()
+	halos_city_tour[indice_mas_cercano] = _crear_halo_city_tour()
 
-# Pone el aro gigante en el checkpoint actual, mirando hacia el PRÓXIMO
-# aeropuerto de la ruta, y activa el rumbo sugerido ("Ponete en rumbo X°")
-# reutilizando el mismo sistema que ya usa el ILS individual de Torre.
-# Cuando se acaban los 4 checkpoints, activa el destino normal de
-# "Aeroparque" para reusar la guía/aterrizaje de siempre.
-#
-# BUG REAL encontrado 2026-10-01 (reportado: "apuntás al medio pero pasa
-# por el costado, es rarísimo"): la primera versión de esto reusaba uno de
-# los aros REALES del ILS (buena idea para la altura/posición, que ya
-# vienen resueltos), pero esos aros están orientados según el RUMBO DE LA
-# PISTA (la línea entre las dos cabeceras) -- un ILS normal se puede
-# atravesar siempre porque volás alineado a la pista, que es justo la
-# orientación del aro. En el City Tour volás de un aeropuerto a otro en
-# una dirección que NO tiene nada que ver con hacia dónde apunta esa
-# pista -- si la pista queda casi perpendicular a la ruta, el aro se ve
-# como un círculo grande de frente pero en realidad es una "rodaja" casi
-# de canto respecto a la trayectoria real (la ilusión óptica que describió
-# el usuario). Solución: aro PROPIO, con la altura ya corregida con la
-# vertical real (_arriba_real(), no el eje Y crudo -- eso fue lo que causó
-# el bug anterior de "apareció por Cañuelas"), pero orientado hacia el
-# PRÓXIMO checkpoint de la ruta, no hacia ninguna pista.
-func _activar_siguiente_aro_city_tour() -> void:
-	if aro_city_tour and is_instance_valid(aro_city_tour):
-		aro_city_tour.queue_free()
-	aro_city_tour = null
-	if halo_city_tour and is_instance_valid(halo_city_tour):
-		halo_city_tour.queue_free()
-	halo_city_tour = null
-	if indice_city_tour < RUTA_CITY_TOUR.size():
-		var nombre_actual: String = RUTA_CITY_TOUR[indice_city_tour]
-		var nodo_actual := _buscar_destino_por_nombre(nombre_actual)
-		if not nodo_actual:
-			return
-		var nombre_siguiente: String = RUTA_CITY_TOUR[indice_city_tour + 1] if indice_city_tour + 1 < RUTA_CITY_TOUR.size() else "Aeroparque"
-		var nodo_siguiente := _buscar_destino_por_nombre(nombre_siguiente)
-		city_tour_lat_actual = nodo_actual.get_meta("lat")
-		city_tour_lon_actual = nodo_actual.get_meta("lon")
-		if nodo_siguiente:
-			city_tour_lat_siguiente = nodo_siguiente.get_meta("lat")
-			city_tour_lon_siguiente = nodo_siguiente.get_meta("lon")
-		else:
-			city_tour_lat_siguiente = city_tour_lat_actual
-			city_tour_lon_siguiente = city_tour_lon_actual
-		aro_city_tour = _crear_aro_gigante_city_tour()
-		_reposicionar_aro_city_tour()
-		rumbo_guia_override_activo = true
-		rumbo_guia_override_lat = nodo_actual.get_meta("lat")
-		rumbo_guia_override_lon = nodo_actual.get_meta("lon")
-		rumbo_guia_override_nombre = nombre_actual
-	else:
-		rumbo_guia_override_activo = false
-		var nodo_aeroparque := _buscar_destino_por_nombre("Aeroparque")
-		if nodo_aeroparque:
-			indice_destino = destinos.find(nodo_aeroparque)
-		cartel_central.text = "🏁 ¡Volvé a Aeroparque y aterrizá!"
-		cartel_central.visible = true
-		get_tree().create_timer(3.0).timeout.connect(func():
-			if modo_city_tour:
-				cartel_central.visible = false)
+# Estrella gigante y visible de lejos (pedido explicito, tras investigar por
+# que el aro de ILS reciclado no se podia atravesar por el centro: vivia en
+# la "capa de marcadores nocturnos", que se renderiza en una camara aparte y
+# se PEGA encima de toda la pantalla como una calcomania plana, sin
+# profundidad real contra el propio avion -- de ahi la sensacion de nunca
+# poder "entrar"). Una estrella en la capa NORMAL es un objeto 3D real, con
+# profundidad de verdad. "no_depth_test" (mismo recurso que ya usa el cartel
+# gigante del nombre de cada aeropuerto) la hace visible desde lejos aunque
+# haya edificios/terreno en el medio -- pedido explicito, "que se vea apenas
+# salis del aeropuerto, si no el que no conoce se pierde".
+func _crear_estrella_city_tour() -> Label3D:
+	var estrella := Label3D.new()
+	estrella.name = "EstrellaCityTour"
+	estrella.text = "⭐"
+	estrella.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	estrella.no_depth_test = true
+	estrella.pixel_size = 2.0
+	estrella.font_size = 200
+	estrella.outline_size = 24
+	estrella.modulate = Color(1.0, 0.85, 0.1, 1.0)
+	estrella.outline_modulate = Color(0.3, 0.2, 0.0, 1.0)
+	mundo.add_child(estrella)
+	return estrella
 
-# Pedido 2026-10-01: reposiciona la estrella TODOS los cuadros desde lat/lon
-# -- ver comentario junto a "city_tour_lat_actual" más arriba (el origen se
-# recentra en el avión cada cuadro, y "mundo" no es descendiente del
-# CesiumGeoreference así que nada se recentra solo).
-func _reposicionar_aro_city_tour() -> void:
-	if not aro_city_tour or not is_instance_valid(aro_city_tour):
-		return
-	aro_city_tour.global_position = mundo._posicion_desde_lat_lon(city_tour_lat_actual, city_tour_lon_actual, 0.0) + _arriba_real() * ALTURA_ARO_CITY_TOUR
-
-# Esfera translúcida en la coordenada EXACTA trackeada a mano -- ver
-# comentario junto a "_trackear_checkpoint_city_tour". Se reposiciona todos
-# los cuadros desde lat/lon en _actualizar_city_tour, mismo motivo que el aro.
+# Esfera translucida en la coordenada EXACTA trackeada a mano -- ver
+# comentario junto a "_trackear_checkpoint_city_tour".
 func _crear_halo_city_tour() -> MeshInstance3D:
 	var halo := MeshInstance3D.new()
 	halo.name = "HaloCityTour"
@@ -4001,85 +3980,82 @@ func _crear_halo_city_tour() -> MeshInstance3D:
 	mundo.add_child(halo)
 	return halo
 
-func _reposicionar_halo_city_tour() -> void:
-	if not halo_city_tour or not is_instance_valid(halo_city_tour):
-		return
-	var trackeado = city_tour_trackeado[indice_city_tour]
-	if trackeado == null:
-		return
-	halo_city_tour.global_position = mundo._posicion_desde_lat_lon(trackeado["lat"], trackeado["lon"], trackeado["alt"])
-
-# Pedido explícito 2026-10-01 ("en vez de aro poné una estrellita, el aro
-# tiene un problema de profundidad raro -- probemos con un objeto simple").
-# El aro vivía en la "capa de marcadores nocturnos", que se renderiza en una
-# cámara aparte y se PEGA encima de toda la pantalla como una calcomanía
-# plana, sin profundidad real contra el propio avión -- por eso nunca se
-# podía atravesar bien por el centro, por más que apuntaras derecho. Una
-# estrella en la capa NORMAL (sin ese truco) es un objeto 3D real, con
-# profundidad de verdad. "no_depth_test" (mismo recurso que usa el cartel
-# gigante del nombre de cada aeropuerto) la hace visible desde lejos aunque
-# haya edificios/terreno en el medio -- pedido explícito, "que se vea apenas
-# salís del aeropuerto, si no el que no conoce se pierde".
-func _crear_aro_gigante_city_tour() -> Label3D:
-	var estrella := Label3D.new()
-	estrella.name = "EstrellaCityTour"
-	estrella.text = "⭐"
-	estrella.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	estrella.no_depth_test = true
-	estrella.pixel_size = 2.0
-	estrella.font_size = 200
-	estrella.outline_size = 24
-	estrella.modulate = Color(1.0, 0.85, 0.1, 1.0)
-	estrella.outline_modulate = Color(0.3, 0.2, 0.0, 1.0)
-	mundo.add_child(estrella)
-	return estrella
-
 func _refrescar_estrellas_city_tour() -> void:
 	for i in estrellas_city_tour.size():
 		var etiqueta: Label = estrellas_city_tour_labels[i]
 		etiqueta.add_theme_color_override("font_color",
 			Color(1.0, 0.85, 0.1) if estrellas_city_tour[i] else Color(0.5, 0.5, 0.5))
 
-func _pasar_checkpoint_city_tour() -> void:
-	estrellas_city_tour[indice_city_tour] = true
+# Pedido explicito 2026-10-01 ("cuando yo paso por la estrella, aparte de
+# hacer el ruidito y sumarme la estrella, la estrella tiene que desaparecer
+# para dar una sensacion"): a diferencia del diseno anterior (secuencial,
+# una activaba la siguiente), ahora cada estrella se borra directamente al
+# pasarla -- las otras (o menos) siguen ahi esperando.
+func _pasar_checkpoint_city_tour(indice: int) -> void:
+	estrellas_city_tour[indice] = true
 	_refrescar_estrellas_city_tour()
 	sonido_bonus_city_tour.play()
-	_crear_explosion_city_tour(aro_city_tour.global_position if aro_city_tour else global_position)
-	indice_city_tour += 1
-	_activar_siguiente_aro_city_tour()
+	var posicion_explosion: Vector3 = global_position
+	if city_tour_estrellas_mundo[indice] and is_instance_valid(city_tour_estrellas_mundo[indice]):
+		posicion_explosion = city_tour_estrellas_mundo[indice].global_position
+		city_tour_estrellas_mundo[indice].queue_free()
+	city_tour_estrellas_mundo[indice] = null
+	if halos_city_tour[indice] and is_instance_valid(halos_city_tour[indice]):
+		halos_city_tour[indice].queue_free()
+	halos_city_tour[indice] = null
+	_crear_explosion_city_tour(posicion_explosion)
+	# Las 4 estrellas del tour completas -- falta volver a Aeroparque y
+	# aterrizar (reusa el sistema normal de destino/aterrizaje de siempre).
+	var todas_completas: bool = true
+	for i in RUTA_CITY_TOUR.size():
+		if not estrellas_city_tour[i]:
+			todas_completas = false
+			break
+	if todas_completas and indice_destino < 0:
+		var nodo_aeroparque := _buscar_destino_por_nombre("Aeroparque")
+		if nodo_aeroparque:
+			indice_destino = destinos.find(nodo_aeroparque)
+		cartel_central.text = "🏁 ¡Volvé a Aeroparque y aterrizá!"
+		cartel_central.visible = true
+		get_tree().create_timer(3.0).timeout.connect(func():
+			if modo_city_tour:
+				cartel_central.visible = false)
 
 func _completar_city_tour() -> void:
 	if not estrellas_city_tour[4]:
 		estrellas_city_tour[4] = true
 		_refrescar_estrellas_city_tour()
 		sonido_bonus_city_tour.play()
-	if aro_city_tour and is_instance_valid(aro_city_tour):
-		aro_city_tour.queue_free()
-	aro_city_tour = null
-	if halo_city_tour and is_instance_valid(halo_city_tour):
-		halo_city_tour.queue_free()
-	halo_city_tour = null
+	for i in RUTA_CITY_TOUR.size():
+		if city_tour_estrellas_mundo[i] and is_instance_valid(city_tour_estrellas_mundo[i]):
+			city_tour_estrellas_mundo[i].queue_free()
+		city_tour_estrellas_mundo[i] = null
+		if halos_city_tour[i] and is_instance_valid(halos_city_tour[i]):
+			halos_city_tour[i].queue_free()
+		halos_city_tour[i] = null
 	modo_city_tour = false
-	indice_city_tour = -1
 
 func _actualizar_city_tour(_delta: float) -> void:
-	if not modo_city_tour or indice_city_tour < 0 or indice_city_tour >= RUTA_CITY_TOUR.size():
+	if not modo_city_tour:
 		return
-	_reposicionar_aro_city_tour()
-	_reposicionar_halo_city_tour()
-	var trackeado = city_tour_trackeado[indice_city_tour]
-	if trackeado != null:
-		# Coordenada real marcada a mano (ver _trackear_checkpoint_city_tour)
-		# -- mucho más precisa que la distancia genérica al aro, con un radio
-		# bastante más chico (RADIO_DETECCION_CITY_TOUR_TRACKEADO).
-		var punto: Vector3 = mundo._posicion_desde_lat_lon(trackeado["lat"], trackeado["lon"], trackeado["alt"])
-		if global_position.distance_to(punto) < RADIO_DETECCION_CITY_TOUR_TRACKEADO:
-			_pasar_checkpoint_city_tour()
-		return
-	if not aro_city_tour or not is_instance_valid(aro_city_tour):
-		return
-	if global_position.distance_to(aro_city_tour.global_position) < RADIO_DETECCION_CITY_TOUR:
-		_pasar_checkpoint_city_tour()
+	for i in RUTA_CITY_TOUR.size():
+		if estrellas_city_tour[i]:
+			continue
+		if city_tour_estrellas_mundo[i] and is_instance_valid(city_tour_estrellas_mundo[i]):
+			# Reposiciona TODOS los cuadros desde lat/lon -- el origen se
+			# recentra en el avion cada cuadro, y "mundo" no es descendiente
+			# del CesiumGeoreference asi que nada se recentra solo.
+			city_tour_estrellas_mundo[i].global_position = mundo._posicion_desde_lat_lon(city_tour_lats[i], city_tour_lons[i], 0.0) + _arriba_real() * ALTURA_ARO_CITY_TOUR
+		var trackeado = city_tour_trackeado[i]
+		if trackeado != null:
+			var punto: Vector3 = mundo._posicion_desde_lat_lon(trackeado["lat"], trackeado["lon"], trackeado["alt"])
+			if halos_city_tour[i] and is_instance_valid(halos_city_tour[i]):
+				halos_city_tour[i].global_position = punto
+			if global_position.distance_to(punto) < RADIO_DETECCION_CITY_TOUR_TRACKEADO:
+				_pasar_checkpoint_city_tour(i)
+		elif city_tour_estrellas_mundo[i] and is_instance_valid(city_tour_estrellas_mundo[i]):
+			if global_position.distance_to(city_tour_estrellas_mundo[i].global_position) < RADIO_DETECCION_CITY_TOUR:
+				_pasar_checkpoint_city_tour(i)
 
 # Ráfaga corta de partículas doradas, a modo de "explosión" de bonus al
 # pasar un checkpoint -- se borra sola después de terminar.
