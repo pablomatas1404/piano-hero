@@ -140,6 +140,15 @@ var indice_city_tour: int = -1  # -1 = inactivo, 0..3 = checkpoint actual, 4 = v
 var aro_city_tour: MeshInstance3D = null
 var aro_city_tour_contenedor: Node3D = null
 var estrellas_city_tour: Array = [false, false, false, false, false]
+# Trackeado a mano (pedido explícito 2026-10-01, "como vos no vas a saber
+# calcular cuando pasa DIRECTAMENTE por el medio, te aprieto un botón justo
+# ahí y te marco la coordenada exacta"): mientras un checkpoint no esté
+# trackeado, se usa la detección genérica por distancia al aro (más laxa,
+# "o te acercaste bastante"); una vez trackeado, se usa ESA coordenada real
+# con un radio bastante más chico -- mucho más preciso que cualquier cálculo.
+var city_tour_trackeado: Array = [null, null, null, null]  # null o {"lat","lon","alt"}
+var tecla_trackear_anterior: bool = false
+const RADIO_DETECCION_CITY_TOUR_TRACKEADO = 60.0
 var estrellas_city_tour_labels: Array = []
 var sonido_bonus_city_tour: AudioStreamPlayer = null
 
@@ -851,11 +860,11 @@ const ACCIONES_JOYSTICK = [
 	["freno_emergencia", "Freno de emergencia (baja a 200)"],
 	["freno_gradual", "Freno progresivo"],
 	["activar_ils", "Activar/desactivar ILS"],
-	# Pedido 2026-09-26: "el otro dejalo, después le daré una función" --
-	# fila reservada, asignable ya mismo, sin comportamiento todavía. Cuando
-	# se defina qué hace, agregar el chequeo con _joystick_activo("reservado_1")
-	# donde corresponda (mismo patrón que activar_ils/marcar_lugar arriba).
-	["reservado_1", "Reservado (función futura)"],
+	# Pedido 2026-10-01: "trackear" a mano el punto exacto donde el avión pasa
+	# por el aro del City Tour (más preciso que yo calculando una distancia a
+	# ciegas) -- reusa la fila reservada de 2026-09-26 (se mantiene el id
+	# "reservado_1" para no romper asignaciones de joystick ya guardadas).
+	["reservado_1", "Trackear checkpoint (City Tour)"],
 ]
 var joystick_id: int = -1
 var mapeo_joystick: Dictionary = {}   # nombre_accion -> {"tipo":"boton","indice":N} o {"tipo":"eje","indice":N,"signo":1.0}
@@ -2211,6 +2220,14 @@ func _process(delta: float) -> void:
 		cartel_central.visible = true
 		get_tree().create_timer(1.0).timeout.connect(func(): cartel_central.visible = false)
 	freno_gradual_anterior = freno_gradual_activo
+
+	# Tecla T (de "Trackear") o botón de joystick asignado a "reservado_1":
+	# marca a mano la coordenada exacta del checkpoint actual del City Tour,
+	# ver comentario junto a "city_tour_trackeado" más arriba.
+	var tecla_trackear_activa = Input.is_physical_key_pressed(KEY_T) or _joystick_activo("reservado_1")
+	if tecla_trackear_activa and not tecla_trackear_anterior:
+		_trackear_checkpoint_city_tour()
+	tecla_trackear_anterior = tecla_trackear_activa
 
 	# Tecla I: prender/apagar el ILS sin soltar el mouse a buscar el botón
 	# (pedido explícito, "estoy a oscuras con el teclado, hasta que agarro
@@ -3816,9 +3833,21 @@ func _iniciar_city_tour() -> void:
 	modo_city_tour = true
 	indice_city_tour = 0
 	estrellas_city_tour = [false, false, false, false, false]
+	city_tour_trackeado = [null, null, null, null]
 	_refrescar_estrellas_city_tour()
 	hbox_estrellas_city_tour.visible = true
 	_activar_siguiente_aro_city_tour()
+
+func _trackear_checkpoint_city_tour() -> void:
+	if not modo_city_tour or indice_city_tour < 0 or indice_city_tour >= RUTA_CITY_TOUR.size():
+		return
+	city_tour_trackeado[indice_city_tour] = {
+		"lat": mundo.lat_avion, "lon": mundo.lon_avion, "alt": mundo.altitud_avion}
+	cartel_central.text = "📍 Checkpoint trackeado"
+	cartel_central.visible = true
+	get_tree().create_timer(1.0).timeout.connect(func():
+		if modo_city_tour:
+			cartel_central.visible = false)
 
 # Pone el aro gigante en el checkpoint actual y activa el rumbo sugerido
 # ("Ponete en rumbo X°") reutilizando el mismo sistema que ya usa el ILS
@@ -3876,6 +3905,11 @@ func _activar_aro_ils_city_tour(nombre_checkpoint: String) -> MeshInstance3D:
 		return null
 	var contenedor: Node3D = entrada["contenedor"]
 	contenedor.visible = true
+	# BUG REAL encontrado 2026-10-01 (reportado: "la primera vez no apareció,
+	# tuve que dar otra vuelta"): _actualizar_ils_dos_cabeceras_frame recién
+	# reposiciona este aro en el PRÓXIMO _process de mundo.gd -- forzado acá
+	# mismo para que ya esté bien ubicado desde este mismo cuadro.
+	mundo._actualizar_ils_dos_cabeceras_frame()
 	aro_city_tour_contenedor = contenedor
 	var hijos: Array = contenedor.get_children()
 	if hijos.is_empty():
@@ -3922,6 +3956,15 @@ func _completar_city_tour() -> void:
 
 func _actualizar_city_tour(_delta: float) -> void:
 	if not modo_city_tour or indice_city_tour < 0 or indice_city_tour >= RUTA_CITY_TOUR.size():
+		return
+	var trackeado = city_tour_trackeado[indice_city_tour]
+	if trackeado != null:
+		# Coordenada real marcada a mano (ver _trackear_checkpoint_city_tour)
+		# -- mucho más precisa que la distancia genérica al aro, con un radio
+		# bastante más chico (RADIO_DETECCION_CITY_TOUR_TRACKEADO).
+		var punto: Vector3 = mundo._posicion_desde_lat_lon(trackeado["lat"], trackeado["lon"], trackeado["alt"])
+		if global_position.distance_to(punto) < RADIO_DETECCION_CITY_TOUR_TRACKEADO:
+			_pasar_checkpoint_city_tour()
 		return
 	if not aro_city_tour or not is_instance_valid(aro_city_tour):
 		return
