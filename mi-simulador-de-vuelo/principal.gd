@@ -470,6 +470,15 @@ const URL_RADIO_ASPEN = "https://playerservices.streamtheworld.com/api/livestrea
 @onready var boton_radio_en_vivo: Button = get_node("../HUD/BarraBotones/BotonRadioEnVivo")
 @onready var sonido_radio: AudioStreamPlayer = get_node("SonidoRadio")
 var radio_activa: bool = false
+# Aviso de seguridad automático al minuto de vuelo (pedido explícito
+# 2026-10-01, "que active el sonido de azafata, así el que no sabe jugar
+# dice uh, mirá, tiene esos sonidos"). Detecta el cambio de estado a VOLANDO
+# de forma genérica en _process (en vez de tocar los 4 lugares del código
+# donde arranca un vuelo nuevo), y dispara una sola vez por vuelo.
+var _estado_anterior_para_timer_vuelo = null
+var tiempo_vuelo_actual: float = 0.0
+var anuncio_seguridad_reproducido: bool = false
+const SEGUNDOS_ANUNCIO_SEGURIDAD = 60.0
 
 # Selector de emisoras de radio (pedido 2026-09-27, "un selector tipo con la
 # música" -- antes había un solo archivo fijo de fondo). Mismo patrón que
@@ -975,6 +984,12 @@ func _ready() -> void:
 	boton_cerrar_radio.focus_mode = Control.FOCUS_NONE
 	boton_cerrar_radio.pressed.connect(func(): panel_radio.visible = false)
 	_cargar_emisora_radio()
+	# Pedido explícito 2026-10-01 ("que la radio ya arranque activada... el
+	# que no sabe jugar ya dice uh, mirá, tiene esos sonidos"): arranca
+	# prendida sola al abrir el juego, el jugador la puede apagar con el
+	# mismo botón de siempre si molesta.
+	if ruta_emisora_actual != "":
+		_alternar_radio()
 
 	boton_instrucciones.focus_mode = Control.FOCUS_NONE
 	boton_instrucciones.pressed.connect(_alternar_instrucciones)
@@ -2107,6 +2122,7 @@ func _alinear_con_vertical_real(delta: float) -> void:
 func _process(delta: float) -> void:
 	_actualizar_estroboscopica(delta)
 	_actualizar_city_tour(delta)
+	_actualizar_anuncio_seguridad(delta)
 	# Orientación inicial hacia San Fernando -- ver comentario junto a las
 	# constantes LAT/LON de arriba. Se aplica UNA sola vez, en el primer
 	# cuadro (Godot procesa _process() de arriba hacia abajo en el árbol --
@@ -4022,3 +4038,17 @@ func _generar_sonido_bonus() -> AudioStreamWAV:
 	stream.stereo = false
 	stream.data = datos
 	return stream
+
+# Aviso de seguridad automático -- ver comentario junto a la declaración de
+# "anuncio_seguridad_reproducido" más arriba.
+func _actualizar_anuncio_seguridad(delta: float) -> void:
+	if estado == Estado.VOLANDO:
+		if _estado_anterior_para_timer_vuelo != Estado.VOLANDO:
+			tiempo_vuelo_actual = 0.0
+			anuncio_seguridad_reproducido = false
+		tiempo_vuelo_actual += delta
+		if not anuncio_seguridad_reproducido and tiempo_vuelo_actual >= SEGUNDOS_ANUNCIO_SEGURIDAD:
+			anuncio_seguridad_reproducido = true
+			if not sonido_instrucciones.playing:
+				_alternar_instrucciones()
+	_estado_anterior_para_timer_vuelo = estado
