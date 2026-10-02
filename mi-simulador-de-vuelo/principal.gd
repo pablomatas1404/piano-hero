@@ -105,7 +105,13 @@ const TIPOS_AVION = [
 	# Godot las debería resolver solo, sin forzar nada a mano. Rotación 180°
 	# de entrada por pedido explícito ("como todos aparecen mal, ya lo
 	# rotaría directamente") -- confirmar/corregir con el juego en vivo.
-	{"nombre": "F-16 (nuevo)", "modelo": "res://modelos_aviones/f16/F-16 EXP.fbm/F-16 EXP.fbx", "helicoptero": false, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
+	# Escala calculada por diagonal real: el .fbx nativo mide 55.5 unidades
+	# de diagonal (AABB medido con un script aparte, sin Blender a mano) --
+	# demasiado grande para ser metros reales de un caza. 0.335 lo deja en
+	# ~18.6m de diagonal, comparable a un F-16 real (15m largo x 9.8m
+	# envergadura x 5m alto). Confirmar en vivo, es un cálculo, no una
+	# medición exacta del modelo.
+	{"nombre": "F-16 (nuevo)", "modelo": "res://modelos_aviones/f16/F-16 EXP.fbm/F-16 EXP.fbx", "helicoptero": false, "escala": 0.335, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
 ]
 var tipo_avion_indice: int = 0
 
