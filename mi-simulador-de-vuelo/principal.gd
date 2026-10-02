@@ -126,6 +126,22 @@ const TIPOS_AVION = [
 ]
 var tipo_avion_indice: int = 0
 
+# City Tour (pedido explícito 2026-10-01, "prueba inicial" para probar
+# checkpoints grandes + sonido + estrellitas antes de armar el circuito
+# bueno por lugares de la ciudad -- empieza por aeropuertos porque ya están
+# todos mapeados). Aeroparque -> Ezeiza -> Morón -> Campo de Mayo ->
+# San Fernando -> volver a Aeroparque y aterrizar. Arranca en el aire a
+# ~2000m, no en pista ("así no tenemos quilombo").
+const RUTA_CITY_TOUR: Array[String] = ["Ezeiza", "Morón", "Campo de Mayo", "San Fernando"]
+const RADIO_DETECCION_CITY_TOUR = 220.0  # generoso -- el aro mide ~240m de radio externo
+const ALTURA_INICIO_CITY_TOUR = 2000.0
+var modo_city_tour: bool = false
+var indice_city_tour: int = -1  # -1 = inactivo, 0..3 = checkpoint actual, 4 = volviendo a Aeroparque a aterrizar
+var aro_city_tour: Node3D = null
+var estrellas_city_tour: Array = [false, false, false, false, false]
+var estrellas_city_tour_labels: Array = []
+var sonido_bonus_city_tour: AudioStreamPlayer = null
+
 # Licencia de Helicóptero -- Modo Carrera (pedido 2026-09-21, "ya lo hablamos
 # todo, hacerlo completo"): 3 viajes cortos y fáciles, punto A a punto B,
 # CERCA (mismos lugares reales que ya usamos en las misiones de sobrevuelo de
@@ -675,6 +691,8 @@ var vista_sin_avion_activa: bool = false
 @onready var marcadores_viewport: SubViewport = get_node("../HUD/MarcadoresViewport")
 @onready var marcadores_rect: TextureRect = get_node("../HUD/MarcadoresRect")
 @onready var asa_minimapa: ColorRect = get_node("../HUD/MinimapaRect/AsaMinimapa")
+@onready var boton_city_tour: Button = get_node("../HUD/BarraBotones/BotonCityTour")
+@onready var hbox_estrellas_city_tour: HBoxContainer = get_node("../HUD/HBoxEstrellasCityTour")
 @onready var boton_mapa: Button = get_node("../HUD/BarraBotones/BotonMapa")
 @onready var boton_mapa_auto: Button = get_node("../HUD/BarraBotones/BotonMapaAuto")
 @onready var mapa_viewport: SubViewport = get_node("../HUD/MapaViewport")
@@ -1089,6 +1107,14 @@ func _ready() -> void:
 	boton_mapa.focus_mode = Control.FOCUS_NONE
 	boton_mapa.pressed.connect(func():
 		mapa_rect.visible = not mapa_rect.visible)
+
+	boton_city_tour.focus_mode = Control.FOCUS_NONE
+	boton_city_tour.pressed.connect(_iniciar_city_tour)
+	for i in range(1, 6):
+		estrellas_city_tour_labels.append(get_node("../HUD/HBoxEstrellasCityTour/EstrellaCityTour%d" % i))
+	sonido_bonus_city_tour = AudioStreamPlayer.new()
+	sonido_bonus_city_tour.stream = _generar_sonido_bonus()
+	add_child(sonido_bonus_city_tour)
 	# Botón "T" (pedido 2026-09-28): transparenta el mapa al 30% para ver el
 	# terreno de fondo a través, útil mientras se reacomoda/agranda el panel.
 	boton_transparencia_mapa.focus_mode = Control.FOCUS_NONE
@@ -2070,6 +2096,7 @@ func _alinear_con_vertical_real(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	_actualizar_estroboscopica(delta)
+	_actualizar_city_tour(delta)
 	# Orientación inicial hacia San Fernando -- ver comentario junto a las
 	# constantes LAT/LON de arriba. Se aplica UNA sola vez, en el primer
 	# cuadro (Godot procesa _process() de arriba hacia abajo en el árbol --
@@ -3618,6 +3645,8 @@ func _actualizar_torre(altura: float) -> void:
 			estado = Estado.LLEGADA
 			cartel_central.text = "✅ ¡LLEGASTE A %s!\n\nApretá ESPACIO para frenar" % nombre_destino.to_upper()
 			cartel_central.visible = true
+			if modo_city_tour and indice_city_tour >= RUTA_CITY_TOUR.size() and nombre_destino == "Aeroparque":
+				_completar_city_tour()
 
 	if estado != Estado.VOLANDO and estado != Estado.LLEGADA:
 		_ocultar_flechas()
@@ -3746,3 +3775,185 @@ func _actualizar_torre(altura: float) -> void:
 	# altura_objetivo/factor_planeo que las alimentaba ya no se usa para nada.
 	flecha_arriba.visible = false
 	flecha_abajo.visible = false
+
+# ============================================================
+# CITY TOUR (pedido 2026-10-01) -- ver comentario junto a RUTA_CITY_TOUR.
+# ============================================================
+
+func _buscar_destino_por_nombre(nombre: String) -> Node3D:
+	for nodo in destinos:
+		if nodo.get_meta("nombre_bonito", nodo.name) == nombre:
+			return nodo
+	return null
+
+func _iniciar_city_tour() -> void:
+	var nodo_aeroparque := _buscar_destino_por_nombre("Aeroparque")
+	var nodo_ezeiza := _buscar_destino_por_nombre("Ezeiza")
+	if not nodo_aeroparque or not nodo_ezeiza:
+		return
+	selector_vuelo.visible = false
+	cartel_central.visible = false
+	panel_misiones.visible = false
+	objetivo_mision = null
+	indice_destino = -1
+	rumbo_guia_override_activo = false
+	# Arranca en el aire, no en pista (pedido explícito, "así no tenemos
+	# quilombo") -- mismo patrón que _confirmar_viaje para teletransportar.
+	global_position = nodo_aeroparque.global_position + Vector3(0, ALTURA_INICIO_CITY_TOUR, 0)
+	look_at(nodo_ezeiza.global_position, _arriba_real())
+	banco_actual = 0.0
+	var ajustes_actuales: Dictionary = _ajustes_avion_actual()
+	velocidad_actual = lerp(float(ajustes_actuales["vel_minima"]), float(ajustes_actuales["vel_maxima"]), 0.4)
+	_actualizar_etiqueta_velocidad()
+	estado = Estado.VOLANDO
+	modo_city_tour = true
+	indice_city_tour = 0
+	estrellas_city_tour = [false, false, false, false, false]
+	_refrescar_estrellas_city_tour()
+	hbox_estrellas_city_tour.visible = true
+	_activar_siguiente_aro_city_tour()
+
+# Pone el aro gigante en el checkpoint actual, mirando hacia el PRÓXIMO (así
+# se ve para qué lado seguir viajando al atravesarlo) y activa el rumbo
+# sugerido ("Ponete en rumbo X°") reutilizando el mismo sistema que ya usa
+# el ILS individual de Torre. Cuando se acaban los 4 checkpoints, activa el
+# destino normal de "Aeroparque" para reusar la guía/aterrizaje de siempre.
+func _activar_siguiente_aro_city_tour() -> void:
+	if aro_city_tour and is_instance_valid(aro_city_tour):
+		aro_city_tour.queue_free()
+	aro_city_tour = null
+	if indice_city_tour < RUTA_CITY_TOUR.size():
+		var nombre_actual: String = RUTA_CITY_TOUR[indice_city_tour]
+		var nodo_actual := _buscar_destino_por_nombre(nombre_actual)
+		if not nodo_actual:
+			return
+		var nombre_siguiente: String = RUTA_CITY_TOUR[indice_city_tour + 1] if indice_city_tour + 1 < RUTA_CITY_TOUR.size() else "Aeroparque"
+		var nodo_siguiente := _buscar_destino_por_nombre(nombre_siguiente)
+		var punto_mirar: Vector3 = nodo_siguiente.global_position if nodo_siguiente else nodo_actual.global_position + Vector3(0, 0, 1)
+		aro_city_tour = _crear_aro_gigante_city_tour(nodo_actual.global_position, punto_mirar)
+		rumbo_guia_override_activo = true
+		rumbo_guia_override_lat = nodo_actual.get_meta("lat")
+		rumbo_guia_override_lon = nodo_actual.get_meta("lon")
+		rumbo_guia_override_nombre = nombre_actual
+	else:
+		rumbo_guia_override_activo = false
+		var nodo_aeroparque := _buscar_destino_por_nombre("Aeroparque")
+		if nodo_aeroparque:
+			indice_destino = destinos.find(nodo_aeroparque)
+		cartel_central.text = "🏁 ¡Volvé a Aeroparque y aterrizá!"
+		cartel_central.visible = true
+		get_tree().create_timer(3.0).timeout.connect(func():
+			if modo_city_tour:
+				cartel_central.visible = false)
+
+# Aro 3x más grande que los gates de ILS (pedido explícito, "casi no entra
+# el avión, necesito que tengas sensibilidad") -- mismo estilo visual
+# (TorusMesh dorado emisivo, capa de marcadores nocturnos para que se vea
+# bien de noche también).
+func _crear_aro_gigante_city_tour(posicion: Vector3, mirar_hacia: Vector3) -> Node3D:
+	var contenedor := Node3D.new()
+	contenedor.name = "AroCityTour"
+	mundo.add_child(contenedor)
+	contenedor.global_position = posicion
+	contenedor.look_at(mirar_hacia, mundo.arriba_motor_actual)
+	var color := Color(1.0, 0.85, 0.1)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(color.r, color.g, color.b, 0.85)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.emission_enabled = true
+	mat.emission = color
+	mat.emission_energy_multiplier = 0.8
+	var aro := MeshInstance3D.new()
+	var malla := TorusMesh.new()
+	malla.inner_radius = 195.0  # 3x RADIO_INTERNO_GATE_ILS (65.0) de mundo.gd
+	malla.outer_radius = 240.0  # 3x RADIO_EXTERNO_GATE_ILS (80.0) de mundo.gd
+	aro.mesh = malla
+	aro.set_surface_override_material(0, mat)
+	aro.set_layer_mask_value(1, false)
+	aro.set_layer_mask_value(mundo.CAPA_MARCADORES_NOCTURNOS, true)
+	# El agujero del TorusMesh atraviesa su propio eje Y local -- mismo giro
+	# fijo que usan los gates de ILS para que mire hacia adelante (Z local).
+	aro.rotation_degrees = Vector3(90, 0, 0)
+	contenedor.add_child(aro)
+	return contenedor
+
+func _refrescar_estrellas_city_tour() -> void:
+	for i in estrellas_city_tour.size():
+		var etiqueta: Label = estrellas_city_tour_labels[i]
+		etiqueta.add_theme_color_override("font_color",
+			Color(1.0, 0.85, 0.1) if estrellas_city_tour[i] else Color(0.5, 0.5, 0.5))
+
+func _pasar_checkpoint_city_tour() -> void:
+	estrellas_city_tour[indice_city_tour] = true
+	_refrescar_estrellas_city_tour()
+	sonido_bonus_city_tour.play()
+	_crear_explosion_city_tour(aro_city_tour.global_position if aro_city_tour else global_position)
+	indice_city_tour += 1
+	_activar_siguiente_aro_city_tour()
+
+func _completar_city_tour() -> void:
+	if not estrellas_city_tour[4]:
+		estrellas_city_tour[4] = true
+		_refrescar_estrellas_city_tour()
+		sonido_bonus_city_tour.play()
+	modo_city_tour = false
+	indice_city_tour = -1
+
+func _actualizar_city_tour(_delta: float) -> void:
+	if not modo_city_tour or indice_city_tour < 0 or indice_city_tour >= RUTA_CITY_TOUR.size():
+		return
+	if not aro_city_tour or not is_instance_valid(aro_city_tour):
+		return
+	if global_position.distance_to(aro_city_tour.global_position) < RADIO_DETECCION_CITY_TOUR:
+		_pasar_checkpoint_city_tour()
+
+# Ráfaga corta de partículas doradas, a modo de "explosión" de bonus al
+# pasar un checkpoint -- se borra sola después de terminar.
+func _crear_explosion_city_tour(posicion: Vector3) -> void:
+	var particulas := GPUParticles3D.new()
+	particulas.amount = 24
+	particulas.lifetime = 0.8
+	particulas.one_shot = true
+	particulas.explosiveness = 1.0
+	var material := ParticleProcessMaterial.new()
+	material.direction = Vector3(0, 1, 0)
+	material.spread = 180.0
+	material.initial_velocity_min = 8.0
+	material.initial_velocity_max = 20.0
+	material.gravity = Vector3(0, -9.8, 0)
+	material.scale_min = 0.5
+	material.scale_max = 1.5
+	material.color = Color(1.0, 0.85, 0.1, 1.0)
+	particulas.process_material = material
+	var malla_particula := SphereMesh.new()
+	malla_particula.radius = 1.0
+	malla_particula.height = 2.0
+	particulas.draw_pass_1 = malla_particula
+	mundo.add_child(particulas)
+	particulas.global_position = posicion
+	particulas.emitting = true
+	get_tree().create_timer(particulas.lifetime + 0.3).timeout.connect(func():
+		if is_instance_valid(particulas):
+			particulas.queue_free())
+
+# Sintetiza un "bonus" de dos tonos (880Hz -> 1320Hz, 250ms) sin depender de
+# ningún archivo de audio -- simple y autocontenido para esta primera prueba.
+func _generar_sonido_bonus() -> AudioStreamWAV:
+	var muestras_por_segundo := 44100
+	var duracion := 0.25
+	var total_muestras := int(muestras_por_segundo * duracion)
+	var datos := PackedByteArray()
+	datos.resize(total_muestras * 2)
+	for i in total_muestras:
+		var t: float = float(i) / muestras_por_segundo
+		var frecuencia: float = 880.0 if t < duracion * 0.5 else 1320.0
+		var envolvente: float = 1.0 - (t / duracion)
+		var muestra: float = sin(TAU * frecuencia * t) * envolvente * 0.5
+		var valor: int = int(clamp(muestra, -1.0, 1.0) * 32767.0)
+		datos.encode_s16(i * 2, valor)
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = muestras_por_segundo
+	stream.stereo = false
+	stream.data = datos
+	return stream
