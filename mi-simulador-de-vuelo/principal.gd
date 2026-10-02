@@ -786,8 +786,8 @@ var _arrastrando_mover_mapa: bool = false
 # ver el uso de control_mouse_activo en _procesar_vuelo(). El acelerador
 # sigue siendo siempre de teclado (W/S), en los dos modos.
 @onready var check_control_mouse: CheckButton = get_node("../HUD/PanelConfiguracion/VBoxConfig/CheckControlMouse")
-@onready var check_editor_luces: CheckButton = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxEditorLuces/CheckEditorLuces")
-@onready var boton_clavar_luces: Button = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxEditorLuces/BotonClavarLuces")
+@onready var check_editor_luces: CheckButton = get_node("../HUD/PanelConfiguracion/VBoxConfig/CheckEditorLuces")
+@onready var boton_clavar_luces: Button = get_node("../HUD/PanelConfiguracion/VBoxConfig/BotonClavarLuces")
 const RUTA_CONFIG_CONTROLES = "user://controles_config.cfg"
 var control_mouse_activo: bool = false
 

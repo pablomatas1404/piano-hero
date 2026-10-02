@@ -1814,18 +1814,15 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="HBoxEditorLuces" type="HBoxContainer" parent="HUD/PanelConfiguracion/VBoxConfig"]
+[node name="CheckEditorLuces" type="CheckButton" parent="HUD/PanelConfiguracion/VBoxConfig"]
 layout_mode = 2
-theme_override_constants/separation = 8
+text = "💡 Editar luces (arrastrar con el mouse)"
+autowrap_mode = 2
 
-[node name="CheckEditorLuces" type="CheckButton" parent="HUD/PanelConfiguracion/VBoxConfig/HBoxEditorLuces"]
+[node name="BotonClavarLuces" type="Button" parent="HUD/PanelConfiguracion/VBoxConfig"]
+custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
-size_flags_horizontal = 3
-text = "💡 Editar luces del avión (arrastrar con el mouse)"
-
-[node name="BotonClavarLuces" type="Button" parent="HUD/PanelConfiguracion/VBoxConfig/HBoxEditorLuces"]
-layout_mode = 2
-text = "📌 Clavar"
+text = "📌 Clavar luces"
 
 [node name="BotonCerrarConfig" type="Button" parent="HUD/PanelConfiguracion/VBoxConfig" unique_id=701777610]
 custom_minimum_size = Vector2(0, 40)
