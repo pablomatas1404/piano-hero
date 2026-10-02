@@ -381,6 +381,18 @@ var _tiempo_estrobo: float = 0.0
 # porque de noche si no es el avioncito tuyo todos se ven como una cosa
 # negra"). null cuando el avión elegido es el primitivo "Avioncito clásico".
 var luz_estroboscopica_externa: MeshInstance3D = null
+# Editor de luces en vivo (pedido explícito 2026-10-01, "para no tener que
+# renegar ajustando luces a ciegas en cada avión nuevo"): guarda referencia a
+# las 3 lucecitas del avión externo actual para poder agarrarlas con el mouse
+# y arrastrarlas -- se "clavan" apretando un botón, que escribe las
+# coordenadas finales (en espacio LOCAL del modelo, mismo formato que
+# "luces_manual") a un archivo de texto para copiar directo a TIPOS_AVION.
+var luz_navegacion_izq_externa: MeshInstance3D = null
+var luz_navegacion_der_externa: MeshInstance3D = null
+var modo_editar_luces: bool = false
+var luz_arrastrada: MeshInstance3D = null
+var profundidad_arrastre_luz: float = 0.0
+const RUTA_AJUSTES_LUCES_DEBUG = "res://ajustes_luces_debug.txt"
 @onready var boton_despegar: Button = get_node("../HUD/BotonDespegar")
 @onready var flecha_izquierda: Label = get_node("../HUD/FlechaIzquierda")
 @onready var flecha_derecha: Label = get_node("../HUD/FlechaDerecha")
@@ -774,6 +786,8 @@ var _arrastrando_mover_mapa: bool = false
 # ver el uso de control_mouse_activo en _procesar_vuelo(). El acelerador
 # sigue siendo siempre de teclado (W/S), en los dos modos.
 @onready var check_control_mouse: CheckButton = get_node("../HUD/PanelConfiguracion/VBoxConfig/CheckControlMouse")
+@onready var check_editor_luces: CheckButton = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxEditorLuces/CheckEditorLuces")
+@onready var boton_clavar_luces: Button = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxEditorLuces/BotonClavarLuces")
 const RUTA_CONFIG_CONTROLES = "user://controles_config.cfg"
 var control_mouse_activo: bool = false
 
@@ -1145,6 +1159,13 @@ func _ready() -> void:
 		control_mouse_activo = activo
 		_guardar_control_mouse())
 
+	check_editor_luces.focus_mode = Control.FOCUS_NONE
+	check_editor_luces.toggled.connect(func(activo: bool):
+		modo_editar_luces = activo
+		luz_arrastrada = null)
+	boton_clavar_luces.focus_mode = Control.FOCUS_NONE
+	boton_clavar_luces.pressed.connect(_guardar_ajuste_luces_editadas)
+
 	boton_hora_menos.focus_mode = Control.FOCUS_NONE
 	boton_hora_mas.focus_mode = Control.FOCUS_NONE
 	check_avance_automatico_hora.focus_mode = Control.FOCUS_NONE
@@ -1286,6 +1307,43 @@ func _iniciar_asignacion_joystick(nombre_accion: String) -> void:
 	_refrescar_lista_acciones_joystick()
 
 func _input(event: InputEvent) -> void:
+	# Editor de luces en vivo (ver comentario junto a "modo_editar_luces"):
+	# clic izquierdo cerca de una lucecita la agarra, arrastrar la mueve sobre
+	# un plano paralelo a la pantalla a la misma profundidad donde estaba,
+	# soltar la suelta. Tiene que ir ANTES que cualquier otra lógica de clic
+	# (por el mismo motivo que el arrastre del mapa usa _input y no
+	# _unhandled_input, ver comentario de más abajo).
+	if modo_editar_luces:
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				var origen: Vector3 = camara.project_ray_origin(event.position)
+				var direccion: Vector3 = camara.project_ray_normal(event.position)
+				var mejor_luz: MeshInstance3D = null
+				var mejor_distancia: float = 2.0
+				for luz in [luz_navegacion_izq_externa, luz_navegacion_der_externa, luz_estroboscopica_externa]:
+					if luz == null or not is_instance_valid(luz):
+						continue
+					var al_punto: Vector3 = luz.global_position - origen
+					var proyeccion: float = al_punto.dot(direccion)
+					if proyeccion < 0.0:
+						continue
+					var distancia: float = (origen + direccion * proyeccion).distance_to(luz.global_position)
+					if distancia < mejor_distancia:
+						mejor_distancia = distancia
+						mejor_luz = luz
+				luz_arrastrada = mejor_luz
+				if mejor_luz:
+					var al_punto_elegido: Vector3 = mejor_luz.global_position - origen
+					profundidad_arrastre_luz = al_punto_elegido.dot(direccion)
+			else:
+				luz_arrastrada = null
+			return
+		if event is InputEventMouseMotion and luz_arrastrada and is_instance_valid(luz_arrastrada):
+			var origen: Vector3 = camara.project_ray_origin(event.position)
+			var direccion: Vector3 = camara.project_ray_normal(event.position)
+			luz_arrastrada.global_position = origen + direccion * profundidad_arrastre_luz
+			return
+
 	# BUG encontrado 2026-09-20: usar _unhandled_input hacía que el arrastre
 	# del vértice se cortara apenas el mouse pasaba por ENCIMA de cualquier
 	# Control con filtro STOP (el valor por defecto en Godot) -- el evento
@@ -2690,9 +2748,40 @@ func _crear_luz_navegacion(posicion: Vector3, color: Color, padre: Node3D = null
 	omni.light_color = color
 	omni.light_energy = 1.2
 	omni.omni_range = radio * 6.0
-	omni.position = posicion
-	padre.add_child(omni)
+	# Hija de la bolita, no hermana (posición LOCAL (0,0,0) = centrada en la
+	# bolita) -- así si el editor de luces arrastra la bolita, la luz real la
+	# sigue solita, no se queda atrás en la posición vieja.
+	luz.add_child(omni)
 	return luz
+
+func _vector3_a_texto(v: Vector3) -> String:
+	return "Vector3(%.4f, %.4f, %.4f)" % [v.x, v.y, v.z]
+
+# Editor de luces en vivo: escribe la posición FINAL de las 3 lucecitas (en
+# espacio local del modelo -- luz.position ya es exactamente eso, porque son
+# hijas directas de "instancia") a un archivo de texto, listas para pegar en
+# TIPOS_AVION como "luces_manual". No se guardan solas ni se tocan los
+# valores en caliente -- hace falta copiarlas a mano una vez conformes, para
+# no llenar el código de ediciones automáticas sin revisar.
+func _guardar_ajuste_luces_editadas() -> void:
+	if not luz_navegacion_izq_externa or not luz_navegacion_der_externa or not luz_estroboscopica_externa:
+		return
+	if not is_instance_valid(luz_navegacion_izq_externa) or not is_instance_valid(luz_navegacion_der_externa) or not is_instance_valid(luz_estroboscopica_externa):
+		return
+	var nombre_avion: String = TIPOS_AVION[tipo_avion_indice]["nombre"]
+	var texto := "\n# \"%s\" -- %s\n" % [nombre_avion, Time.get_datetime_string_from_system()]
+	texto += "\"luces_manual\": {\"izq\": %s, \"der\": %s, \"estrobo\": %s}\n" % [
+		_vector3_a_texto(luz_navegacion_izq_externa.position),
+		_vector3_a_texto(luz_navegacion_der_externa.position),
+		_vector3_a_texto(luz_estroboscopica_externa.position)]
+	var existente := ""
+	if FileAccess.file_exists(RUTA_AJUSTES_LUCES_DEBUG):
+		existente = FileAccess.get_file_as_string(RUTA_AJUSTES_LUCES_DEBUG)
+	var archivo := FileAccess.open(RUTA_AJUSTES_LUCES_DEBUG, FileAccess.WRITE)
+	archivo.store_string(existente + texto)
+	archivo.close()
+	print("📌 Luces clavadas para \"%s\" -- guardado en %s" % [nombre_avion, RUTA_AJUSTES_LUCES_DEBUG])
+	print(texto)
 
 # Destello CORTO y agudo (no una onda suave) para la estroboscópica -- pow()
 # con exponente alto deja la mayor parte del ciclo casi apagado y solo un
@@ -2793,8 +2882,8 @@ func _generar_luces_para_modelo_externo(instancia: Node3D, datos: Dictionary) ->
 	# usando piezas de referencia del propio modelo cuando las tenía).
 	if datos.has("luces_manual"):
 		var lm: Dictionary = datos["luces_manual"]
-		_crear_luz_navegacion(lm["izq"], Color(1.0, 0.1, 0.1), instancia, radio_luz)
-		_crear_luz_navegacion(lm["der"], Color(0.1, 1.0, 0.2), instancia, radio_luz)
+		luz_navegacion_izq_externa = _crear_luz_navegacion(lm["izq"], Color(1.0, 0.1, 0.1), instancia, radio_luz)
+		luz_navegacion_der_externa = _crear_luz_navegacion(lm["der"], Color(0.1, 1.0, 0.2), instancia, radio_luz)
 		luz_estroboscopica_externa = _crear_luz_navegacion(lm["estrobo"], Color(1.0, 1.0, 1.0), instancia, radio_luz * 1.2)
 	else:
 		# "ajuste_izq"/"ajuste_der"/"ajuste_estrobo" (pedido 2026-10-01, Piper:
@@ -2811,8 +2900,8 @@ func _generar_luces_para_modelo_externo(instancia: Node3D, datos: Dictionary) ->
 		var x_izq: float = caja.position.x + ajuste_izq.x
 		var x_der: float = caja.end.x + ajuste_der.x
 		var y_arriba: float = caja.end.y + caja.size.y * 0.08
-		_crear_luz_navegacion(Vector3(x_izq, y_medio + ajuste_izq.y, z_medio + ajuste_izq.z), Color(1.0, 0.1, 0.1), instancia, radio_luz)
-		_crear_luz_navegacion(Vector3(x_der, y_medio + ajuste_der.y, z_medio + ajuste_der.z), Color(0.1, 1.0, 0.2), instancia, radio_luz)
+		luz_navegacion_izq_externa = _crear_luz_navegacion(Vector3(x_izq, y_medio + ajuste_izq.y, z_medio + ajuste_izq.z), Color(1.0, 0.1, 0.1), instancia, radio_luz)
+		luz_navegacion_der_externa = _crear_luz_navegacion(Vector3(x_der, y_medio + ajuste_der.y, z_medio + ajuste_der.z), Color(0.1, 1.0, 0.2), instancia, radio_luz)
 		luz_estroboscopica_externa = _crear_luz_navegacion(Vector3(caja.position.x + caja.size.x * 0.5 + ajuste_estrobo.x, y_arriba + ajuste_estrobo.y, z_medio + ajuste_estrobo.z), Color(1.0, 1.0, 1.0), instancia, radio_luz * 1.2)
 
 	var rango_spot: float = clamp(tamano_mundo * 0.35, 1.0, 8.0) / escala
@@ -2841,6 +2930,9 @@ func _aplicar_tipo_avion(indice: int) -> void:
 	# una nueva, para que _actualizar_estroboscopica no toque un nodo
 	# liberado en el frame en que se cambia a "Avioncito clásico".
 	luz_estroboscopica_externa = null
+	luz_navegacion_izq_externa = null
+	luz_navegacion_der_externa = null
+	luz_arrastrada = null
 	var mostrar_primitivas = datos["modelo"] == ""
 	pieza_fuselaje.visible = mostrar_primitivas
 	pieza_nariz.visible = mostrar_primitivas
