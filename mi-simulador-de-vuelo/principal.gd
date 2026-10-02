@@ -133,6 +133,15 @@ var tipo_avion_indice: int = 0
 # San Fernando -> volver a Aeroparque y aterrizar. Arranca en el aire a
 # ~2000m, no en pista ("así no tenemos quilombo").
 const RUTA_CITY_TOUR: Array[String] = ["Ezeiza", "Morón", "Campo de Mayo", "San Fernando"]
+# Coordenadas trackeadas a mano por el usuario en vivo (2026-10-01, con el
+# botón/tecla T, volando el circuito real) -- se usan como punto de partida
+# ya cargado al arrancar el City Tour, mismo formato que "city_tour_trackeado".
+const COORDENADAS_TRACKEADAS_CITY_TOUR: Array = [
+	{"lat": -34.801013, "lon": -58.516862, "alt": 1464.25},  # Ezeiza
+	{"lat": -34.693623, "lon": -58.626800, "alt": 1242.05},  # Morón
+	{"lat": -34.561913, "lon": -58.670213, "alt": 1351.45},  # Campo de Mayo
+	{"lat": -34.470775, "lon": -58.613806, "alt": 1326.79},  # San Fernando
+]
 const RADIO_DETECCION_CITY_TOUR = 220.0  # generoso -- el aro mide ~240m de radio externo
 const ALTURA_INICIO_CITY_TOUR = 2000.0
 const ALTURA_ARO_CITY_TOUR = 400.0
@@ -3868,7 +3877,6 @@ func _iniciar_city_tour() -> void:
 	estado = Estado.VOLANDO
 	modo_city_tour = true
 	estrellas_city_tour = [false, false, false, false, false]
-	city_tour_trackeado = [null, null, null, null]
 	_refrescar_estrellas_city_tour()
 	hbox_estrellas_city_tour.visible = true
 	for i in RUTA_CITY_TOUR.size():
@@ -3877,6 +3885,16 @@ func _iniciar_city_tour() -> void:
 		if halos_city_tour[i] and is_instance_valid(halos_city_tour[i]):
 			halos_city_tour[i].queue_free()
 		halos_city_tour[i] = null
+		# Precargadas con lo que el usuario ya trackeó a mano en vivo (ver
+		# COORDENADAS_TRACKEADAS_CITY_TOUR) -- .duplicate() para no compartir
+		# el mismo Dictionary entre la constante y el estado de la partida.
+		if i < COORDENADAS_TRACKEADAS_CITY_TOUR.size():
+			city_tour_trackeado[i] = COORDENADAS_TRACKEADAS_CITY_TOUR[i].duplicate()
+			halos_city_tour[i] = _crear_halo_city_tour()
+			halos_city_tour[i].global_position = mundo._posicion_desde_lat_lon(
+				city_tour_trackeado[i]["lat"], city_tour_trackeado[i]["lon"], city_tour_trackeado[i]["alt"])
+		else:
+			city_tour_trackeado[i] = null
 		var nodo := _buscar_destino_por_nombre(RUTA_CITY_TOUR[i])
 		if not nodo:
 			city_tour_estrellas_mundo[i] = null
