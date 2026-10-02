@@ -135,10 +135,10 @@ var tipo_avion_indice: int = 0
 const RUTA_CITY_TOUR: Array[String] = ["Ezeiza", "Morón", "Campo de Mayo", "San Fernando"]
 const RADIO_DETECCION_CITY_TOUR = 220.0  # generoso -- el aro mide ~240m de radio externo
 const ALTURA_INICIO_CITY_TOUR = 2000.0
-const ALTURA_ARO_CITY_TOUR = 400.0
 var modo_city_tour: bool = false
 var indice_city_tour: int = -1  # -1 = inactivo, 0..3 = checkpoint actual, 4 = volviendo a Aeroparque a aterrizar
-var aro_city_tour: Node3D = null
+var aro_city_tour: MeshInstance3D = null
+var aro_city_tour_contenedor: Node3D = null
 var estrellas_city_tour: Array = [false, false, false, false, false]
 var estrellas_city_tour_labels: Array = []
 var sonido_bonus_city_tour: AudioStreamPlayer = null
@@ -3820,30 +3820,27 @@ func _iniciar_city_tour() -> void:
 	hbox_estrellas_city_tour.visible = true
 	_activar_siguiente_aro_city_tour()
 
-# Pone el aro gigante en el checkpoint actual, mirando hacia el PRÓXIMO (así
-# se ve para qué lado seguir viajando al atravesarlo) y activa el rumbo
-# sugerido ("Ponete en rumbo X°") reutilizando el mismo sistema que ya usa
-# el ILS individual de Torre. Cuando se acaban los 4 checkpoints, activa el
-# destino normal de "Aeroparque" para reusar la guía/aterrizaje de siempre.
+# Pone el aro gigante en el checkpoint actual y activa el rumbo sugerido
+# ("Ponete en rumbo X°") reutilizando el mismo sistema que ya usa el ILS
+# individual de Torre. Cuando se acaban los 4 checkpoints, activa el destino
+# normal de "Aeroparque" para reusar la guía/aterrizaje de siempre.
 func _activar_siguiente_aro_city_tour() -> void:
-	if aro_city_tour and is_instance_valid(aro_city_tour):
-		aro_city_tour.queue_free()
+	# Pedido explícito 2026-10-01 ("usá los mismos aros del ILS, ya tenés la
+	# altura y todo"): en vez de inventar una posición nueva a mano (lo que
+	# causó el bug de "apareció por Cañuelas"), se agranda y reusa UNO de los
+	# aros reales del ILS de ese aeropuerto -- esos ya vienen con la altura,
+	# orientación y curvatura de la Tierra resueltas por el sistema de
+	# siempre (_actualizar_ils_dos_cabeceras_frame), nada que reinventar acá.
+	if aro_city_tour_contenedor and is_instance_valid(aro_city_tour_contenedor):
+		aro_city_tour_contenedor.visible = false
 	aro_city_tour = null
+	aro_city_tour_contenedor = null
 	if indice_city_tour < RUTA_CITY_TOUR.size():
 		var nombre_actual: String = RUTA_CITY_TOUR[indice_city_tour]
 		var nodo_actual := _buscar_destino_por_nombre(nombre_actual)
 		if not nodo_actual:
 			return
-		var nombre_siguiente: String = RUTA_CITY_TOUR[indice_city_tour + 1] if indice_city_tour + 1 < RUTA_CITY_TOUR.size() else "Aeroparque"
-		var nodo_siguiente := _buscar_destino_por_nombre(nombre_siguiente)
-		# BUG REAL encontrado 2026-10-01 (reportado: "no aparece el aro,
-		# debe estar enterrado"): el aro se ponía en nodo_actual.global_position
-		# directo, que es la posición del aeropuerto A NIVEL DE PISO -- quedaba
-		# metido bajo tierra/edificios. Elevado con la vertical REAL (no el eje
-		# Y crudo, mismo motivo que el spawn de más arriba).
-		var posicion_aro: Vector3 = nodo_actual.global_position + _arriba_real() * ALTURA_ARO_CITY_TOUR
-		var punto_mirar: Vector3 = (nodo_siguiente.global_position + _arriba_real() * ALTURA_ARO_CITY_TOUR) if nodo_siguiente else posicion_aro + _arriba_real()
-		aro_city_tour = _crear_aro_gigante_city_tour(posicion_aro, punto_mirar)
+		aro_city_tour = _activar_aro_ils_city_tour(nombre_actual)
 		rumbo_guia_override_activo = true
 		rumbo_guia_override_lat = nodo_actual.get_meta("lat")
 		rumbo_guia_override_lon = nodo_actual.get_meta("lon")
@@ -3859,36 +3856,43 @@ func _activar_siguiente_aro_city_tour() -> void:
 			if modo_city_tour:
 				cartel_central.visible = false)
 
-# Aro 3x más grande que los gates de ILS (pedido explícito, "casi no entra
-# el avión, necesito que tengas sensibilidad") -- mismo estilo visual
-# (TorusMesh dorado emisivo, capa de marcadores nocturnos para que se vea
-# bien de noche también).
-func _crear_aro_gigante_city_tour(posicion: Vector3, mirar_hacia: Vector3) -> Node3D:
-	var contenedor := Node3D.new()
-	contenedor.name = "AroCityTour"
-	mundo.add_child(contenedor)
-	contenedor.global_position = posicion
-	contenedor.look_at(mirar_hacia, mundo.arriba_motor_actual)
-	var color := Color(1.0, 0.85, 0.1)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(color.r, color.g, color.b, 0.85)
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.emission_enabled = true
-	mat.emission = color
-	mat.emission_energy_multiplier = 0.8
-	var aro := MeshInstance3D.new()
-	var malla := TorusMesh.new()
-	malla.inner_radius = 195.0  # 3x RADIO_INTERNO_GATE_ILS (65.0) de mundo.gd
-	malla.outer_radius = 240.0  # 3x RADIO_EXTERNO_GATE_ILS (80.0) de mundo.gd
-	aro.mesh = malla
-	aro.set_surface_override_material(0, mat)
-	aro.set_layer_mask_value(1, false)
-	aro.set_layer_mask_value(mundo.CAPA_MARCADORES_NOCTURNOS, true)
-	# El agujero del TorusMesh atraviesa su propio eje Y local -- mismo giro
-	# fijo que usan los gates de ILS para que mire hacia adelante (Z local).
-	aro.rotation_degrees = Vector3(90, 0, 0)
-	contenedor.add_child(aro)
-	return contenedor
+# Busca el contenedor de ILS "dos cabeceras" de ese aeropuerto, lo prende
+# (así el sistema de siempre empieza a actualizarle la posición/orientación
+# cuadro a cuadro) y deja UN SOLO aro visible -- el más lejano de los dos
+# lados (DISTANCIAS_GATES_ILS[0] = 6000m, el de mayor altura, ~314m, una
+# altura cómoda de crucero) -- agrandado 3x. El resto de los ~21 aros de ese
+# ILS quedan ocultos para no confundir con el checkpoint gigante.
+func _activar_aro_ils_city_tour(nombre_checkpoint: String) -> MeshInstance3D:
+	# Ezeiza tiene dos pistas medidas por separado ("Ezeiza Pista 1"/"Pista
+	# 2") en vez de una entrada simple -- se usa la 1 para el City Tour, el
+	# resto de los aeropuertos de la ruta tienen una sola entrada.
+	var nombre_ils: String = "Ezeiza Pista 1" if nombre_checkpoint == "Ezeiza" else nombre_checkpoint
+	var entrada = null
+	for e in mundo.contenedor_ils_dos_cabeceras:
+		if e["nombre"] == nombre_ils:
+			entrada = e
+			break
+	if entrada == null:
+		return null
+	var contenedor: Node3D = entrada["contenedor"]
+	contenedor.visible = true
+	aro_city_tour_contenedor = contenedor
+	var hijos: Array = contenedor.get_children()
+	if hijos.is_empty():
+		return null
+	var elegido: MeshInstance3D = hijos[0]
+	for hijo in hijos:
+		hijo.visible = (hijo == elegido)
+	# BUG REAL encontrado al programar esto: _actualizar_ils_dos_cabeceras_frame
+	# reescribe aro.global_transform ENTERO todos los cuadros (para seguir la
+	# curvatura real) -- un "elegido.scale = 3.0" se borraría solo al cuadro
+	# siguiente. Agrandar la MALLA (el TorusMesh es propio de este aro, no
+	# compartido) sí sobrevive, porque el transform y el mesh son
+	# independientes.
+	var malla: TorusMesh = elegido.mesh
+	malla.inner_radius *= 3.0
+	malla.outer_radius *= 3.0
+	return elegido
 
 func _refrescar_estrellas_city_tour() -> void:
 	for i in estrellas_city_tour.size():
@@ -3909,6 +3913,10 @@ func _completar_city_tour() -> void:
 		estrellas_city_tour[4] = true
 		_refrescar_estrellas_city_tour()
 		sonido_bonus_city_tour.play()
+	if aro_city_tour_contenedor and is_instance_valid(aro_city_tour_contenedor):
+		aro_city_tour_contenedor.visible = false
+	aro_city_tour_contenedor = null
+	aro_city_tour = null
 	modo_city_tour = false
 	indice_city_tour = -1
 
