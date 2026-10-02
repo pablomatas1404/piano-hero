@@ -27,27 +27,34 @@ const TIPOS_AVION = [
 	# otra vuelta de ajuste fino según lo que se vea en pantalla.
 	# Achicado 60% (pedido explícito 2026-09-22, "el alerón de atrás tapa toda
 	# la visión de la pantalla"): 0.015 -> 0.006 (0.015 * 0.4).
-	{"nombre": "Boeing", "modelo": "res://modelos_aviones/boeing.glb", "helicoptero": false, "escala": 0.006, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
+	# "luces_manual" 2026-10-01: posicionadas a mano con el editor de luces en
+	# vivo (arrastrar + clavar), reemplazando el cálculo automático por AABB.
+	{"nombre": "Boeing", "modelo": "res://modelos_aviones/boeing.glb", "helicoptero": false, "escala": 0.006, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3",
+		"luces_manual": {"izq": Vector3(-748.3093, -65.6160, -204.7245), "der": Vector3(766.6332, -71.7569, -212.8981), "estrobo": Vector3(9.4899, 148.2665, -224.9929)}},
 	# Mostraban la trompa/cabina de frente a la cámara -- la cámara va SIEMPRE
 	# detrás del avión mirando hacia adelante, así que si se ve la trompa de
 	# frente es que el modelo tiene el "adelante" invertido. 180° en yaw (Y).
-	{"nombre": "Jet privado", "modelo": "res://modelos_aviones/jet_privado.glb", "helicoptero": false, "escala": 0.9, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
+	{"nombre": "Jet privado", "modelo": "res://modelos_aviones/jet_privado.glb", "helicoptero": false, "escala": 0.9, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3",
+		"luces_manual": {"izq": Vector3(-3.9672, -0.1821, -0.5093), "der": Vector3(3.8563, -0.1934, -0.4900), "estrobo": Vector3(-0.0333, 1.1496, -0.4804)}},
 	# Escala +40% (pedido 2026-09-27) -- las luces son hijas del modelo, así
 	# que escalan proporcionalmente y quedan en el mismo lugar relativo.
-	{"nombre": "Avión de guerra", "modelo": "res://modelos_aviones/avion_de_guerra.glb", "helicoptero": false, "escala": 1.05, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
+	{"nombre": "Avión de guerra", "modelo": "res://modelos_aviones/avion_de_guerra.glb", "helicoptero": false, "escala": 1.05, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3",
+		"luces_manual": {"izq": Vector3(-5.5777, -1.5728, -0.7603), "der": Vector3(5.7251, -1.4666, -0.7423), "estrobo": Vector3(-0.0981, -0.8672, -0.4409)}},
 	# Orientación ya perfecta -- solo un poco más grande.
 	# SIN sonido de motor (pedido 2026-09-21, "no es constante, es un
 	# helicóptero cuando pasa, no mientras va volando"): el loop de Mixkit que
 	# habíamos bajado era un efecto de "sobrevuelo" (crece y se aleja), no un
 	# motor sostenido -- sonaba raro en loop. Se saca hasta encontrar uno que
 	# sí sea un zumbido constante de verdad.
-	{"nombre": "Helicóptero", "modelo": "res://modelos_aviones/helicoptero.glb", "helicoptero": true, "escala": 0.22, "rotacion": Vector3(0, 90, 0), "sonido": ""},
+	{"nombre": "Helicóptero", "modelo": "res://modelos_aviones/helicoptero.glb", "helicoptero": true, "escala": 0.22, "rotacion": Vector3(0, 90, 0), "sonido": "",
+		"luces_manual": {"izq": Vector3(-14.1928, 8.0870, 1.5506), "der": Vector3(12.0029, -1.5471, -2.8637), "estrobo": Vector3(-1.2623, 7.6731, 0.0880)}},
 	# NUEVO 2026-09-26 (pedido explícito, "aunque no tengan partes animadas,
 	# si son lindos los agregamos igual") -- bajado por el usuario de
 	# Sketchfab, único de la nueva tanda que ya venía en .glb (los demás son
 	# .fbx/.obj/.blend, necesitan más trabajo de conversión). Escala ajustada
 	# tras primera prueba en vivo 2026-09-26 (usuario: "50% más chico").
-	{"nombre": "Avión genérico (nuevo)", "modelo": "res://modelos_aviones/plane_generico.glb", "helicoptero": false, "escala": 0.5, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helice.mp3"},
+	{"nombre": "Avión genérico (nuevo)", "modelo": "res://modelos_aviones/plane_generico.glb", "helicoptero": false, "escala": 0.5, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helice.mp3",
+		"luces_manual": {"izq": Vector3(-9.5640, -2.7933, -1.7048), "der": Vector3(9.8257, -2.6805, -1.7442), "estrobo": Vector3(0.0398, 0.4705, -1.4673)}},
 	# NUEVO 2026-09-26, misma tanda -- estos 3 son .fbx (Godot 4 los importa
 	# nativo, sin necesitar Blender instalado). CUARTA vuelta 2026-09-26:
 	# tamaño del KF-30 y orientación del combate confirmados bien -- quedan.
@@ -85,11 +92,13 @@ const TIPOS_AVION = [
 	# "adelante" correcto de Godot (-Z). Los dos cálculos (180 e 90)
 	# cuadran perfecto entre sí y contra la foto real -- por eso ahora sí,
 	# 90 es el valor matemáticamente correcto, no 270.
+	# Posiciones re-afinadas 2026-10-01 con el editor de luces en vivo
+	# (arrastrar + clavar), reemplazando las medidas en Blender de 2026-09-26.
 	{"nombre": "KF-30 (nuevo)", "modelo": "res://modelos_aviones/kf30.fbx", "helicoptero": false, "escala": 0.2, "rotacion": Vector3(0, 90, 0), "sonido": "res://FX/motor_jet.mp3",
-		"luces_manual": {"izq": Vector3(-3.2927, 3.8327, -10.863), "der": Vector3(-3.2927, 3.8049, 11.127), "estrobo": Vector3(-6.7517, 4.313, -0.73291)}},
+		"luces_manual": {"izq": Vector3(-2.5449, 2.7354, -11.2163), "der": Vector3(-3.2927, 3.8049, 11.1270), "estrobo": Vector3(-5.2741, 6.3697, 0.2356)}},
 	# Escala +40% (pedido 2026-09-27, mismo motivo que "Avión de guerra").
 	{"nombre": "Ka-27 (nuevo)", "modelo": "res://modelos_aviones/ka27.fbx", "helicoptero": true, "escala": 1.4, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helicoptero.mp3",
-		"luces_manual": {"izq": Vector3(-1.673, 0.0, -0.044), "der": Vector3(1.576, 0.0, -0.044), "estrobo": Vector3(0.0, 0.716, -0.044)}},
+		"luces_manual": {"izq": Vector3(-0.1501, -0.3725, -0.0564), "der": Vector3(0.2247, -0.3934, -0.0834), "estrobo": Vector3(0.0290, 0.0713, -0.2773)}},
 	{"nombre": "Avión de combate (nuevo)", "modelo": "res://modelos_aviones/fighter_jet_nuevo.fbx", "helicoptero": false, "escala": 0.9, "rotacion": Vector3(0, 0, 0), "sonido": "res://FX/motor_jet.mp3",
 		"luces_manual": {"izq": Vector3(-1.144, 0.244, 0.809), "der": Vector3(1.156, 0.244, 0.809), "estrobo": Vector3(0.0, 0.95, 1.5)}},
 	# Piper PA-18 (pedido 2026-10-01, bajado de CGTrader en FBX). Escala y
@@ -98,7 +107,9 @@ const TIPOS_AVION = [
 	# juego, mismo proceso que KF-30/Ka-27 (probar y corregir con feedback).
 	{"nombre": "Piper PA-18 (nuevo)", "modelo": "res://modelos_aviones/piper_pa18.fbx", "helicoptero": false, "escala": 1.0, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_helice.mp3",
 		"textura": "res://modelos_aviones/piper_diffuse.jpg",
-		"ajuste_izq": Vector3(-0.01, 0.01, 0.0), "ajuste_der": Vector3(0.01, 0.01, 0.0), "ajuste_estrobo": Vector3(0.0, -0.01, 0.0)},
+		# Posicionadas a mano con el editor de luces en vivo (2026-10-01),
+		# reemplaza el ajuste automático de 1cm que era solo una aproximación.
+		"luces_manual": {"izq": Vector3(-4.5841, 2.1438, 0.3211), "der": Vector3(4.6055, 2.0977, 0.3096), "estrobo": Vector3(-0.0257, 1.7982, -0.4211)}},
 	# F-16 EXP (pedido 2026-10-01, bajado completo con todas las texturas
 	# PBR -- a diferencia del Piper, este .fbx SÍ trae el nombre de archivo
 	# de cada textura adentro y vive en la misma carpeta que ellas, así que
@@ -2868,7 +2879,10 @@ func _generar_luces_para_modelo_externo(instancia: Node3D, datos: Dictionary) ->
 	if escala <= 0.0:
 		escala = 1.0
 	var tamano_mundo: float = caja.size.length() * escala
-	var radio_luz: float = clamp(tamano_mundo * 0.012, 0.03, 0.4) / escala
+	# Achicadas ~30% (pedido 2026-10-01, "achicá todas las luces un poquito,
+	# la posición queda igual") -- NO toca ninguna posición clavada con el
+	# editor de luces, solo el tamaño de la bolita visible.
+	var radio_luz: float = clamp(tamano_mundo * 0.012, 0.03, 0.4) / escala * 0.7
 	var y_medio: float = caja.position.y + caja.size.y * 0.55
 	var z_medio: float = caja.position.z + caja.size.z * 0.5
 
