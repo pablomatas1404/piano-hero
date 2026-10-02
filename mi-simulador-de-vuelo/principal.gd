@@ -135,6 +135,7 @@ var tipo_avion_indice: int = 0
 const RUTA_CITY_TOUR: Array[String] = ["Ezeiza", "Morón", "Campo de Mayo", "San Fernando"]
 const RADIO_DETECCION_CITY_TOUR = 220.0  # generoso -- el aro mide ~240m de radio externo
 const ALTURA_INICIO_CITY_TOUR = 2000.0
+const ALTURA_ARO_CITY_TOUR = 400.0
 var modo_city_tour: bool = false
 var indice_city_tour: int = -1  # -1 = inactivo, 0..3 = checkpoint actual, 4 = volviendo a Aeroparque a aterrizar
 var aro_city_tour: Node3D = null
@@ -3799,7 +3800,13 @@ func _iniciar_city_tour() -> void:
 	rumbo_guia_override_activo = false
 	# Arranca en el aire, no en pista (pedido explícito, "así no tenemos
 	# quilombo") -- mismo patrón que _confirmar_viaje para teletransportar.
-	global_position = nodo_aeroparque.global_position + Vector3(0, ALTURA_INICIO_CITY_TOUR, 0)
+	# BUG REAL encontrado 2026-10-01 (reportado: "apareció por Cañuelas"):
+	# acá se sumaba Vector3(0, altura, 0) -- el eje Y CRUDO del motor, que en
+	# Buenos Aires está inclinado ~34.5° respecto a la vertical real por la
+	# curvatura de la Tierra (regla de oro del proyecto). Sumar 2000 "para
+	# arriba" con ese eje torcido corre al avión casi 1150m de costado
+	# ADEMÁS de no subirlo del todo -- hay que usar _arriba_real(), no Y.
+	global_position = nodo_aeroparque.global_position + _arriba_real() * ALTURA_INICIO_CITY_TOUR
 	look_at(nodo_ezeiza.global_position, _arriba_real())
 	banco_actual = 0.0
 	var ajustes_actuales: Dictionary = _ajustes_avion_actual()
@@ -3829,8 +3836,14 @@ func _activar_siguiente_aro_city_tour() -> void:
 			return
 		var nombre_siguiente: String = RUTA_CITY_TOUR[indice_city_tour + 1] if indice_city_tour + 1 < RUTA_CITY_TOUR.size() else "Aeroparque"
 		var nodo_siguiente := _buscar_destino_por_nombre(nombre_siguiente)
-		var punto_mirar: Vector3 = nodo_siguiente.global_position if nodo_siguiente else nodo_actual.global_position + Vector3(0, 0, 1)
-		aro_city_tour = _crear_aro_gigante_city_tour(nodo_actual.global_position, punto_mirar)
+		# BUG REAL encontrado 2026-10-01 (reportado: "no aparece el aro,
+		# debe estar enterrado"): el aro se ponía en nodo_actual.global_position
+		# directo, que es la posición del aeropuerto A NIVEL DE PISO -- quedaba
+		# metido bajo tierra/edificios. Elevado con la vertical REAL (no el eje
+		# Y crudo, mismo motivo que el spawn de más arriba).
+		var posicion_aro: Vector3 = nodo_actual.global_position + _arriba_real() * ALTURA_ARO_CITY_TOUR
+		var punto_mirar: Vector3 = (nodo_siguiente.global_position + _arriba_real() * ALTURA_ARO_CITY_TOUR) if nodo_siguiente else posicion_aro + _arriba_real()
+		aro_city_tour = _crear_aro_gigante_city_tour(posicion_aro, punto_mirar)
 		rumbo_guia_override_activo = true
 		rumbo_guia_override_lat = nodo_actual.get_meta("lat")
 		rumbo_guia_override_lon = nodo_actual.get_meta("lon")
