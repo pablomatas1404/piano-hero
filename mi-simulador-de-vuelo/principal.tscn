@@ -104,9 +104,9 @@ altitude = 4.999999999068677
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
 
 [node name="Cesium3DTileset" type="Cesium3DTileset" parent="CesiumGeoreference" unique_id=671413382]
-maximum_screen_space_error = 24.0
-maximum_simultaneous_tile_loads = 4
-loading_descendant_limit = 4
+maximum_screen_space_error = 36.0
+maximum_simultaneous_tile_loads = 2
+loading_descendant_limit = 2
 ion_asset_id = 2275207
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
 
@@ -2009,27 +2009,6 @@ script = ExtResource("3_minimapa")
 [node name="MapaViewport" type="SubViewport" parent="HUD" unique_id=309383883]
 own_world_3d = true
 size = Vector2i(340, 340)
-
-[node name="CesiumGeoreferenceMapa" type="CesiumGeoreference" parent="HUD/MapaViewport" unique_id=606833036]
-ecefX = 2754016.0001164875
-ecefY = -4479461.554926906
-ecefZ = -3597677.6133829523
-latitude = -34.55890000000066
-longitude = -58.41640000000001
-altitude = 4.999999999068677
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
-
-[node name="Cesium3DTilesetMapa" type="Cesium3DTileset" parent="HUD/MapaViewport/CesiumGeoreferenceMapa" unique_id=580038204]
-maximum_simultaneous_tile_loads = 8
-ion_asset_id = 1
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
-
-[node name="DirectionalLight3DMapa" type="DirectionalLight3D" parent="HUD/MapaViewport" unique_id=623284429]
-transform = Transform3D(0.707, -0.5, 0.5, 0, 0.707, 0.707, -0.707, -0.5, 0.5, 0, 10, 0)
-
-[node name="CamaraMapa" type="Camera3D" parent="HUD/MapaViewport" unique_id=1592457707]
-current = true
-script = ExtResource("3_minimapa")
 
 [node name="PeticionMapa" type="HTTPRequest" parent="HUD" unique_id=260615569]
 
