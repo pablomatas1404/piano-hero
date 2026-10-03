@@ -577,7 +577,14 @@ custom_minimum_size = Vector2(70, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 10
 toggle_mode = true
-text = "➕ Página 3"
+text = "🔊 Sonidos"
+
+[node name="BotonSolapa4" type="Button" parent="HUD/SolapasInferior"]
+custom_minimum_size = Vector2(70, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+toggle_mode = true
+text = "⚙️ Config"
 
 [node name="PanelFotosDecorativas" type="Panel" parent="HUD"]
 anchors_preset = 3
@@ -887,7 +894,7 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
 theme_override_font_sizes/font_size = 10
 text = "sin viento"
-[node name="PanelSolapaVacia" type="Panel" parent="HUD"]
+[node name="PanelSonidos" type="Panel" parent="HUD"]
 visible = false
 anchors_preset = 3
 anchor_left = 0.0
@@ -902,18 +909,89 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
 
-[node name="LabelSolapaVacia" type="Label" parent="HUD/PanelSolapaVacia"]
+[node name="ScrollSonidos" type="ScrollContainer" parent="HUD/PanelSonidos"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = -8.0
+offset_bottom = -6.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
-theme_override_font_sizes/font_size = 13
-text = "Próximamente..."
-horizontal_alignment = 1
-vertical_alignment = 1
+horizontal_scroll_mode = 0
+
+[node name="VBoxSonidos" type="VBoxContainer" parent="HUD/PanelSonidos/ScrollSonidos"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="LabelTituloSonidos" type="Label" parent="HUD/PanelSonidos/ScrollSonidos/VBoxSonidos"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_override_font_sizes/font_size = 11
+text = "🔊 Sonidos"
+
+[node name="HBoxVolumenMotor" type="HBoxContainer" parent="HUD/PanelSonidos/ScrollSonidos/VBoxSonidos"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LabelVolumenMotor" type="Label" parent="HUD/PanelSonidos/ScrollSonidos/VBoxSonidos/HBoxVolumenMotor"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Sonido motores"
+
+[node name="SliderVolumenMotor" type="HSlider" parent="HUD/PanelSonidos/ScrollSonidos/VBoxSonidos/HBoxVolumenMotor"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxVolumenMusica" type="HBoxContainer" parent="HUD/PanelSonidos/ScrollSonidos/VBoxSonidos"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LabelVolumenMusica" type="Label" parent="HUD/PanelSonidos/ScrollSonidos/VBoxSonidos/HBoxVolumenMusica"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Volumen música"
+
+[node name="SliderVolumenMusica" type="HSlider" parent="HUD/PanelSonidos/ScrollSonidos/VBoxSonidos/HBoxVolumenMusica"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxVolumenRadio" type="HBoxContainer" parent="HUD/PanelSonidos/ScrollSonidos/VBoxSonidos"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LabelVolumenRadio" type="Label" parent="HUD/PanelSonidos/ScrollSonidos/VBoxSonidos/HBoxVolumenRadio"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Volumen radio"
+
+[node name="SliderVolumenRadio" type="HSlider" parent="HUD/PanelSonidos/ScrollSonidos/VBoxSonidos/HBoxVolumenRadio"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxVolumenInstrucciones" type="HBoxContainer" parent="HUD/PanelSonidos/ScrollSonidos/VBoxSonidos"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LabelVolumenInstrucciones" type="Label" parent="HUD/PanelSonidos/ScrollSonidos/VBoxSonidos/HBoxVolumenInstrucciones"]
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "Volumen instrucciones"
+
+[node name="SliderVolumenInstrucciones" type="HSlider" parent="HUD/PanelSonidos/ScrollSonidos/VBoxSonidos/HBoxVolumenInstrucciones"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="PanelTorre" type="Panel" parent="HUD"]
 anchors_preset = 3
@@ -2113,147 +2191,100 @@ offset_bottom = 18.0
 mouse_default_cursor_shape = 11
 color = Color(1, 1, 1, 0.55)
 
-[node name="BotonConfiguracion" type="Button" parent="HUD" unique_id=1569654520]
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = -60.0
-offset_right = 74.0
-offset_bottom = -20.0
-grow_vertical = 0
-theme_override_font_sizes/font_size = 22
-text = "⚙️"
-
-[node name="PanelConfiguracion" type="Panel" parent="HUD" unique_id=249780679]
+[node name="PanelConfigTab" type="Panel" parent="HUD"]
 visible = false
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_top = -260.0
-offset_right = 260.0
-offset_bottom = 260.0
+anchors_preset = 3
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 220.0
+offset_top = -128.0
+offset_right = -170.0
+offset_bottom = -10.0
 grow_horizontal = 2
-grow_vertical = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
 
-[node name="VBoxConfig" type="VBoxContainer" parent="HUD/PanelConfiguracion" unique_id=617340680]
+[node name="ScrollConfig" type="ScrollContainer" parent="HUD/PanelConfigTab"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 14.0
-offset_right = -16.0
-offset_bottom = -14.0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = -8.0
+offset_bottom = -6.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 8
+horizontal_scroll_mode = 0
 
-[node name="LabelTituloConfig" type="Label" parent="HUD/PanelConfiguracion/VBoxConfig" unique_id=1976057967]
+[node name="VBoxConfig" type="VBoxContainer" parent="HUD/PanelConfigTab/ScrollConfig"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 22
-text = "🕹️ Configuración de joystick"
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
 
-[node name="LabelEstadoJoystick" type="Label" parent="HUD/PanelConfiguracion/VBoxConfig" unique_id=1572412100]
+[node name="LabelTituloConfig" type="Label" parent="HUD/PanelConfigTab/ScrollConfig/VBoxConfig"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_override_font_sizes/font_size = 11
+text = "⚙️ Configuración"
+
+[node name="LabelEstadoJoystick" type="Label" parent="HUD/PanelConfigTab/ScrollConfig/VBoxConfig"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.7, 0.2, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 12
 text = "Joystick: no detectado"
 autowrap_mode = 3
 
-[node name="HBoxVolumenMotor" type="HBoxContainer" parent="HUD/PanelConfiguracion/VBoxConfig" unique_id=428389325]
+[node name="HBoxCalidadGraficos" type="HBoxContainer" parent="HUD/PanelConfigTab/ScrollConfig/VBoxConfig"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="LabelVolumenMotor" type="Label" parent="HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenMotor" unique_id=738790000]
+[node name="LabelCalidadGraficos" type="Label" parent="HUD/PanelConfigTab/ScrollConfig/VBoxConfig/HBoxCalidadGraficos"]
 custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
-text = "Sonido motores"
+theme_override_font_sizes/font_size = 12
+text = "🖼️ Calidad gráfica"
 
-[node name="SliderVolumenMotor" type="HSlider" parent="HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenMotor" unique_id=436393977]
-custom_minimum_size = Vector2(0, 24)
+[node name="OptionCalidadGraficos" type="OptionButton" parent="HUD/PanelConfigTab/ScrollConfig/VBoxConfig/HBoxCalidadGraficos"]
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 size_flags_horizontal = 3
+item_count = 3
+popup/item_0/text = "Bajo"
+popup/item_0/id = 0
+popup/item_1/text = "Medio"
+popup/item_1/id = 1
+popup/item_2/text = "Alto"
+popup/item_2/id = 2
 
-[node name="HBoxVolumenMusica" type="HBoxContainer" parent="HUD/PanelConfiguracion/VBoxConfig"]
+[node name="CheckControlMouse" type="CheckButton" parent="HUD/PanelConfigTab/ScrollConfig/VBoxConfig"]
 layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="LabelVolumenMusica" type="Label" parent="HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenMusica"]
-custom_minimum_size = Vector2(140, 0)
-layout_mode = 2
-theme_override_font_sizes/font_size = 14
-text = "Volumen música"
-
-[node name="SliderVolumenMusica" type="HSlider" parent="HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenMusica"]
-custom_minimum_size = Vector2(0, 24)
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="HBoxVolumenRadio" type="HBoxContainer" parent="HUD/PanelConfiguracion/VBoxConfig"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="LabelVolumenRadio" type="Label" parent="HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenRadio"]
-custom_minimum_size = Vector2(140, 0)
-layout_mode = 2
-theme_override_font_sizes/font_size = 14
-text = "Volumen radio"
-
-[node name="SliderVolumenRadio" type="HSlider" parent="HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenRadio"]
-custom_minimum_size = Vector2(0, 24)
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="HBoxVolumenInstrucciones" type="HBoxContainer" parent="HUD/PanelConfiguracion/VBoxConfig"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="LabelVolumenInstrucciones" type="Label" parent="HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenInstrucciones"]
-custom_minimum_size = Vector2(140, 0)
-layout_mode = 2
-theme_override_font_sizes/font_size = 14
-text = "Volumen instrucciones"
-
-[node name="SliderVolumenInstrucciones" type="HSlider" parent="HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenInstrucciones"]
-custom_minimum_size = Vector2(0, 24)
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="CheckControlMouse" type="CheckButton" parent="HUD/PanelConfiguracion/VBoxConfig" unique_id=1248500775]
-layout_mode = 2
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 12
 text = "🖱️ Volar con mouse (como GeoFS) -- el acelerador sigue siendo del teclado"
+autowrap_mode = 2
 
-[node name="ScrollAcciones" type="ScrollContainer" parent="HUD/PanelConfiguracion/VBoxConfig" unique_id=1642781119]
-custom_minimum_size = Vector2(0, 300)
+[node name="ScrollAcciones" type="ScrollContainer" parent="HUD/PanelConfigTab/ScrollConfig/VBoxConfig"]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="ListaAcciones" type="VBoxContainer" parent="HUD/PanelConfiguracion/VBoxConfig/ScrollAcciones" unique_id=351067299]
+[node name="ListaAcciones" type="VBoxContainer" parent="HUD/PanelConfigTab/ScrollConfig/VBoxConfig/ScrollAcciones"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="CheckEditorLuces" type="CheckButton" parent="HUD/PanelConfiguracion/VBoxConfig"]
+[node name="CheckEditorLuces" type="CheckButton" parent="HUD/PanelConfigTab/ScrollConfig/VBoxConfig"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "💡 Editar luces (arrastrar con el mouse)"
 autowrap_mode = 2
 
-[node name="BotonClavarLuces" type="Button" parent="HUD/PanelConfiguracion/VBoxConfig"]
-custom_minimum_size = Vector2(0, 36)
+[node name="BotonClavarLuces" type="Button" parent="HUD/PanelConfigTab/ScrollConfig/VBoxConfig"]
+custom_minimum_size = Vector2(0, 30)
 layout_mode = 2
 text = "📌 Clavar luces"
-
-[node name="BotonCerrarConfig" type="Button" parent="HUD/PanelConfiguracion/VBoxConfig" unique_id=701777610]
-custom_minimum_size = Vector2(0, 40)
-layout_mode = 2
-text = "Cerrar"
 
 [node name="CortinaDeCarga" type="ColorRect" parent="HUD" unique_id=269016089]
 anchors_preset = 15

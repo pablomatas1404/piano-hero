@@ -589,13 +589,13 @@ var genero_musica_actual: String = ""
 # genérico) y el tono (pitch) sube un poco con la velocidad para dar
 # sensación de aceleración, sin que quede estruendoso.
 @onready var sonido_motor: AudioStreamPlayer = get_node("SonidoMotor")
-@onready var slider_volumen_motor: HSlider = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenMotor/SliderVolumenMotor")
+@onready var slider_volumen_motor: HSlider = get_node("../HUD/PanelSonidos/ScrollSonidos/VBoxSonidos/HBoxVolumenMotor/SliderVolumenMotor")
 # Pedido 2026-09-27 ("en pantalla completa es un lío bajar el volumen de
 # Windows"): sliders propios para música y radio, mismo patrón que el de
 # motor de arriba.
-@onready var slider_volumen_musica: HSlider = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenMusica/SliderVolumenMusica")
-@onready var slider_volumen_radio: HSlider = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenRadio/SliderVolumenRadio")
-@onready var slider_volumen_instrucciones: HSlider = get_node("../HUD/PanelConfiguracion/VBoxConfig/HBoxVolumenInstrucciones/SliderVolumenInstrucciones")
+@onready var slider_volumen_musica: HSlider = get_node("../HUD/PanelSonidos/ScrollSonidos/VBoxSonidos/HBoxVolumenMusica/SliderVolumenMusica")
+@onready var slider_volumen_radio: HSlider = get_node("../HUD/PanelSonidos/ScrollSonidos/VBoxSonidos/HBoxVolumenRadio/SliderVolumenRadio")
+@onready var slider_volumen_instrucciones: HSlider = get_node("../HUD/PanelSonidos/ScrollSonidos/VBoxSonidos/HBoxVolumenInstrucciones/SliderVolumenInstrucciones")
 const RUTA_CONFIG_AUDIO = "user://audio_config.cfg"
 const VOLUMEN_MOTOR_DB_MINIMO = -40.0  # con el slider en 0, casi inaudible en vez de mudo de golpe
 const VOLUMEN_MOTOR_DB_MAXIMO = -6.0   # con el slider al máximo, presente pero no estruendoso
@@ -752,6 +752,7 @@ var vista_sin_avion_activa: bool = false
 @onready var boton_solapa_1: Button = get_node("../HUD/SolapasInferior/BotonSolapa1")
 @onready var boton_solapa_2: Button = get_node("../HUD/SolapasInferior/BotonSolapa2")
 @onready var boton_solapa_3: Button = get_node("../HUD/SolapasInferior/BotonSolapa3")
+@onready var boton_solapa_4: Button = get_node("../HUD/SolapasInferior/BotonSolapa4")
 @onready var panel_fotos_decorativas: Panel = get_node("../HUD/PanelFotosDecorativas")
 @onready var aguja_velocidad: Label = get_node("../HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaVelocidad/EsferaVelocidad/AgujaVelocidad")
 @onready var valor_velocidad_reloj: Label = get_node("../HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaVelocidad/ValorVelocidad")
@@ -761,7 +762,8 @@ var vista_sin_avion_activa: bool = false
 @onready var boton_viento: Button = get_node("../HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaViento/VBoxViento/BotonViento")
 @onready var flecha_viento: Label = get_node("../HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaViento/VBoxViento/HBoxIndicadorViento/FlechaViento")
 @onready var valor_viento: Label = get_node("../HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaViento/VBoxViento/HBoxIndicadorViento/ValorViento")
-@onready var panel_solapa_vacia: Panel = get_node("../HUD/PanelSolapaVacia")
+@onready var panel_sonidos: Panel = get_node("../HUD/PanelSonidos")
+@onready var panel_config_tab: Panel = get_node("../HUD/PanelConfigTab")
 @onready var panel_torre: Panel = get_node("../HUD/PanelTorre")
 @onready var panel_sensibilidad: Panel = get_node("../HUD/PanelSensibilidad")
 var mapa_transparente: bool = true
@@ -874,20 +876,19 @@ const MAPA_TAMANO_MAXIMO = 900.0
 @onready var asa_mover_mapa: ColorRect = get_node("../HUD/MapaRect/AsaMoverMapa")
 var _arrastrando_mover_mapa: bool = false
 
-@onready var boton_configuracion: Button = get_node("../HUD/BotonConfiguracion")
-@onready var panel_configuracion: Panel = get_node("../HUD/PanelConfiguracion")
-@onready var etiqueta_estado_joystick: Label = get_node("../HUD/PanelConfiguracion/VBoxConfig/LabelEstadoJoystick")
-@onready var lista_acciones_joystick: VBoxContainer = get_node("../HUD/PanelConfiguracion/VBoxConfig/ScrollAcciones/ListaAcciones")
-@onready var boton_cerrar_config: Button = get_node("../HUD/PanelConfiguracion/VBoxConfig/BotonCerrarConfig")
+@onready var etiqueta_estado_joystick: Label = get_node("../HUD/PanelConfigTab/ScrollConfig/VBoxConfig/LabelEstadoJoystick")
+@onready var lista_acciones_joystick: VBoxContainer = get_node("../HUD/PanelConfigTab/ScrollConfig/VBoxConfig/ScrollAcciones/ListaAcciones")
+@onready var option_calidad_graficos: OptionButton = get_node("../HUD/PanelConfigTab/ScrollConfig/VBoxConfig/HBoxCalidadGraficos/OptionCalidadGraficos")
+@onready var cesium_tileset: Cesium3DTileset = get_node("../CesiumGeoreference/Cesium3DTileset")
 
 # Control con mouse tipo GeoFS (pedido 2026-09-21): con esto activado, el
 # centro de la pantalla es "neutro" y alejar el mouse del centro inclina/
 # cabecea el avión proporcionalmente (como un joystick virtual invisible) --
 # ver el uso de control_mouse_activo en _procesar_vuelo(). El acelerador
 # sigue siendo siempre de teclado (W/S), en los dos modos.
-@onready var check_control_mouse: CheckButton = get_node("../HUD/PanelConfiguracion/VBoxConfig/CheckControlMouse")
-@onready var check_editor_luces: CheckButton = get_node("../HUD/PanelConfiguracion/VBoxConfig/CheckEditorLuces")
-@onready var boton_clavar_luces: Button = get_node("../HUD/PanelConfiguracion/VBoxConfig/BotonClavarLuces")
+@onready var check_control_mouse: CheckButton = get_node("../HUD/PanelConfigTab/ScrollConfig/VBoxConfig/CheckControlMouse")
+@onready var check_editor_luces: CheckButton = get_node("../HUD/PanelConfigTab/ScrollConfig/VBoxConfig/CheckEditorLuces")
+@onready var boton_clavar_luces: Button = get_node("../HUD/PanelConfigTab/ScrollConfig/VBoxConfig/BotonClavarLuces")
 const RUTA_CONFIG_CONTROLES = "user://controles_config.cfg"
 var control_mouse_activo: bool = false
 
@@ -960,6 +961,11 @@ const IMAGENES_PRESENTACION = [
 
 func _ready() -> void:
 	print("El avión arrancó bien y el script está corriendo.")
+	# Verificación pedida por Gemini 2026-10-03 (para no repetir la confusión
+	# de "probamos Mobile" cuando en realidad nunca se aplicó por un project.godot
+	# corrupto): esto lee el renderer REAL que está corriendo el motor ahora
+	# mismo, sin confiar en lo que diga el archivo en disco.
+	print(">>> RENDERER ACTIVO: ", ProjectSettings.get_setting("rendering/renderer/rendering_method"))
 	# Pedido explícito 2026-10-03 ("sacá ese avioncito infantil, dame más
 	# profesionalidad"): pantalla de carga con arte real (generado con
 	# ChatGPT) en vez del fondo plano de siempre -- una de las 3 imágenes al
@@ -1231,16 +1237,21 @@ func _ready() -> void:
 	# Solapas del panel de instrumentos de abajo (pedido explícito 2026-10-03,
 	# "como en Excel, página 1, página 2, página 3"): Página 1 = fotos
 	# decorativas (primera impresión al entrar), Página 2 = Torre +
-	# Sensibilidad (lo que ya había), Página 3 = vacía por ahora. Los 3
-	# botones son "toggle" pero se comportan como radio (solo uno prendido a
-	# la vez) -- más simple que un TabContainer real porque Torre/Sensibilidad
-	# no se mueven de lugar, solo se esconden/muestran.
+	# Sensibilidad (lo que ya había), Página 3 = Sonidos, Página 4 =
+	# Configuración (ambas movidas acá el 2026-10-03 desde el viejo menú
+	# flotante de PanelConfiguracion, que quedaba desprolijo con botones
+	# flotando fuera del panel). Los botones son "toggle" pero se comportan
+	# como radio (solo uno prendido a la vez) -- más simple que un
+	# TabContainer real porque Torre/Sensibilidad no se mueven de lugar,
+	# solo se esconden/muestran.
 	boton_solapa_1.focus_mode = Control.FOCUS_NONE
 	boton_solapa_2.focus_mode = Control.FOCUS_NONE
 	boton_solapa_3.focus_mode = Control.FOCUS_NONE
+	boton_solapa_4.focus_mode = Control.FOCUS_NONE
 	boton_solapa_1.pressed.connect(func(): _mostrar_solapa_inferior(1))
 	boton_solapa_2.pressed.connect(func(): _mostrar_solapa_inferior(2))
 	boton_solapa_3.pressed.connect(func(): _mostrar_solapa_inferior(3))
+	boton_solapa_4.pressed.connect(func(): _mostrar_solapa_inferior(4))
 	_mostrar_solapa_inferior(1)
 	boton_mapa_auto.focus_mode = Control.FOCUS_NONE
 	boton_mapa_auto.pressed.connect(func():
@@ -1302,13 +1313,14 @@ func _ready() -> void:
 
 	# Mismo motivo que arriba (foco de teclado robando el ESPACIO) -- estos
 	# botones nuevos también necesitan FOCUS_NONE.
-	boton_configuracion.focus_mode = Control.FOCUS_NONE
-	boton_cerrar_config.focus_mode = Control.FOCUS_NONE
-	boton_configuracion.pressed.connect(func():
-		panel_configuracion.visible = not panel_configuracion.visible)
-	boton_cerrar_config.pressed.connect(func():
-		panel_configuracion.visible = false
-		esperando_asignacion = "")
+	option_calidad_graficos.focus_mode = Control.FOCUS_NONE
+	_cargar_calidad_graficos()
+	option_calidad_graficos.selected = calidad_graficos_actual
+	_aplicar_calidad_graficos(calidad_graficos_actual)
+	option_calidad_graficos.item_selected.connect(func(indice: int):
+		calidad_graficos_actual = indice
+		_aplicar_calidad_graficos(indice)
+		_guardar_calidad_graficos())
 
 	check_control_mouse.focus_mode = Control.FOCUS_NONE
 	_cargar_control_mouse()
@@ -1581,9 +1593,6 @@ func _input(event: InputEvent) -> void:
 	# (en pantalla completa no hay cruz para cerrar ni bordes de ventana, así
 	# que ESCAPE tiene que poder sacarte de ahí como en cualquier programa).
 	if event.is_action_pressed("ui_cancel") and esperando_asignacion == "":
-		if panel_configuracion.visible:
-			panel_configuracion.visible = false
-			return
 		if panel_carrera.visible:
 			panel_carrera.visible = false
 			return
@@ -2051,6 +2060,69 @@ func _guardar_control_mouse() -> void:
 	cfg.load(RUTA_CONFIG_CONTROLES)
 	cfg.set_value("vuelo", "mouse_activo", control_mouse_activo)
 	cfg.save(RUTA_CONFIG_CONTROLES)
+
+# Nivel de gráficos (pedido explícito 2026-10-03, "como tienen todos los
+# programas, bajo medio y alto"): controla los mismos parámetros del
+# Cesium3DTileset que se habían bajado a mano durante la investigación de los
+# crashes (ver feedback_texturas_vram_aviones_nuevos.md y el commit que bajó
+# maximum_screen_space_error / maximum_simultaneous_tile_loads /
+# loading_descendant_limit) -- ahora el usuario los puede subir de nuevo si
+# su máquina aguanta, en vez de quedar fijos en el valor más conservador.
+# 0 = Bajo (igual al ajuste de seguridad post-crash), 1 = Medio, 2 = Alto
+# (cerca del default de Cesium, más nitidez pero más carga).
+var calidad_graficos_actual: int = 0
+const RUTA_CONFIG_GRAFICOS = "user://graficos_config.cfg"
+
+func _cargar_calidad_graficos() -> void:
+	var cfg = ConfigFile.new()
+	if cfg.load(RUTA_CONFIG_GRAFICOS) != OK:
+		return
+	calidad_graficos_actual = cfg.get_value("graficos", "calidad", 0)
+
+func _guardar_calidad_graficos() -> void:
+	var cfg = ConfigFile.new()
+	cfg.load(RUTA_CONFIG_GRAFICOS)
+	cfg.set_value("graficos", "calidad", calidad_graficos_actual)
+	cfg.save(RUTA_CONFIG_GRAFICOS)
+
+func _aplicar_calidad_graficos(indice: int) -> void:
+	if not cesium_tileset:
+		return
+	# 2026-10-03, historial de esta función (para no repetir el mismo lío):
+	# 1) Se probó activar forbid_holes/preload_ancestors/preload_siblings
+	#    (propiedades reales del Cesium3DTileset, no documentadas en
+	#    tooltips.gd) en Medio/Alto -- el terreno se puso "nublado" en los
+	#    3 niveles. Se descartó cuota de Cesium ion con datos reales del
+	#    dashboard (141 MiB esa semana). Se revirtieron esas 3 propiedades.
+	# 2) Apareció un lag nuevo -- se solucionó reiniciando Godot completo
+	#    (cambiarlas en caliente sin reiniciar no alcanza).
+	# 3) Se separó más maximum_screen_space_error entre niveles (Alto a 8)
+	#    para que la diferencia de nitidez se notara.
+	# 4) Se probó forbid_holes=true solo (sin los otros 2) para evitar los
+	#    parches marrones que se completaban de golpe.
+	# 5) Con forbid_holes=true apareció/empeoró un patrón distinto: el
+	#    fondo lejano terminaba de cargar rápido y nítido, pero la zona
+	#    CERCANA a la cámara (la más importante, con mucha más densidad de
+	#    edificios) quedaba trabada mostrando picos/placeholders mucho más
+	#    tiempo -- Gemini lo explicó así: forbid_holes obliga a esperar a
+	#    que TODOS los hijos de un tile estén listos antes de refinar, y la
+	#    zona cercana tiene un sub-árbol de hijos mucho más grande (más
+	#    densidad real de Buenos Aires) que el fondo lejano, así que tarda
+	#    mucho más en "destrabarse". Conclusión de Gemini + nuestra: dejamos
+	#    de iterar en caliente y volvemos a la ÚNICA configuración
+	#    confirmada estable durante meses (la que corría ANTES de que
+	#    existiera este selector de 3 niveles): 36/2/2, sin forbid_holes ni
+	#    preload_ancestors/preload_siblings. Los 3 niveles quedan IGUALES
+	#    por ahora a propósito -- no diferenciarlos hasta confirmar que esta
+	#    base anda tan prolija como antes. Recién ahí, de a una variable por
+	#    vez y con reinicio completo entre cada prueba, se vuelve a intentar
+	#    diferenciar Medio/Alto.
+	match indice:
+		0, 1, 2:  # Bajo, Medio, Alto -- los 3 iguales a propósito (ver arriba)
+			cesium_tileset.maximum_screen_space_error = 36.0
+			cesium_tileset.maximum_simultaneous_tile_loads = 2
+			cesium_tileset.loading_descendant_limit = 2
+			cesium_tileset.forbid_holes = false
 
 func _cambiar_volumen_motor(valor: float) -> void:
 	volumen_motor = valor
@@ -4232,10 +4304,14 @@ func _mostrar_solapa_inferior(numero: int) -> void:
 	panel_fotos_decorativas.visible = numero == 1
 	panel_torre.visible = numero == 2
 	panel_sensibilidad.visible = numero == 2
-	panel_solapa_vacia.visible = numero == 3
+	panel_sonidos.visible = numero == 3
+	panel_config_tab.visible = numero == 4
 	boton_solapa_1.button_pressed = numero == 1
 	boton_solapa_2.button_pressed = numero == 2
 	boton_solapa_3.button_pressed = numero == 3
+	boton_solapa_4.button_pressed = numero == 4
+	if numero != 4:
+		esperando_asignacion = ""
 
 # ============================================================
 # RELOJES DE LA PÁGINA 1 + VIENTO (pedido 2026-10-03)
