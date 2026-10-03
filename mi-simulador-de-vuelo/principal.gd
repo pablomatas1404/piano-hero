@@ -979,6 +979,15 @@ func _ready() -> void:
 			break
 	tipo_avion_option.select(indice_avion_default)
 	tipo_avion_option.focus_mode = Control.FOCUS_NONE
+	# BUG REAL encontrado 2026-10-03 (reportado: "arranca con el avioncito
+	# clásico igual"): seleccionar el ítem en el desplegable NO cambia el
+	# modelo 3D visible -- eso solo pasa al confirmar un vuelo
+	# (_aplicar_tipo_avion se llama ahí). Al arrancar el juego el avión ya
+	# está volando (estado = VOLANDO por defecto) con el modelo clásico
+	# puesto a mano en la escena, sin pasar nunca por esa función. Forzado
+	# acá para que el Piper se vea desde el primer cuadro, no recién cuando
+	# el jugador confirma un vuelo.
+	_aplicar_tipo_avion(indice_avion_default)
 
 	# Misiones de helicóptero (pedido 2026-09-20) -- esqueleto jugable: elegís
 	# una de la lista, te teletransporta ahí mismo con el helicóptero puesto.
@@ -2213,10 +2222,10 @@ func _process(delta: float) -> void:
 	# que tape el panel en pantalla. Vuelve al tamaño y posición de siempre.
 	var tecla_reset_mapa_activa = Input.is_physical_key_pressed(KEY_U)
 	if tecla_reset_mapa_activa and not tecla_reset_mapa_anterior:
-		mapa_rect.offset_left = 20.0
-		mapa_rect.offset_top = 130.0
-		mapa_rect.offset_right = 220.0
-		mapa_rect.offset_bottom = 330.0
+		mapa_rect.offset_left = -264.0
+		mapa_rect.offset_top = 151.0
+		mapa_rect.offset_right = 0.0
+		mapa_rect.offset_bottom = 406.0
 		_modo_resize_mapa = ModoResizeMapa.NINGUNO
 		_arrastrando_mover_mapa = false
 		cartel_central.text = "🗺️ Mapa restablecido"
@@ -2438,10 +2447,10 @@ func _pedir_baldosa_de_mapa(xtile: int, ytile: int) -> void:
 # abajo a la derecha (dentro del panel de instrumentos), así que estos son
 # offsets NEGATIVOS medidos desde ese borde.
 func _resetear_mapa_a_tamano_default() -> void:
-	mapa_rect.offset_left = -130.0
-	mapa_rect.offset_top = -130.0
-	mapa_rect.offset_right = -10.0
-	mapa_rect.offset_bottom = -10.0
+	mapa_rect.offset_left = -264.0
+	mapa_rect.offset_top = 151.0
+	mapa_rect.offset_right = 0.0
+	mapa_rect.offset_bottom = 406.0
 	_modo_resize_mapa = ModoResizeMapa.NINGUNO
 	_arrastrando_mover_mapa = false
 
