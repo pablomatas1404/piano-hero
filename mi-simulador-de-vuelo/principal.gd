@@ -742,8 +742,15 @@ var vista_sin_avion_activa: bool = false
 @onready var boton_mapa_auto: Button = get_node("../HUD/BarraBotones/BotonMapaAuto")
 @onready var mapa_viewport: SubViewport = get_node("../HUD/MapaViewport")
 @onready var mapa_rect: TextureRect = get_node("../HUD/MapaRect")
-@onready var boton_transparencia_mapa: Button = get_node("../HUD/BotonTransparenciaMapa")
-var mapa_transparente: bool = false
+@onready var boton_transparencia_mapa: Button = get_node("../HUD/MapaRect/BotonTransparenciaMapa")
+@onready var boton_solapa_1: Button = get_node("../HUD/SolapasInferior/BotonSolapa1")
+@onready var boton_solapa_2: Button = get_node("../HUD/SolapasInferior/BotonSolapa2")
+@onready var boton_solapa_3: Button = get_node("../HUD/SolapasInferior/BotonSolapa3")
+@onready var panel_fotos_decorativas: Panel = get_node("../HUD/PanelFotosDecorativas")
+@onready var panel_solapa_vacia: Panel = get_node("../HUD/PanelSolapaVacia")
+@onready var panel_torre: Panel = get_node("../HUD/PanelTorre")
+@onready var panel_sensibilidad: Panel = get_node("../HUD/PanelSensibilidad")
+var mapa_transparente: bool = true
 @onready var asa_mapa: ColorRect = get_node("../HUD/MapaRect/AsaMapa")
 @onready var asa_mapa_sup_izq: ColorRect = get_node("../HUD/MapaRect/AsaMapaSupIzq")
 @onready var asa_mapa_sup_der: ColorRect = get_node("../HUD/MapaRect/AsaMapaSupDer")
@@ -1183,6 +1190,24 @@ func _ready() -> void:
 	boton_transparencia_mapa.pressed.connect(func():
 		mapa_transparente = not mapa_transparente
 		mapa_rect.modulate.a = 0.3 if mapa_transparente else 1.0)
+	# Pedido explícito 2026-10-03: arranca transparente por defecto (así no
+	# se ve un cuadrado blanco feo antes de que cargue la primera baldosa).
+	mapa_rect.modulate.a = 0.3 if mapa_transparente else 1.0
+
+	# Solapas del panel de instrumentos de abajo (pedido explícito 2026-10-03,
+	# "como en Excel, página 1, página 2, página 3"): Página 1 = fotos
+	# decorativas (primera impresión al entrar), Página 2 = Torre +
+	# Sensibilidad (lo que ya había), Página 3 = vacía por ahora. Los 3
+	# botones son "toggle" pero se comportan como radio (solo uno prendido a
+	# la vez) -- más simple que un TabContainer real porque Torre/Sensibilidad
+	# no se mueven de lugar, solo se esconden/muestran.
+	boton_solapa_1.focus_mode = Control.FOCUS_NONE
+	boton_solapa_2.focus_mode = Control.FOCUS_NONE
+	boton_solapa_3.focus_mode = Control.FOCUS_NONE
+	boton_solapa_1.pressed.connect(func(): _mostrar_solapa_inferior(1))
+	boton_solapa_2.pressed.connect(func(): _mostrar_solapa_inferior(2))
+	boton_solapa_3.pressed.connect(func(): _mostrar_solapa_inferior(3))
+	_mostrar_solapa_inferior(1)
 	boton_mapa_auto.focus_mode = Control.FOCUS_NONE
 	boton_mapa_auto.pressed.connect(func():
 		mapa_zoom_automatico = not mapa_zoom_automatico
@@ -3581,7 +3606,9 @@ func _actualizar_panel_torre(delta: float) -> void:
 
 		fila["nombre"].text = nombre
 		fila["distancia"].text = "%.1f km" % (candidato["distancia"] / 1000.0)
-		fila["flecha"].visible = true
+		# Pedido explícito 2026-10-03 ("las flechitas amarillas se van de
+		# lugar, por ahora sacalas"): quedan ocultas, solo texto.
+		fila["flecha"].visible = false
 		fila["flecha"].rotation_degrees = relativo
 		fila["boton"].set_meta("nombre_aeropuerto", nombre)
 		fila["boton"].set_meta("lat_aeropuerto", candidato["lat"])
@@ -4151,3 +4178,14 @@ func _actualizar_anuncio_seguridad(delta: float) -> void:
 			if not sonido_instrucciones.playing:
 				_alternar_instrucciones()
 	_estado_anterior_para_timer_vuelo = estado
+
+# Solapas del panel de instrumentos de abajo -- ver comentario junto a donde
+# se conectan los botones en _ready().
+func _mostrar_solapa_inferior(numero: int) -> void:
+	panel_fotos_decorativas.visible = numero == 1
+	panel_torre.visible = numero == 2
+	panel_sensibilidad.visible = numero == 2
+	panel_solapa_vacia.visible = numero == 3
+	boton_solapa_1.button_pressed = numero == 1
+	boton_solapa_2.button_pressed = numero == 2
+	boton_solapa_3.button_pressed = numero == 3

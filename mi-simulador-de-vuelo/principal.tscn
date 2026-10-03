@@ -6,6 +6,10 @@
 [ext_resource type="Script" uid="uid://cai6cs206iv7d" path="res://icono_avion_mapa.gd" id="4_icono_avion"]
 [ext_resource type="Script" uid="uid://cril5v28hcwu1" path="res://insignia_piloto.gd" id="5_insignia"]
 [ext_resource type="Script" uid="uid://dodttxyqx0rld" path="res://camara_marcadores.gd" id="6_camara_marcadores"]
+[ext_resource type="Texture2D" path="res://imagenes_panel_decorativas/reloj1.jpg" id="5_reloj1"]
+[ext_resource type="Texture2D" path="res://imagenes_panel_decorativas/reloj2.jpg" id="6_reloj2"]
+[ext_resource type="Texture2D" path="res://imagenes_panel_decorativas/reloj3.jpg" id="7_reloj3"]
+[ext_resource type="Texture2D" path="res://imagenes_panel_decorativas/reloj4.webp" id="8_reloj4"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
 
@@ -542,6 +546,129 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_dashboard")
 
+[node name="SolapasInferior" type="HBoxContainer" parent="HUD"]
+anchors_preset = 3
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 220.0
+offset_top = -150.0
+offset_right = -170.0
+offset_bottom = -130.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 4
+
+[node name="BotonSolapa1" type="Button" parent="HUD/SolapasInferior"]
+custom_minimum_size = Vector2(70, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+toggle_mode = true
+button_pressed = true
+text = "📷 Página 1"
+
+[node name="BotonSolapa2" type="Button" parent="HUD/SolapasInferior"]
+custom_minimum_size = Vector2(70, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+toggle_mode = true
+text = "📡 Página 2"
+
+[node name="BotonSolapa3" type="Button" parent="HUD/SolapasInferior"]
+custom_minimum_size = Vector2(70, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+toggle_mode = true
+text = "➕ Página 3"
+
+[node name="PanelFotosDecorativas" type="Panel" parent="HUD"]
+anchors_preset = 3
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 220.0
+offset_top = -128.0
+offset_right = -170.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="HBoxFotosDecorativas" type="HBoxContainer" parent="HUD/PanelFotosDecorativas"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 6
+
+[node name="FotoDecorativa1" type="TextureRect" parent="HUD/PanelFotosDecorativas/HBoxFotosDecorativas"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("5_reloj1")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="FotoDecorativa2" type="TextureRect" parent="HUD/PanelFotosDecorativas/HBoxFotosDecorativas"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("6_reloj2")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="FotoDecorativa3" type="TextureRect" parent="HUD/PanelFotosDecorativas/HBoxFotosDecorativas"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("7_reloj3")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="FotoDecorativa4" type="TextureRect" parent="HUD/PanelFotosDecorativas/HBoxFotosDecorativas"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("8_reloj4")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PanelSolapaVacia" type="Panel" parent="HUD"]
+visible = false
+anchors_preset = 3
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 220.0
+offset_top = -128.0
+offset_right = -170.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="LabelSolapaVacia" type="Label" parent="HUD/PanelSolapaVacia"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+theme_override_font_sizes/font_size = 13
+text = "Próximamente..."
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="PanelTorre" type="Panel" parent="HUD"]
 anchors_preset = 3
 anchor_left = 0.0
@@ -549,7 +676,7 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 220.0
-offset_top = -140.0
+offset_top = -128.0
 offset_right = -170.0
 offset_bottom = -10.0
 grow_horizontal = 2
@@ -804,7 +931,7 @@ anchor_top = 1.0
 anchor_right = 0.0
 anchor_bottom = 1.0
 offset_left = 10.0
-offset_top = -140.0
+offset_top = -128.0
 offset_right = 210.0
 offset_bottom = -10.0
 grow_horizontal = 1
@@ -1410,7 +1537,7 @@ layout_mode = 2
 text = "Cerrar"
 
 [node name="SelectorVuelo" type="Panel" parent="HUD" unique_id=320021826]
-visible = true
+visible = false
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -1635,9 +1762,9 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -130.0
-offset_top = -130.0
+offset_top = -135.0
 offset_right = -10.0
-offset_bottom = -10.0
+offset_bottom = -15.0
 grow_horizontal = 0
 grow_vertical = 0
 
@@ -1693,19 +1820,19 @@ offset_right = 9.0
 mouse_default_cursor_shape = 11
 color = Color(1, 1, 1, 0.55)
 
-[node name="BotonTransparenciaMapa" type="Button" parent="HUD" unique_id=1000000101]
+[node name="BotonTransparenciaMapa" type="Button" parent="HUD/MapaRect" unique_id=1000000101]
 anchors_preset = 12
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -12.0
-offset_top = -18.0
-offset_right = 12.0
-offset_bottom = -2.0
+offset_left = -11.0
+offset_top = -15.0
+offset_right = 11.0
+offset_bottom = -1.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_font_sizes/font_size = 11
+theme_override_font_sizes/font_size = 10
 text = "T"
 tooltip_text = "Transparencia del mapa"
 
