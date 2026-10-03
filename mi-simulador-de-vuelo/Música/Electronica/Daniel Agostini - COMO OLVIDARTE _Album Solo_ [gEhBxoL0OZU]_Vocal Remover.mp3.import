@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://5uojypcop1lk"
+path="res://.godot/imported/Daniel Agostini - COMO OLVIDARTE _Album Solo_ [gEhBxoL0OZU]_Vocal Remover.mp3-64ef29126b44f9d93f20749c7f670c63.mp3str"
+
+[deps]
+
+source_file="res://Música/Electronica/Daniel Agostini - COMO OLVIDARTE _Album Solo_ [gEhBxoL0OZU]_Vocal Remover.mp3"
+dest_files=["res://.godot/imported/Daniel Agostini - COMO OLVIDARTE _Album Solo_ [gEhBxoL0OZU]_Vocal Remover.mp3-64ef29126b44f9d93f20749c7f670c63.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
