@@ -6,10 +6,6 @@
 [ext_resource type="Script" uid="uid://cai6cs206iv7d" path="res://icono_avion_mapa.gd" id="4_icono_avion"]
 [ext_resource type="Script" uid="uid://cril5v28hcwu1" path="res://insignia_piloto.gd" id="5_insignia"]
 [ext_resource type="Script" uid="uid://dodttxyqx0rld" path="res://camara_marcadores.gd" id="6_camara_marcadores"]
-[ext_resource type="Texture2D" path="res://imagenes_panel_decorativas/reloj1.jpg" id="5_reloj1"]
-[ext_resource type="Texture2D" path="res://imagenes_panel_decorativas/reloj2.jpg" id="6_reloj2"]
-[ext_resource type="Texture2D" path="res://imagenes_panel_decorativas/reloj3.jpg" id="7_reloj3"]
-[ext_resource type="Texture2D" path="res://imagenes_panel_decorativas/reloj4.webp" id="8_reloj4"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
 
@@ -596,7 +592,7 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
 
-[node name="HBoxFotosDecorativas" type="HBoxContainer" parent="HUD/PanelFotosDecorativas"]
+[node name="ScrollRelojes" type="ScrollContainer" parent="HUD/PanelFotosDecorativas"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -607,40 +603,291 @@ offset_right = -6.0
 offset_bottom = -6.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 6
+vertical_scroll_mode = 0
 
-[node name="FotoDecorativa1" type="TextureRect" parent="HUD/PanelFotosDecorativas/HBoxFotosDecorativas"]
-custom_minimum_size = Vector2(100, 0)
+[node name="HBoxRelojes" type="HBoxContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes"]
 layout_mode = 2
-size_flags_horizontal = 3
-texture = ExtResource("5_reloj1")
-expand_mode = 1
-stretch_mode = 5
+size_flags_vertical = 3
+theme_override_constants/separation = 10
 
-[node name="FotoDecorativa2" type="TextureRect" parent="HUD/PanelFotosDecorativas/HBoxFotosDecorativas"]
-custom_minimum_size = Vector2(100, 0)
+[node name="TarjetaVelocidad" type="VBoxContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes"]
+custom_minimum_size = Vector2(76, 0)
 layout_mode = 2
-size_flags_horizontal = 3
-texture = ExtResource("6_reloj2")
-expand_mode = 1
-stretch_mode = 5
+theme_override_constants/separation = 2
 
-[node name="FotoDecorativa3" type="TextureRect" parent="HUD/PanelFotosDecorativas/HBoxFotosDecorativas"]
-custom_minimum_size = Vector2(100, 0)
+[node name="LabelTarjetaVelocidad" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaVelocidad"]
 layout_mode = 2
-size_flags_horizontal = 3
-texture = ExtResource("7_reloj3")
-expand_mode = 1
-stretch_mode = 5
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 9
+text = "VELOC"
+horizontal_alignment = 1
 
-[node name="FotoDecorativa4" type="TextureRect" parent="HUD/PanelFotosDecorativas/HBoxFotosDecorativas"]
-custom_minimum_size = Vector2(100, 0)
+[node name="EsferaVelocidad" type="PanelContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaVelocidad"]
+custom_minimum_size = Vector2(70, 70)
 layout_mode = 2
-size_flags_horizontal = 3
-texture = ExtResource("8_reloj4")
-expand_mode = 1
-stretch_mode = 5
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
 
+[node name="AgujaVelocidad" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaVelocidad/EsferaVelocidad"]
+custom_minimum_size = Vector2(0, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_font_sizes/font_size = 22
+text = "▲"
+horizontal_alignment = 1
+vertical_alignment = 1
+pivot_offset = Vector2(11, 13)
+
+[node name="ValorVelocidad" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaVelocidad"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
+theme_override_font_sizes/font_size = 11
+text = "0 km/h"
+horizontal_alignment = 1
+
+[node name="TarjetaAltitud" type="VBoxContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes"]
+custom_minimum_size = Vector2(76, 0)
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="LabelTarjetaAltitud" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaAltitud"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 9
+text = "ALTÍMETRO"
+horizontal_alignment = 1
+
+[node name="EsferaAltitud" type="PanelContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaAltitud"]
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="AgujaAltitud" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaAltitud/EsferaAltitud"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(0.3, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "▲"
+horizontal_alignment = 1
+vertical_alignment = 1
+pivot_offset = Vector2(11, 13)
+
+[node name="ValorAltitud" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaAltitud"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
+theme_override_font_sizes/font_size = 11
+text = "0 m"
+horizontal_alignment = 1
+
+[node name="TarjetaHorizonte" type="VBoxContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes"]
+custom_minimum_size = Vector2(76, 0)
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="LabelTarjetaHorizonte" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaHorizonte"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 9
+text = "HORIZONTE"
+horizontal_alignment = 1
+
+[node name="EsferaHorizonte" type="PanelContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaHorizonte"]
+custom_minimum_size = Vector2(70, 70)
+layout_mode = 2
+clip_contents = true
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="HorizonteGiro" type="Control" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaHorizonte/EsferaHorizonte"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+pivot_offset = Vector2(45, 45)
+
+[node name="HorizonteCielo" type="ColorRect" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaHorizonte/EsferaHorizonte/HorizonteGiro"]
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 110.0
+offset_bottom = 45.0
+color = Color(0.25, 0.55, 0.85, 1)
+
+[node name="HorizonteTierra" type="ColorRect" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaHorizonte/EsferaHorizonte/HorizonteGiro"]
+offset_left = -20.0
+offset_top = 45.0
+offset_right = 110.0
+offset_bottom = 110.0
+color = Color(0.45, 0.3, 0.15, 1)
+
+[node name="ValorHorizonte" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaHorizonte"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.5, 0.5, 1)
+theme_override_font_sizes/font_size = 11
+text = "banco"
+horizontal_alignment = 1
+
+[node name="TarjetaRPM" type="PanelContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="VBoxRPM" type="VBoxContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaRPM"]
+layout_mode = 2
+
+[node name="LabelRPM" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaRPM/VBoxRPM"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_font_sizes/font_size = 9
+text = "RPM"
+horizontal_alignment = 1
+
+[node name="ValorRPM" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaRPM/VBoxRPM"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
+theme_override_font_sizes/font_size = 16
+text = "2350"
+horizontal_alignment = 1
+
+[node name="TarjetaCombustible" type="PanelContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="VBoxCombustible" type="VBoxContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaCombustible"]
+layout_mode = 2
+
+[node name="LabelCombustible" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaCombustible/VBoxCombustible"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_font_sizes/font_size = 9
+text = "COMB"
+horizontal_alignment = 1
+
+[node name="ValorCombustible" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaCombustible/VBoxCombustible"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
+theme_override_font_sizes/font_size = 16
+text = "78%"
+horizontal_alignment = 1
+
+[node name="TarjetaTemperatura" type="PanelContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="VBoxTemperatura" type="VBoxContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaTemperatura"]
+layout_mode = 2
+
+[node name="LabelTemperatura" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaTemperatura/VBoxTemperatura"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_font_sizes/font_size = 9
+text = "TEMP"
+horizontal_alignment = 1
+
+[node name="ValorTemperatura" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaTemperatura/VBoxTemperatura"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
+theme_override_font_sizes/font_size = 16
+text = "92°C"
+horizontal_alignment = 1
+
+[node name="TarjetaVoltaje" type="PanelContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes"]
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="VBoxVoltaje" type="VBoxContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaVoltaje"]
+layout_mode = 2
+
+[node name="LabelVoltaje" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaVoltaje/VBoxVoltaje"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_font_sizes/font_size = 9
+text = "VOLT"
+horizontal_alignment = 1
+
+[node name="ValorVoltaje" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaVoltaje/VBoxVoltaje"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 1, 0.3, 1)
+theme_override_font_sizes/font_size = 16
+text = "13.8V"
+horizontal_alignment = 1
+
+[node name="TarjetaSwitches" type="PanelContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes"]
+custom_minimum_size = Vector2(170, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="GridSwitches" type="GridContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaSwitches"]
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 4
+
+[node name="BotonSwitchNav" type="Button" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaSwitches/GridSwitches"]
+custom_minimum_size = Vector2(78, 24)
+layout_mode = 2
+toggle_mode = true
+theme_override_font_sizes/font_size = 10
+text = "💡 NAV"
+
+[node name="BotonSwitchEstrobo" type="Button" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaSwitches/GridSwitches"]
+custom_minimum_size = Vector2(78, 24)
+layout_mode = 2
+toggle_mode = true
+theme_override_font_sizes/font_size = 10
+text = "✨ STROBE"
+
+[node name="BotonSwitchPitot" type="Button" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaSwitches/GridSwitches"]
+custom_minimum_size = Vector2(78, 24)
+layout_mode = 2
+toggle_mode = true
+theme_override_font_sizes/font_size = 10
+text = "🔥 PITOT"
+
+[node name="BotonSwitchAuto" type="Button" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaSwitches/GridSwitches"]
+custom_minimum_size = Vector2(78, 24)
+layout_mode = 2
+toggle_mode = true
+theme_override_font_sizes/font_size = 10
+text = "🤖 AUTO"
+
+[node name="TarjetaViento" type="PanelContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes"]
+custom_minimum_size = Vector2(110, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
+
+[node name="VBoxViento" type="VBoxContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaViento"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="BotonViento" type="Button" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaViento/VBoxViento"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+toggle_mode = true
+theme_override_font_sizes/font_size = 10
+text = "💨 VIENTO: OFF"
+
+[node name="HBoxIndicadorViento" type="HBoxContainer" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaViento/VBoxViento"]
+layout_mode = 2
+alignment = 1
+
+[node name="FlechaViento" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaViento/VBoxViento/HBoxIndicadorViento"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.85, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "➤"
+horizontal_alignment = 1
+vertical_alignment = 1
+pivot_offset = Vector2(12, 12)
+
+[node name="ValorViento" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaViento/VBoxViento/HBoxIndicadorViento"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+theme_override_font_sizes/font_size = 10
+text = "sin viento"
 [node name="PanelSolapaVacia" type="Panel" parent="HUD"]
 visible = false
 anchors_preset = 3
@@ -1148,6 +1395,38 @@ text = "1.0x"
 horizontal_alignment = 1
 
 [node name="BotonVelocidadAnimacionMas" type="Button" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion"]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "＋"
+
+[node name="FilaViento" type="HBoxContainer" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="LabelViento" type="Label" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaViento"]
+custom_minimum_size = Vector2(58, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "💨 Viento"
+autowrap_mode = 3
+
+[node name="BotonVientoMenos" type="Button" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaViento"]
+custom_minimum_size = Vector2(22, 20)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "－"
+
+[node name="LabelVientoValor" type="Label" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaViento"]
+custom_minimum_size = Vector2(34, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 1, 0.6, 1)
+theme_override_font_sizes/font_size = 11
+text = "1.0x"
+horizontal_alignment = 1
+
+[node name="BotonVientoMas" type="Button" parent="HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaViento"]
 custom_minimum_size = Vector2(22, 20)
 layout_mode = 2
 theme_override_font_sizes/font_size = 12

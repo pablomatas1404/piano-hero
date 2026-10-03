@@ -330,6 +330,12 @@ func _ajustes_por_defecto(indice: int) -> Dictionary:
 		# avión de guerra). Independiente por avión, igual que el resto de
 		# este panel.
 		"velocidad_animacion": 1.0,
+		# Pedido explícito 2026-10-03: sensibilidad al viento por avión (uno
+		# más chico/liviano se mueve más con el mismo viento que uno más
+		# grande/pesado) -- multiplicador sobre la deriva que aplica el
+		# sistema de viento (ver _actualizar_viento). 1.0 = valor de partida,
+		# se ajusta por avión igual que el resto de este panel.
+		"viento_sensibilidad": 1.0,
 	}
 
 func _ajustes_avion_actual() -> Dictionary:
@@ -350,6 +356,7 @@ func _cargar_sensibilidad_aviones() -> void:
 			"vel_minima": cfg.get_value(nombre_avion, "vel_minima", VELOCIDAD_MINIMA),
 			"vel_maxima": cfg.get_value(nombre_avion, "vel_maxima", VELOCIDAD_MAXIMA),
 			"velocidad_animacion": cfg.get_value(nombre_avion, "velocidad_animacion", 1.0),
+			"viento_sensibilidad": cfg.get_value(nombre_avion, "viento_sensibilidad", 1.0),
 		}
 
 func _guardar_sensibilidad_aviones() -> void:
@@ -363,6 +370,7 @@ func _guardar_sensibilidad_aviones() -> void:
 	cfg.set_value(nombre, "vel_minima", ajustes["vel_minima"])
 	cfg.set_value(nombre, "vel_maxima", ajustes["vel_maxima"])
 	cfg.set_value(nombre, "velocidad_animacion", ajustes["velocidad_animacion"])
+	cfg.set_value(nombre, "viento_sensibilidad", ajustes["viento_sensibilidad"])
 	cfg.save(RUTA_CONFIG_SENSIBILIDAD)
 
 func _refrescar_panel_sensibilidad() -> void:
@@ -378,6 +386,7 @@ func _refrescar_panel_sensibilidad() -> void:
 	label_vel_minima_valor.text = "%.0f" % ajustes["vel_minima"]
 	label_vel_maxima_valor.text = "%.0f" % ajustes["vel_maxima"]
 	label_velocidad_animacion_valor.text = "%.1fx" % ajustes["velocidad_animacion"]
+	label_viento_valor.text = "%.1fx" % ajustes["viento_sensibilidad"]
 
 func _ajustar_sensibilidad(clave: String, delta_valor: float, minimo: float, maximo: float) -> void:
 	var ajustes := _ajustes_avion_actual()
@@ -628,6 +637,9 @@ const PITCH_MOTOR_MAXIMO = 1.25
 @onready var label_velocidad_animacion_valor: Label = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion/LabelVelocidadAnimacionValor")
 @onready var boton_velocidad_animacion_menos: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion/BotonVelocidadAnimacionMenos")
 @onready var boton_velocidad_animacion_mas: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaVelocidadAnimacion/BotonVelocidadAnimacionMas")
+@onready var label_viento_valor: Label = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaViento/LabelVientoValor")
+@onready var boton_viento_menos: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaViento/BotonVientoMenos")
+@onready var boton_viento_mas: Button = get_node("../HUD/PanelSensibilidad/ScrollSensibilidad/VBoxSensibilidad/FilaViento/BotonVientoMas")
 var ayuda_visual_activa: bool = false
 # CAMBIADO 2026-09-21 (pedido explícito, "es como un láser en los ojos,
 # pegado al avión como una bandita elástica"): antes la línea salía siempre
@@ -747,10 +759,23 @@ var vista_sin_avion_activa: bool = false
 @onready var boton_solapa_2: Button = get_node("../HUD/SolapasInferior/BotonSolapa2")
 @onready var boton_solapa_3: Button = get_node("../HUD/SolapasInferior/BotonSolapa3")
 @onready var panel_fotos_decorativas: Panel = get_node("../HUD/PanelFotosDecorativas")
+@onready var aguja_velocidad: Label = get_node("../HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaVelocidad/EsferaVelocidad/AgujaVelocidad")
+@onready var valor_velocidad_reloj: Label = get_node("../HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaVelocidad/ValorVelocidad")
+@onready var aguja_altitud: Label = get_node("../HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaAltitud/EsferaAltitud/AgujaAltitud")
+@onready var valor_altitud_reloj: Label = get_node("../HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaAltitud/ValorAltitud")
+@onready var horizonte_giro: Control = get_node("../HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaHorizonte/EsferaHorizonte/HorizonteGiro")
+@onready var boton_viento: Button = get_node("../HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaViento/VBoxViento/BotonViento")
+@onready var flecha_viento: Label = get_node("../HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaViento/VBoxViento/HBoxIndicadorViento/FlechaViento")
+@onready var valor_viento: Label = get_node("../HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaViento/VBoxViento/HBoxIndicadorViento/ValorViento")
 @onready var panel_solapa_vacia: Panel = get_node("../HUD/PanelSolapaVacia")
 @onready var panel_torre: Panel = get_node("../HUD/PanelTorre")
 @onready var panel_sensibilidad: Panel = get_node("../HUD/PanelSensibilidad")
 var mapa_transparente: bool = true
+# Viento (pedido explícito 2026-10-03) -- ver uso en el bloque de movimiento
+# principal y en _alternar_viento()/_actualizar_indicador_viento().
+var viento_activo: bool = false
+var viento_direccion_grados: float = 0.0  # de dónde SOPLA (convención meteorológica)
+var viento_velocidad_kmh: float = 0.0
 @onready var asa_mapa: ColorRect = get_node("../HUD/MapaRect/AsaMapa")
 @onready var asa_mapa_sup_izq: ColorRect = get_node("../HUD/MapaRect/AsaMapaSupIzq")
 @onready var asa_mapa_sup_der: ColorRect = get_node("../HUD/MapaRect/AsaMapaSupDer")
@@ -1102,6 +1127,12 @@ func _ready() -> void:
 	boton_velocidad_animacion_mas.focus_mode = Control.FOCUS_NONE
 	boton_velocidad_animacion_menos.pressed.connect(func(): _ajustar_sensibilidad("velocidad_animacion", -0.1, 0.2, 3.0))
 	boton_velocidad_animacion_mas.pressed.connect(func(): _ajustar_sensibilidad("velocidad_animacion", 0.1, 0.2, 3.0))
+	boton_viento_menos.focus_mode = Control.FOCUS_NONE
+	boton_viento_mas.focus_mode = Control.FOCUS_NONE
+	boton_viento_menos.pressed.connect(func(): _ajustar_sensibilidad("viento_sensibilidad", -0.1, 0.0, 3.0))
+	boton_viento_mas.pressed.connect(func(): _ajustar_sensibilidad("viento_sensibilidad", 0.1, 0.0, 3.0))
+	boton_viento.focus_mode = Control.FOCUS_NONE
+	boton_viento.pressed.connect(_alternar_viento)
 	_refrescar_panel_sensibilidad()
 
 	boton_musica.focus_mode = Control.FOCUS_NONE
@@ -2194,6 +2225,7 @@ func _process(delta: float) -> void:
 	_actualizar_estroboscopica(delta)
 	_actualizar_city_tour(delta)
 	_actualizar_anuncio_seguridad(delta)
+	_actualizar_relojes_panel(delta)
 	# Orientación inicial hacia San Fernando -- ver comentario junto a las
 	# constantes LAT/LON de arriba. Se aplica UNA sola vez, en el primer
 	# cuadro (Godot procesa _process() de arriba hacia abajo en el árbol --
@@ -2641,6 +2673,18 @@ func _procesar_vuelo(delta: float) -> void:
 			intensidad_frenado_gradual = 0.0
 
 	translate(Vector3(0, 0, -velocidad_actual * delta))
+
+	# Viento (pedido explícito 2026-10-03, "un botón que apretamos y pierde
+	# un poco de estabilidad, si viene de la izquierda que te empuje"):
+	# empuje lateral en espacio REAL (norte/este, no ejes crudos del motor,
+	# misma regla de oro de siempre) hacia donde sopla el viento. La
+	# sensibilidad es por avión (uno chico se mueve más con el mismo
+	# viento que uno grande) -- panel Sensibilidad, fila "💨 Viento".
+	if viento_activo:
+		var viento_rad: float = deg_to_rad(viento_direccion_grados + 180.0)
+		var direccion_empuje: Vector3 = mundo.norte_motor_actual * cos(viento_rad) + mundo.este_motor_actual * sin(viento_rad)
+		var velocidad_viento_ms: float = viento_velocidad_kmh / 3.6
+		global_position += direccion_empuje * velocidad_viento_ms * ajustes["viento_sensibilidad"] * delta
 
 	# Subida/bajada vertical -- SOLO para el helicóptero (pedido explícito, ya
 	# tiene los botones de joystick asignados desde que armamos el mapeo). Se
@@ -4198,3 +4242,55 @@ func _mostrar_solapa_inferior(numero: int) -> void:
 	boton_solapa_1.button_pressed = numero == 1
 	boton_solapa_2.button_pressed = numero == 2
 	boton_solapa_3.button_pressed = numero == 3
+
+# ============================================================
+# RELOJES DE LA PÁGINA 1 + VIENTO (pedido 2026-10-03)
+# ============================================================
+
+# Pedido explícito: "llename el panel de relojes, que después les damos
+# función". Velocímetro/altímetro/horizonte son los únicos 3 realmente
+# funcionales por ahora (RPM/combustible/temperatura/voltaje quedan fijos,
+# decorativos, a la espera de implementar motor de verdad). El usuario avisó
+# que no espera que el horizonte quede perfecto de entrada -- se ajusta con
+# feedback en vivo, mismo proceso que todo lo demás en este proyecto.
+func _actualizar_relojes_panel(_delta: float) -> void:
+	# Velocímetro: aguja de -135° (0) a +135° (300 km/h), escala nominal --
+	# no es un velocímetro real calibrado por avión, es decorativo con datos
+	# reales.
+	var fraccion_vel: float = clamp(velocidad_actual / 300.0, 0.0, 1.0)
+	aguja_velocidad.rotation_degrees = -135.0 + 270.0 * fraccion_vel
+	valor_velocidad_reloj.text = "%d km/h" % int(round(velocidad_actual))
+
+	var altura_actual: float = mundo.altitud_avion + position.y - altura_piso
+	var fraccion_alt: float = clamp(altura_actual / 3000.0, 0.0, 1.0)
+	aguja_altitud.rotation_degrees = -135.0 + 270.0 * fraccion_alt
+	valor_altitud_reloj.text = "%d m" % int(round(altura_actual))
+
+	# Horizonte artificial simplificado: solo banco (inclinación), no
+	# cabeceo -- gira el cielo/tierra al revés del banco del avión, como un
+	# horizonte real (el avión se inclina, la línea de horizonte "se queda
+	# quieta" respecto al mundo).
+	horizonte_giro.rotation_degrees = -banco_actual
+
+	_actualizar_indicador_viento()
+
+func _alternar_viento() -> void:
+	viento_activo = not viento_activo
+	if viento_activo:
+		viento_direccion_grados = randf() * 360.0
+		viento_velocidad_kmh = randf_range(10.0, 35.0)
+		boton_viento.text = "💨 VIENTO: ON"
+	else:
+		boton_viento.text = "💨 VIENTO: OFF"
+	_actualizar_indicador_viento()
+
+func _actualizar_indicador_viento() -> void:
+	if not viento_activo:
+		flecha_viento.visible = false
+		valor_viento.text = "sin viento"
+		return
+	flecha_viento.visible = true
+	# Misma convención que las flechitas de Torre: apunta hacia de dónde
+	# sopla, relativo al rumbo actual del avión.
+	flecha_viento.rotation_degrees = fposmod(viento_direccion_grados - _ultimo_rumbo_actual, 360.0)
+	valor_viento.text = "%d° %d km/h" % [int(viento_direccion_grados), int(round(viento_velocidad_kmh))]
