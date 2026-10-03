@@ -260,6 +260,7 @@ var _orientacion_inicial_aplicada: bool = false
 # cargar de verdad -- así nunca se ve la transición fea, se ve directo el
 # resultado final.
 @onready var cortina_de_carga: ColorRect = get_node("../HUD/CortinaDeCarga")
+@onready var fondo_presentacion: TextureRect = get_node("../HUD/CortinaDeCarga/FondoPresentacion")
 const ESPERA_CORTINA_DE_CARGA = 9.5  # -3s, pedido explícito ("tarda demasiado")
 var _tiempo_desde_orientacion_inicial: float = -1.0
 const VELOCIDAD_MINIMA = 0.0
@@ -925,8 +926,19 @@ var indice_destino: int = 1
 var temporizador_torre: float = 0.0
 var selector_poblado: bool = false
 
+const IMAGENES_PRESENTACION = [
+	"res://imagenes_presentacion/presentacion_atardecer.png",
+	"res://imagenes_presentacion/presentacion_noche.png",
+	"res://imagenes_presentacion/presentacion_tierra.png",
+]
+
 func _ready() -> void:
 	print("El avión arrancó bien y el script está corriendo.")
+	# Pedido explícito 2026-10-03 ("sacá ese avioncito infantil, dame más
+	# profesionalidad"): pantalla de carga con arte real (generado con
+	# ChatGPT) en vez del fondo plano de siempre -- una de las 3 imágenes al
+	# azar cada vez que arranca el juego, para no ver siempre la misma.
+	fondo_presentacion.texture = load(IMAGENES_PRESENTACION[randi() % IMAGENES_PRESENTACION.size()])
 	_crear_luces_avion_clasico()
 	boton_confirmar.pressed.connect(_confirmar_viaje)
 	boton_despegar.pressed.connect(_despegar)
