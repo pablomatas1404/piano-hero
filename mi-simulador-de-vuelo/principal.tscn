@@ -104,8 +104,9 @@ altitude = 4.999999999068677
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
 
 [node name="Cesium3DTileset" type="Cesium3DTileset" parent="CesiumGeoreference" unique_id=671413382]
-maximum_simultaneous_tile_loads = 8
-loading_descendant_limit = 10
+maximum_screen_space_error = 24.0
+maximum_simultaneous_tile_loads = 4
+loading_descendant_limit = 4
 ion_asset_id = 2275207
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
 
@@ -701,22 +702,20 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_digital")
 
 [node name="HorizonteGiro" type="Control" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaHorizonte/EsferaHorizonte"]
 layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-pivot_offset = Vector2(45, 45)
+pivot_offset = Vector2(35, 35)
 
 [node name="HorizonteCielo" type="ColorRect" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaHorizonte/EsferaHorizonte/HorizonteGiro"]
-offset_left = -20.0
-offset_top = -20.0
-offset_right = 110.0
-offset_bottom = 45.0
+offset_left = -35.0
+offset_top = -35.0
+offset_right = 105.0
+offset_bottom = 35.0
 color = Color(0.25, 0.55, 0.85, 1)
 
 [node name="HorizonteTierra" type="ColorRect" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaHorizonte/EsferaHorizonte/HorizonteGiro"]
-offset_left = -20.0
-offset_top = 45.0
-offset_right = 110.0
-offset_bottom = 110.0
+offset_left = -35.0
+offset_top = 35.0
+offset_right = 105.0
+offset_bottom = 105.0
 color = Color(0.45, 0.3, 0.15, 1)
 
 [node name="ValorHorizonte" type="Label" parent="HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaHorizonte"]
