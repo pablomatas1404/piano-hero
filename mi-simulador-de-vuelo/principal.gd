@@ -110,19 +110,13 @@ const TIPOS_AVION = [
 		# Posicionadas a mano con el editor de luces en vivo (2026-10-01),
 		# reemplaza el ajuste automático de 1cm que era solo una aproximación.
 		"luces_manual": {"izq": Vector3(-4.5841, 2.1438, 0.3211), "der": Vector3(4.6055, 2.0977, 0.3096), "estrobo": Vector3(-0.0257, 1.7982, -0.4211)}},
-	# F-16 EXP (pedido 2026-10-01, bajado completo con todas las texturas
-	# PBR -- a diferencia del Piper, este .fbx SÍ trae el nombre de archivo
-	# de cada textura adentro y vive en la misma carpeta que ellas, así que
-	# Godot las debería resolver solo, sin forzar nada a mano. Rotación 180°
-	# de entrada por pedido explícito ("como todos aparecen mal, ya lo
-	# rotaría directamente") -- confirmar/corregir con el juego en vivo.
-	# Escala calculada por diagonal real: el .fbx nativo mide 55.5 unidades
-	# de diagonal (AABB medido con un script aparte, sin Blender a mano) --
-	# demasiado grande para ser metros reales de un caza. 0.335 lo deja en
-	# ~18.6m de diagonal, comparable a un F-16 real (15m largo x 9.8m
-	# envergadura x 5m alto). Confirmar en vivo, es un cálculo, no una
-	# medición exacta del modelo.
-	{"nombre": "F-16 (nuevo)", "modelo": "res://modelos_aviones/f16/F-16 EXP.fbm/F-16 EXP.fbx", "helicoptero": false, "escala": 0.335, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
+	# F-16 EXP ELIMINADO 2026-10-03 (pedido explícito: "ese avión no nos
+	# sirve para nada, tiene una parte transparente en el fuselaje, borrarlo
+	# a la mierda"). De paso elimina al principal sospechoso de los crashes
+	# recientes (132MB de texturas PBR sin comprimir, varias de 10-27MB cada
+	# una -- footprint de VRAM enorme en una GPU integrada/memoria
+	# compartida, sumado al terreno fotorrealista de Cesium que ya es
+	# pesado de por sí).
 ]
 var tipo_avion_indice: int = 0
 
