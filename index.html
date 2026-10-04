@@ -13189,6 +13189,20 @@ function frameInner(ts) {
     // tempo fijo conocido — los MIDI importados/con manos separadas no traen un solo BPM, así que ahí no suena.
     // Sin bpm conocido (MIDI importados, grabaciones, multipista) antes el metronomo quedaba MUDO sin avisar;
     // ahora cae en 100 bpm fijos: mejor un pulso parejo que silencio.
+    // FIX 2 (3/10/2026, Ernesto probando con un ejercicio de escalas: 'puse metronomo y no suena'): en Modo
+    // Espera la cancion se congela esperando la primera tecla, y como el clic dependia del avance de la
+    // cancion, el metronomo quedaba muerto justo ahi (y entre nota y nota). Mientras esta congelada, ahora
+    // marca por reloj real, al tempo de la cancion por la velocidad elegida.
+    if (metronomeOn && frozen && isPlaying) {
+      const nowMs = performance.now();
+      const periodMs = 60000 / ((activeSong.bpm || 100) * (speed || 1));
+      if (!window.__metroFrozenLast || nowMs - window.__metroFrozenLast >= periodMs) {
+        window.__metroFrozenLast = nowMs;
+        window.__metroFrozenN = ((window.__metroFrozenN || 0) + 1);
+        const bpmBar = (activeSong.timeSig && activeSong.timeSig.num) || 4;
+        if (metronomeSynth) metronomeSynth.triggerAttackRelease(window.__metroFrozenN % bpmBar === 1 ? 'C7' : 'G6', 0.03);
+      }
+    } else window.__metroFrozenLast = 0;
     if (metronomeOn && !frozen) {
       const beatSec = 60 / (activeSong.bpm || 100);
       const beatIndex = Math.floor(playhead / beatSec);
