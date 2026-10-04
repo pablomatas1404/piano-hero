@@ -1754,7 +1754,7 @@
       <span class="mini-toolbar-sep mini-toolbar-collapsible"></span>
       <span class="mini-toolbar-group mini-toolbar-collapsible">
         <button class="btn on" id="btn-wait" onclick="toggleWaitMode(this)" title="La canción se frena hasta que toques la nota correcta">⏳ Modo Espera</button>
-        <button class="btn" id="btn-metronome" onclick="toggleMetronome(this)" title="Clic por cada tiempo del compás (solo funciona en canciones con tempo fijo)">🥁 Metrónomo</button>
+        <button class="btn" id="btn-metronome" onclick="toggleMetronome(this)" title="Clic por cada tiempo del compás (si la canción no trae tempo, marca 100 pulsos por minuto)">🥁 Metrónomo</button>
         <button class="btn" id="btn-notenames" onclick="toggleNoteNames(this)" title="Mostrar/ocultar el nombre de cada nota en el Modo Profesional">🔤 Nombres de nota</button>
         <button class="btn on" id="btn-autoplay-offscreen" onclick="toggleAutoPlayOffscreen(this)" title="Lo que quede fuera de la parte visible del teclado (por el zoom o el scroll) lo toca la máquina sola, para no tener que ir corriendo el teclado">🎹 Auto fuera de pantalla</button>
       </span>
@@ -3711,6 +3711,7 @@ function closeSidePanels() {
 }
 function toggleMetronome(btnEl) {
   metronomeOn = !metronomeOn;
+  if (metronomeOn && !audioReady && typeof startAudio === 'function') startAudio(); // el sintetizador del clic recien existe despues de arrancar el audio
   document.getElementById('btn-metronome').classList.toggle('on', metronomeOn);
   lastMetronomeBeat = -1;
 }
@@ -4060,7 +4061,10 @@ async function startAudio() {
   // (el reverb ya se armó y conectó más arriba, junto con basicPiano).
 
   // Clic de metrónomo: un blip cortito, más agudo en el primer tiempo del compás
-  metronomeSynth = new Tone.MembraneSynth({ pitchDecay: 0.008, octaves: 2, envelope: { attack: 0.001, decay: 0.06, sustain: 0 }, volume: -8 }).connect(masterLimiter);
+  // FIX (3/10/2026, Pablo/Ernesto: 'el metronomo no suena'): el clic anterior era un MembraneSynth en C2/C3
+  // (65-130 Hz), un golpe grave tan corto que en parlantes de notebook/monitor directamente no se oye.
+  // Ahora es un 'tic' agudo (triangular, ~1-2 kHz) que se oye en cualquier parlante, incluso sobre la musica.
+  metronomeSynth = new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.02 }, volume: -2 }).connect(masterLimiter);
 
   // Tienda: "Aviso sonoro al errar" — un zumbido cortito y disonante (nada agresivo) para saber
   // que fallaste SIN tener que ver la pantalla, pensado para cuando cuesta ver el X rojo.
@@ -13183,13 +13187,15 @@ function frameInner(ts) {
 
     // Metrónomo: un clic por cada tiempo del compás (asumiendo 4/4), solo si la canción tiene un
     // tempo fijo conocido — los MIDI importados/con manos separadas no traen un solo BPM, así que ahí no suena.
-    if (metronomeOn && !frozen && activeSong.bpm) {
-      const beatSec = 60 / activeSong.bpm;
+    // Sin bpm conocido (MIDI importados, grabaciones, multipista) antes el metronomo quedaba MUDO sin avisar;
+    // ahora cae en 100 bpm fijos: mejor un pulso parejo que silencio.
+    if (metronomeOn && !frozen) {
+      const beatSec = 60 / (activeSong.bpm || 100);
       const beatIndex = Math.floor(playhead / beatSec);
       if (beatIndex !== lastMetronomeBeat && playhead >= 0) {
         lastMetronomeBeat = beatIndex;
         const beatsPerMeasure = (activeSong.timeSig && activeSong.timeSig.num) || 4;
-        if (metronomeSynth) metronomeSynth.triggerAttackRelease(beatIndex % beatsPerMeasure === 0 ? 'C3' : 'C2', 0.03);
+        if (metronomeSynth) metronomeSynth.triggerAttackRelease(beatIndex % beatsPerMeasure === 0 ? 'C7' : 'G6', 0.03);
         // Tienda: "Metrónomo con voz" — en vez de (o además de) el clic, una voz cuenta el tiempo
         // real del compás (1, 2, 3...) en el que estás, según el compás real de la canción.
         if (isFeatureActive('metrohablado') && window.speechSynthesis) {
