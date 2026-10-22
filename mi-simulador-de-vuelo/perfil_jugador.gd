@@ -69,6 +69,7 @@ func crear_perfil(nombre: String) -> void:
 	nombre_perfil_actual = nombre
 	perfil_actual = _perfil_por_defecto(nombre)
 	guardar_perfil()
+	_guardar_ultimo_perfil_usado(nombre)
 
 func cargar_perfil(nombre: String) -> bool:
 	var ruta := _ruta_perfil(nombre)
@@ -85,7 +86,46 @@ func cargar_perfil(nombre: String) -> bool:
 	perfil_actual = _perfil_por_defecto(nombre)
 	for clave in datos:
 		perfil_actual[clave] = datos[clave]
+	_guardar_ultimo_perfil_usado(nombre)
 	return true
+
+# Pedido 2026-10-17 (reportado: "cada vez que arranco, arranca de cero en la
+# cuenta de dinero"): la plata SOLO persiste si hay un perfil cargado (ver
+# guardar_perfil) -- pero nada cargaba ninguno a menos que el usuario entrara
+# a mano a la pestaña "Carrera" y elegiera un piloto. Si volás "directo" sin
+# pasar por ahí (el caso de Pablo todos los días), todo lo que ganás vive
+# solo en memoria y se pierde al cerrar el juego. FIX: se recuerda el último
+# perfil usado en un archivito chico aparte (RUTA_ULTIMO_PERFIL) y se carga
+# SOLO al arrancar (ver _autocargar_ultimo_perfil, llamada una vez desde
+# principal.gd _ready()) -- así nunca más arranca en cero sin pedírselo.
+# Si en el futuro hay varios jugadores con su propio login, cada uno sigue
+# pudiendo entrar a la pestaña Carrera y elegirse/crearse el suyo a mano
+# (eso sigue funcionando exactamente igual, sin cambios).
+const RUTA_ULTIMO_PERFIL = "user://ultimo_perfil.txt"
+
+func _guardar_ultimo_perfil_usado(nombre: String) -> void:
+	var archivo := FileAccess.open(RUTA_ULTIMO_PERFIL, FileAccess.WRITE)
+	if archivo:
+		archivo.store_string(nombre)
+		archivo.close()
+
+# Se llama UNA vez al arrancar el juego. Prioridad: 1) el último perfil
+# usado (si el archivito existe y ese perfil todavía existe en disco),
+# 2) si hay un único perfil guardado, ese, 3) si no hay ninguno todavía,
+# se crea uno nuevo llamado "Piloto" (nombre genérico, cualquiera lo puede
+# renombrar más adelante creando otro perfil desde la pestaña Carrera).
+func autocargar_ultimo_perfil() -> void:
+	if FileAccess.file_exists(RUTA_ULTIMO_PERFIL):
+		var archivo := FileAccess.open(RUTA_ULTIMO_PERFIL, FileAccess.READ)
+		var nombre_guardado := archivo.get_as_text().strip_edges()
+		archivo.close()
+		if nombre_guardado != "" and cargar_perfil(nombre_guardado):
+			return
+	var perfiles: Array = listar_perfiles()
+	if perfiles.size() >= 1:
+		cargar_perfil(perfiles[0])
+		return
+	crear_perfil("Piloto")
 
 func guardar_perfil() -> void:
 	if nombre_perfil_actual == "":

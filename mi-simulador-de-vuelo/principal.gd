@@ -38,7 +38,7 @@ const TIPOS_AVION = [
 		"luces_manual": {"izq": Vector3(-3.9672, -0.1821, -0.5093), "der": Vector3(3.8563, -0.1934, -0.4900), "estrobo": Vector3(-0.0333, 1.1496, -0.4804)}},
 	# Escala +40% (pedido 2026-09-27) -- las luces son hijas del modelo, así
 	# que escalan proporcionalmente y quedan en el mismo lugar relativo.
-	{"nombre": "Avión de guerra", "modelo": "res://modelos_aviones/avion_de_guerra.glb", "helicoptero": false, "escala": 1.05, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3",
+	{"nombre": "Avión de guerra", "modelo": "res://modelos_aviones/avion_de_guerra.glb", "helicoptero": false, "escala": 0.85, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3",
 		"luces_manual": {"izq": Vector3(-5.5777, -1.5728, -0.7603), "der": Vector3(5.7251, -1.4666, -0.7423), "estrobo": Vector3(-0.0981, -0.8672, -0.4409)}},
 	# Orientación ya perfecta -- solo un poco más grande.
 	# SIN sonido de motor (pedido 2026-09-21, "no es constante, es un
@@ -117,6 +117,131 @@ const TIPOS_AVION = [
 	# una -- footprint de VRAM enorme en una GPU integrada/memoria
 	# compartida, sumado al terreno fotorrealista de Cesium que ya es
 	# pesado de por sí).
+	# F/A-18E Super Hornet con AGM-65E Maverick (pedido 2026-10-10, avión
+	# PRINCIPAL -- no enemigo). Bajado de Sketchfab a 46-53MB, reexportado en
+	# Blender: texturas comprimidas (AUTO, calidad 85) + mallas unidas en una
+	# sola + Decimate moderado (584mil -> 204mil polígonos, ~35%, silueta
+	# intacta, confirmado a ojo con captura) + compresión Draco -- quedó en
+	# 19.25MB. Pedido explícito de Pablo: para los aviones PRINCIPALES
+	# priorizar que la cáscara exterior se vea bien, no hace falta detalle de
+	# interior/articulaciones. Escala y rotación sin verificar en juego
+	# todavía -- 1.0/180° son valores de partida típicos, ajustar con
+	# feedback como el resto de los aviones nuevos.
+	# "luces_manual" 2026-10-10: posición clavada a mano por Pablo con el
+	# editor de luces en vivo -- BUG REAL encontrado el mismo día (reportado:
+	# "ya van 4 veces que la oriento y se desacomoda al reiniciar"): clavar
+	# luces solo ESCRIBE el valor en ajustes_luces_debug.txt, no lo aplica
+	# solo al juego -- faltaba copiarlo acá a mano. Ya quedó copiado, no
+	# hace falta volver a clavarla cada sesión.
+	# Pedido 2026-10-11 ("muy grande, no se le ve el caño de escape atrás
+	# del panel de abajo -- achicarlo 15%"): las luces (luces_manual) no
+	# hace falta recalcularlas -- son hijas del modelo, escalan solas.
+	{"nombre": "F/A-18E Super Hornet (nuevo)", "modelo": "res://modelos_aviones/fa18e_maverick.glb", "helicoptero": false, "escala": 0.85, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3",
+		"luces_manual": {"izq": Vector3(-7.0490, -0.9577, -0.7419), "der": Vector3(6.9543, -0.9974, -0.7223), "estrobo": Vector3(0.0000, 1.9135, -0.0156)}},
+
+	# Tanda 2026-10-11 (pedido de Pablo: "integrá TODOS los aviones que bajé,
+	# los probamos todos juntos y vamos dando de baja los feos, nos quedamos
+	# con los buenos"). Sin "luces_manual" todavía -- usan el cálculo
+	# automático por AABB (_generar_luces_para_modelo_externo), que ya existe
+	# justo para este caso. Escala 1.0 / rotación 180° de partida (pedido
+	# explícito: "por las dudas los girás 180 grados"), SIN verificar en
+	# juego -- van a necesitar la vuelta de ajuste de siempre.
+	# BUG REAL encontrado 2026-10-11 (reportado: "el A380 nunca aparece a la
+	# vista, y tampoco pega ningún disparo"): medido el .glb directamente
+	# (bounding box real del glTF) -- viene modelado en metros de verdad,
+	# ~80m de envergadura. Con escala 1.0 y la cámara fija a solo 8-17
+	# unidades del avión (OFFSET_CAMARA_DISTANCIA), la cámara queda
+	# literalmente DENTRO del fuselaje -- no es que esté mal orientado, hay
+	# avión de sobra tapando todo alrededor de la cámara. Probablemente
+	# también explica los disparos fallados: el origen (punto medio de las
+	# luces de ala, ahora a ~40m del centro) queda muy lejos de donde mira
+	# la cámara. Bajado a 0.25 como primer ajuste -- sin confirmar en
+	# juego todavía, ajustar con feedback como siempre. Boeing 747-400
+	# tiene dimensiones reales casi idénticas (mismo riesgo), bajado
+	# preventivamente con el mismo valor.
+	# BUG REAL arreglado 2026-10-11 con la tecla P: la medición anterior
+	# ("metros reales") había salido mal por un problema de formato de
+	# números al leer el archivo -- el tamaño nativo real es ~19750
+	# unidades de envergadura, no ~80. Escala recalculada: 79.75m (envergadura
+	# real del A380) / 19750 ≈ 0.004. "recentrar_pivote" corrige el pivote
+	# descentrado (mismo bug que tuvo el aquitaine). Primer intento con
+	# datos reales, igual sin confirmar en juego -- ajustar con feedback.
+	# Pedido 2026-10-11, segunda vuelta ("apareció, pero gigante -- achicarlo
+	# 300%, y girarlo 90° de las 3 a las 12"): "achicar 300%" interpretado
+	# como dividir por 4 (0.004/4=0.001), igual que "agrandar 100%" ya
+	# significó duplicar en este proyecto. Giro: 180°-90°=90° -- si queda al
+	# revés (como pasó una vez con el Pilatus), es sumar en vez de restar.
+	# Pedido 2026-10-11, tercera vuelta ("giró para el lado contrario -- quedó
+	# en las 6, tiene que ir a las 12 -- y achicarlo 80% más"). DATO
+	# IMPORTANTE para los próximos aviones: "girar a la izquierda" en este
+	# proyecto corresponde a SUMAR grados en Y, no restar (confirmado acá y
+	# con el Pilatus antes) -- quedar anotado. 6 a 12 es un giro de 180°
+	# sin importar la dirección: 90+180=270. Escala: 0.001*0.2=0.0002.
+	# Pedido 2026-10-11, cuarta vuelta ("orientación perfecta, agrandar 5% y
+	# subirlo un poquito si se puede -- sabe que viene una revisión general
+	# de cámaras después"): 0.0002*1.05=0.00021. Subida chica de cámara
+	# como primer intento, se termina de ajustar con el sistema nuevo.
+	# Pedido 2026-10-16 ("clavé las luces del A380 -- ponelas, y que las dos
+	# tengan el mismo tamaño, el de la más chica"): posición copiada del editor
+	# de luces (ajustes_luces_debug.txt, 17:34) -- las coordenadas son grandes
+	# porque están en unidades NATIVAS del modelo (las luces son hijas de la
+	# instancia y escalan solas con 0.00021). "luces_mismo_tamano": la
+	# estroboscópica deja de ser 1.2x más grande y queda igual que la roja y
+	# la verde (el radio de las tres ya es el de la más chica).
+	{"nombre": "Airbus A380-900", "modelo": "res://modelos_aviones/airbus_a380.glb", "helicoptero": false, "escala": 0.00021, "rotacion": Vector3(0, 270, 0), "sonido": "res://FX/motor_jet.mp3", "recentrar_pivote": true, "ajuste_altura_camara": 1.0,
+		"luces_manual": {"izq": Vector3(27410.0820, -15143.6631, 52452.7305), "der": Vector3(81279.7031, 19258.0371, -23609.3984), "estrobo": Vector3(48548.1211, 8782.8301, -262.2363)},
+		"luces_mismo_tamano": true},
+	# Pedido 2026-10-11 ("funciona todo, pero agrandarlo un 40%"):
+	# Pedido 2026-10-11, segunda vuelta ("quedó perfecto, pero agrandalo otro
+	# 15-20% más para que quede más lindo"): 1.4 * 1.175 ≈ 1.65.
+	# Pedido 2026-10-11, tercera vuelta ("se luce mejor 10% más grande"):
+	{"nombre": "Saab 37 Viggen (enemigo liviano)", "modelo": "res://modelos_aviones/saab_viggen.glb", "helicoptero": false, "escala": 1.82, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
+	# Pedido 2026-10-11 ("funciona todo, pero muy gigante, achicarlo 50%"):
+	# Pedido 2026-10-11 ("quedó bien, agrandarlo 20%, pero se ve muy abajo
+	# como si lo mirara desde arriba -- subir la cámara"): primer intento
+	# de "ajuste_altura_camara", sin confirmar, ajustar con feedback.
+	# Pedido 2026-10-11, segunda vuelta ("10% más grande, y la cámara sigue
+	# baja -- sentía que estaba en planta baja mirando el primer piso"):
+	# +10% tamaño, duplicado el ajuste de altura de cámara (2.0 -> 4.0).
+	# También reportó algo "como una bandera" flameando en el ala derecha --
+	# pendiente revisar en Blender, no se puede diagnosticar a ciegas.
+	# Pedido 2026-10-11, tercera vuelta ("sigue como antes, planta baja/primer
+	# piso -- agrandar 40% más"): +40% tamaño, triplicado el ajuste de altura
+	# de cámara (4.0 -> 6.0) ya que el doble no alcanzó. Lo del ala
+	# "bandera" queda pendiente para Blender, como dijo Pablo.
+	{"nombre": "British Airways Boeing 747-400", "modelo": "res://modelos_aviones/ba_boeing747.glb", "helicoptero": false, "escala": 0.231, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3", "ajuste_altura_camara": 6.0},
+	# Pedido 2026-10-11 ("funciona todo, pero muy grande, achicarlo 50%"):
+	# Pedido 2026-10-11, segunda vuelta ("sigue gigante, no se ve completo --
+	# achicarlo 40% más"): 0.5 * 0.6 = 0.3.
+	{"nombre": "Emirates Boeing 777-200", "modelo": "res://modelos_aviones/emirates_boeing777.glb", "helicoptero": false, "escala": 0.3, "rotacion": Vector3(0, 180, 0), "sonido": "res://FX/motor_jet.mp3"},
+	# Pedido explícito: "subílo con todos los chiches, con la textura y todo
+	# -- si hay que alivianar después, le sacamos pedazos, pero primero hay
+	# que probarlo completo" -- el .glb copiado es el original, sin tocar.
+	# Pedido 2026-10-11 ("funciona todo, pero parece una hormiguita --
+	# agrandarlo 400% -- y girarlo 180° más, está mirando para mi lado"):
+	# el 180° de partida le quedaba al revés para este modelo en particular,
+	# así que se cancela (0°) en vez de sumarse.
+	# Pedido 2026-10-11, segunda vuelta ("orientación bien, pero queda un
+	# poco abajo -- agrandar 80% más"): 5.0 * 1.8 = 9.0. Primer intento de
+	# altura de cámara para este, sin confirmar.
+	# Pedido 2026-10-11, tercera vuelta ("agrandar 80% más"): 9.0*1.8=16.2.
+	{"nombre": "Miljet (interior 5 estrellas)", "modelo": "res://modelos_aviones/miljet.glb", "helicoptero": false, "escala": 16.2, "rotacion": Vector3(0, 0, 0), "sonido": "res://FX/motor_jet.mp3", "ajuste_altura_camara": 2.0},
+	# Pedido 2026-10-11 ("anda bien, pero girarlo 90° a la izquierda -- de
+	# las 3 a las 12 -- y achicarlo 20-30%"): 180°-90°=90° (primer intento,
+	# si quedó al revés es simplemente sumar en vez de restar). Achicado
+	# 25% (punto medio de lo pedido).
+	# Pedido 2026-10-11, segunda vuelta ("quedó apuntando a las 6, tiene que
+	# mirar a las 12 -- 180° más"): 6 y 12 son puntos opuestos del reloj, un
+	# giro de 180° los intercambia sin importar para qué lado -- 90+180=270.
+	{"nombre": "Pilatus PC-24", "modelo": "res://modelos_aviones/pilatus_pc24.glb", "helicoptero": false, "escala": 0.75, "rotacion": Vector3(0, 270, 0), "sonido": "res://FX/motor_jet.mp3"},
+	# Pedido 2026-10-11 ("me olvidé del helicóptero ruso, agregalo, y que
+	# tenga el comando subir-bajar como el otro helicóptero"):
+	# "helicoptero": true activa ese control (ver _es_helicoptero()), igual
+	# que el Ka-27 que ya está en la lista. Escala/rotación sin verificar
+	# todavía, ajustar con feedback como todos los demás.
+	# Pedido 2026-10-11 ("apunta a las 6, hay que hacerlo apuntar a las 12 --
+	# 180°", "muy grande, achicarlo 20%"): 180°+180°=0°.
+	{"nombre": "Mil Mi-35M (helicóptero ruso)", "modelo": "res://modelos_aviones/mi35m.glb", "helicoptero": true, "escala": 0.8, "rotacion": Vector3(0, 0, 0), "sonido": "res://FX/motor_helicoptero.mp3"},
 ]
 var tipo_avion_indice: int = 0
 
@@ -396,12 +521,217 @@ var altura_piso = 0.0
 @onready var etiqueta_rumbo: Label = get_node("../HUD/PanelInstrumentos/CajaRumbo/RumboLabel")
 @onready var etiqueta_distancia: Label = get_node("../HUD/PanelInstrumentos/CajaDistancia/DistanciaLabel")
 
+# Pedido 2026-10-16 ("como un relojito del avión, pero que me diga cuánta RAM
+# libre queda -- así si veo un crash puedo chequear si fue por memoria"):
+# una caja más en la fila de instrumentos (ALT/RUMBO/VEL/DIST), mismo estilo,
+# con la RAM libre del sistema. Se actualiza cada INTERVALO_RAM segundos, no
+# todos los cuadros (OS.get_memory_info() no es gratis).
+var etiqueta_ram: Label = null
+var _acumulador_ram: float = 0.0
+const INTERVALO_RAM := 2.0
+
+# PASO 1 -- ESQUELETO DE MISIONES (pedido 2026-10-16: "modo juego con
+# diferentes misiones, que vaya avanzando" -- lore propio, modo práctica
+# antes del nivel 1). Genérico a propósito: cada "paso" de una secuencia
+# reusa contadores que YA EXISTEN (mision_verde_destruidos para Capital,
+# objetivos_destruidos para aeropuertos) en vez de inventar un sistema de
+# objetivos nuevo -- la idea es que agregar misiones futuras sea solo
+# agregar entradas a una lista, no escribir código nuevo cada vez.
+var secuencia_mision_actual: Array = []
+var mision_paso_actual: int = -1
+var etiqueta_objetivo_mision: Label = null
+
+# Pedido 2026-10-16 ("modo práctica: primero Capital con un solo tiro,
+# después los aeropuertos con un solo tiro"): el "chequeo" de cada paso es
+# una función lambda que consulta el contador real -- así cualquier
+# contador que ya exista en el juego (barcos, industria, invasión...) sirve
+# para armar una misión nueva sin tocar su propio sistema.
+const SECUENCIA_MODO_PRACTICA := [
+	{
+		"nombre": "Capital Federal",
+		"texto": "MODO PRÁCTICA\nDestruí los objetivos verdes de Capital Federal",
+	},
+	{
+		"nombre": "Aeropuertos",
+		"texto": "Ahora: destruí los objetivos de los aeropuertos",
+	},
+]
+
+# Pedido 2026-10-16 ("Nivel 1: ir y destruir tres barcos y volver a base"):
+# el paso "Hundir 3 barcos" usa una FOTO del contador real de barcos
+# (mision_barcos_base, tomada al arrancar el nivel) para pedir "3 MÁS", sin
+# importar cuántos ya hundiste antes jugando sueltO. "Volver a base" mide
+# la distancia real a Aeroparque -- mismo patrón que usa el resto del
+# juego para "llegaste a destino".
+var mision_barcos_base: int = 0
+const RADIO_VOLVER_BASE := 600.0  # metros
+const SECUENCIA_NIVEL_1 := [
+	{"nombre": "Hundir 3 barcos", "texto": "NIVEL 1\nDestruí 3 barcos"},
+	{"nombre": "Volver a base", "texto": "¡Bien! Ahora volvé a Aeroparque"},
+]
+
+# Pedido 2026-10-16 ("agregale cuatro o cinco misiones más, de a dos es muy
+# lento"): reusan los 3 tipos de blanco que ya existían con su propio
+# contador (industria, invasión) -- Nivel 4 los junta todos para un final
+# más difícil, incluido Capital y aeropuertos del modo práctica.
+const SECUENCIA_NIVEL_2 := [
+	{"nombre": "Industria", "texto": "NIVEL 2\nDetectamos actividad industrial enemiga en La Plata. Destruila toda."},
+]
+var mision_invasores_base: int = 0
+const SECUENCIA_NIVEL_3 := [
+	{"nombre": "Invasores", "texto": "NIVEL 3\nUna oleada de tropas está desembarcando por la costa. Destruí 10."},
+]
+const SECUENCIA_NIVEL_4 := [
+	{"nombre": "Defensa Total", "texto": "NIVEL 4 — FINAL\nAtaque combinado: barcos, aeropuertos, Capital e industria. ¡A por todo!"},
+]
+
+# MISIONES COMERCIALES (pedido 2026-10-17, "modo civil -- ir de un
+# aeropuerto a otro, sin disparar, con un poco de lore, no 'ir de acá para
+# allá' nomás"). Cada paso usa "tipo": "llegar_aeropuerto" (destino = nombre
+# real de un aeropuerto del juego) o "llegar_punto" (lat/lon de un lugar
+# marcado a mano con la tecla M -- acá, el Hangar 5 de Aeroparque). El
+# Hangar 5 en especial: pedido explícito "usá los hangares, no solo para
+# aterrizar, también para salir -- que no sea solo aterrizar, después hay
+# que carretear hasta el lugar justo".
+const COORD_HANGAR_5_AEROPARQUE := {"lat": -34.5569770646676, "lon": -58.4144436451155}
+const COORD_AEROPARQUE := {"lat": -34.5589, "lon": -58.4164}
+
+# Pedido 2026-10-17 ("destinos nacionales, todos los que tenemos trackeados,
+# ordenados de más cerca a más lejos, cada uno con su precio en dólares,
+# editable con el +/- -- y que cambie según qué avión uses"): "var", no
+# "const" -- el precio se edita en vivo, mismo patrón que ya usan las
+# misiones de helicóptero (_poblar_lista_misiones). Orden y distancias
+# aproximadas desde Aeroparque.
+# BUG REAL encontrado 2026-10-17 (reportado: "aterricé en Río Cuarto y no me
+# pagó"): el lat/lon de cada destino se había tomado de una fuente aproximada
+# (mapa online), que no coincide con dónde está en realidad la pista de ESE
+# aeropuerto dentro del simulador (mundo.gd tiene su propio dato, separado,
+# para el ILS/beacon de cada uno) -- la diferencia llegaba a 1,5km en varios
+# casos (Rosario, Córdoba, Río Cuarto), bien por fuera de cualquier radio de
+# llegada razonable. Ahora cada destino apunta, por nombre EXACTO, al
+# aeropuerto real ya cargado en mundo.gd (campo "aeropuerto_real") -- al
+# armar el viaje (_iniciar_destino_nacional) se usa la posición de ESE nodo,
+# nunca el lat/lon escrito a mano acá abajo (que queda solo de respaldo por
+# si algún día ese nombre no se encuentra).
+var DESTINOS_NACIONALES := [
+	{"nombre": "Chivilcoy", "aeropuerto_real": "Aeródromo Chivilcoy", "lat": -34.9617070587302, "lon": -60.0288016448983, "precio": 150},
+	{"nombre": "Gualeguaychú (Entre Ríos)", "aeropuerto_real": "Gualeguaychú", "lat": -33.0087525020559, "lon": -58.6129206261459, "precio": 200},
+	{"nombre": "Rosario (Santa Fe)", "aeropuerto_real": "Rosario (Islas Malvinas)", "lat": -32.9167810491964, "lon": -60.7877080510417, "precio": 320},
+	{"nombre": "Río Cuarto (Córdoba)", "aeropuerto_real": "Río Cuarto (Las Higueras)", "lat": -33.0837345938044, "lon": -64.259578187267, "precio": 480},
+	{"nombre": "Córdoba Capital", "aeropuerto_real": "Córdoba (Taravella)", "lat": -31.3228603321429, "lon": -64.2071143328457, "precio": 550},
+	{"nombre": "San Luis", "aeropuerto_real": "San Luis (Brig. Mayor César Raúl Ojeda)", "lat": -33.2765558892837, "lon": -66.3569762482839, "precio": 600},
+]
+const PASO_PRECIO_DESTINO := 25
+# Pedido 2026-10-17, SEGUNDA VUELTA ("si dice San Fernando-Morón, al apretar
+# Volar te tiene que teletransportar a San Fernando, no respetar el destino
+# nomás estés donde estés -- no quiero que sea así" -- reemplaza el pedido
+# anterior de "nunca teletransportar"): cada misión ahora trae su propio
+# "origen" (lat/lon reales, casi siempre un hangar trackeado) -- al apretar
+# Volar, _iniciar_mision_comercial() primero teletransporta ahí.
+const MISIONES_COMERCIALES := [
+	{
+		"nombre": "Carga militar a Campo de Mayo",
+		"descripcion": "Llegó un cargamento de armamento por barco a Aeroparque. Hay que llevarlo a la guarnición de Campo de Mayo antes de que caiga la noche.",
+		"origen": COORD_AEROPARQUE,
+		"precio": 120,
+		"pasos": [
+			{"nombre": "Entregar en Campo de Mayo", "texto": "Base a piloto: cargamento militar asegurado. Destino: guarnición de Campo de Mayo.", "tipo": "llegar_aeropuerto", "destino": "Campo de Mayo"},
+		],
+	},
+	{
+		"nombre": "Turistas a Ezeiza (Cessna)",
+		"descripcion": "Un grupo de turistas llegó en vuelo de cabotaje a Aeroparque y tiene que conectar su vuelo internacional en Ezeiza. Llevalos en el Cessna antes de que lo pierdan.",
+		"origen": COORD_AEROPARQUE,
+		"precio": 100,
+		"pasos": [
+			{"nombre": "Llevar turistas a Ezeiza", "texto": "Pasajeros a bordo. Próxima escala: Ezeiza, conexión internacional.", "tipo": "llegar_aeropuerto", "destino": "Ezeiza"},
+		],
+	},
+	{
+		"nombre": "Pasajero VIP a San Fernando",
+		"descripcion": "Un pasajero muy importante necesita llegar a San Fernando sin demoras. Vuelo corto, pero no podés fallar.",
+		"origen": COORD_AEROPARQUE,
+		"precio": 150,
+		"pasos": [
+			{"nombre": "Llevar al VIP a San Fernando", "texto": "Pasajero VIP a bordo. Destino: San Fernando.", "tipo": "llegar_aeropuerto", "destino": "San Fernando"},
+		],
+	},
+	{
+		"nombre": "Capitán militar a Morón",
+		"descripcion": "Un capitán del Ejército tiene que presentarse en la guarnición de Morón. Transporte prioritario.",
+		"origen": COORD_AEROPARQUE,
+		"precio": 130,
+		"pasos": [
+			{"nombre": "Llevar al capitán a Morón", "texto": "Oficial a bordo. Destino: guarnición de Morón.", "tipo": "llegar_aeropuerto", "destino": "Morón"},
+		],
+	},
+	{
+		"nombre": "Recorrido de entrega (con escalas)",
+		"descripcion": "Entregas pendientes en tres paradas: El Palomar, Ezeiza, y de vuelta a Aeroparque -- esta vez no alcanza con aterrizar, hay que carretear hasta el Hangar 5 para cerrar la entrega.",
+		"origen": COORD_AEROPARQUE,
+		"precio": 300,
+		"pasos": [
+			{"nombre": "Escala en El Palomar", "texto": "RECORRIDO DE ENTREGA\nPrimera escala: El Palomar.", "tipo": "llegar_aeropuerto", "destino": "El Palomar"},
+			{"nombre": "Escala en Ezeiza", "texto": "Segunda escala: Ezeiza.", "tipo": "llegar_aeropuerto", "destino": "Ezeiza"},
+			{"nombre": "Volver a Aeroparque y estacionar en el Hangar 5", "texto": "Última escala: volvé a Aeroparque y estacioná en el Hangar 5.", "tipo": "llegar_punto", "lat": COORD_HANGAR_5_AEROPARQUE["lat"], "lon": COORD_HANGAR_5_AEROPARQUE["lon"], "radio": 80.0},
+		],
+	},
+	# Pedido 2026-10-17 ("ahora las misiones van de hangar en hangar -- son
+	# lugares espectaculares, no solo para aterrizar, también para
+	# carretear hasta el lugar justo"): usan los hangares que fue trackeando
+	# con la tecla M en cada aeropuerto -- la flecha (ver _actualizar_
+	# marcador_destino_mision) ya apunta sola al hangar de destino.
+	{
+		"nombre": "Aeroparque → San Fernando (hangar)",
+		"descripcion": "Salís del Hangar 5 de Aeroparque con una entrega para San Fernando. Estacioná en el hangar del medio.",
+		"origen": COORD_HANGAR_5_AEROPARQUE,
+		"precio": 160,
+		"pasos": [
+			{"nombre": "Ir al Hangar 2 de San Fernando", "texto": "Destino: Hangar 2, San Fernando.", "tipo": "llegar_punto", "lat": -34.4574557225892, "lon": -58.5888192459131, "radio": 80.0},
+		],
+	},
+	{
+		"nombre": "Ezeiza → Morón (hangar)",
+		"descripcion": "Salís del Hangar 1 de Ezeiza. Hay que llevar el avión hasta el hangar de Morón, el que está al lado del Museo Nacional de Aeronáutica.",
+		"origen": {"lat": -34.8133828902489, "lon": -58.536929830955},
+		"precio": 180,
+		"pasos": [
+			{"nombre": "Ir al Hangar 1 de Morón", "texto": "Destino: Hangar 1, Morón.", "tipo": "llegar_punto", "lat": -34.6736493934052, "lon": -58.6376924863747, "radio": 80.0},
+		],
+	},
+	{
+		"nombre": "San Fernando → El Palomar (hangar)",
+		"descripcion": "Salís del Hangar 3 de San Fernando (el de la salida directa a pista) con destino El Palomar.",
+		"origen": {"lat": -34.4562481120316, "lon": -58.5861169810681},
+		"precio": 140,
+		"pasos": [
+			{"nombre": "Ir al Hangar 2 de El Palomar", "texto": "Destino: Hangar 2, El Palomar.", "tipo": "llegar_punto", "lat": -34.6134659644805, "lon": -58.604843224449, "radio": 80.0},
+		],
+	},
+	{
+		"nombre": "Ezeiza VIP → Campo de Mayo (hangar)",
+		"descripcion": "Salís del Hangar VIP de Ezeiza con un pasajero militar. Destino: Campo de Mayo, el hangar de la Torre de Control.",
+		"origen": {"lat": -34.8153439965883, "lon": -58.5389747244369},
+		"precio": 170,
+		"pasos": [
+			{"nombre": "Ir al Hangar Torre de Control de Campo de Mayo", "texto": "Destino: Hangar Torre de Control, Campo de Mayo.", "tipo": "llegar_punto", "lat": -34.5348325875828, "lon": -58.6749675029003, "radio": 80.0},
+		],
+	},
+]
+
 # Panel "Torre" (pedido 2026-09-27): muestra los 3 aeropuertos más cercanos
 # con distancia real y permite prender/apagar el ILS de cada uno por
 # separado, sin usar el interruptor global. _filas_torre se arma UNA vez en
 # _ready() con referencias a los nodos de la escena; _actualizar_panel_torre()
 # solo actualiza texto/rotación/metadata cada tanto (ver INTERVALO_TORRE).
 var _filas_torre: Array = []
+# Pedido 2026-10-17 ("encadenar viajes desde los aeropuertos cercanos, como
+# ir parando el colectivo"): precio editable por aeropuerto, guardado por
+# NOMBRE (no por índice de fila, que cambia cada refresco al reordenarse por
+# distancia) -- así el ± que toques se mantiene mientras ese aeropuerto siga
+# en la lista, en vez de volver a calcularse de cero cada 2 segundos.
+var _precios_torre_override: Dictionary = {}
+const TARIFA_TORRE_POR_KM := 0.55  # dólares por km, aproximado (pedido: "calculalo más o menos por distancia")
 # Pedido explícito 2026-09-27: activar un ILS individual desde el panel
 # Torre pisa el rumbo sugerido ("Ponete en rumbo X°"), apuntando a ESE
 # aeropuerto en vez de al plan de vuelo Origen/Destino. Se apaga solo si
@@ -455,6 +785,103 @@ var luz_estroboscopica_externa: MeshInstance3D = null
 # "luces_manual") a un archivo de texto para copiar directo a TIPOS_AVION.
 var luz_navegacion_izq_externa: MeshInstance3D = null
 var luz_navegacion_der_externa: MeshInstance3D = null
+# Pedido 2026-10-16 (A380: "una luz más grande que la otra"): si el avión trae
+# "luces_mismo_tamano", la roja y la verde se igualan cada cuadro a como se
+# ve la MÁS LEJANA (la más chica) -- ver _igualar_tamano_luces_navegacion.
+var luces_igualar_tamano: bool = false
+
+# ============================================================
+# MODO TIERRA / ATERRIZAJE (pedido 2026-10-16)
+# ============================================================
+# Estado "en tierra": el avión se apoya en las RUEDAS (no en el centro), queda
+# nivelado, gira como un auto y no se hunde ni entierra el ala. Todos los
+# valores son editables por avión desde la pestaña "Aterrizaje" (ver
+# _crear_solapa_aterrizaje) y se guardan en disco.
+const RUTA_CONFIG_ATERRIZAJE = "user://aterrizaje_aviones.cfg"
+const GRAVEDAD_REBOTE = 9.8
+const ALTURA_ARRANQUE_VUELO = 1800.0   # metros sobre el aeropuerto de origen al apretar Empezar (pedido 2026-10-22: subido de 1000 -- más altura = más tiempo para que Cesium cargue las baldosas antes de estar cerca del piso. Pendiente: algún día dejar elegir "desde la pista" para el que lo prefiera)
+var config_aterrizaje: Dictionary = {}
+var en_tierra: bool = false
+
+# Pedido 2026-10-17 ("bajar del avión, un cuadradito que camino al ras del
+# piso, y voy trackeando una ruta a mano"): en vez de crear un Node3D nuevo
+# con su propia cámara/colisión/recentrado de origen (reinventar todo lo que
+# YA funciona para el avión), se reusa este mismo nodo (el avión) como
+# "portador" -- se le esconden los mallados de avión, se le muestra un cubo
+# chico, y mientras modo_a_pie esté activo un movimiento distinto (caminar,
+# sin banco/cabeceo) lo controla en vez de la física de vuelo. Todo lo demás
+# (cámara, recentrado de origen, lat/lon, minimapa) sigue funcionando gratis
+# porque sigue siendo el mismo global_position de siempre.
+var modo_a_pie: bool = false
+var figura_a_pie: Node3D = null
+var _pose_avion_antes_de_bajar: Transform3D = Transform3D.IDENTITY
+const VELOCIDAD_A_PIE_MAXIMA := 55.56  # m/s (200 km/h, pedido explícito: "para trackear rápido", no para manejar realista)
+const ACELERACION_A_PIE := 8.0         # m/s², rampa como el avión, no instantáneo
+const FRENADO_A_PIE := 12.0            # m/s² al frenar a propósito
+const VELOCIDAD_REVERSA_A_PIE := 4.0  # m/s, marcha atrás lenta a propósito (no hace falta mantener velocidad en reversa)
+var velocidad_a_pie_actual: float = 0.0
+const VELOCIDAD_GIRO_A_PIE := 40.0    # grados/segundo (pedido 2026-10-22, "muy brusco" -- bajado de 60; con joystick analógico además se escala por cuánto empujás el stick)
+const ALTURA_FIGURA_A_PIE := 0.75     # m sobre el piso real (mitad de la altura aprox. del auto)
+var boton_bajar_subir: Button = null
+
+# Pedido 2026-10-17 ("reemplazá el cuadradito por un auto -- el de policía,
+# el más liviano de los 3 que bajé"): mismo truco de autoescalar + recentrar
+# pivote que ya usamos para el A380/los barcos (los modelos de Sketchfab
+# vienen en escalas y pivotes random, nunca "1 metro = 1 unidad" ni
+# centrados) -- ver _crear_modelo_auto más abajo.
+const MODELO_AUTO := "res://modelos_vehiculos/police_car.glb"
+const LARGO_AUTO_REAL := 5.52  # metros (pedido 2026-10-22: "agrandarlo un 20%" -- era 4.6)
+
+# Ruta trackeada a mano (pedido explícito: "prefiero ir trackeando yo, para
+# que no queden rutas falsas" -- un botón asignable marca el punto actual,
+# otro borra el último por si se aprieta de más). Se guarda en su PROPIO
+# archivo, separado de lugares_marcados.json (eso son lugares puntuales con
+# nombre; esto es una lista ordenada de puntos de un camino).
+const RUTA_TRACKEADA_ARCHIVO = "res://ruta_trackeada.json"
+var _ruta_trackeada: Array = []
+var _marcar_ruta_anterior: bool = false
+var _deshacer_ruta_anterior: bool = false
+var bloqueo_despegue: float = 0.0       # después de tocar, no se puede despegar de golpe (evita el "escupido" al aire)
+var tiempo_en_aire: float = 0.0        # segundos seguidos bien separado del piso: sin esto no cuenta como aterrizaje
+var tiempo_sin_toque: float = 0.0       # después de despegar, no se vuelve a detectar un "toque" por un rato
+var rebote_activo: bool = false
+var rebote_altura: float = 0.0
+var rebote_velocidad: float = 0.0
+var rebote_velocidad_inicial: float = 0.0
+var rebotes_restantes: int = 0
+var altura_tren_auto: float = 0.3       # medida del modelo (ver _medir_altura_tren)
+var _altura_sobre_piso_prev: float = -1.0
+# BUG REAL encontrado 2026-10-17 (diagnóstico de Pablo, confirmado por el
+# código: "frenás en el aeroparque y de golpe acelera a 150" -- 150 era su
+# velocidad mínima de VUELO configurada para ese avión, no un freno). El
+# "salto de teletransporte" de más abajo sacaba del modo tierra con un
+# solo cuadro ruidoso del rayo al piso (Aeroparque es la zona con más
+# objetos cargados a la vez -- ver feedback_cuidar_espacio_disco -- así que
+# es donde más probable es que el terreno de Cesium tiemble un cuadro).
+# Apenas eso pasaba, el freno (pensado para el piso=0 en tierra) pasaba a
+# usar el piso de VUELO (vel_minima) -- y como la velocidad real taxeando
+# es menor a eso, "frenar" empujaba la velocidad PARA ARRIBA de golpe.
+# Este contador exige que el salto dure más de un cuadro antes de creérselo.
+var _tiempo_altura_sospechosa: float = 0.0
+var cartel_aterrizaje: Label = null
+var cartel_aterrizaje_tiempo: float = 0.0
+var panel_aterrizaje_tab: Panel = null
+var boton_solapa_6: Button = null
+var panel_mision_tab: Panel = null
+var boton_solapa_8: Button = null
+var panel_destinos_tab: Panel = null
+var boton_solapa_7: Button = null
+var valores_aterrizaje_labels: Dictionary = {}
+var boton_modo_tierra: Button = null
+
+# MODO GUERRA (pedido 2026-10-16): los blancos (cuadrados rojos de los aeropuertos,
+# verdes de Capital, barcos, industria, invasores) y sus contadores solo existen
+# en modo guerra. En modo normal quedan ocultos Y SIN COLISION -- tenían
+# colisión en medio de la pista y el rayo del piso los tomaba como suelo.
+var modo_guerra: bool = false
+var boton_modo_guerra: Button = null
+var panel_modo_guerra_niveles: Panel = null
+var _tiempo_sync_guerra: float = 0.0
 var modo_editar_luces: bool = false
 var luz_arrastrada: MeshInstance3D = null
 var profundidad_arrastre_luz: float = 0.0
@@ -570,6 +997,7 @@ var _mostrar_sugerencia_ils: bool = false
 @onready var boton_siguiente_musica: Button = get_node("../HUD/PanelMusica/VBoxMusica/HBoxControlesMusica/BotonSiguienteMusica")
 @onready var boton_detener_musica: Button = get_node("../HUD/PanelMusica/VBoxMusica/BotonDetenerMusica")
 @onready var boton_cerrar_musica: Button = get_node("../HUD/PanelMusica/VBoxMusica/BotonCerrarMusica")
+@onready var boton_cerrar_musica_x: Button = get_node("../HUD/PanelMusica/BotonCerrarMusicaX")
 @onready var sonido_musica: AudioStreamPlayer = get_node("SonidoMusica")
 const CARPETAS_MUSICA = {
 	"Ambiental": "res://Música/Ambiental",
@@ -605,7 +1033,19 @@ const VOLUMEN_RADIO_DB_MINIMO = -40.0
 const VOLUMEN_RADIO_DB_MAXIMO = 0.0
 const VOLUMEN_INSTRUCCIONES_DB_MINIMO = -40.0
 const VOLUMEN_INSTRUCCIONES_DB_MAXIMO = 0.0
+const VOLUMEN_DISPARO_DB_MINIMO = -20.0
+const VOLUMEN_DISPARO_DB_MAXIMO = 10.0
+const VOLUMEN_EXPLOSION_DB_MINIMO = -25.0
+const VOLUMEN_EXPLOSION_DB_MAXIMO = 8.0
 var volumen_motor: float = 0.5  # 0..1, lo que muestra/mueve el slider
+# Volumen de efectos de armamento, separado de los demás (pedido 2026-10-07:
+# "las balas están muy bajitas y las explosiones muy altas, un slider para
+# cada uno"). Arrancan en valores distintos a 0.5 porque ya sabemos para qué
+# lado está desbalanceado cada uno por defecto.
+var volumen_disparo: float = 0.7
+var volumen_explosion: float = 0.35
+var slider_volumen_disparo: HSlider = null
+var slider_volumen_explosion: HSlider = null
 var volumen_musica: float = 0.7
 var volumen_radio: float = 0.5  # arranca más bajo (antes sonaba fijo a -12db)
 var volumen_instrucciones: float = 0.4  # pedido explícito: "está muy fuerte"
@@ -687,6 +1127,12 @@ var freno_emergencia_anterior: bool = false
 const FRENADO_GRADUAL_BASE = 0.5        # primera apretada: unidades/seg de frenado
 const FRENADO_GRADUAL_INCREMENTO = 1.0  # cada apretada extra suma esto
 const FRENADO_GRADUAL_MAXIMO = 20.0     # tope para que nunca sea instantáneo
+# Modo tierra (pedido 2026-10-16): por encima de esta velocidad un toque de B frena
+# fuerte hasta llegar acá (para bajar de 200 a 50 sin apretar 200 veces); de acá
+# para abajo B vuelve a ser fino, de a poco.
+const VEL_TIERRA_FINA = 50.0
+var _freno_rapido_tierra: bool = false
+var _tiempo_aviso_despegue: float = 0.0
 var freno_gradual_anterior: bool = false
 var intensidad_frenado_gradual: float = 0.0
 
@@ -707,6 +1153,167 @@ var tecla_reset_mapa_anterior: bool = false
 # código del ciclo día/noche).
 var tecla_vista_sin_avion_anterior: bool = false
 var vista_sin_avion_activa: bool = false
+var boton_vista_avion: Button = null
+var etiqueta_dinero: Label = null
+var etiqueta_dinero_mp: Label = null
+
+# Armamento de práctica (prototipo 2026-10-05, portado de la copia de
+# ChatGPT): mira acumulativa por HUD + blancos fijos en 5 aeropuertos.
+var armamento_anterior: bool = false
+# Pedido 2026-10-11 ("disparo 10 veces en un segundo y medio, no le da
+# tiempo a nada al barco"): cadencia de cañón del propio avión, separada
+# del "recién apretado" de armamento_anterior -- aunque el gatillo
+# dispare ediciones falsas/rápidas, no se puede disparar más seguido que
+# esto. ~3 disparos por segundo, "tipo ametralladora" como pidió Pablo.
+var tiempo_hasta_proximo_disparo_jugador: float = 0.0
+const CADENCIA_DISPARO_JUGADOR := 0.35
+var mira_hud: Control = null
+var etiqueta_vida_objetivo: Label = null
+# Pedido 2026-10-11 ("la mira arranca en el centro del avión, quiero que
+# arranque perpendicular a la nariz, un poco para arriba por defecto"): un
+# offset chico hacia arriba (Y negativo = arriba en coordenadas de
+# pantalla) en vez de Vector2.ZERO -- el jugador la sigue pudiendo mover
+# con el joystick como siempre, esto solo cambia el punto de partida.
+var mira_hud_posicion: Vector2 = Vector2(0.0, -180.0)
+var mira_feedback_tiempo: float = 0.0
+var objetivos_armamento: Array[Node3D] = []
+var sonido_disparo: AudioStreamPlayer = null
+var sonido_disparo_archivo_real: bool = false
+var sonido_explosion: AudioStreamPlayer = null
+var etiqueta_objetivo_destruido: Label = null
+var objetivos_destruidos: int = 0
+
+# Misión verde (Capital Federal) y barquitos del río -- pedido 2026-10-06,
+# prototipo aparte de los blancos de aeropuertos, con su propio contador.
+var etiqueta_mision_verde: Label = null
+var mision_verde_destruidos: int = 0
+var sonido_mision_completada: AudioStreamPlayer = null
+var objetivos_barcos: Array[Node3D] = []
+var etiqueta_barcos: Label = null
+var barcos_destruidos: int = 0
+var sonido_explosion_barco: AudioStreamPlayer = null
+var etiqueta_fuera_de_mira: Label = null
+var panel_fuera_de_mira: PanelContainer = null
+
+# Contraataque de los barcos (pedido 2026-10-11): un barco se "activa" con
+# su primer impacto (ver bloque "sigue_con_vida" en _process) y empieza a
+# tirar ráfagas de balas lentas y visibles hacia el avión, que SÍ se pueden
+# esquivar cambiando de rumbo/altura (no son misiles que persiguen). Estado
+# por barco guardado como meta ("rafaga_temporizador",
+# "rafaga_balas_restantes") para no necesitar un Timer por barco.
+var barcos_activados: Array[Node3D] = []
+const CARGA_INICIAL_ATAQUE_BARCO := 0.6  # segundos de "aviso" antes del primer disparo
+const RAFAGA_TAMANO_BARCO := 3           # cañonazos por ráfaga (pedido: que no sea un solo tiro fácil de esquivar)
+const INTERVALO_ENTRE_BALAS_RAFAGA := 0.35  # segundos entre cada bala de la misma ráfaga -- cada una reapunta a la posición ACTUAL del avión
+const ENFRIAMIENTO_ENTRE_RAFAGAS := 3.5     # segundos de pausa entre una ráfaga y la siguiente
+var velocidad_bala_barco: float = 18.0  # m/s -- ajustable en vivo con los +/- del HUD (pedido explícito, "que lo pueda ir controlando yo")
+const VELOCIDAD_BALA_BARCO_MIN := 5.0
+const VELOCIDAD_BALA_BARCO_MAX := 60.0
+const PASO_VELOCIDAD_BALA_BARCO := 5.0
+const RADIO_IMPACTO_BALA_BARCO := 8.0    # metros -- distancia a la que se considera que la bala "te dio"
+# BUG REAL encontrado 2026-10-11 (reportado: "nunca vi las balas, ni en
+# aeropuertos ni con la H"): el límite anterior era por TIEMPO (12
+# segundos), no por distancia -- con la bala lenta eso significaba un
+# alcance real de apenas ~200m. La tecla H activaba barcos a 30+ km sin que
+# nadie se diera cuenta de que la bala físicamente no podía llegar ni
+# acercarse. Cambiado a un límite por DISTANCIA RECORRIDA, independiente
+# de la velocidad (que además se puede ajustar en vivo con el HUD).
+const ALCANCE_MAXIMO_BALA_BARCO := 6000.0  # metros
+var balas_barcos: Array[Dictionary] = []  # cada entrada: {"nodo": MeshInstance3D, "direccion": Vector3, "distancia_recorrida": float}
+
+# Vida del jugador (pedido 2026-10-11, "una barrita roja de 10 -- un solo
+# tiro no me puede sacar del juego"). Por ahora solo baja; qué pasa al
+# llegar a 0 lo definimos después (Pablo todavía no lo pidió).
+var vida_jugador: int = 10
+const VIDA_INICIAL_JUGADOR := 10
+var segmentos_vida_jugador: Array[ColorRect] = []
+var etiqueta_velocidad_invasion: Label = null
+
+# INVASIÓN POR TIERRA -- boceto 2026-10-11 (idea de Pablo: "lo peor que te
+# puede pasar no es que te bajen el avión, es que te invadan"). Un barco
+# que llega a la costa sin ser hundido desembarca 5 unidades chicas que
+# caminan por tierra hacia el aeropuerto más cercano SIN tomar. 5 tiros las
+# bajan. Si una llega, el aeropuerto queda "tomado" (marrón, 40 de vida) y
+# larga 5 unidades nuevas hacia otros aeropuertos libres. Tope duro de
+# unidades vivas a la vez para que no se descontrole (reproducción sin
+# límite = riesgo real de lag/crash). Sin balas de vuelta todavía -- esto
+# es solo invasión por tierra, el jugador es la única amenaza para ellos.
+var unidades_invasion: Array[Node3D] = []
+# Pedido 2026-10-11, SEGUNDA VUELTA ("con 10 tiros no me da el tiempo -- si
+# le pego de lejos no acierto, si estoy cerca me paso de largo y tengo que
+# volver, no alcanzo a matarlo. Que sean 4, tipo semáforo: rojo, amarillo,
+# verde y el otro disparo desaparece. Que entren más cantidad, pero más
+# fáciles de bajar"): bajado de 10 a 4, compensado con más cantidad.
+const VIDA_UNIDAD_INVASION := 4
+const MAX_UNIDADES_INVASION := 60
+# Pedido 2026-10-11 ("que no las trague la tierra, que floten un poco
+# paralelo al piso, como si volaran bajito"): clearance sobre el terreno
+# real encontrado por el rayo -- antes eran 5m, casi pegadas al piso.
+const ALTURA_FLOTE_INVASION := 18.0
+# Pedido 2026-10-11 ("que tenga tamaño de camión, no de auto... hacé
+# diferentes tamaños, cambiále el color a cada uno, y yo te digo cuál va"):
+# igual que hicimos con el pitch de los barcos -- en vez de adivinar un
+# tamaño, se prueban varios a la vez y Pablo elige por color. Una vez
+# elegido, dejar UN solo tamaño/color acá y sacar la variedad.
+# Pedido 2026-10-11 ("un poquito más grandes"): +50% todos los tamaños.
+const VARIANTES_TAMANO_INVASION := [
+	{"lado": 22.0, "color": Color(1.0, 0.15, 0.1, 1.0)},   # rojo -- "auto"
+	{"lado": 45.0, "color": Color(1.0, 0.9, 0.1, 1.0)},    # amarillo -- "camión"
+	{"lado": 68.0, "color": Color(0.2, 0.9, 0.2, 1.0)},    # verde
+	{"lado": 98.0, "color": Color(0.2, 0.6, 1.0, 1.0)},    # celeste -- "cuarto de barco"
+	{"lado": 135.0, "color": Color(1.0, 0.3, 0.8, 1.0)},   # rosa -- "medio barco"
+]
+const LADO_UNIDAD_INVASION := 20.0  # mucho más chico que el cuadrado de aeropuerto (200) -- usado si no se pasa variante
+const RADIO_CAPTURA_AEROPUERTO := 250.0  # metros -- a esta distancia del aeropuerto, "llegó"
+# Longitud aproximada de la costa cerca de Aeroparque (-58.4164) -- boceto
+# de hoy, sin geometría de costa real todavía. Un barco que cruza esta
+# longitud (yendo al oeste) se considera "desembarcado".
+const LON_COSTA_DESEMBARCO := -58.40
+var velocidad_invasion: float = 4.0  # m/s -- "velocidad de los camiones", ajustable en vivo con el HUD (reemplaza al control de velocidad de bala, pausado)
+const VELOCIDAD_INVASION_MIN := 1.0
+const VELOCIDAD_INVASION_MAX := 20.0
+const PASO_VELOCIDAD_INVASION := 1.0
+
+# Pedido 2026-10-11 ("dejate de debuggear con teclas, trabajemos con el que
+# ya tenemos centrado -- el T-80, bajalo y achicalo"): el modelo 3D
+# reemplaza al cuadrado de cada unidad de invasión real, no solo en una
+# prueba aislada. OJO: la prueba de las teclas X/Z usaba un ancla de altura
+# DISTINTA (aeropuerto.global_position + 120m) -- acá se usa la fórmula de
+# siempre de _crear_unidad_invasion (rayo real al terreno + ALTURA_FLOTE_
+# INVASION), la misma que ya posiciona bien los cuadrados negros, así que
+# el "bajar 180m" de la prueba NO aplica directamente acá. Arranca con el
+# flote normal; si queda mal, se ajusta con un número real, no a ciegas.
+const MODELO_TANQUE_INVASION := {"ruta": "res://modelos_objetivos/vehiculos/t80bv.glb", "eje_largo_es_x": true}
+const LARGO_OBJETIVO_TANQUE_INVASION := 45.0
+const FACTOR_ESCALA_TANQUE_INVASION := 0.6  # "achicalo 10 veces" respecto del escala_exagerada_prueba=6.0 de la prueba
+var aeropuertos_tomados: Dictionary = {}  # nombre del aeropuerto (String) -> true
+# Pedido 2026-10-11 ("si maté a 5 y son 15, que ponga 5/15 -- quiero saber
+# los que di de baja y los que me quedan"): contadores acumulados, no solo
+# "cuántos hay vivos ahora".
+var invasores_destruidos: int = 0
+var invasores_totales_sembrados: int = 0
+# Pedido 2026-10-11 ("agregale más invasores, que a medida que los voy
+# liquidando, vayan entrando más por la costa"): refuerzos periódicos,
+# además de la siembra inicial.
+var tiempo_hasta_proximo_refuerzo: float = 30.0
+# Pedido 2026-10-11 ("prefiero que haya más invasores"): intervalo más
+# corto y tandas más grandes.
+const INTERVALO_REFUERZO_INVASION := 30.0
+const UNIDADES_POR_REFUERZO := 5
+
+# Misión Industria (pedido 2026-10-10): blancos con modelos 3D reales (no
+# cuadraditos) en la zona Quilmes-La Plata, que hace falta golpear varias
+# veces para destruir (no mueren de un solo tiro, como las fábricas/tanques
+# grandes de verdad). "vida" se guarda como meta en cada nodo.
+var objetivos_industria: Array[Node3D] = []
+var etiqueta_industria: Label = null
+var etiqueta_invasion: Label = null
+var industria_destruidos: int = 0
+# DEBUG TEMPORAL 2026-10-11 (ver tecla X): reporte de la prueba de
+# vehículos EN PANTALLA, grande, en vez de la consola de Godot -- Pablo no
+# tiene forma fácil de ver la consola mientras juega.
+var etiqueta_diagnostico_vehiculo: Label = null
+var nodos_prueba_vehiculos: Array[Node3D] = []
 @onready var boton_elegir_vuelo: Button = get_node("../HUD/BarraBotones/BotonElegirVuelo")
 
 # Modo Carrera (pedido 2026-09-21, arranque del esqueleto): perfiles de
@@ -753,6 +1360,9 @@ var vista_sin_avion_activa: bool = false
 @onready var boton_solapa_2: Button = get_node("../HUD/SolapasInferior/BotonSolapa2")
 @onready var boton_solapa_3: Button = get_node("../HUD/SolapasInferior/BotonSolapa3")
 @onready var boton_solapa_4: Button = get_node("../HUD/SolapasInferior/BotonSolapa4")
+@onready var boton_solapa_5: Button = get_node("../HUD/SolapasInferior/BotonSolapa5")
+@onready var panel_vuelo_tab: Panel = get_node("../HUD/PanelVueloTab")
+@onready var contenedor_selector_vuelo: HBoxContainer = get_node("../HUD/PanelVueloTab/VBoxVueloTab/ContenedorSelectorVuelo")
 @onready var panel_fotos_decorativas: Panel = get_node("../HUD/PanelFotosDecorativas")
 @onready var aguja_velocidad: Label = get_node("../HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaVelocidad/EsferaVelocidad/AgujaVelocidad")
 @onready var valor_velocidad_reloj: Label = get_node("../HUD/PanelFotosDecorativas/ScrollRelojes/HBoxRelojes/TarjetaVelocidad/ValorVelocidad")
@@ -784,7 +1394,7 @@ var viento_velocidad_kmh: float = 0.0
 # separada, con o sin overlay por código -- ver mundo.gd), lo más rápido y
 # confiable es bajar directo una tesela de mapa real (OpenStreetMap) como
 # imagen 2D, sin pasar por Cesium/3D Tiles para nada en este panel.
-var zoom_mapa: int = 11  # 4 niveles más alejado por defecto (pedido explícito, "el puntito se va del mapa a los pedos")
+var zoom_mapa: int = 13  # REAJUSTADO 2026-10-17 (pedido: "que no aparezca en modo calle -- cuatro zoom para arriba por defecto, y después uno lo corrige con la ruedita y donde queda, queda"): 4 niveles más alejado que el nivel "calle" (17).
 const ZOOM_MAPA_MINIMO = 3
 const ZOOM_MAPA_MAXIMO = 19
 var tile_x_mapa: int = -999999
@@ -808,6 +1418,18 @@ const INTERVALO_ZOOM_AUTOMATICO = 8.0  # bajado de 60 a 8 (pedido 2026-09-27, "q
 # vuelve solo.
 var mapa_zoom_automatico: bool = true
 var _tiempo_zoom_automatico: float = INTERVALO_ZOOM_AUTOMATICO  # "debido" ya al arrancar, para el primer ajuste rápido
+
+# Pedido 2026-10-17 ("el mapa automático no me sirvió para nada, me perdí
+# yendo a Rosario -- quiero que el mapa esté independiente [de la altura]
+# y que se pueda arrastrar con el mouse para mirar al costado, quedando
+# fijo donde se suelta, con un botón Centrar para volver al avión"): el
+# mapa ahora arranca en modo manual (ver _ready, donde se apaga
+# mapa_zoom_automatico) y tiene un "centro" propio, independiente del
+# avión, que el arrastre desplaza y que "Centrar" repone.
+var mapa_siguiendo_avion: bool = true
+var mapa_centro_lat: float = 0.0
+var mapa_centro_lon: float = 0.0
+var _arrastrando_contenido_mapa: bool = false
 
 # Misma capa que usa mundo.gd para las baldosas del mapa de calles -- la
 # cámara principal la excluye de su cull_mask para no verlas encimadas con
@@ -921,12 +1543,18 @@ const ACCIONES_JOYSTICK = [
 	["marcar_lugar", "Marcar lugar (guardar coordenada actual)"],
 	["freno_emergencia", "Freno de emergencia (baja a 200)"],
 	["freno_gradual", "Freno progresivo"],
+	["armamento", "Disparo / armamento"],
+	["mira_horizontal", "Mira horizontal"],
+	["mira_vertical", "Mira vertical"],
 	["activar_ils", "Activar/desactivar ILS"],
 	# Pedido 2026-10-01: "trackear" a mano el punto exacto donde el avión pasa
 	# por el aro del City Tour (más preciso que yo calculando una distancia a
 	# ciegas) -- reusa la fila reservada de 2026-09-26 (se mantiene el id
 	# "reservado_1" para no romper asignaciones de joystick ya guardadas).
 	["reservado_1", "Trackear checkpoint (City Tour)"],
+	# Pedido 2026-10-17 ("modo a pie" + trackeo manual de rutas).
+	["marcar_punto_ruta", "Marcar punto de ruta (modo a pie)"],
+	["deshacer_punto_ruta", "Borrar último punto de ruta"],
 ]
 var joystick_id: int = -1
 var mapeo_joystick: Dictionary = {}   # nombre_accion -> {"tipo":"boton","indice":N} o {"tipo":"eje","indice":N,"signo":1.0}
@@ -943,6 +1571,15 @@ const OFFSET_CAMARA_DISTANCIA = 8.0
 # sistema de aeropuertos/destinos de siempre.
 var objetivo_mision: Node3D = null
 var nombre_mision_actual: String = ""
+# Pedido 2026-10-17 ("activá el rumbo/las flechas para los viajes de
+# Destino Nacional, me perdí yendo a Rosario"): "objetivo_mision" es
+# justo el enganche que ya usa el sistema de guía (rumbo/flechas/
+# distancia/línea) para las misiones de helicóptero -- se reusa tal cual
+# para CUALQUIER paso "llegar_aeropuerto"/"llegar_punto" de mi esqueleto
+# de misiones nuevo, en vez de inventar un sistema de guía aparte. Esta
+# bandera indica si el "objetivo_mision" actual es de ESTE sistema (para
+# no pisar el de las misiones de helicóptero al limpiarlo).
+var objetivo_mision_de_secuencia: bool = false
 var precio_mision_actual: int = 0
 
 var destinos: Array = []
@@ -960,7 +1597,30 @@ const IMAGENES_PRESENTACION = [
 ]
 
 func _ready() -> void:
+	# REVERTIDO 2026-10-11: se había puesto "process_priority = 10" acá para
+	# forzar que el avión procese DESPUÉS que mundo.gd (hipótesis del
+	# disparo saliendo de atrás). Resultó INNECESARIO -- el nodo de mundo.gd
+	# es la RAÍZ de toda la escena y "Avion" es hijo directo de esa raíz; en
+	# Godot un padre siempre procesa su _process() ANTES que sus hijos por
+	# default, así que el orden ya era correcto sin tocar nada. Y el cambio
+	# tenía un efecto colateral real: otros scripts que dependen de la
+	# posición del avión ya actualizada ese cuadro (camara_marcadores.gd,
+	# minimapa_camara.gd, icono_avion_mapa.gd) procesaban naturalmente
+	# DESPUÉS del avión -- al forzar al avión a prioridad 10 (la más baja,
+	# corre último), esos scripts pasaron a leer la posición VIEJA del
+	# avión, causando el reporte "las luces de las alas se corren hacia
+	# adelante". Revertido. Si el disparo vuelve a salir mal, el debug
+	# print de abajo en _disparar_hacia_mira() (distancia_sospechosa) sigue
+	# activo para diagnosticar sin adivinar.
 	print("El avión arrancó bien y el script está corriendo.")
+	# Pedido 2026-10-17 ("cada vez que arranco, arranca de cero en la cuenta
+	# de dinero"): antes la plata solo persistía si entrabas a mano a la
+	# pestaña Carrera a elegir piloto -- ahora se autocarga el último perfil
+	# usado (o se crea uno nuevo la primera vez) apenas arranca el juego, sin
+	# que haga falta ir a elegirlo. La pestaña Carrera sigue funcionando
+	# igual que siempre para crear perfiles nuevos (otros jugadores) o
+	# cambiarse de piloto a mano.
+	PerfilJugador.autocargar_ultimo_perfil()
 	# Verificación pedida por Gemini 2026-10-03 (para no repetir la confusión
 	# de "probamos Mobile" cuando en realidad nunca se aplicó por un project.godot
 	# corrupto): esto lee el renderer REAL que está corriendo el motor ahora
@@ -971,7 +1631,264 @@ func _ready() -> void:
 	# ChatGPT) en vez del fondo plano de siempre -- una de las 3 imágenes al
 	# azar cada vez que arranca el juego, para no ver siempre la misma.
 	fondo_presentacion.texture = load(IMAGENES_PRESENTACION[randi() % IMAGENES_PRESENTACION.size()])
+	# Presentación limpia: la cortina se dibuja SIEMPRE por encima de todo el HUD
+	# (cartel de aterrizaje, control de velocidad de invasión, etc.).
+	cortina_de_carga.z_index = 4000
 	_crear_luces_avion_clasico()
+	_crear_mira_hud()
+	sonido_disparo = AudioStreamPlayer.new()
+	sonido_disparo.name = "SonidoDisparoPrototipo"
+	# Pedido 2026-10-07: se probó "disparo_canon.mp3" pero sonaba raro en
+	# juego (el offset de 1 segundo de inicio, abajo, estaba afinado para
+	# cannon_fire.ogg específicamente) -- vuelve a cannon_fire.ogg.
+	var ruta_disparo_real := "res://FX/Disparos/cannon_fire.ogg"
+	sonido_disparo_archivo_real = ResourceLoader.exists(ruta_disparo_real)
+	sonido_disparo.stream = load(ruta_disparo_real) if sonido_disparo_archivo_real else _generar_sonido_disparo()
+	add_child(sonido_disparo)
+	sonido_explosion = AudioStreamPlayer.new()
+	sonido_explosion.name = "SonidoExplosionObjetivo"
+	# Explosión "grande" para blancos en tierra (aeropuertos + misión verde).
+	var ruta_explosion_real := "res://FX/Explosiones/explosion_impacto.mp3"
+	sonido_explosion.stream = load(ruta_explosion_real) if ResourceLoader.exists(ruta_explosion_real) else _generar_sonido_explosion()
+	sonido_explosion.volume_db = 8.0
+	add_child(sonido_explosion)
+	sonido_explosion_barco = AudioStreamPlayer.new()
+	sonido_explosion_barco.name = "SonidoExplosionBarco"
+	# Explosión distinta, más chica, para los barcos (pedido explícito: "uno
+	# para los barcos y otro para los demás").
+	var ruta_explosion_barco := "res://FX/Explosiones/explosion_barco.mp3"
+	sonido_explosion_barco.stream = load(ruta_explosion_barco) if ResourceLoader.exists(ruta_explosion_barco) else _generar_sonido_explosion()
+	sonido_explosion_barco.volume_db = 6.0
+	add_child(sonido_explosion_barco)
+	# Pedido 2026-10-07 (segunda vez -- la primera no llegué a aplicarla):
+	# letra más chica, y ARRANCAN OCULTOS -- no tienen que verse durante la
+	# pantalla de presentación/cortina de carga. Se hacen visibles recién
+	# cuando la cortina se saca de encima (ver _process, junto a
+	# "cortina_de_carga.visible = false").
+	# Pedido 2026-10-10 ("no me gustan esos iconos tan infantiles, subilas
+	# arriba, juntas, prolijas, letra más chica, letras electrónicas
+	# verdes"): sin emojis, un solo color verde tipo display electrónico
+	# para las 4, apiladas BIEN juntas justo debajo de la barra de botones
+	# de arriba (no al lado del mapa como antes).
+	const COLOR_HUD_MISIONES := Color(0.25, 1.0, 0.45, 1.0)
+	etiqueta_objetivo_destruido = Label.new()
+	etiqueta_objetivo_destruido.name = "ObjetivoDestruidoHUD"
+	etiqueta_objetivo_destruido.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	etiqueta_objetivo_destruido.position = Vector2(-200.0, 44.0)
+	etiqueta_objetivo_destruido.size = Vector2(180.0, 20.0)
+	etiqueta_objetivo_destruido.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	etiqueta_objetivo_destruido.add_theme_font_size_override("font_size", 12)
+	etiqueta_objetivo_destruido.modulate = COLOR_HUD_MISIONES
+	etiqueta_objetivo_destruido.text = "AEROPUERTOS: 0/5"
+	etiqueta_objetivo_destruido.visible = false
+	get_node("../HUD").add_child(etiqueta_objetivo_destruido)
+	etiqueta_mision_verde = Label.new()
+	etiqueta_mision_verde.name = "MisionVerdeHUD"
+	etiqueta_mision_verde.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	etiqueta_mision_verde.position = Vector2(-200.0, 62.0)
+	etiqueta_mision_verde.size = Vector2(180.0, 20.0)
+	etiqueta_mision_verde.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	etiqueta_mision_verde.add_theme_font_size_override("font_size", 12)
+	etiqueta_mision_verde.modulate = COLOR_HUD_MISIONES
+	etiqueta_mision_verde.text = "CAPITAL: 0/10"
+	etiqueta_mision_verde.visible = false
+	get_node("../HUD").add_child(etiqueta_mision_verde)
+	etiqueta_barcos = Label.new()
+	etiqueta_barcos.name = "MisionBarcosHUD"
+	etiqueta_barcos.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	etiqueta_barcos.position = Vector2(-200.0, 80.0)
+	etiqueta_barcos.size = Vector2(180.0, 20.0)
+	etiqueta_barcos.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	etiqueta_barcos.add_theme_font_size_override("font_size", 12)
+	etiqueta_barcos.modulate = COLOR_HUD_MISIONES
+	etiqueta_barcos.text = "BARCOS: 0/%d" % BARCOS_RIO_AEROPARQUE.size()
+	etiqueta_barcos.visible = false
+	get_node("../HUD").add_child(etiqueta_barcos)
+	etiqueta_industria = Label.new()
+	etiqueta_industria.name = "MisionIndustriaHUD"
+	etiqueta_industria.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	etiqueta_industria.position = Vector2(-200.0, 98.0)
+	etiqueta_industria.size = Vector2(180.0, 20.0)
+	etiqueta_industria.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	etiqueta_industria.add_theme_font_size_override("font_size", 12)
+	etiqueta_industria.modulate = COLOR_HUD_MISIONES
+	etiqueta_industria.text = "INDUSTRIA: 0/10"
+	etiqueta_industria.visible = false
+	get_node("../HUD").add_child(etiqueta_industria)
+	# Pedido 2026-10-11 ("necesito saber cuántos invasores quedan, para
+	# rastrear si me queda alguno corriendo por ahí"): contador simple,
+	# mismo estilo que los demás, se actualiza solo en
+	# _actualizar_unidades_invasion().
+	etiqueta_invasion = Label.new()
+	etiqueta_invasion.name = "InvasionHUD"
+	etiqueta_invasion.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	etiqueta_invasion.position = Vector2(-200.0, 116.0)
+	etiqueta_invasion.size = Vector2(180.0, 20.0)
+	etiqueta_invasion.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	etiqueta_invasion.add_theme_font_size_override("font_size", 12)
+	etiqueta_invasion.modulate = Color(1.0, 0.55, 0.15, 1.0)
+	etiqueta_invasion.text = "INVASORES: 0"
+	etiqueta_invasion.visible = false
+	get_node("../HUD").add_child(etiqueta_invasion)
+
+	# DEBUG TEMPORAL 2026-10-11 (ver tecla X): reporte de la prueba de
+	# vehículos EN PANTALLA, letra grande, centrado arriba -- Pablo no tiene
+	# forma fácil de encontrar la consola de Godot mientras juega.
+	etiqueta_diagnostico_vehiculo = Label.new()
+	etiqueta_diagnostico_vehiculo.name = "DiagnosticoVehiculoHUD"
+	etiqueta_diagnostico_vehiculo.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	etiqueta_diagnostico_vehiculo.position = Vector2(0.0, 150.0)
+	etiqueta_diagnostico_vehiculo.size = Vector2(0.0, 120.0)
+	etiqueta_diagnostico_vehiculo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	etiqueta_diagnostico_vehiculo.add_theme_font_size_override("font_size", 26)
+	etiqueta_diagnostico_vehiculo.modulate = Color(1.0, 1.0, 0.2, 1.0)
+	etiqueta_diagnostico_vehiculo.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	etiqueta_diagnostico_vehiculo.add_theme_constant_override("outline_size", 6)
+	etiqueta_diagnostico_vehiculo.visible = false
+	get_node("../HUD").add_child(etiqueta_diagnostico_vehiculo)
+
+	# Pedido 2026-10-16 ("un cuadradito como el del altímetro, pero que diga
+	# cuánta RAM libre queda -- así si veo un crash puedo chequear si fue por
+	# memoria"): una caja más en la fila de instrumentos de arriba (ALT/
+	# RUMBO/VEL/DIST), mismo estilo exacto (reusa el panel de CajaAltitud en
+	# vez de armar uno nuevo, para que no se note la diferencia).
+	var caja_altitud_ref: PanelContainer = get_node("../HUD/PanelInstrumentos/CajaAltitud")
+	var caja_ram := PanelContainer.new()
+	caja_ram.name = "CajaRAM"
+	caja_ram.custom_minimum_size = Vector2(105, 58)
+	caja_ram.add_theme_stylebox_override("panel", caja_altitud_ref.get_theme_stylebox("panel"))
+	etiqueta_ram = Label.new()
+	etiqueta_ram.name = "RamLabel"
+	etiqueta_ram.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	etiqueta_ram.add_theme_constant_override("line_spacing", -4)
+	etiqueta_ram.add_theme_constant_override("outline_size", 2)
+	etiqueta_ram.add_theme_font_size_override("font_size", 15)
+	etiqueta_ram.text = "RAM\n--- MB"
+	etiqueta_ram.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	etiqueta_ram.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	caja_ram.add_child(etiqueta_ram)
+	get_node("../HUD/PanelInstrumentos").add_child(caja_ram)
+
+	# PASO 1 -- recordatorio chico y persistente del objetivo de la misión
+	# actual (pedido 2026-10-16: "que quede en un cuadradito el objetivo,
+	# por si uno se lo olvida"), mismo estilo que los contadores de arriba
+	# a la derecha (AEROPUERTOS/CAPITAL/etc).
+	etiqueta_objetivo_mision = Label.new()
+	etiqueta_objetivo_mision.name = "ObjetivoMisionHUD"
+	etiqueta_objetivo_mision.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	etiqueta_objetivo_mision.position = Vector2(-340.0, 86.0)
+	etiqueta_objetivo_mision.size = Vector2(320.0, 20.0)
+	etiqueta_objetivo_mision.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	etiqueta_objetivo_mision.add_theme_font_size_override("font_size", 13)
+	etiqueta_objetivo_mision.modulate = Color(1.0, 0.9, 0.3, 1.0)
+	etiqueta_objetivo_mision.visible = false
+	get_node("../HUD").add_child(etiqueta_objetivo_mision)
+
+	# Pedido 2026-10-11 ("una barrita roja de 10 para mi vida, y arriba en
+	# el HUD -- no en Configuración -- un más/menos para ir ajustando la
+	# velocidad de las balas de los barcos mientras pruebo"): dos controles
+	# nuevos, mismo estilo que los paneles de instrumentos de arriba.
+	var fila_vida := HBoxContainer.new()
+	fila_vida.name = "FilaVidaJugador"
+	fila_vida.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	fila_vida.position = Vector2(10.0, 100.0)
+	fila_vida.add_theme_constant_override("separation", 3)
+	for i in range(VIDA_INICIAL_JUGADOR):
+		var segmento := ColorRect.new()
+		segmento.custom_minimum_size = Vector2(16.0, 16.0)
+		segmento.color = Color(0.85, 0.12, 0.08, 1.0)
+		fila_vida.add_child(segmento)
+		segmentos_vida_jugador.append(segmento)
+	get_node("../HUD").add_child(fila_vida)
+
+	# REPROPÓSITO 2026-10-11 (pedido explícito de Pablo, "el sistema de bala
+	# es malísimo, olvidémonos por ahora... donde está la velocidad de las
+	# balas, ponés la velocidad de los camiones de invasión"): este control
+	# ya no toca velocidad_bala_barco (pausado) -- ahora mueve
+	# velocidad_invasion en vivo.
+	var fila_vel_invasion := HBoxContainer.new()
+	fila_vel_invasion.name = "FilaVelocidadInvasion"
+	fila_vel_invasion.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	fila_vel_invasion.position = Vector2(10.0, 122.0)
+	fila_vel_invasion.add_theme_constant_override("separation", 4)
+	var etiqueta_vel_titulo := Label.new()
+	etiqueta_vel_titulo.text = "Vel. invasión:"
+	etiqueta_vel_titulo.add_theme_font_size_override("font_size", 12)
+	etiqueta_vel_titulo.modulate = Color(1.0, 0.7, 0.3, 1.0)
+	fila_vel_invasion.add_child(etiqueta_vel_titulo)
+	var boton_vel_menos := Button.new()
+	boton_vel_menos.text = "－"
+	boton_vel_menos.custom_minimum_size = Vector2(22, 20)
+	boton_vel_menos.focus_mode = Control.FOCUS_NONE
+	boton_vel_menos.pressed.connect(func():
+		velocidad_invasion = max(VELOCIDAD_INVASION_MIN, velocidad_invasion - PASO_VELOCIDAD_INVASION)
+		etiqueta_velocidad_invasion.text = "%d" % int(velocidad_invasion))
+	fila_vel_invasion.add_child(boton_vel_menos)
+	etiqueta_velocidad_invasion = Label.new()
+	etiqueta_velocidad_invasion.text = "%d" % int(velocidad_invasion)
+	etiqueta_velocidad_invasion.custom_minimum_size = Vector2(28, 0)
+	etiqueta_velocidad_invasion.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	etiqueta_velocidad_invasion.add_theme_font_size_override("font_size", 12)
+	fila_vel_invasion.add_child(etiqueta_velocidad_invasion)
+	var boton_vel_mas := Button.new()
+	boton_vel_mas.text = "＋"
+	boton_vel_mas.custom_minimum_size = Vector2(22, 20)
+	boton_vel_mas.focus_mode = Control.FOCUS_NONE
+	boton_vel_mas.pressed.connect(func():
+		velocidad_invasion = min(VELOCIDAD_INVASION_MAX, velocidad_invasion + PASO_VELOCIDAD_INVASION)
+		etiqueta_velocidad_invasion.text = "%d" % int(velocidad_invasion))
+	fila_vel_invasion.add_child(boton_vel_mas)
+	get_node("../HUD").add_child(fila_vel_invasion)
+
+	# Pedido 2026-10-10 ("el cartel de fuera de alcance es gigante y
+	# antiestético, poné un recuadro negro chico como el resto de los
+	# instrumentos de arriba, letras electrónicas chiquitas"): panel chico
+	# al lado de ALT/RUMBO/VEL/DIST, mismo estilo (fondo negro, texto verde).
+	panel_fuera_de_mira = PanelContainer.new()
+	panel_fuera_de_mira.name = "PanelFueraDeMira"
+	var estilo_panel := StyleBoxFlat.new()
+	estilo_panel.bg_color = Color(0.0, 0.0, 0.0, 0.75)
+	estilo_panel.corner_radius_top_left = 6
+	estilo_panel.corner_radius_top_right = 6
+	estilo_panel.corner_radius_bottom_left = 6
+	estilo_panel.corner_radius_bottom_right = 6
+	estilo_panel.content_margin_left = 10
+	estilo_panel.content_margin_right = 10
+	estilo_panel.content_margin_top = 4
+	estilo_panel.content_margin_bottom = 4
+	panel_fuera_de_mira.add_theme_stylebox_override("panel", estilo_panel)
+	panel_fuera_de_mira.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	panel_fuera_de_mira.position = Vector2(800.0, 65.0)
+	panel_fuera_de_mira.visible = false
+	etiqueta_fuera_de_mira = Label.new()
+	etiqueta_fuera_de_mira.add_theme_font_size_override("font_size", 13)
+	etiqueta_fuera_de_mira.modulate = Color(0.25, 1.0, 0.45, 1.0)
+	etiqueta_fuera_de_mira.text = "OBJETIVO FUERA DE MIRA"
+	panel_fuera_de_mira.add_child(etiqueta_fuera_de_mira)
+	get_node("../HUD").add_child(panel_fuera_de_mira)
+	sonido_mision_completada = AudioStreamPlayer.new()
+	sonido_mision_completada.name = "SonidoMisionCompletada"
+	sonido_mision_completada.stream = _generar_sonido_mision_completada()
+	add_child(sonido_mision_completada)
+	# call_deferred: a esta altura de _ready() el nodo "mundo" (padre) puede
+	# no haber terminado el suyo todavía -- Godot llama _ready() de abajo
+	# hacia arriba, así que mundo.georeferencia (un @onready de mundo.gd)
+	# puede seguir null acá. BUG REAL encontrado 2026-10-07 ("no deja de
+	# entrar al juego, pestañea y queda en el editor"): _posicion_desde_lat_lon
+	# llamaba a georeferencia.get_ecef_x() sobre null. call_deferred espera
+	# a que termine el cuadro actual (con TODOS los _ready() ya corridos).
+	call_deferred("_crear_mision_verde")
+	call_deferred("_crear_barcos_rio")
+	call_deferred("_crear_mision_industria")
+	call_deferred("_sembrar_invasion_inicial")
+	# BUG REAL encontrado 2026-10-10 (reportado: "desaparecieron los 5
+	# cuadraditos rojos de los aeropuertos"): esta función SOLO se llamaba
+	# desde _confirmar_viaje() (al elegir un destino del menú) -- si el
+	# jugador arranca y vuela directo sin pasar por esa pantalla (como
+	# ahora, con el F/A-18E de arranque tentando a despegar ya), nunca se
+	# creaban. Los otros 3 tipos (industria/CABA/barcos) ya se creaban solos
+	# acá -- faltaba sumar este.
+	call_deferred("_crear_objetivos_armamento")
 	boton_confirmar.pressed.connect(_confirmar_viaje)
 	boton_despegar.pressed.connect(_despegar)
 	# IMPORTANTE: sin esto, un botón clickeado se queda con el FOCO de
@@ -994,12 +1911,13 @@ func _ready() -> void:
 
 	for tipo in TIPOS_AVION:
 		tipo_avion_option.add_item(tipo["nombre"])
-	# Avión por defecto al arrancar (pedido 2026-10-01): el Piper, no el
-	# avioncito clásico de siempre -- buscado por nombre, no por índice fijo,
-	# para no romperse si el orden de TIPOS_AVION cambia.
+	# Avión por defecto al arrancar (pedido 2026-10-10: "dejalo como avión
+	# principal por default cuando arranca el juego" -- el F/A-18E, no el
+	# Piper) -- buscado por nombre, no por índice fijo, para no romperse si
+	# el orden de TIPOS_AVION cambia.
 	var indice_avion_default: int = 0
 	for i in TIPOS_AVION.size():
-		if TIPOS_AVION[i]["nombre"] == "Piper PA-18 (nuevo)":
+		if TIPOS_AVION[i]["nombre"] == "F/A-18E Super Hornet (nuevo)":
 			indice_avion_default = i
 			break
 	tipo_avion_option.select(indice_avion_default)
@@ -1101,6 +2019,7 @@ func _ready() -> void:
 	boton_plata_mas.pressed.connect(func(): PerfilJugador.modificar_plata(100); _refrescar_credencial())
 
 	_cargar_sensibilidad_aviones()
+	_cargar_aterrizaje_aviones()
 	for boton in [boton_giro_menos, boton_giro_mas, boton_angulo_menos, boton_angulo_mas,
 			boton_vertical_menos, boton_vertical_mas,
 			boton_vel_minima_menos, boton_vel_minima_mas, boton_vel_maxima_menos, boton_vel_maxima_mas]:
@@ -1162,6 +2081,12 @@ func _ready() -> void:
 	boton_siguiente_musica.pressed.connect(_reproducir_siguiente_musica)
 	boton_detener_musica.pressed.connect(_detener_musica)
 	boton_cerrar_musica.pressed.connect(func(): panel_musica.visible = false)
+	# Pedido 2026-10-17 ("ponele una cruz arriba, no seas tan boludo -- el
+	# botón de abajo me quedaba tapado por el panel de instrumentos"): cruz
+	# fija arriba a la derecha del panel, afuera del VBox, así SIEMPRE está
+	# a mano sin importar cuánto crezca la lista de temas de abajo.
+	boton_cerrar_musica_x.focus_mode = Control.FOCUS_NONE
+	boton_cerrar_musica_x.pressed.connect(func(): panel_musica.visible = false)
 	sonido_musica.finished.connect(_reproducir_siguiente_musica)
 
 	_cargar_volumen_motor()
@@ -1201,6 +2126,20 @@ func _ready() -> void:
 	slider_volumen_instrucciones.focus_mode = Control.FOCUS_NONE
 	slider_volumen_instrucciones.value_changed.connect(_cambiar_volumen_instrucciones)
 	sonido_instrucciones.volume_db = lerp(VOLUMEN_INSTRUCCIONES_DB_MINIMO, VOLUMEN_INSTRUCCIONES_DB_MAXIMO, volumen_instrucciones)
+
+	# Sliders de balas/explosiones (pedido 2026-10-07) -- el panel de Sonidos
+	# no tiene estos nodos en la escena todavía, así que se arman por código
+	# y se agregan AL FINAL de la misma lista (VBoxSonidos), sin tocar ni
+	# reemplazar nada existente -- el aviso de Pablo es real: ya pasó antes
+	# que al agregar algo nuevo algo viejo "desaparecía" en estos paneles.
+	var contenedor_sonidos: VBoxContainer = get_node("../HUD/PanelSonidos/ScrollSonidos/VBoxSonidos")
+	_cargar_volumen_disparo()
+	slider_volumen_disparo = _crear_fila_slider_volumen(contenedor_sonidos, "Volumen de disparos", volumen_disparo, _cambiar_volumen_disparo)
+	sonido_disparo.volume_db = lerp(VOLUMEN_DISPARO_DB_MINIMO, VOLUMEN_DISPARO_DB_MAXIMO, volumen_disparo)
+	_cargar_volumen_explosion()
+	slider_volumen_explosion = _crear_fila_slider_volumen(contenedor_sonidos, "Volumen de explosiones", volumen_explosion, _cambiar_volumen_explosion)
+	sonido_explosion.volume_db = lerp(VOLUMEN_EXPLOSION_DB_MINIMO, VOLUMEN_EXPLOSION_DB_MAXIMO, volumen_explosion)
+	sonido_explosion_barco.volume_db = lerp(VOLUMEN_EXPLOSION_DB_MINIMO, VOLUMEN_EXPLOSION_DB_MAXIMO, volumen_explosion)
 
 	boton_guardar_lugar.focus_mode = Control.FOCUS_NONE
 	boton_cancelar_lugar.focus_mode = Control.FOCUS_NONE
@@ -1248,18 +2187,201 @@ func _ready() -> void:
 	boton_solapa_2.focus_mode = Control.FOCUS_NONE
 	boton_solapa_3.focus_mode = Control.FOCUS_NONE
 	boton_solapa_4.focus_mode = Control.FOCUS_NONE
+	boton_solapa_5.focus_mode = Control.FOCUS_NONE
 	boton_solapa_1.pressed.connect(func(): _mostrar_solapa_inferior(1))
 	boton_solapa_2.pressed.connect(func(): _mostrar_solapa_inferior(2))
 	boton_solapa_3.pressed.connect(func(): _mostrar_solapa_inferior(3))
 	boton_solapa_4.pressed.connect(func(): _mostrar_solapa_inferior(4))
+	boton_solapa_5.pressed.connect(func(): _mostrar_solapa_inferior(5))
+	# Pestaña nueva "Aterrizaje" + cartel de aterrizaje (pedido 2026-10-16).
+	_crear_solapa_aterrizaje()
+	_crear_cartel_aterrizaje()
+	_crear_boton_modo_guerra()
+	_crear_solapa_mision()
+	_crear_solapa_destinos()
+
+	# SEGUNDA VUELTA 2026-10-17 ("en vez del símbolo choto de pesos, poné el
+	# ícono de Banco Nación y al lado el número en dólares -- y un segundo
+	# cuadradito con el ícono de Mercado Pago, arranca en cero, el puente
+	# para transferir lo hacemos después"): dos cajitas chicas, ícono real +
+	# número estilo electrónico (mismos logos que ya tenés en la app de
+	# gastos, reusados tal cual). Banco Nación = la plata de las misiones
+	# (PerfilJugador.plata); Mercado Pago = pozo aparte, todavía sin
+	# conexión entre los dos.
+	# TERCERA VUELTA 2026-10-17 (pedido: "la caja de Banco Nación, del mismo
+	# ancho que Mercado Pago, con botón más/menos -- perdí 420 pesos, así me
+	# los repongo yo mismo"): se ensancha para que entren los ▼▲ (ver
+	# parámetro nuevo con_editar de _crear_caja_dinero).
+	var caja_banco_nacion := _crear_caja_dinero("res://iconos_dinero/banco-nacion.png", -240.0, -104.0, true)
+	etiqueta_dinero = caja_banco_nacion
+	var caja_mercado_pago := _crear_caja_dinero("res://iconos_dinero/mercado-pago.png", -384.0, -248.0)
+	etiqueta_dinero_mp = caja_mercado_pago
+	_actualizar_etiqueta_dinero()
+
+	# CUARTA VUELTA 2026-10-17 (reportado: "el botón 'vista avión' de arriba
+	# tapa unos botones que hay atrás -- dejá solo el icono del ojo, al lado
+	# de Banco Nación"): se saca del renglón de arriba (compartido con la
+	# cruz de cerrar/el reloj, de ahí el choque) y se lo deja chiquito, solo
+	# el ícono, en el mismo renglón que las cajitas de dinero.
+	boton_vista_avion = Button.new()
+	boton_vista_avion.text = "👁"
+	boton_vista_avion.anchors_preset = 1
+	boton_vista_avion.anchor_left = 1.0
+	boton_vista_avion.anchor_right = 1.0
+	boton_vista_avion.offset_left = -100.0
+	boton_vista_avion.offset_top = 32.0
+	boton_vista_avion.offset_right = -72.0
+	boton_vista_avion.offset_bottom = 54.0
+	boton_vista_avion.grow_horizontal = 0
+	boton_vista_avion.add_theme_font_size_override("font_size", 13)
+	boton_vista_avion.focus_mode = Control.FOCUS_NONE
+	boton_vista_avion.tooltip_text = "Oculta o muestra el dibujo del avión (útil para fotos/aterrizajes). Mismo efecto que la tecla V."
+	boton_vista_avion.pressed.connect(_alternar_vista_sin_avion)
+	get_node("../HUD").add_child(boton_vista_avion)
+
+	# Pedido 2026-10-17 ("bajar del avión" + cuadradito + trackeo de rutas a
+	# pie): mismo renglón que el ojo/las cajas de dinero, más a la izquierda
+	# (texto más largo). _actualizar_boton_bajar_subir (llamada cada cuadro)
+	# decide cuándo mostrarlo y qué dice.
+	boton_bajar_subir = Button.new()
+	boton_bajar_subir.text = "🚶 Bajar del avión"
+	boton_bajar_subir.visible = false
+	boton_bajar_subir.anchors_preset = 1
+	boton_bajar_subir.anchor_left = 1.0
+	boton_bajar_subir.anchor_right = 1.0
+	# Mismo renglón que las cajitas de dinero/el ojo (offset_top 32-54), NO
+	# el renglón de arriba (2-24, compartido con la cruz/reloj -- ahí fue
+	# donde "vista avión" tapó algo hace poco). Se pone a la IZQUIERDA de
+	# Mercado Pago (que arranca en -384), con margen de sobra.
+	boton_bajar_subir.offset_left = -560.0
+	boton_bajar_subir.offset_top = 32.0
+	boton_bajar_subir.offset_right = -388.0
+	boton_bajar_subir.offset_bottom = 54.0
+	boton_bajar_subir.grow_horizontal = 0
+	boton_bajar_subir.add_theme_font_size_override("font_size", 11)
+	boton_bajar_subir.focus_mode = Control.FOCUS_NONE
+	boton_bajar_subir.pressed.connect(func():
+		if modo_a_pie:
+			_subir_al_avion()
+		else:
+			_bajar_del_avion())
+	get_node("../HUD").add_child(boton_bajar_subir)
+	_cargar_ruta_trackeada()
+
+	# Pedido 2026-10-22 ("no tengo F1/F2/F3 cómodas ni en el teclado
+	# Bluetooth ni en la notebook, ponelo en un botón arriba a la vista"):
+	# alterna entre el terreno fotorrealista de Google y el modo mapa plano
+	# (terreno + foto aérea Bing, sin edificios 3D) -- mismo botón que antes
+	# pensábamos en F9, ahora con un clic nomás.
+	var boton_mapa_plano := Button.new()
+	boton_mapa_plano.text = "🗺️ Mapa: Plano" if mundo.modo_mapa_plano else "🗺️ Mapa: Google"
+	boton_mapa_plano.anchors_preset = 1
+	boton_mapa_plano.anchor_left = 1.0
+	boton_mapa_plano.anchor_right = 1.0
+	# BUG REAL encontrado 2026-10-22 (reportado: "pisa el botón de RAM"): a
+	# -736 se salía del ancho de pantalla reservado para la fila de botones
+	# de la derecha y caía encima del panel de instrumentos (que vive pegado
+	# a la izquierda). En vez de seguir sumando columnas hacia la izquierda,
+	# va en un renglón PROPIO, debajo de "Bajar del avión" -- mismo rango
+	# horizontal ya probado seguro, nunca se va a cruzar con nada.
+	boton_mapa_plano.offset_left = -560.0
+	boton_mapa_plano.offset_top = 56.0
+	boton_mapa_plano.offset_right = -388.0
+	boton_mapa_plano.offset_bottom = 78.0
+	boton_mapa_plano.grow_horizontal = 0
+	boton_mapa_plano.add_theme_font_size_override("font_size", 11)
+	boton_mapa_plano.focus_mode = Control.FOCUS_NONE
+	boton_mapa_plano.tooltip_text = "Alterna entre el terreno fotorrealista de Google (con edificios 3D) y el mapa plano liviano (terreno + foto aérea Bing, sin edificios)."
+	boton_mapa_plano.pressed.connect(func():
+		mundo.modo_mapa_plano = not mundo.modo_mapa_plano
+		mundo._aplicar_modo_mapa(mundo.modo_mapa_plano)
+		boton_mapa_plano.text = "🗺️ Mapa: Plano" if mundo.modo_mapa_plano else "🗺️ Mapa: Google")
+	get_node("../HUD").add_child(boton_mapa_plano)
+	# Pedido 2026-10-11 ("ese cuadro de diálogo flotante nació mal parido,
+	# se ve horrible -- hacé una pestaña nueva abajo"). SEGUNDA VUELTA
+	# (pedido: "lo trasplantaste con el error puesto -- tenés todo el ancho
+	# del panel, no uses scroll, hacelo en fila"): en vez de mover el VBox
+	# entero (vertical, pensado para una ventana angosta), se reparenta
+	# CADA control individual -- misma instancia, misma lógica ya
+	# conectada -- a una fila horizontal, cada uno con su etiqueta arriba.
+	# "LabelTitulo" (el título viejo del popup) queda oculto -- ya hay uno
+	# nuevo arriba de toda la pestaña.
+	var vbox_viejo: VBoxContainer = selector_vuelo.get_node("VBox")
+	vbox_viejo.get_node("LabelTitulo").visible = false
+	var pares_campo := [
+		["LabelAvion", "TipoAvionOption"],
+		["LabelDesde", "OrigenOption"],
+		["LabelHasta", "DestinoOption"],
+	]
+	for par in pares_campo:
+		var etiqueta: Label = vbox_viejo.get_node(par[0])
+		var control: Control = vbox_viejo.get_node(par[1])
+		vbox_viejo.remove_child(etiqueta)
+		vbox_viejo.remove_child(control)
+		var columna := VBoxContainer.new()
+		columna.add_theme_constant_override("separation", 2)
+		columna.add_child(etiqueta)
+		columna.add_child(control)
+		contenedor_selector_vuelo.add_child(columna)
+	# Checkbox y botón van sueltos, sin etiqueta arriba (ya se explican solos).
+	for nombre_suelto in ["CheckVueloLibre", "BotonConfirmar"]:
+		var nodo: Control = vbox_viejo.get_node(nombre_suelto)
+		vbox_viejo.remove_child(nodo)
+		nodo.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		contenedor_selector_vuelo.add_child(nodo)
+	# OJO: no se hace queue_free() de "selector_vuelo" ni de "vbox_viejo" --
+	# otras partes del código todavía tocan "selector_vuelo.visible" más
+	# adelante (al confirmar vuelo, etc.); tocar esa propiedad en una
+	# instancia ya liberada tira error. Quedan vivos, vacíos y ocultos --
+	# inofensivos.
+	selector_vuelo.visible = false
+	boton_elegir_vuelo.visible = false
+	# Pedido 2026-10-11 ("el destino que sea predeterminado vuelo libre,
+	# ahora no arreglemos ese desplegable, probemos aviones"): tildado y
+	# apagado a la vista para que coincida con lo que realmente hace
+	# _confirmar_viaje() ahora mismo (modo_libre forzado).
+	check_vuelo_libre.button_pressed = true
+	destino_option.disabled = true
 	_mostrar_solapa_inferior(1)
 	boton_mapa_auto.focus_mode = Control.FOCUS_NONE
 	boton_mapa_auto.pressed.connect(func():
 		mapa_zoom_automatico = not mapa_zoom_automatico
 		boton_mapa_auto.text = "🔍 Zoom: Auto" if mapa_zoom_automatico else "🔍 Zoom: Manual"
 		_tiempo_zoom_automatico = INTERVALO_ZOOM_AUTOMATICO)
+	# Pedido 2026-10-17: arranca en Manual (el automático "nunca funcionó" --
+	# queda a un toque de distancia con el mismo botón de siempre).
+	mapa_zoom_automatico = false
+	boton_mapa_auto.text = "🔍 Zoom: Manual"
+
+	# Botón "Centrar" (pedido 2026-10-17, "si me pierdo arrastrando el mapa,
+	# aprieto Centrar y me aparece con el puntito donde está el avión") --
+	# mismo rincón que BotonTransparenciaMapa pero del otro lado, deja libre
+	# la esquina inferior derecha (ahí vive AsaMapa, el tirador de resize).
+	var boton_centrar_mapa := Button.new()
+	boton_centrar_mapa.text = "📍 Centrar"
+	boton_centrar_mapa.anchors_preset = 3
+	boton_centrar_mapa.anchor_left = 1.0
+	boton_centrar_mapa.anchor_top = 1.0
+	boton_centrar_mapa.anchor_right = 1.0
+	boton_centrar_mapa.anchor_bottom = 1.0
+	boton_centrar_mapa.offset_left = -72.0
+	boton_centrar_mapa.offset_top = -15.0
+	boton_centrar_mapa.offset_right = -10.0
+	boton_centrar_mapa.offset_bottom = -1.0
+	boton_centrar_mapa.grow_horizontal = 0
+	boton_centrar_mapa.grow_vertical = 0
+	boton_centrar_mapa.add_theme_font_size_override("font_size", 9)
+	boton_centrar_mapa.focus_mode = Control.FOCUS_NONE
+	boton_centrar_mapa.tooltip_text = "Vuelve a centrar el mapa en la posición actual del avión (por si arrastraste el mapa y te perdiste)."
+	boton_centrar_mapa.pressed.connect(func():
+		mapa_siguiendo_avion = true
+		_arrastrando_contenido_mapa = false
+		tile_x_mapa = -999999
+		acumulador_mapa = 999.0)
+	mapa_rect.add_child(boton_centrar_mapa)
 
 	for i in range(1, 7):
+		var tarjeta: VBoxContainer = get_node("../HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre%d" % i)
 		var fila := {
 			"flecha": get_node("../HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre%d/FlechaTorre%d" % [i, i]),
 			"nombre": get_node("../HUD/PanelTorre/VBoxTorre/HBoxTorre/TarjetaTorre%d/NombreTorre%d" % [i, i]),
@@ -1269,6 +2391,56 @@ func _ready() -> void:
 		fila["boton"].focus_mode = Control.FOCUS_NONE
 		fila["boton"].disabled = true
 		fila["boton"].pressed.connect(_alternar_ils_torre.bind(_filas_torre.size()))
+
+		# Pedido 2026-10-17 ("encadenar viajes -- en cada aeropuerto cercano
+		# un precio en verde con más/menos y un botón Ir, como ir parando el
+		# colectivo"): se agregan a mano (no están en la escena) debajo del
+		# botón de ILS de siempre, en la MISMA tarjeta -- ver _actualizar_
+		# panel_torre más abajo, que llena estos controles cada refresco.
+		# BUG REAL encontrado 2026-10-17 (reportado: "no aparece el nombre
+		# del aeropuerto, solo distancia/precio/Ir"): NombreTorreN es el
+		# ÚNICO control de la columna con size_flags_vertical=EXPAND -- al
+		# agregarle 2 filas fijas más (precio y Ir, cada una en su propia
+		# fila), no quedaba espacio sobrante para repartir y el nombre se
+		# achicaba a 0 de alto. Ahora precio + ▼▲ + Ir van TODOS en una sola
+		# fila (una fila menos de altura fija) + se le puso un alto mínimo
+		# a NombreTorreN en la escena, así nunca más puede desaparecer.
+		var fila_precio := HBoxContainer.new()
+		fila_precio.add_theme_constant_override("separation", 2)
+		var boton_menos_torre := Button.new()
+		boton_menos_torre.text = "▼"
+		boton_menos_torre.custom_minimum_size = Vector2(14, 18)
+		boton_menos_torre.add_theme_font_size_override("font_size", 8)
+		boton_menos_torre.focus_mode = Control.FOCUS_NONE
+		boton_menos_torre.pressed.connect(_ajustar_precio_torre.bind(_filas_torre.size(), -25))
+		fila_precio.add_child(boton_menos_torre)
+		var etiqueta_precio_torre := Label.new()
+		etiqueta_precio_torre.text = "$0"
+		etiqueta_precio_torre.add_theme_font_size_override("font_size", 9)
+		etiqueta_precio_torre.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
+		etiqueta_precio_torre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		etiqueta_precio_torre.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		etiqueta_precio_torre.clip_text = true
+		fila_precio.add_child(etiqueta_precio_torre)
+		var boton_mas_torre := Button.new()
+		boton_mas_torre.text = "▲"
+		boton_mas_torre.custom_minimum_size = Vector2(14, 18)
+		boton_mas_torre.add_theme_font_size_override("font_size", 8)
+		boton_mas_torre.focus_mode = Control.FOCUS_NONE
+		boton_mas_torre.pressed.connect(_ajustar_precio_torre.bind(_filas_torre.size(), 25))
+		fila_precio.add_child(boton_mas_torre)
+		var boton_ir_torre := Button.new()
+		boton_ir_torre.text = "Ir"
+		boton_ir_torre.custom_minimum_size = Vector2(22, 18)
+		boton_ir_torre.add_theme_font_size_override("font_size", 9)
+		boton_ir_torre.focus_mode = Control.FOCUS_NONE
+		boton_ir_torre.disabled = true
+		boton_ir_torre.pressed.connect(_ir_a_aeropuerto_torre.bind(_filas_torre.size()))
+		fila_precio.add_child(boton_ir_torre)
+		tarjeta.add_child(fila_precio)
+
+		fila["etiqueta_precio"] = etiqueta_precio_torre
+		fila["boton_ir"] = boton_ir_torre
 		_filas_torre.append(fila)
 	asa_mapa.gui_input.connect(_asa_mapa_gui_input)
 	asa_mapa_sup_izq.gui_input.connect(_asa_mapa_sup_izq_gui_input)
@@ -1533,6 +2705,69 @@ func _input(event: InputEvent) -> void:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 		return
 
+	# DEBUG TEMPORAL 2026-10-11 (diagnóstico "se ve la luz, no se ve el
+	# casco" de los barcos, sugerido por Gemini) -- K imprime en la consola
+	# de Godot el estado real del barco más cercano (posición, visibilidad,
+	# AABB de cada malla); J apaga/prende el terreno de Cesium para ver si
+	# el casco estaba enterrado bajo la malla del tileset. Teclas de letra,
+	# no de función (el teclado de Pablo no tiene F9/F10/etc). Sacar los dos
+	# bloques cuando el problema de los barcos quede resuelto.
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_K:
+		_diagnosticar_barco_mas_cercano()
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_J:
+		if mundo and mundo.tileset:
+			mundo.tileset.visible = not mundo.tileset.visible
+			print("🌍 Cesium3DTileset visible = ", mundo.tileset.visible)
+		return
+	# DEBUG TEMPORAL 2026-10-11 (pedido de Pablo: "prefiero que actives unos
+	# cuantos barcos lejanos, para ver si llegan las balas, sin tener que
+	# acertarle primero"): H activa el contraataque de los 3 barcos de la
+	# flota real MÁS LEJANOS al avión, sin gastarles vida ni necesitar
+	# impactarlos -- así se puede ver si las balas realmente salen y llegan,
+	# con tiempo de reacción de sobra. Sacar cuando quede confirmado.
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_H:
+		_activar_contraataque_de_prueba()
+		return
+	# DEBUG TEMPORAL 2026-10-11 (boceto de invasión): los barcos reales
+	# tardan ~50 minutos en llegar solos a la costa a su velocidad normal
+	# -- G fuerza el desembarco del barco más cercano al avión AHORA MISMO,
+	# para probar el sistema de invasión sin esperar. Sacar cuando el
+	# desembarco por tiempo real ya esté probado y ajustado.
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_G:
+		_forzar_desembarco_de_prueba()
+		return
+	# DEBUG TEMPORAL 2026-10-11 (reportado: "el A380 sigue invisible aunque
+	# ya lo achiqué" -- segunda vez que pasa, así que en vez de seguir
+	# adivinando un número de escala, P imprime en consola el estado REAL
+	# del modelo que está puesto ahora mismo: su AABB (¿está centrado en el
+	# pivote, o lejos, como nos pasó con el aquitaine?), si Godot lo
+	# considera visible, y dónde está la cámara respecto a él. Mismo
+	# método que usamos para los barcos.
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_P:
+		_diagnosticar_modelo_avion_actual()
+		return
+	# TERCERA VUELTA 2026-10-11 (reportado: "aprieto X y van rotando entre
+	# distintos, ninguno queda derecho -- no me compliques con tantas
+	# teclas"): UNA sola tecla, UN tanque y UN Jaguar siempre en el MISMO
+	# lugar fijo en Aeroparque, mirando siempre para el mismo lado (ver
+	# _prueba_vehiculos_fija) -- apretarla de nuevo solo actualiza esos
+	# mismos dos vehículos con los valores de escala/roll actuales, nunca
+	# elige otros. El reporte de altura aparece en letras grandes arriba de
+	# la pantalla, no hace falta buscar la consola.
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_X:
+		_prueba_vehiculos_fija()
+		return
+	# BUG REAL encontrado 2026-10-17 (reportado: "estoy haciendo una misión
+	# civil y de repente aparece 'hundir barcos', nunca me deja terminar la
+	# mía" -- causa real: las teclas Q y 1, de cuando recién armamos el
+	# esqueleto de misiones, seguían activas. Si se tocaban sin querer
+	# mientras volaba, pisaban silenciosamente la misión en curso -- el
+	# cartel se veía solo 3.5s y desaparecía, pero el estado interno de la
+	# misión YA había sido reemplazado para siempre, aunque pareciera que
+	# "no pasó nada"). Ya existe la pestaña "Misión" con botones para todo
+	# esto, así que estas teclas de prueba no hacen más falta -- sacadas.
+
 	# Agrandar/achicar el minimapa o el panel de mapa arrastrando su esquina
 	# (pedido explícito, "como en CorelDraw"). El minimapa queda pegado
 	# abajo a la derecha (crece para arriba/izquierda); el mapa de calles
@@ -1555,6 +2790,29 @@ func _input(event: InputEvent) -> void:
 		_modo_resize_mapa = ModoResizeMapa.NINGUNO
 	if _arrastrando_mover_mapa and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		_arrastrando_mover_mapa = false
+	if _arrastrando_contenido_mapa and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		_arrastrando_contenido_mapa = false
+
+	if _arrastrando_contenido_mapa:
+		if event is InputEventMouseMotion:
+			# Arrastre del contenido (no del panel): desplaza el "centro"
+			# propio del mapa en grados, convirtiendo el movimiento en
+			# píxeles a fracción de tesela con el zoom actual -- mismas
+			# fórmulas slippy-map que usa _actualizar_mapa_calles, pero
+			# invertidas para la latitud (Mercator no es lineal en Y).
+			var n: float = pow(2.0, zoom_mapa)
+			mapa_centro_lon -= (event.relative.x / mapa_rect.size.x) * (360.0 / n)
+			var lat_rad: float = deg_to_rad(mapa_centro_lat)
+			var y_exacto: float = (1.0 - log(tan(lat_rad) + 1.0 / cos(lat_rad)) / PI) / 2.0 * n
+			y_exacto -= event.relative.y / mapa_rect.size.y
+			var y_frac: float = y_exacto / n
+			mapa_centro_lat = rad_to_deg(atan(sinh(PI * (1.0 - 2.0 * y_frac))))
+			tile_x_mapa = -999999  # fuerza a re-evaluar qué tesela pedir ya mismo
+			acumulador_mapa = 999.0
+			return
+		elif event is InputEventMouseButton and not event.pressed:
+			_arrastrando_contenido_mapa = false
+			return
 
 	if _arrastrando_minimapa:
 		if event is InputEventMouseMotion:
@@ -1611,6 +2869,11 @@ func _input(event: InputEvent) -> void:
 	if esperando_asignacion == "":
 		return
 	if event is InputEventJoypadButton and event.pressed:
+		if esperando_asignacion == "mira_horizontal" or esperando_asignacion == "mira_vertical":
+			cartel_central.text = "La mira necesita un eje del joystick"
+			cartel_central.visible = true
+			get_tree().create_timer(1.5).timeout.connect(func(): cartel_central.visible = false)
+			return
 		mapeo_joystick[esperando_asignacion] = {"tipo": "boton", "indice": event.button_index}
 		esperando_asignacion = ""
 		_guardar_mapeo_joystick()
@@ -1738,13 +3001,11 @@ func _seleccionar_tema_musica(indice: int) -> void:
 	indice_musica = indice
 	_reproducir_siguiente_musica()
 
+const TAMANO_MAXIMO_TEMA_MUSICA := 100 * 1024 * 1024  # 100MB -- ningún tema dura tanto; si pesa más, algo anda mal con el archivo
+
 func _reproducir_siguiente_musica() -> void:
 	if playlist_musica.is_empty():
 		return
-	if indice_musica >= playlist_musica.size():
-		indice_musica = 0
-	var ruta: String = playlist_musica[indice_musica]
-	indice_musica += 1
 	# BUG REAL encontrado 2026-09-27 (reportado: "agregué temas míos a la
 	# carpeta y no suenan, los viejos tenían un archivito de 1kb al lado que
 	# los nuevos no tienen"): load(ruta) pasa por el sistema de import de
@@ -1755,19 +3016,34 @@ func _reproducir_siguiente_musica() -> void:
 	# AudioStreamMP3 directamente evita el sistema de import por completo --
 	# cualquier mp3 que se copie a la carpeta suena al toque, sin depender
 	# de que el editor lo haya "notado" antes.
-	var bytes: PackedByteArray = FileAccess.get_file_as_bytes(ruta)
-	var stream: AudioStream
-	if bytes.is_empty():
-		stream = null
-	else:
+	#
+	# GUARDIA 2026-10-17 (reportado: "le puse música y se cerró el
+	# programa"): un archivo vacío, corrupto, o demasiado pesado para la poca
+	# RAM de esta PC puede tirar abajo el decodificador de audio del motor
+	# ENTERO, no solo esta función -- en vez de arriesgarse a abrir ESE
+	# archivo, se lo descarta por tamaño antes de tocarlo y se sigue de largo
+	# al próximo tema de la lista (probamos como máximo toda la lista una
+	# vez, para no colgarse en bucle si todos fallan).
+	var intentos: int = 0
+	while intentos < playlist_musica.size():
+		if indice_musica >= playlist_musica.size():
+			indice_musica = 0
+		var ruta: String = playlist_musica[indice_musica]
+		indice_musica += 1
+		intentos += 1
+		var bytes: PackedByteArray = FileAccess.get_file_as_bytes(ruta)
+		if bytes.size() < 100 or bytes.size() > TAMANO_MAXIMO_TEMA_MUSICA:
+			push_warning("Tema descartado (vacío/corrupto/demasiado pesado): %s" % ruta)
+			continue
 		var mp3 := AudioStreamMP3.new()
 		mp3.data = bytes
-		stream = mp3
-	sonido_musica.stream = stream
-	sonido_musica.stream_paused = false
-	sonido_musica.play()
-	boton_pausa_musica.text = "⏸ Pausa"
-	label_estado_musica.text = "%s: %s" % [genero_musica_actual, ruta.get_file().trim_suffix(".mp3")]
+		sonido_musica.stream = mp3
+		sonido_musica.stream_paused = false
+		sonido_musica.play()
+		boton_pausa_musica.text = "⏸ Pausa"
+		label_estado_musica.text = "%s: %s" % [genero_musica_actual, ruta.get_file().trim_suffix(".mp3")]
+		return
+	label_estado_musica.text = "%s: ningún tema de la lista se pudo reproducir" % genero_musica_actual
 
 # Retrocede UN tema (pedido 2026-09-21, "por si te gustó y querés
 # repetir"). _reproducir_siguiente_musica() ya deja indice_musica apuntando
@@ -2180,6 +3456,72 @@ func _cargar_volumen_instrucciones() -> void:
 		return
 	volumen_instrucciones = cfg.get_value("audio", "volumen_instrucciones", volumen_instrucciones)
 
+# Arma una fila "Label + HSlider" por código, igual que las filas de
+# volumen que ya existen en la escena (motor/música/radio/instrucciones),
+# y la agrega al final del contenedor sin tocar nada de lo que ya había.
+# Cartel + fanfarria al completar CUALQUIERA de las 3 misiones (pedido
+# 2026-10-07: "vos se la pusiste nada más que a la de CABA, pero que las
+# tres tengan"). Compartido para no repetir el mismo bloque tres veces.
+func _festejar_mision_completada() -> void:
+	cartel_central.text = "🎉 MISIÓN COMPLETADA"
+	cartel_central.visible = true
+	get_tree().create_timer(3.0).timeout.connect(func(): cartel_central.visible = false)
+	if sonido_mision_completada:
+		sonido_mision_completada.play()
+
+func _crear_fila_slider_volumen(contenedor: VBoxContainer, titulo: String, valor_inicial: float, al_cambiar: Callable) -> HSlider:
+	var fila := HBoxContainer.new()
+	var etiqueta := Label.new()
+	etiqueta.text = titulo
+	etiqueta.custom_minimum_size = Vector2(220, 0)
+	fila.add_child(etiqueta)
+	var slider := HSlider.new()
+	slider.min_value = 0.0
+	slider.max_value = 1.0
+	slider.step = 0.01
+	slider.value = valor_inicial
+	slider.custom_minimum_size = Vector2(160, 0)
+	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	slider.focus_mode = Control.FOCUS_NONE
+	fila.add_child(slider)
+	contenedor.add_child(fila)
+	slider.value_changed.connect(al_cambiar)
+	return slider
+
+func _cambiar_volumen_disparo(valor: float) -> void:
+	volumen_disparo = valor
+	if sonido_disparo:
+		sonido_disparo.volume_db = lerp(VOLUMEN_DISPARO_DB_MINIMO, VOLUMEN_DISPARO_DB_MAXIMO, volumen_disparo)
+	var cfg = ConfigFile.new()
+	cfg.load(RUTA_CONFIG_AUDIO)
+	cfg.set_value("audio", "volumen_disparo", volumen_disparo)
+	cfg.save(RUTA_CONFIG_AUDIO)
+
+func _cargar_volumen_disparo() -> void:
+	var cfg = ConfigFile.new()
+	if cfg.load(RUTA_CONFIG_AUDIO) != OK:
+		return
+	volumen_disparo = cfg.get_value("audio", "volumen_disparo", volumen_disparo)
+
+func _cambiar_volumen_explosion(valor: float) -> void:
+	volumen_explosion = valor
+	# Un solo slider controla las dos explosiones (tierra y barco) -- pedido
+	# "discriminado por balas y explosiones", dos categorías, no tres.
+	if sonido_explosion:
+		sonido_explosion.volume_db = lerp(VOLUMEN_EXPLOSION_DB_MINIMO, VOLUMEN_EXPLOSION_DB_MAXIMO, volumen_explosion)
+	if sonido_explosion_barco:
+		sonido_explosion_barco.volume_db = lerp(VOLUMEN_EXPLOSION_DB_MINIMO, VOLUMEN_EXPLOSION_DB_MAXIMO, volumen_explosion)
+	var cfg = ConfigFile.new()
+	cfg.load(RUTA_CONFIG_AUDIO)
+	cfg.set_value("audio", "volumen_explosion", volumen_explosion)
+	cfg.save(RUTA_CONFIG_AUDIO)
+
+func _cargar_volumen_explosion() -> void:
+	var cfg = ConfigFile.new()
+	if cfg.load(RUTA_CONFIG_AUDIO) != OK:
+		return
+	volumen_explosion = cfg.get_value("audio", "volumen_explosion", volumen_explosion)
+
 # Carga el loop que corresponde a la familia de avión (hélice/jet/helicóptero)
 # y lo deja sonando -- se llama al arrancar y cada vez que se cambia de avión
 # en el selector de vuelo.
@@ -2210,6 +3552,96 @@ func _joystick_activo(nombre_accion: String) -> bool:
 		return Input.is_joy_button_pressed(joystick_id, m["indice"])
 	var valor = Input.get_joy_axis(joystick_id, m["indice"])
 	return valor * m["signo"] > DEADZONE_EJE_JOYSTICK
+
+func _joystick_eje(nombre_accion: String) -> float:
+	if joystick_id < 0 or not mapeo_joystick.has(nombre_accion):
+		return 0.0
+	var m = mapeo_joystick[nombre_accion]
+	if m["tipo"] != "eje":
+		return 0.0
+	var valor: float = Input.get_joy_axis(joystick_id, int(m["indice"])) * float(m["signo"])
+	var magnitud: float = abs(valor)
+	if magnitud <= DEADZONE_EJE_JOYSTICK:
+		return 0.0
+	return signf(valor) * clamp(
+		(magnitud - DEADZONE_EJE_JOYSTICK) / (1.0 - DEADZONE_EJE_JOYSTICK), 0.0, 1.0)
+
+func _crear_mira_hud() -> void:
+	if mira_hud:
+		return
+	mira_hud = Control.new()
+	mira_hud.name = "MiraArmamentoHUD"
+	mira_hud.size = Vector2(64.0, 64.0)
+	mira_hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mira_hud.z_index = 50
+	mira_hud.modulate = Color(1.0, 0.1, 0.1, 0.85)
+	# Pedido 2026-10-10 ("la crucecita celeste molesta en la presentación,
+	# que aparezca durante el juego, no antes"): mismo arreglo que ya se le
+	# hizo a los 3 contadores de misión -- arranca oculta, se muestra recién
+	# cuando se saca la cortina de carga (ver _process).
+	mira_hud.visible = false
+	get_node("../HUD").add_child(mira_hud)
+
+	var segmentos := [
+		Rect2(22.0, 31.0, 20.0, 2.0),
+		Rect2(31.0, 22.0, 2.0, 20.0),
+	]
+	for recto in segmentos:
+		var segmento := ColorRect.new()
+		segmento.position = recto.position
+		segmento.size = recto.size
+		segmento.color = Color.WHITE
+		segmento.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		mira_hud.add_child(segmento)
+
+	# Pedido 2026-10-11 ("un numerito cerca de la mira mientras disparo"):
+	# NO es hijo de mira_hud a propósito -- mira_hud ya tiene su propio
+	# modulate que parpadea con cada disparo, y eso mezclaría mal con el
+	# color del gradiente de vida. Se posiciona solo, siguiendo a la mira
+	# cuadro a cuadro (ver _actualizar_mira_hud).
+	etiqueta_vida_objetivo = Label.new()
+	etiqueta_vida_objetivo.name = "VidaObjetivoHUD"
+	etiqueta_vida_objetivo.z_index = 51
+	etiqueta_vida_objetivo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	etiqueta_vida_objetivo.add_theme_font_size_override("font_size", 26)
+	etiqueta_vida_objetivo.add_theme_constant_override("outline_size", 5)
+	etiqueta_vida_objetivo.add_theme_color_override("font_outline_color", Color.BLACK)
+	etiqueta_vida_objetivo.visible = false
+	get_node("../HUD").add_child(etiqueta_vida_objetivo)
+
+func _actualizar_mira_hud(delta: float) -> void:
+	if not mira_hud:
+		return
+	var entrada := Vector2(
+		-_joystick_eje("mira_horizontal"),
+		-_joystick_eje("mira_vertical"))
+	var tamano_pantalla: Vector2 = get_viewport().get_visible_rect().size
+	var centro: Vector2 = tamano_pantalla * 0.5
+	var mitad_mira: Vector2 = mira_hud.size * 0.5
+	var margen := Vector2(24.0, 24.0)
+	var limite := Vector2(
+		max(0.0, centro.x - mitad_mira.x - margen.x),
+		max(0.0, centro.y - mitad_mira.y - margen.y))
+	# La mira acumula el desplazamiento y queda fija al soltar el stick.
+	# El eje horizontal se invierte porque este joystick lo entrega al revés.
+	const VELOCIDAD_MIRA_PIXELES := 180.0
+	mira_hud_posicion += entrada * VELOCIDAD_MIRA_PIXELES * delta
+	mira_hud_posicion.x = clamp(mira_hud_posicion.x, -limite.x, limite.x)
+	mira_hud_posicion.y = clamp(mira_hud_posicion.y, -limite.y, limite.y)
+	mira_hud.position = centro + mira_hud_posicion - mitad_mira
+	if etiqueta_vida_objetivo:
+		etiqueta_vida_objetivo.position = mira_hud.position + Vector2(74.0, 20.0)
+	mira_feedback_tiempo = max(0.0, mira_feedback_tiempo - delta)
+	if mira_feedback_tiempo > 0.0:
+		mira_hud.modulate = Color(1.0, 0.25, 0.05, 1.0)
+	else:
+		mira_hud.modulate = Color(1.0, 0.1, 0.1, 0.85)
+		# Pedido 2026-10-11 ("un numerito cerca de la mira mientras le
+		# disparo, para saber si estoy acertando sin tener que buscar el
+		# cartel 3D arriba del blanco"): se apaga solo junto con el
+		# parpadeo de la mira.
+		if etiqueta_vida_objetivo:
+			etiqueta_vida_objetivo.visible = false
 
 # La vertical GEODÉSICA real en la posición ACTUAL del avión (no
 # Vector3.UP, que es un eje fijo del motor y NO coincide con "arriba" en
@@ -2288,7 +3720,21 @@ func _alinear_con_vertical_real(delta: float) -> void:
 	global_rotate(eje.normalized(), angulo)
 
 func _process(delta: float) -> void:
+	# "Modo a pie" corta TODA la lógica de vuelo/armamento/misiones de este
+	# cuadro (no tiene sentido ninguna mientras estás caminando) -- solo la
+	# cámara y el mapa de calles siguen andando, para que se sienta igual de
+	# "vivo" que volando. Ver comentario largo junto a la declaración de
+	# modo_a_pie, más arriba, sobre por qué esto reusa el mismo nodo del
+	# avión en vez de crear uno nuevo.
+	if modo_a_pie:
+		_procesar_modo_a_pie(delta)
+		_actualizar_camara()
+		_actualizar_mapa_calles(delta)
+		_actualizar_boton_bajar_subir()
+		return
 	_actualizar_estroboscopica(delta)
+	_igualar_tamano_luces_navegacion()
+	_actualizar_cartel_aterrizaje(delta)
 	_actualizar_city_tour(delta)
 	_actualizar_anuncio_seguridad(delta)
 	_actualizar_relojes_panel(delta)
@@ -2312,6 +3758,30 @@ func _process(delta: float) -> void:
 		if _tiempo_desde_orientacion_inicial >= ESPERA_CORTINA_DE_CARGA:
 			cortina_de_carga.visible = false
 			_tiempo_desde_orientacion_inicial = -1.0
+			etiqueta_objetivo_destruido.visible = true
+			etiqueta_mision_verde.visible = true
+			etiqueta_barcos.visible = true
+			etiqueta_industria.visible = true
+			if mira_hud:
+				mira_hud.visible = true
+
+	_actualizar_mira_hud(delta)
+	_sincronizar_modo_guerra(delta)
+	_actualizar_objetivos_armamento()
+	_actualizar_barcos(delta)
+	# BUG REAL encontrado 2026-10-11 (reportado: "las balas de los barcos
+	# salen para el lado contrario de donde estoy, aunque no me mueva"):
+	# estas dos funciones estaban llamándose ARRIBA, antes de
+	# _actualizar_barcos() -- en ese momento la posición de cada barco
+	# todavía era la del cuadro ANTERIOR (mundo.gd ya recentró el origen
+	# este cuadro, pero el barco recién se reubica acá abajo). El disparo
+	# calculaba la dirección con una posición de barco desactualizada.
+	# Movidas DESPUÉS de _actualizar_barcos() para que siempre usen la
+	# posición ya corregida de este mismo cuadro.
+	if modo_guerra:
+		_actualizar_contraataque_barcos(delta)
+		_actualizar_balas_barcos(delta)
+		_actualizar_unidades_invasion(delta)
 
 	# Tecla U: "botón de pánico" para el panel del mapa (pedido explícito
 	# 2026-09-21, "no me quiero ir a dormir y dejarlo roto") -- el doble clic
@@ -2331,28 +3801,164 @@ func _process(delta: float) -> void:
 		get_tree().create_timer(1.5).timeout.connect(func(): cartel_central.visible = false)
 	tecla_reset_mapa_anterior = tecla_reset_mapa_activa
 
-	# Tecla V: vista externa sin el avión visible/oculto (ver comentario junto
-	# a la declaración de vista_sin_avion_activa, más arriba).
+	# Tecla V: vista externa sin el avión visible/oculto (ver _alternar_vista_
+	# sin_avion y el comentario junto a la declaración de vista_sin_avion_
+	# activa, más arriba).
 	var tecla_vista_sin_avion_activa = Input.is_physical_key_pressed(KEY_V)
 	if tecla_vista_sin_avion_activa and not tecla_vista_sin_avion_anterior:
-		vista_sin_avion_activa = not vista_sin_avion_activa
-		modelo_externo.visible = not vista_sin_avion_activa
-		var mostrar_primitivas = TIPOS_AVION[tipo_avion_indice]["modelo"] == "" and not vista_sin_avion_activa
-		pieza_fuselaje.visible = mostrar_primitivas
-		pieza_nariz.visible = mostrar_primitivas
-		pieza_alas.visible = mostrar_primitivas
-		pieza_cola.visible = mostrar_primitivas
-		pieza_timon.visible = mostrar_primitivas
-		if luz_punta_ala_izq:
-			luz_punta_ala_izq.visible = mostrar_primitivas
-			luz_punta_ala_der.visible = mostrar_primitivas
-			luz_estroboscopica.visible = mostrar_primitivas
-			luz_iluminacion_ala.visible = mostrar_primitivas
-			luz_iluminacion_ala_2.visible = mostrar_primitivas
-		cartel_central.text = "👁️ Vista sin avión: ON" if vista_sin_avion_activa else "👁️ Vista sin avión: OFF"
-		cartel_central.visible = true
-		get_tree().create_timer(1.5).timeout.connect(func(): cartel_central.visible = false)
+		_alternar_vista_sin_avion()
 	tecla_vista_sin_avion_anterior = tecla_vista_sin_avion_activa
+
+	# Disparo de prueba: proyecta un rayo desde la mira, muestra la traza y
+	# comprueba impactos contra los blancos cuadrados creados al iniciar.
+	tiempo_hasta_proximo_disparo_jugador = max(0.0, tiempo_hasta_proximo_disparo_jugador - delta)
+	var armamento_activo := _joystick_activo("armamento")
+	if armamento_activo and not armamento_anterior and esperando_asignacion == "" and tiempo_hasta_proximo_disparo_jugador <= 0.0:
+		tiempo_hasta_proximo_disparo_jugador = CADENCIA_DISPARO_JUGADOR
+		var disparo := _disparar_hacia_mira()
+		# Pedido 2026-10-11 ("prefiero como lo teníamos, con la traza, que
+		# salga de las dos luces apuntando a la cruz de la mira -- la
+		# marca de impacto queda tapada DETRÁS de la mira, que es un
+		# overlay 2D siempre encima"): vuelve la traza de las dos alas
+		# convergiendo (ya estaba armada, solo hacía falta reactivarla).
+		# Pedido 2026-10-11 ("una sola línea desde las luces hasta la mira,
+		# nada más"): origen YA es el punto medio entre las dos luces de ala
+		# (ver _disparar_hacia_mira) -- una línea derecha, simple.
+		_crear_traza_armamento(disparo["origen"], disparo["destino"])
+		if sonido_disparo:
+			sonido_disparo.play(1.0 if sonido_disparo_archivo_real else 0.0)
+		if disparo["impacto"]:
+			var objetivo: Node3D = disparo["objetivo"]
+			# Blancos con "vida" (pedido 2026-10-10, misión Industria): no
+			# mueren de un tiro -- cada impacto resta 1 y actualiza el
+			# numerito flotante. Recién cuando llega a 0 sigue el camino de
+			# siempre (explosión, sonido, contador, destrucción). No se
+			# usa "return" acá para no saltearse el resto de _process() en
+			# el mismo cuadro (controles, etc.) -- se usa una bandera.
+			var sigue_con_vida := false
+			if objetivo.has_meta("vida"):
+				var vida_restante: int = objetivo.get_meta("vida") - 1
+				objetivo.set_meta("vida", vida_restante)
+				if vida_restante > 0:
+					sigue_con_vida = true
+					# Pedido 2026-10-11 ("que cambie de color para saber si le
+					# estoy pegando, que arranque bien oscuro/intenso y vaya
+					# aclarando -- negro, marrón, azul, y cuando le falten
+					# dos tiros, amarillo/blanco, casi liquidado"): gradiente
+					# según el % de vida que le queda, no un color fijo.
+					var vida_inicial_objetivo: int = objetivo.get_meta("vida_inicial", 10)
+					var color_segun_vida: Color = (_color_semaforo_invasion(vida_restante) if objetivo.is_in_group("invasion") else _color_por_vida_restante(vida_restante, vida_inicial_objetivo))
+					var etiqueta_vida: Label3D = objetivo.get_meta("etiqueta_vida")
+					if is_instance_valid(etiqueta_vida):
+						etiqueta_vida.text = str(vida_restante)
+						etiqueta_vida.modulate = color_segun_vida
+						etiqueta_vida.visible = true  # los barcos arrancan con el numerito oculto (ver _crear_barcos_rio) hasta el primer impacto
+					# Pedido 2026-10-11 ("un numerito cerca de la mira mientras
+					# disparo, para no tener que buscar el cartel 3D arriba del
+					# blanco"): mismo número y mismo color, pero en el HUD 2D.
+					if etiqueta_vida_objetivo:
+						etiqueta_vida_objetivo.text = str(vida_restante)
+						etiqueta_vida_objetivo.modulate = color_segun_vida
+						etiqueta_vida_objetivo.visible = true
+					# Pedido 2026-10-11 ("lo que yo quiero que cambie de color
+					# es el CUADRADO, no el número"): el material real del
+					# cuadrado -- albedo Y emission, si no con emission fija
+					# el cambio de albedo casi no se nota.
+					var material_cuadrado: StandardMaterial3D = objetivo.get_meta("material_cuadrado")
+					if material_cuadrado:
+						material_cuadrado.albedo_color = color_segun_vida
+						material_cuadrado.emission = color_segun_vida
+					# PAUSADO 2026-10-11 (pedido explícito de Pablo, "el sistema de
+					# bala es malísimo, olvidémonos por ahora -- hay que pensar
+					# otro sistema"): se deja de activar el contraataque. Código
+					# de balas/ráfagas intacto más abajo por si se retoma, pero
+					# ya no se dispara solo. Foco ahora: la invasión por tierra.
+					if (objetivo.is_in_group("mision_barcos") or objetivo.is_in_group("mision_aeropuertos")) and not objetivo.has_meta("activado"):
+						objetivo.set_meta("activado", true)
+				else:
+					var etiqueta_vida_final: Label3D = objetivo.get_meta("etiqueta_vida")
+					if is_instance_valid(etiqueta_vida_final):
+						etiqueta_vida_final.queue_free()
+			if sigue_con_vida:
+				# El sonido de disparo ya sonó arriba -- acá solo falta el
+				# "feedback" de la mira (parpadeo rojo), sin explosión ni
+				# destruir nada todavía.
+				mira_feedback_tiempo = 0.25
+			else:
+				_crear_explosion_city_tour(objetivo.global_position)
+				# Explosión distinta para barcos vs. el resto (aeropuertos/
+				# misión verde/industria) -- pedido explícito 2026-10-07.
+				var sonido_de_impacto: AudioStreamPlayer = sonido_explosion_barco if objetivo.is_in_group("mision_barcos") else sonido_explosion
+				if sonido_de_impacto:
+					# BUG REAL encontrado 2026-10-07 ("sueltos suenan bien, en
+					# el juego suenan raro, la de barco parece un disparo"):
+					# acá había un corte forzado a los 0.5s, afinado para el
+					# sonido viejo (bien corto). Los sonidos nuevos son más
+					# largos y ese corte les arrancaba la cola -- se escuchaba
+					# solo el golpe inicial, parecido a un disparo seco. Se
+					# deja que cada explosión termine sola; si entra un
+					# impacto nuevo antes de que termine la anterior, play()
+					# la reinicia sin problema.
+					sonido_de_impacto.play()
+				if objetivo.is_in_group("mision_verde"):
+					mision_verde_destruidos += 1
+					if etiqueta_mision_verde:
+						etiqueta_mision_verde.text = "CAPITAL: %d/10" % mision_verde_destruidos
+						etiqueta_mision_verde.visible = true
+					if mision_verde_destruidos >= OBJETIVOS_MISION_VERDE_CABA.size():
+						_festejar_mision_completada()
+				elif objetivo.is_in_group("mision_aeropuertos"):
+					objetivos_destruidos += 1
+					if etiqueta_objetivo_destruido:
+						etiqueta_objetivo_destruido.text = "AEROPUERTOS: %d/5" % objetivos_destruidos
+						etiqueta_objetivo_destruido.visible = true
+					if objetivos_destruidos >= 5:
+						_festejar_mision_completada()
+				elif objetivo.is_in_group("mision_industria"):
+					industria_destruidos += 1
+					if etiqueta_industria:
+						etiqueta_industria.text = "INDUSTRIA: %d/10" % industria_destruidos
+						etiqueta_industria.visible = true
+					if industria_destruidos >= MISION_INDUSTRIA.size():
+						_festejar_mision_completada()
+				elif objetivo.is_in_group("mision_barcos"):
+					barcos_destruidos += 1
+					if etiqueta_barcos:
+						etiqueta_barcos.text = "BARCOS: %d/%d" % [barcos_destruidos, BARCOS_RIO_AEROPARQUE.size()]
+						etiqueta_barcos.visible = true
+					if barcos_destruidos >= BARCOS_RIO_AEROPARQUE.size():
+						_festejar_mision_completada()
+				elif objetivo.is_in_group("aeropuerto_invadido"):
+					# Boceto de invasión: bajaste las 40 vidas de la marca
+					# marrón -- el aeropuerto queda liberado, sale del
+					# diccionario de tomados (vuelve a ser blanco de
+					# invasión posible más adelante).
+					var nombre_liberado: String = objetivo.get_meta("nombre_aeropuerto_tomado", "")
+					if nombre_liberado != "":
+						aeropuertos_tomados.erase(nombre_liberado)
+						print("✅ Aeropuerto LIBERADO: ", nombre_liberado)
+				elif objetivo.is_in_group("invasion"):
+					invasores_destruidos += 1
+				objetivos_armamento.erase(objetivo)
+				objetivos_barcos.erase(objetivo)
+				objetivos_industria.erase(objetivo)
+				barcos_activados.erase(objetivo)
+				unidades_invasion.erase(objetivo)
+				objetivo.queue_free()
+			mira_feedback_tiempo = 0.25
+		else:
+			# Pedido 2026-10-10 ("el cartel gigante queda antiestético, y no
+			# entiendo por qué si lo detecta cerca no cuenta"): ya no hay zona
+			# gris -- la tolerancia ahora escala con la distancia y lo que
+			# entra, cuenta siempre (ver _disparar_hacia_mira). Esto es
+			# simplemente un fallo limpio: aviso chico y discreto, mismo
+			# estilo que los instrumentos de arriba, no un cartel central.
+			if panel_fuera_de_mira:
+				panel_fuera_de_mira.visible = true
+				get_tree().create_timer(0.8).timeout.connect(func():
+					if is_instance_valid(panel_fuera_de_mira):
+						panel_fuera_de_mira.visible = false)
+	armamento_anterior = armamento_activo
 
 	# "Marcar lugar" -- detectado a mano (con flag "anterior") porque
 	# _joystick_activo() devuelve "está apretado ahora", no "recién lo
@@ -2398,9 +4004,13 @@ func _process(delta: float) -> void:
 	# la velocidad mucho más rápido, hasta el tope.
 	var freno_gradual_activo = Input.is_physical_key_pressed(KEY_B) or _joystick_activo("freno_gradual")
 	if freno_gradual_activo and not freno_gradual_anterior:
-		intensidad_frenado_gradual = clamp(
-			intensidad_frenado_gradual + FRENADO_GRADUAL_INCREMENTO if intensidad_frenado_gradual > 0.0 else FRENADO_GRADUAL_BASE,
-			0.0, FRENADO_GRADUAL_MAXIMO)
+		if en_tierra and not _es_helicoptero() and bool(_aterrizaje_actual()["modo_tierra"]) and velocidad_actual > VEL_TIERRA_FINA:
+			intensidad_frenado_gradual = FRENADO_GRADUAL_MAXIMO
+			_freno_rapido_tierra = true
+		else:
+			intensidad_frenado_gradual = clamp(
+				intensidad_frenado_gradual + FRENADO_GRADUAL_INCREMENTO if intensidad_frenado_gradual > 0.0 else FRENADO_GRADUAL_BASE,
+				0.0, FRENADO_GRADUAL_MAXIMO)
 		cartel_central.text = "🛑 Freno progresivo (-%.0f/s)" % intensidad_frenado_gradual
 		cartel_central.visible = true
 		get_tree().create_timer(1.0).timeout.connect(func(): cartel_central.visible = false)
@@ -2486,19 +4096,34 @@ func _actualizar_mapa_calles(delta: float) -> void:
 
 	# Coordenadas EXACTAS (con decimales) dentro de la grilla de teselas --
 	# la parte entera (floor) dice qué tesela mostrar, la parte fraccionaria
-	# dice EXACTAMENTE dónde cae el avión adentro de esa tesela (0..1). Antes
+	# dice EXACTAMENTE dónde cae un punto adentro de esa tesela (0..1). Antes
 	# el avión quedaba siempre fijo en el centro y la imagen "saltaba" debajo
 	# suyo -- ahora es al revés (como GeoFS/Google Maps): la imagen se queda
 	# quieta y el avioncito se desliza suavemente sobre ella, y solo cuando
 	# se sale de la tesela actual se pide una nueva.
 	var n: float = pow(2.0, zoom_mapa)
-	var lat_rad: float = deg_to_rad(mundo.lat_avion)
-	var x_exacto: float = (mundo.lon_avion + 180.0) / 360.0 * n
-	var y_exacto: float = (1.0 - log(tan(lat_rad) + 1.0 / cos(lat_rad)) / PI) / 2.0 * n
-	var xtile: int = int(floor(x_exacto))
-	var ytile: int = int(floor(y_exacto))
-	var frac_x: float = clamp(x_exacto - xtile, 0.0, 1.0)
-	var frac_y: float = clamp(y_exacto - ytile, 0.0, 1.0)
+
+	# Pedido 2026-10-17: la tesela que se MUESTRA depende del "centro" del
+	# mapa (que por defecto es el avión, pero el arrastre lo puede mover a
+	# mano -- ver _mapa_rect_gui_input/_input); el ícono siempre se dibuja
+	# en la posición REAL del avión, relativa a esa tesela, así que si se
+	# arrastró lejos el ícono puede quedar corrido hacia un borde del panel.
+	var lat_centro: float = mundo.lat_avion
+	var lon_centro: float = mundo.lon_avion
+	if not mapa_siguiendo_avion:
+		lat_centro = mapa_centro_lat
+		lon_centro = mapa_centro_lon
+	var lat_rad_centro: float = deg_to_rad(lat_centro)
+	var x_exacto_centro: float = (lon_centro + 180.0) / 360.0 * n
+	var y_exacto_centro: float = (1.0 - log(tan(lat_rad_centro) + 1.0 / cos(lat_rad_centro)) / PI) / 2.0 * n
+	var xtile: int = int(floor(x_exacto_centro))
+	var ytile: int = int(floor(y_exacto_centro))
+
+	var lat_rad_avion: float = deg_to_rad(mundo.lat_avion)
+	var x_exacto_avion: float = (mundo.lon_avion + 180.0) / 360.0 * n
+	var y_exacto_avion: float = (1.0 - log(tan(lat_rad_avion) + 1.0 / cos(lat_rad_avion)) / PI) / 2.0 * n
+	var frac_x: float = clamp(x_exacto_avion - xtile, -1.0, 2.0)
+	var frac_y: float = clamp(y_exacto_avion - ytile, -1.0, 2.0)
 
 	# El ícono se desliza dentro de la baldosa actual, en proporción al
 	# tamaño del panel (si el panel es más grande, se desliza más lejos).
@@ -2519,13 +4144,16 @@ func _actualizar_mapa_calles(delta: float) -> void:
 # a 500-1000m, pero no perder el mapa completo si vuela alto"). Niveles de
 # zoom estándar de OpenStreetMap (más alto = más detalle/más cerca).
 func _zoom_mapa_para_altura(altura: float) -> int:
-	# REAJUSTADO 2026-09-27: el usuario vuela seguido a 1500-2000m entre
-	# aeropuertos cercanos (sin margen para subir mucho porque enseguida hay
-	# que bajar de nuevo) -- con escalones de a 1000-2000m ahí se quedaba
-	# pegado en un solo nivel todo el vuelo. Ahora un escalón cada 500m,
-	# nivel calle por debajo de 500m.
-	var escalon: int = int(floor(altura / 500.0))
-	return clamp(17 - escalon, ZOOM_MAPA_MINIMO, 17)
+	# REAJUSTADO 2026-10-11 (pedido: "la bolita del avión va corriendo muy
+	# rápido en el mapa, se ven las calles -- que recién se empiecen a ver
+	# debajo de 1000m, y arriba de eso 4 niveles de zoom más alejado que
+	# ahora"): por debajo de 1000m queda el detalle de calle de siempre; por
+	# encima, un escalón de 4 niveles de golpe (mucho menos detalle) y sigue
+	# alejándose cada 500m adicionales.
+	if altura < 1000.0:
+		return 17
+	var escalon_extra: int = int(floor((altura - 1000.0) / 500.0))
+	return clamp(17 - 4 - escalon_extra, ZOOM_MAPA_MINIMO, 17)
 
 func _pedir_baldosa_de_mapa(xtile: int, ytile: int) -> void:
 	if descargando_mapa:
@@ -2560,6 +4188,22 @@ func _mapa_rect_gui_input(event: InputEvent) -> void:
 	# el control aunque el panel haya quedado gigante por lo que sea.
 	if event is InputEventMouseButton and event.pressed and event.double_click:
 		_resetear_mapa_a_tamano_default()
+		return
+	# Pedido 2026-10-17 ("que se pueda arrastrar con el mouse para mirar al
+	# costado, y que quede fijo donde se suelta"): clic izquierdo normal (sin
+	# ser doble clic) arranca el arrastre del CONTENIDO del mapa -- distinto
+	# de AsaMoverMapa, que mueve el PANEL entero en la pantalla; esto mueve
+	# qué parte del mundo se ve adentro del panel. El movimiento real se
+	# procesa en _input() (ver ahí), igual que el resto de los arrastres.
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			if mapa_siguiendo_avion:
+				mapa_centro_lat = mundo.lat_avion
+				mapa_centro_lon = mundo.lon_avion
+				mapa_siguiendo_avion = false
+			_arrastrando_contenido_mapa = true
+		else:
+			_arrastrando_contenido_mapa = false
 		return
 	if event is InputEventMouseButton and event.pressed:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
@@ -2615,7 +4259,14 @@ func _actualizar_camara() -> void:
 	var altura_vuelo = mundo.altitud_avion + position.y - altura_piso
 	var factor_zoom = clamp(altura_vuelo / 80.0, 0.0, 1.0)
 	var distancia = lerp(OFFSET_CAMARA_DISTANCIA, OFFSET_CAMARA_DISTANCIA * 2.2, factor_zoom)
-	var altura_cam = lerp(OFFSET_CAMARA_ALTURA, OFFSET_CAMARA_ALTURA * 3.0, factor_zoom)
+	# Pedido 2026-10-11 ("el 747 se ve muy abajo, como si lo mirara desde
+	# arriba"): algunos modelos tienen el pivote (0,0,0) descentrado
+	# respecto al centro visual del fuselaje (distinto para cada GLB
+	# bajado) -- "ajuste_altura_camara" (opcional, 0.0 por defecto) permite
+	# subir/bajar la cámara SOLO para ese avión en particular, sin tocar la
+	# altura global de los demás.
+	var ajuste_altura_camara: float = float(TIPOS_AVION[tipo_avion_indice].get("ajuste_altura_camara", 0.0))
+	var altura_cam = lerp(OFFSET_CAMARA_ALTURA, OFFSET_CAMARA_ALTURA * 3.0, factor_zoom) + ajuste_altura_camara
 	# PROBADO Y DESCARTADO: invertir el signo acá (a "+ adelante") empeoró
 	# todo -- confirma que la cámara SÍ va detrás del avión correctamente con
 	# "- adelante". El problema de "viene hacia mí" es otra cosa, no esto.
@@ -2675,6 +4326,45 @@ func _procesar_vuelo(delta: float) -> void:
 		elif Input.is_action_pressed("ui_right") or _joystick_activo("alabeo_derecha"):
 			banco_objetivo = -ajustes["angulo"]
 
+	# MODO TIERRA (pedido 2026-10-16): en pista el avión queda nivelado (no
+	# cabecea ni se inclina, así no puede enterrar el ala), gira sobre su eje
+	# como un auto y solo despega si llega a la velocidad de despegue y tirás
+	# para atrás. "entrada_giro" es +1 izquierda / -1 derecha, sale de la misma
+	# flecha/mouse que en el aire.
+	var entrada_giro: float = banco_objetivo / max(float(ajustes["angulo"]), 0.01)
+	var en_modo_tierra: bool = en_tierra and not _es_helicoptero() and bool(_aterrizaje_actual()["modo_tierra"])
+	if en_modo_tierra:
+		bloqueo_despegue = max(0.0, bloqueo_despegue - delta)
+		# BUG REAL encontrado 2026-10-17 (reportado: "nunca puedo despegar,
+		# siempre lo tengo que hacer a mano" -- antes hacía falta ADEMÁS
+		# tirar del stick para arriba, justo cuando ya se llegó a la
+		# velocidad de despegue -- fácil de no coincidir). Pedido explícito:
+		# "cuando pasás la velocidad, esté donde esté, podés despegar, se
+		# desactiva solo el modo tierra" -- ya no hace falta tirar del stick,
+		# solo la velocidad. SEGUNDA VUELTA (reportado: "a los 60 ya despega,
+		# tiene que ser 120"): algunos aviones tienen "vel_despegue"/
+		# "vel_minima" configurados muy bajo (vos mismo bajaste vel_minima a
+		# 0 para arreglar el bug del freno) -- un piso de 120 real, pase lo
+		# que pase la configuración del avión.
+		if velocidad_actual >= max(120.0, _vel_despegue_efectiva()) and bloqueo_despegue <= 0.0:
+			_despegar_de_pista()
+			en_modo_tierra = false
+		else:
+			# Tira para arriba pero todavía no llega a la velocidad de despegue: avisar.
+			_tiempo_aviso_despegue = max(0.0, _tiempo_aviso_despegue - delta)
+			# PAUSADO 2026-10-17 (pedido: "aparece a cada rato un cartel molesto
+			# que dice que hace falta tal velocidad -- desactivalo, marea y
+			# confunde cuando todavía no cumplí la misión y estoy taxeando").
+			# El otro aviso ("Esperá un instante") sigue activo, no se tocó.
+			if false and cabeceo_objetivo > cabeceo_maximo_efectivo * 0.3 and velocidad_actual < _vel_despegue_efectiva() and _tiempo_aviso_despegue <= 0.0:
+				_tiempo_aviso_despegue = 3.0
+				_mostrar_cartel_aterrizaje("Muy lento para despegar: hace falta %d" % int(_vel_despegue_efectiva()), Color(1.0, 0.9, 0.4))
+			elif cabeceo_objetivo > cabeceo_maximo_efectivo * 0.3 and bloqueo_despegue > 0.0 and velocidad_actual >= _vel_despegue_efectiva() and _tiempo_aviso_despegue <= 0.0:
+				_tiempo_aviso_despegue = 3.0
+				_mostrar_cartel_aterrizaje("Esperá un instante para despegar", Color(1.0, 0.9, 0.4))
+			cabeceo_objetivo = 0.0
+			banco_objetivo = 0.0
+
 	# Multiplicador por avión (pedido 2026-09-27, panel de Sensibilidad,
 	# "Vel. animación") -- cada avión puede tener su propia suavidad/
 	# agresividad en cómo la nariz sube/baja o el avión se inclina, sin
@@ -2715,18 +4405,32 @@ func _procesar_vuelo(delta: float) -> void:
 	# cuando el cálculo de rumbo todavía tenía el bug de la curvatura de la
 	# Tierra (ver mundo.gd/este_motor_actual) -- ya arreglado esa vez, así
 	# que no debería reaparecer, pero probar bien un viaje largo con curvas.
-	if abs(banco_actual) > 0.5:
+	if en_modo_tierra:
+		var cfg_giro: Dictionary = _aterrizaje_actual()
+		# Como un auto: la velocidad de giro sale de velocidad / radio de giro, así
+		# parado no gira (no puede pivotar en el lugar) y "giro_suelo" es el tope.
+		var giro_por_radio: float = rad_to_deg(velocidad_actual / max(float(cfg_giro["radio_giro"]), 1.0))
+		var giro_max: float = min(giro_por_radio, float(cfg_giro["giro_suelo"]))
+		if abs(entrada_giro) > 0.02:
+			global_rotate(_arriba_real(), deg_to_rad(clamp(entrada_giro, -1.0, 1.0) * giro_max * delta))
+	elif abs(banco_actual) > 0.5:
 		global_rotate(_arriba_real(), deg_to_rad(banco_actual * ajustes["giro"] * delta))
 
 	# Acelerador: W sube la velocidad de crucero, S la baja, dentro de un
 	# rango fijo (arranca despacito, se puede llevar hasta el tope si no
 	# querés bancarte un viaje largo entero).
+	# En tierra el freno puede llegar hasta 0 (no se queda en la velocidad
+	# mínima de vuelo) y frena al ritmo propio de la pestaña "Aterrizaje".
+	var piso_velocidad: float = 0.0 if en_modo_tierra else float(ajustes["vel_minima"])
+	var tasa_freno: float = float(_aterrizaje_actual()["freno_suelo"]) if en_modo_tierra else ACELERACION
 	if Input.is_physical_key_pressed(KEY_W) or _joystick_activo("acelerar"):
 		intensidad_frenado_gradual = 0.0  # acelerar cancela el freno progresivo en curso
-		velocidad_actual = min(ajustes["vel_maxima"], velocidad_actual + ACELERACION * delta)
+		_freno_rapido_tierra = false
+		var tasa_acel: float = float(_aterrizaje_actual()["acel_suelo"]) if en_modo_tierra else ACELERACION
+		velocidad_actual = min(ajustes["vel_maxima"], velocidad_actual + tasa_acel * delta)
 		_actualizar_etiqueta_velocidad()
 	elif Input.is_physical_key_pressed(KEY_S) or _joystick_activo("frenar"):
-		velocidad_actual = max(ajustes["vel_minima"], velocidad_actual - ACELERACION * delta)
+		velocidad_actual = max(piso_velocidad, velocidad_actual - tasa_freno * delta)
 		_actualizar_etiqueta_velocidad()
 	elif intensidad_frenado_gradual > 0.0:
 		# Freno progresivo: resta velocidad de a poco (nunca de golpe), a un
@@ -2735,8 +4439,19 @@ func _procesar_vuelo(delta: float) -> void:
 		# frenar del todo después de aterrizar.
 		velocidad_actual = max(0.0, velocidad_actual - intensidad_frenado_gradual * delta)
 		_actualizar_etiqueta_velocidad()
+		if _freno_rapido_tierra and velocidad_actual <= VEL_TIERRA_FINA:
+			velocidad_actual = VEL_TIERRA_FINA
+			intensidad_frenado_gradual = 0.0
+			_freno_rapido_tierra = false
 		if velocidad_actual <= 0.0:
 			intensidad_frenado_gradual = 0.0
+
+	# Rodadura: resistencia natural al rodar en tierra (0 = sigue rodando sin
+	# frenar solo, como pidió Pablo; se sube en la pestaña "Aterrizaje").
+	if en_modo_tierra and not (Input.is_physical_key_pressed(KEY_W) or _joystick_activo("acelerar")):
+		var rodadura: float = float(_aterrizaje_actual()["rodadura"])
+		if rodadura > 0.0:
+			velocidad_actual = max(0.0, velocidad_actual - rodadura * delta)
 
 	translate(Vector3(0, 0, -velocidad_actual * delta))
 
@@ -2765,7 +4480,7 @@ func _procesar_vuelo(delta: float) -> void:
 		elif Input.is_physical_key_pressed(KEY_F) or Input.is_physical_key_pressed(KEY_L) or _joystick_activo("vertical_abajo"):
 			global_position -= _arriba_real() * ajustes["vertical"] * delta
 
-	_limitar_piso()
+	_limitar_piso(delta)
 	_actualizar_hud(delta)
 
 	# Una vez que llegaste, podés frenar apretando ESPACIO (siempre que estés
@@ -2776,7 +4491,7 @@ func _procesar_vuelo(delta: float) -> void:
 func _procesar_frenado(delta: float) -> void:
 	velocidad_actual = max(0.0, velocidad_actual - 8.0 * delta)
 	translate(Vector3(0, 0, -velocidad_actual * delta))
-	_limitar_piso()
+	_limitar_piso(delta)
 	_actualizar_hud(delta)
 	if velocidad_actual <= 0.05:
 		velocidad_actual = 0.0
@@ -2800,6 +4515,8 @@ func _ocultar_flechas() -> void:
 	_hay_destino_para_linea_guia = false
 
 func _despegar() -> void:
+	_reiniciar_estado_tierra()
+	tiempo_sin_toque = 2.0
 	indice_destino += 1
 	velocidad_actual = VELOCIDAD_INICIAL
 	_actualizar_etiqueta_velocidad()
@@ -2815,7 +4532,7 @@ func _despegar() -> void:
 # choca de verdad. Si todavía no cargó ninguna baldosa ahí (rayo sin
 # resultado), no hacemos nada -- mejor dejarlo flotar que inventar un piso.
 const MARGEN_SOBRE_PISO = 0.3
-func _limitar_piso() -> void:
+func _limitar_piso(delta: float = 0.016) -> void:
 	var arriba_real: Vector3 = _arriba_real()
 	var space_state = get_world_3d().direct_space_state
 	# IMPORTANTE: el rayo tiene que arrancar bien arriba de CUALQUIER terreno
@@ -2827,6 +4544,7 @@ func _limitar_piso() -> void:
 	var origen_rayo = global_position + arriba_real * 20000.0
 	var destino_rayo = global_position - arriba_real * 20000.0
 	var consulta = PhysicsRayQueryParameters3D.create(origen_rayo, destino_rayo)
+	consulta.collision_mask = 1  # solo terreno real: blancos, barcos e invasores (otras capas) no son piso
 	var resultado = space_state.intersect_ray(consulta)
 	if not resultado:
 		return
@@ -2835,8 +4553,1282 @@ func _limitar_piso() -> void:
 	# resultados apenas distintos cada vez.
 	var punto_piso: Vector3 = resultado.position
 	var altura_actual: float = (global_position - punto_piso).dot(arriba_real)
-	if altura_actual < MARGEN_SOBRE_PISO:
-		global_position = punto_piso + arriba_real * MARGEN_SOBRE_PISO
+	var cfg: Dictionary = _aterrizaje_actual()
+
+	# Sin modo tierra (apagado en la pestaña "Aterrizaje") o helicóptero (aterriza
+	# en vertical, no rueda por pista): el comportamiento de siempre.
+	if not bool(cfg["modo_tierra"]) or _es_helicoptero():
+		_altura_sobre_piso_prev = -1.0
+		en_tierra = false
+		if altura_actual < MARGEN_SOBRE_PISO:
+			global_position = punto_piso + arriba_real * MARGEN_SOBRE_PISO
+		return
+
+	var tren: float = _altura_tren_efectiva()
+	var velocidad_vertical: float = 0.0
+	if _altura_sobre_piso_prev >= 0.0 and delta > 0.0:
+		velocidad_vertical = (altura_actual - _altura_sobre_piso_prev) / delta
+	# Un salto enorme de un cuadro al otro es un teletransporte (nuevo viaje,
+	# cambio de lugar), no una caída real.
+	if abs(velocidad_vertical) > 400.0:
+		velocidad_vertical = 0.0
+	_altura_sobre_piso_prev = altura_actual
+	tiempo_sin_toque = max(0.0, tiempo_sin_toque - delta)
+
+	if not en_tierra:
+		if altura_actual > tren + 3.0:
+			tiempo_en_aire += delta
+		# BUG REAL encontrado 2026-10-17 (reportado: "el modo tierra no se
+		# activa solo al aterrizar, lo tengo que prender a mano"): el margen
+		# de detección era de 2CM y 5CM/s -- con el terreno de Cesium
+		# temblando de a ratos (mismo fenómeno de siempre en este proyecto),
+		# casi nunca coincidían los dos a la vez en el mismo cuadro exacto
+		# del aterrizaje real. Aflojado a un margen que sigue siendo "recién
+		# tocando", pero alcanzable de verdad.
+		if altura_actual <= tren + 0.5 and tiempo_sin_toque <= 0.0 and velocidad_vertical <= 0.5:
+			if tiempo_en_aire >= 2.0:
+				_tocar_tierra(-velocidad_vertical)
+			else:
+				# Sin haber volado (recién empezó, rozó algo): NO se activa el modo tierra;
+				# solo se evita que se entierre.
+				global_position = punto_piso + arriba_real * tren
+		elif altura_actual < tren:
+			# Recién despegando (o en la pausa después de despegar): que no se entierre.
+			global_position = punto_piso + arriba_real * tren
+		if not en_tierra:
+			return
+
+	# --- En tierra ---
+	# Rebote (toque brusco): saltitos que se achican hasta que se apoya del todo.
+	if rebote_activo:
+		rebote_velocidad -= GRAVEDAD_REBOTE * delta
+		rebote_altura += rebote_velocidad * delta
+		if rebote_altura <= 0.0:
+			rebote_altura = 0.0
+			if rebotes_restantes > 0:
+				rebotes_restantes -= 1
+				rebote_velocidad_inicial *= 0.5
+				rebote_velocidad = rebote_velocidad_inicial
+				if rebote_velocidad < 0.3:
+					rebote_activo = false
+					rebote_velocidad = 0.0
+			else:
+				rebote_activo = false
+				rebote_velocidad = 0.0
+	elif altura_actual > tren + 40.0:
+		# Teletransporte (nuevo viaje): ya no está en el piso. Los saltos chicos del
+		# terreno (Cesium cargando) NO sacan del modo tierra: solo se sale al despegar.
+		# Exige que el salto dure más de 0.2s seguidos (ver _tiempo_altura_
+		# sospechosa) -- un solo cuadro ruidoso del rayo al piso ya NO alcanza
+		# para sacar del modo tierra (esto es lo que causaba el bug del freno
+		# que empujaba a 150 de golpe en Aeroparque).
+		_tiempo_altura_sospechosa += delta
+		if _tiempo_altura_sospechosa > 0.2:
+			en_tierra = false
+			_tiempo_altura_sospechosa = 0.0
+		return
+	else:
+		_tiempo_altura_sospechosa = 0.0
+	# Suavizado del piso: el terreno de Cesium cambia de detalle y el rayo a veces
+	# da saltos de metros de un cuadro al otro (pantalla que parpadea / "escupe al
+	# aire"). La altura solo puede corregirse a un ritmo limitado.
+	var objetivo_altura: float = tren + rebote_altura
+	var error_altura: float = objetivo_altura - altura_actual
+	var tope_correccion: float = 8.0 * delta
+	var correccion: float = clamp(error_altura * min(1.0, 4.0 * delta), -tope_correccion, tope_correccion)
+	if rebote_activo or abs(error_altura) > 15.0:
+		correccion = error_altura
+	global_position += arriba_real * correccion
+
+# ============================================================
+# MODO TIERRA: configuración por avión (pestaña "Aterrizaje")
+# ============================================================
+
+func _aterrizaje_por_defecto() -> Dictionary:
+	return {
+		"modo_tierra": true,
+		"altura_tren": -1.0,     # -1 = automática (se mide del modelo)
+		"vel_despegue": 0.0,     # 0 = automática (80% de la velocidad mínima)
+		"giro_suelo": 30.0,
+		"radio_giro": 60.0,
+		"acel_suelo": 6.0,
+		"freno_suelo": 25.0,
+		"rodadura": 0.0,
+		"aterr_suave": 8.0,
+		"aterr_brusco": 22.0,
+		"rebote_fuerza": 1.0,
+		"rebotes": 1,
+		"version": 2,
+	}
+
+func _aterrizaje_actual() -> Dictionary:
+	var nombre: String = TIPOS_AVION[tipo_avion_indice]["nombre"]
+	if not config_aterrizaje.has(nombre):
+		config_aterrizaje[nombre] = _aterrizaje_por_defecto()
+	return config_aterrizaje[nombre]
+
+func _cargar_aterrizaje_aviones() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(RUTA_CONFIG_ATERRIZAJE) != OK:
+		return
+	for nombre_avion in cfg.get_sections():
+		var valores: Dictionary = _aterrizaje_por_defecto()
+		# Archivos viejos (version 1) traían umbrales de toque/rebote demasiado
+		# sensibles: se descartan esos y se mantiene el resto de lo ajustado.
+		var vieja: bool = int(cfg.get_value(nombre_avion, "version", 1)) < 2
+		for clave in valores.keys():
+			if vieja and clave in ["aterr_suave", "aterr_brusco", "rebotes", "rebote_fuerza"]:
+				continue
+			valores[clave] = cfg.get_value(nombre_avion, clave, valores[clave])
+		valores["version"] = 2
+		config_aterrizaje[nombre_avion] = valores
+
+func _guardar_aterrizaje_aviones() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(RUTA_CONFIG_ATERRIZAJE)
+	var nombre: String = TIPOS_AVION[tipo_avion_indice]["nombre"]
+	var valores: Dictionary = _aterrizaje_actual()
+	for clave in valores.keys():
+		cfg.set_value(nombre, clave, valores[clave])
+	cfg.save(RUTA_CONFIG_ATERRIZAJE)
+
+func _altura_tren_efectiva() -> float:
+	var valor: float = float(_aterrizaje_actual()["altura_tren"])
+	return valor if valor >= 0.0 else altura_tren_auto
+
+func _vel_despegue_efectiva() -> float:
+	var valor: float = float(_aterrizaje_actual()["vel_despegue"])
+	if valor > 0.0:
+		return valor
+	var vel_minima: float = float(_ajustes_avion_actual()["vel_minima"])
+	return max(30.0, vel_minima * 0.8)
+
+# Mide qué tan abajo del centro del avión quedan las ruedas (o la panza), a
+# partir del propio modelo -- así cada avión arranca con una altura de tren
+# razonable (un A380 no tiene las ruedas a la misma altura que un Cessna) y
+# después se afina a ojo en la pestaña "Aterrizaje".
+func _medir_altura_tren() -> void:
+	altura_tren_auto = MARGEN_SOBRE_PISO
+	if modelo_externo and modelo_externo.get_child_count() > 0:
+		var caja: AABB = _calcular_aabb_local(modelo_externo)
+		if caja.size != Vector3.ZERO:
+			var minimo_y: float = INF
+			for i in range(8):
+				var p: Vector3 = modelo_externo.transform * caja.get_endpoint(i)
+				minimo_y = min(minimo_y, p.y)
+			if minimo_y < -0.05 and minimo_y > -60.0:
+				altura_tren_auto = -minimo_y
+	_refrescar_panel_aterrizaje()
+
+func _reiniciar_estado_tierra() -> void:
+	en_tierra = false
+	tiempo_en_aire = 0.0
+	rebote_activo = false
+	rebote_altura = 0.0
+	rebote_velocidad = 0.0
+	rebotes_restantes = 0
+	_altura_sobre_piso_prev = -1.0
+
+# Toque de ruedas: clasifica el aterrizaje por la velocidad de descenso y, si
+# fue brusco, arranca los rebotes (la cantidad, la altura y los umbrales se
+# editan en la pestaña "Aterrizaje"). Todavía sin choque/crash.
+func _tocar_tierra(velocidad_descenso: float) -> void:
+	en_tierra = true
+	bloqueo_despegue = 4.0
+	tiempo_en_aire = 0.0
+	rebote_activo = false
+	rebote_altura = 0.0
+	var cfg: Dictionary = _aterrizaje_actual()
+	var vd: float = max(0.0, velocidad_descenso)
+	var suave: float = float(cfg["aterr_suave"])
+	var brusco: float = float(cfg["aterr_brusco"])
+	var texto: String = "Aterrizaje suave"
+	var color: Color = Color(0.4, 1.0, 0.4)
+	if vd >= brusco:
+		texto = "¡Venís muy fuerte! Aterrizaje brusco"
+		color = Color(1.0, 0.45, 0.25)
+		var cantidad: int = int(cfg["rebotes"])
+		var fuerza: float = float(cfg["rebote_fuerza"])
+		if cantidad > 0 and fuerza > 0.0:
+			rebote_activo = true
+			rebotes_restantes = cantidad - 1
+			rebote_velocidad_inicial = vd * 0.6 * fuerza
+			rebote_velocidad = rebote_velocidad_inicial
+	elif vd >= suave:
+		texto = "Aterrizaje normal"
+		color = Color(1.0, 0.9, 0.4)
+	_mostrar_cartel_aterrizaje(texto, color)
+
+func _despegar_de_pista() -> void:
+	en_tierra = false
+	tiempo_en_aire = 0.0
+	rebote_activo = false
+	rebote_altura = 0.0
+	tiempo_sin_toque = 2.0
+	_mostrar_cartel_aterrizaje("Despegaste", Color(0.5, 0.85, 1.0))
+
+# Pedido 2026-10-16 ("desde la misión 1 aparecen cuadrados rojos por todos
+# lados que no tienen nada que ver -- si no conocés los aeropuertos, te
+# volvés loco buscando el que importa"): antes "modo_guerra" prendía TODOS
+# los objetivos_armamento a la vez (barcos, aeropuertos, industria,
+# invasión, Capital), sin importar qué misión estuviera activa. Ahora, si
+# hay un paso de misión en curso, solo se activan los objetivos del grupo
+# que corresponde a ESE paso -- el resto queda oculto y sin colisión igual
+# que con el modo guerra apagado, aunque modo_guerra siga en true. No se
+# borra nada (otra misión futura los puede necesitar), solo no estorban.
+func _grupos_relevantes_paso_actual() -> Array:
+	if mision_paso_actual < 0 or mision_paso_actual >= secuencia_mision_actual.size():
+		return []
+	var nombre: String = secuencia_mision_actual[mision_paso_actual]["nombre"]
+	if nombre == "Capital Federal":
+		return ["mision_verde"]
+	elif nombre == "Aeropuertos":
+		return ["mision_aeropuertos"]
+	elif nombre == "Hundir 3 barcos" or nombre == "Volver a base":
+		return ["mision_barcos"]
+	elif nombre == "Industria":
+		return ["mision_industria"]
+	elif nombre == "Invasores":
+		return ["invasion"]
+	elif nombre == "Defensa Total":
+		return ["mision_verde", "mision_aeropuertos", "mision_barcos", "mision_industria"]
+	return []
+
+func _sincronizar_modo_guerra(delta: float, forzar: bool = false) -> void:
+	_tiempo_sync_guerra -= delta
+	if _tiempo_sync_guerra > 0.0 and not forzar:
+		return
+	_tiempo_sync_guerra = 0.5
+	var grupos_del_paso: Array = _grupos_relevantes_paso_actual() if modo_guerra else []
+	for objetivo in objetivos_armamento:
+		if not is_instance_valid(objetivo):
+			continue
+		var debe_estar_activo: bool = modo_guerra and not grupos_del_paso.is_empty() and _objetivo_en_algun_grupo(objetivo, grupos_del_paso)
+		if debe_estar_activo:
+			if objetivo.has_meta("colision_pausada"):
+				for forma in objetivo.find_children("*", "CollisionShape3D", true, false):
+					forma.set_deferred("disabled", false)
+				objetivo.remove_meta("colision_pausada")
+			if objetivo.has_meta("oculto_por_paz"):
+				objetivo.visible = true
+				objetivo.remove_meta("oculto_por_paz")
+		else:
+			if not objetivo.has_meta("colision_pausada"):
+				for forma in objetivo.find_children("*", "CollisionShape3D", true, false):
+					forma.set_deferred("disabled", true)
+				objetivo.set_meta("colision_pausada", true)
+			if objetivo.visible:
+				objetivo.visible = false
+				objetivo.set_meta("oculto_por_paz", true)
+	var fila: Node = get_node_or_null("../HUD/FilaVelocidadInvasion")
+	if fila:
+		fila.visible = modo_guerra and grupos_del_paso.has("invasion")
+	if not modo_guerra:
+		for etiqueta in [etiqueta_objetivo_destruido, etiqueta_mision_verde, etiqueta_barcos, etiqueta_industria, etiqueta_invasion]:
+			if etiqueta:
+				etiqueta.visible = false
+
+func _objetivo_en_algun_grupo(objetivo: Node, grupos: Array) -> bool:
+	for g in grupos:
+		if objetivo.is_in_group(g):
+			return true
+	return false
+
+# BUG REAL encontrado 2026-10-17 (reportado: "la crucecita tapa el reloj"):
+# la barra de arriba (BarraBotones) ya estaba casi llena -- agregar un botón
+# más ahí la desbordaba, empujando la hora contra el botón ✕ (que está
+# anclado fijo en la esquina, no se mueve). El botón ahora NO se agrega a
+# esa barra -- se crea sin padre todavío y se cuelga adentro de la pestaña
+# "Misión" (ver _crear_solapa_mision), mismo lugar que pidió Pablo para
+# todo lo de guerra/misiones.
+# Pedido 2026-10-17 ("quedó espectacular para aterrizar sin el dibujito del
+# avión -- quiero un botón a mano, sin buscar"): la tecla V ya hacía esto
+# (ver comentario viejo junto a vista_sin_avion_activa) -- sacado a función
+# propia para que un botón nuevo, al lado del reloj, dispare lo mismo.
+# Pedido 2026-10-17 ("el ícono real del banco, y al lado un cuadradito con
+# números electrónicos del dinero"): PanelContainer anclado fijo arriba a
+# la derecha (NO adentro de BarraBotones -- ver el bug de la crucecita de
+# antes) con el logo (TextureRect) + un Label verde estilo instrumento,
+# mismo look que ALT/RUMBO/VEL/DIST. Devuelve el Label para que quien llama
+# pueda actualizarle el número después.
+func _crear_caja_dinero(ruta_icono: String, offset_izq: float, offset_der: float, con_editar: bool = false) -> Label:
+	var caja := PanelContainer.new()
+	caja.anchors_preset = 1
+	caja.anchor_left = 1.0
+	caja.anchor_right = 1.0
+	# Pedido 2026-10-17 ("están pisando a lo que está atrás, bajalas un
+	# centímetro y medio"): un renglón más abajo que el resto (que vive en
+	# offset_top 2-24) -- no tapa nada de la fila de arriba.
+	caja.offset_left = offset_izq
+	caja.offset_top = 32.0
+	caja.offset_right = offset_der
+	caja.offset_bottom = 54.0
+	caja.grow_horizontal = 0
+	var caja_altitud_ref: PanelContainer = get_node("../HUD/PanelInstrumentos/CajaAltitud")
+	var estilo: StyleBox = caja_altitud_ref.get_theme_stylebox("panel")
+	if estilo:
+		caja.add_theme_stylebox_override("panel", estilo)
+	get_node("../HUD").add_child(caja)
+
+	var fila := HBoxContainer.new()
+	fila.add_theme_constant_override("separation", 4)
+	caja.add_child(fila)
+
+	var icono := TextureRect.new()
+	if ResourceLoader.exists(ruta_icono):
+		icono.texture = load(ruta_icono)
+	icono.custom_minimum_size = Vector2(18, 18)
+	icono.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	icono.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	fila.add_child(icono)
+
+	var etiqueta := Label.new()
+	etiqueta.text = "$0"
+	etiqueta.add_theme_font_size_override("font_size", 13)
+	etiqueta.modulate = Color(0.2, 1.0, 0.3, 1.0)
+	etiqueta.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
+	etiqueta.add_theme_constant_override("outline_size", 2)
+	fila.add_child(etiqueta)
+
+	# Pedido 2026-10-17 ("perdí 420 pesos -- ponele el botón más/menos para
+	# corregirlo yo mismo"): solo Banco Nación lo pide (con_editar=true);
+	# Mercado Pago queda como antes, sin tocar.
+	if con_editar:
+		var boton_menos_dinero := Button.new()
+		boton_menos_dinero.text = "▼"
+		boton_menos_dinero.custom_minimum_size = Vector2(16, 16)
+		boton_menos_dinero.add_theme_font_size_override("font_size", 9)
+		boton_menos_dinero.focus_mode = Control.FOCUS_NONE
+		boton_menos_dinero.pressed.connect(func():
+			PerfilJugador.modificar_plata(-25)
+			_actualizar_etiqueta_dinero())
+		fila.add_child(boton_menos_dinero)
+		var boton_mas_dinero := Button.new()
+		boton_mas_dinero.text = "▲"
+		boton_mas_dinero.custom_minimum_size = Vector2(16, 16)
+		boton_mas_dinero.add_theme_font_size_override("font_size", 9)
+		boton_mas_dinero.focus_mode = Control.FOCUS_NONE
+		boton_mas_dinero.pressed.connect(func():
+			PerfilJugador.modificar_plata(25)
+			_actualizar_etiqueta_dinero())
+		fila.add_child(boton_mas_dinero)
+	return etiqueta
+
+func _actualizar_etiqueta_dinero() -> void:
+	if etiqueta_dinero:
+		etiqueta_dinero.text = "$%d" % int(PerfilJugador.perfil_actual.get("plata", 0))
+	if etiqueta_dinero_mp:
+		etiqueta_dinero_mp.text = "$%d" % int(PerfilJugador.perfil_actual.get("plata_mercado_pago", 0))
+
+func _alternar_vista_sin_avion() -> void:
+	vista_sin_avion_activa = not vista_sin_avion_activa
+	modelo_externo.visible = not vista_sin_avion_activa
+	var mostrar_primitivas = TIPOS_AVION[tipo_avion_indice]["modelo"] == "" and not vista_sin_avion_activa
+	pieza_fuselaje.visible = mostrar_primitivas
+	pieza_nariz.visible = mostrar_primitivas
+	pieza_alas.visible = mostrar_primitivas
+	pieza_cola.visible = mostrar_primitivas
+	pieza_timon.visible = mostrar_primitivas
+	if luz_punta_ala_izq:
+		luz_punta_ala_izq.visible = mostrar_primitivas
+		luz_punta_ala_der.visible = mostrar_primitivas
+		luz_estroboscopica.visible = mostrar_primitivas
+		luz_iluminacion_ala.visible = mostrar_primitivas
+		luz_iluminacion_ala_2.visible = mostrar_primitivas
+	if boton_vista_avion:
+		boton_vista_avion.text = "🙈" if vista_sin_avion_activa else "👁"
+	cartel_central.text = "👁️ Vista sin avión: ON" if vista_sin_avion_activa else "👁️ Vista sin avión: OFF"
+	cartel_central.visible = true
+	get_tree().create_timer(1.5).timeout.connect(func(): cartel_central.visible = false)
+
+# Movimiento mientras modo_a_pie está activo -- reusa self (el nodo del
+# avión) como "cuerpo" caminando, en vez de la física de vuelo normal. Mismo
+# estilo de input combinado teclado+joystick que ya usa _procesar_vuelo
+# (W/S o acelerar/frenar, flechas o alabeo_izquierda/derecha), pero sin
+# banco ni cabeceo -- solo avanzar/retroceder y girar sobre la vertical real.
+func _procesar_modo_a_pie(delta: float) -> void:
+	var arriba: Vector3 = _arriba_real()
+
+	# BUG REAL encontrado 2026-10-17 (reportado: "voy a la izquierda y el
+	# cuadradito va a la derecha, y viceversa"): girar alrededor del eje
+	# "arriba" con global_rotate() tiene el sentido CONTRARIO al que
+	# usa alabeo_izquierda/derecha para el banco del avión -- están
+	# invertidos los signos.
+	# Pedido 2026-10-22 ("el giro es muy brusco, quiero que sea progresivo,
+	# no de a saltos"): si alabeo_izquierda/derecha están mapeados a un EJE
+	# analógico del joystick (no un botón), se usa esa magnitud (0..1, según
+	# cuánto empujás el stick) para que el giro arranque suave y vaya
+	# acelerando -- con teclado o un botón digital, sigue girando a la
+	# velocidad fija de siempre (no hay forma de "empujar poquito" un botón).
+	var giro: float = 0.0
+	var magnitud_giro: float = 1.0
+	var eje_izquierda: float = _joystick_eje("alabeo_izquierda")
+	var eje_derecha: float = _joystick_eje("alabeo_derecha")
+	if Input.is_action_pressed("ui_left") or _joystick_activo("alabeo_izquierda"):
+		giro = 1.0
+		if eje_izquierda != 0.0:
+			magnitud_giro = eje_izquierda
+	elif Input.is_action_pressed("ui_right") or _joystick_activo("alabeo_derecha"):
+		giro = -1.0
+		if eje_derecha != 0.0:
+			magnitud_giro = eje_derecha
+	if giro != 0.0:
+		global_rotate(arriba, deg_to_rad(giro * magnitud_giro * VELOCIDAD_GIRO_A_PIE * delta))
+
+	# Pedido 2026-10-17 ("quiero que el acelerador sea igual que el avión --
+	# la frenada la hago yo, si no la velocidad se mantiene constante"):
+	# antes se movía SOLO mientras "acelerar" estaba apretado, y frenaba
+	# solo al soltarlo. Ahora hay una velocidad propia que sube con
+	# "acelerar", se queda IGUAL si no tocás nada (crucero), y solo baja si
+	# apretás "frenar" a propósito -- mismo esquema que ya usa el avión.
+	if Input.is_physical_key_pressed(KEY_W) or _joystick_activo("acelerar"):
+		velocidad_a_pie_actual = min(VELOCIDAD_A_PIE_MAXIMA, velocidad_a_pie_actual + ACELERACION_A_PIE * delta)
+	elif Input.is_physical_key_pressed(KEY_S) or _joystick_activo("frenar"):
+		velocidad_a_pie_actual = max(0.0, velocidad_a_pie_actual - FRENADO_A_PIE * delta)
+
+	# Pedido 2026-10-17 ("al auto le falta marcha atrás -- ponela en el
+	# mismo botón que ya tiene el helicóptero para bajar"): reusa
+	# vertical_abajo (F/L o joystick) -- no hay conflicto posible, ese
+	# botón solo hace algo en vuelo normal de helicóptero, nunca en modo a
+	# pie. A diferencia del acelerador normal, la reversa NO mantiene
+	# velocidad sola al soltar -- es lenta y a propósito, como en cualquier
+	# auto de verdad.
+	var reversa_activa: bool = Input.is_physical_key_pressed(KEY_F) or Input.is_physical_key_pressed(KEY_L) or _joystick_activo("vertical_abajo")
+	if reversa_activa:
+		velocidad_a_pie_actual = 0.0
+		var atras: Vector3 = global_transform.basis.z
+		atras -= atras.dot(arriba) * arriba
+		if atras.length() > 0.001:
+			global_position += atras.normalized() * VELOCIDAD_REVERSA_A_PIE * delta
+	elif velocidad_a_pie_actual > 0.001:
+		var adelante: Vector3 = -global_transform.basis.z
+		adelante -= adelante.dot(arriba) * arriba
+		if adelante.length() > 0.001:
+			global_position += adelante.normalized() * velocidad_a_pie_actual * delta
+
+	# BUG REAL encontrado 2026-10-17 (reportado: "nunca funcionó el freno y
+	# el acelerador, iba a velocidad constante"): el acelerador SÍ estaba
+	# funcionando (velocidad_a_pie_actual subía bien) -- lo que nunca se
+	# actualizaba era el VELOCÍMETRO del HUD, porque lee "velocidad_actual"
+	# (la variable del avión) y acá se mueve "velocidad_a_pie_actual" (otra
+	# variable, a propósito, para no pisar nada del avión al volver a
+	# subir). Sin el número en pantalla moviéndose, parecía que no hacía
+	# nada. Ahora el instrumento muestra la velocidad real del auto
+	# (convertida de m/s a km/h) mientras estás en modo a pie.
+	etiqueta_velocidad.text = "VEL\n%d" % int(round(velocidad_a_pie_actual * 3.6))
+
+	# Clavado al piso real cada cuadro (sin tren de aterrizaje ni rebotes --
+	# una persona caminando no "aterriza", simplemente está siempre parada
+	# sobre el terreno).
+	# BUG REAL encontrado 2026-10-17 (reportado: "tiembla mucho, sube y baja,
+	# se mueve toda la pantalla"): el terreno 3D real (fotogrametría de
+	# Cesium) no es perfectamente parejo -- el rayo pega en un triángulo
+	# apenas distinto cada cuadro, y clavar la posición DIRECTO a ese
+	# resultado (como hacíamos) hacía bailar la altura (y con ella la
+	# cámara, que sigue a este mismo nodo) cuadro a cuadro. Ahora solo se
+	# suaviza la componente VERTICAL con un lerp rápido -- filtra ese ruido
+	# chico sin notarse, pero sigue las bajadas/subidas reales del terreno
+	# sin demora perceptible. La posición horizontal (ya movida arriba por
+	# el caminar) no se toca para nada, sigue respondiendo al toque.
+	var space_state = get_world_3d().direct_space_state
+	var origen_rayo: Vector3 = global_position + arriba * 2000.0
+	var destino_rayo: Vector3 = global_position - arriba * 2000.0
+	var consulta := PhysicsRayQueryParameters3D.create(origen_rayo, destino_rayo)
+	consulta.collision_mask = 1
+	var resultado := space_state.intersect_ray(consulta)
+	if resultado:
+		var altura_actual: float = global_position.dot(arriba)
+		var altura_objetivo: float = (resultado["position"] + arriba * ALTURA_FIGURA_A_PIE).dot(arriba)
+		var nueva_altura: float = lerp(altura_actual, altura_objetivo, clamp(delta * 10.0, 0.0, 1.0))
+		global_position += arriba * (nueva_altura - altura_actual)
+
+	# Botón de ruta asignable -- flanco de subida (apretar, no mantener),
+	# mismo patrón que ya usa "armamento" en _process. Guarda lat/lon REAL
+	# actual (mundo.lat_avion/lon_avion ya están frescos porque mundo.gd
+	# recentra el origen en base a este mismo nodo, sin código extra).
+	var marcar_activo: bool = Input.is_physical_key_pressed(KEY_R) or _joystick_activo("marcar_punto_ruta")
+	if marcar_activo and not _marcar_ruta_anterior:
+		_ruta_trackeada.append({"lat": mundo.lat_avion, "lon": mundo.lon_avion})
+		_guardar_ruta_trackeada()
+		cartel_central.text = "📍 Punto de ruta #%d guardado" % _ruta_trackeada.size()
+		cartel_central.visible = true
+		get_tree().create_timer(1.0).timeout.connect(func(): cartel_central.visible = false)
+	_marcar_ruta_anterior = marcar_activo
+
+	var deshacer_activo: bool = _joystick_activo("deshacer_punto_ruta")
+	if deshacer_activo and not _deshacer_ruta_anterior and not _ruta_trackeada.is_empty():
+		_ruta_trackeada.pop_back()
+		_guardar_ruta_trackeada()
+		cartel_central.text = "↩️ Último punto borrado (quedan %d)" % _ruta_trackeada.size()
+		cartel_central.visible = true
+		get_tree().create_timer(1.0).timeout.connect(func(): cartel_central.visible = false)
+	_deshacer_ruta_anterior = deshacer_activo
+
+func _guardar_ruta_trackeada() -> void:
+	var archivo := FileAccess.open(RUTA_TRACKEADA_ARCHIVO, FileAccess.WRITE)
+	if archivo:
+		archivo.store_string(JSON.stringify(_ruta_trackeada, "\t"))
+		archivo.close()
+
+func _cargar_ruta_trackeada() -> void:
+	if not FileAccess.file_exists(RUTA_TRACKEADA_ARCHIVO):
+		return
+	var archivo := FileAccess.open(RUTA_TRACKEADA_ARCHIVO, FileAccess.READ)
+	var datos = JSON.parse_string(archivo.get_as_text())
+	archivo.close()
+	if datos is Array:
+		_ruta_trackeada = datos
+	# Pedido 2026-10-17 ("iluminar de noche la ruta que trackeé, con
+	# bombitas cada tanto, pero ignorá el lío de puntos del estacionamiento
+	# y cortala donde pego la vuelta"): se prueba cada vez que arranca el
+	# juego, con lo que haya en el archivo en ese momento -- así, a medida
+	# que sigas trackeando en próximas sesiones, las luces se actualizan
+	# solas la próxima vez que abras el juego.
+	# BUG REAL encontrado 2026-10-17 (reportado con captura: "Cannot call
+	# method 'get_ecef_x' on a null value", pantalla de error al apretar
+	# Play): esto se llama desde _ready() del avión -- en Godot los hijos
+	# terminan SU _ready() antes que el padre (mundo.gd es el padre del
+	# avión), así que mundo.georeferencia todavía no estaba configurada
+	# (eso lo hace el propio _ready() de mundo.gd, que corre DESPUÉS). Se
+	# pospone con call_deferred para que corra recién al final del cuadro,
+	# cuando el _ready() de mundo.gd ya terminó de verdad.
+	if _ruta_trackeada.size() >= 2:
+		call_deferred("_iluminar_ruta_trackeada_inicial")
+
+# Pedido 2026-10-17 ("tuve que abandonar porque se agotaba la RAM"): con
+# rutas cortas, uno de cada 3 puntos está bien -- pero esta ruta ya es
+# Lugones + Panamericana + 50 cuadras, con muchos más puntos que la
+# Costanera original. En vez de un intervalo fijo, se calcula uno que deje
+# como mucho ~70 bombitas prendidas sea cual sea el largo de la ruta (ruta
+# corta = intervalo chico como antes; ruta larga = intervalo más grande
+# automáticamente, para no comerse la RAM).
+const MAXIMO_LUCES_RUTA := 70
+
+func _iluminar_ruta_trackeada_inicial() -> void:
+	var tramo: Array = _tramo_util_de_ruta(_ruta_trackeada)
+	var intervalo: int = max(3, int(ceil(float(tramo.size()) / float(MAXIMO_LUCES_RUTA))))
+	var elegidos: Array = []
+	var i: int = 0
+	while i < tramo.size():
+		elegidos.append(tramo[i])
+		i += intervalo
+	mundo.iluminar_ruta(elegidos)
+
+# Distancia aproximada en metros entre dos puntos {"lat":, "lon":} --
+# equirrectangular (de sobra de preciso para unos pocos km, mucho más
+# simple que haversine, mismo criterio que se usa en otras cuentas rápidas
+# de este archivo).
+func _distancia_entre_puntos(a: Dictionary, b: Dictionary) -> float:
+	var lat_medio_rad: float = deg_to_rad((float(a["lat"]) + float(b["lat"])) * 0.5)
+	var dy: float = (float(b["lat"]) - float(a["lat"])) * 111320.0
+	var dx: float = (float(b["lon"]) - float(a["lon"])) * 111320.0 * cos(lat_medio_rad)
+	return sqrt(dx * dx + dy * dy)
+
+# Pedido 2026-10-17 ("establecé una regularidad... el estacionamiento con
+# los 10.000 puntos ignoralo... y cuando pego la vuelta ahí cortala"): el
+# archivo de ruta trackeada puede traer, mezclados, puntos de pruebas
+# viejas y el ida-y-vuelta completo de una caminata -- esto se queda SOLO
+# con el tramo de ida real:
+#  1) si el primer tramo tiene un salto enorme (>300m de un punto al
+#     siguiente), es una prueba vieja mezclada en el mismo archivo -- se
+#     descarta todo lo anterior a ese salto.
+#  2) desde ahí, se busca el punto MÁS LEJOS en línea recta del arranque --
+#     ese es el momento justo antes de "doblar" y volver: todo lo que
+#     venga después (la vuelta + el estacionamiento con el enjambre de
+#     puntos) se descarta entero.
+# La regularidad ("uno de cada 3, de cada 5") se decide aparte, en
+# _iluminar_ruta_trackeada_inicial -- acá solo se limpia el tramo.
+func _tramo_util_de_ruta(puntos_crudos: Array) -> Array:
+	var inicio: int = 0
+	for i in range(1, puntos_crudos.size()):
+		if _distancia_entre_puntos(puntos_crudos[i - 1], puntos_crudos[i]) > 300.0:
+			inicio = i
+
+	var indice_mas_lejos: int = inicio
+	var distancia_maxima: float = 0.0
+	for i in range(inicio, puntos_crudos.size()):
+		var distancia: float = _distancia_entre_puntos(puntos_crudos[inicio], puntos_crudos[i])
+		if distancia > distancia_maxima:
+			distancia_maxima = distancia
+			indice_mas_lejos = i
+
+	var tramo: Array = []
+	for i in range(inicio, indice_mas_lejos + 1):
+		tramo.append(puntos_crudos[i])
+	return tramo
+
+# Pedido 2026-10-17: aparece al frenar en tierra (en cualquier lado, no
+# atado a un hangar puntual); el mismo botón sirve para volver a subir --
+# ver _actualizar_boton_bajar_subir, que decide cuándo mostrarlo.
+func _bajar_del_avion() -> void:
+	if modo_a_pie:
+		return
+	_pose_avion_antes_de_bajar = global_transform
+	modo_a_pie = true
+	velocidad_actual = 0.0
+	banco_actual = 0.0
+	cabeceo_actual = 0.0
+	velocidad_a_pie_actual = 0.0
+	_actualizar_etiqueta_velocidad()
+	modelo_externo.visible = false
+	pieza_fuselaje.visible = false
+	pieza_nariz.visible = false
+	pieza_alas.visible = false
+	pieza_cola.visible = false
+	pieza_timon.visible = false
+	if luz_punta_ala_izq:
+		luz_punta_ala_izq.visible = false
+		luz_punta_ala_der.visible = false
+		luz_estroboscopica.visible = false
+		luz_iluminacion_ala.visible = false
+		luz_iluminacion_ala_2.visible = false
+	if not figura_a_pie:
+		figura_a_pie = _crear_modelo_auto()
+		if figura_a_pie:
+			add_child(figura_a_pie)
+	if figura_a_pie:
+		figura_a_pie.visible = true
+
+	# Pedido 2026-10-17 ("el auto me lo dejás en el último punto que
+	# tenemos trackeado de esa ruta, así sigo marcando desde ahí"): si ya
+	# hay una ruta en progreso, arranca directo en su ÚLTIMO punto en vez
+	# de en la posición del avión -- mismo rayo al piso real de siempre.
+	if not _ruta_trackeada.is_empty():
+		var ultimo: Dictionary = _ruta_trackeada[_ruta_trackeada.size() - 1]
+		var arriba_tp: Vector3 = _arriba_real()
+		var punto: Vector3 = mundo._posicion_desde_lat_lon(float(ultimo["lat"]), float(ultimo["lon"]), 0.0)
+		var space_state_tp = get_world_3d().direct_space_state
+		var consulta_tp := PhysicsRayQueryParameters3D.create(punto + arriba_tp * 2000.0, punto - arriba_tp * 2000.0)
+		consulta_tp.collision_mask = 1
+		var resultado_tp := space_state_tp.intersect_ray(consulta_tp)
+		if resultado_tp:
+			global_position = resultado_tp["position"] + arriba_tp * ALTURA_FIGURA_A_PIE
+
+	cartel_central.text = "🚗 Bajaste del avión -- acelerar mantiene la velocidad, frenar la baja. R marca un punto de ruta"
+	cartel_central.visible = true
+	get_tree().create_timer(2.5).timeout.connect(func(): cartel_central.visible = false)
+
+# Autoescala + recentra el pivote del modelo del auto (los modelos bajados
+# de internet vienen con escalas y pivotes al azar -- mismo truco ya
+# probado con el A380/los barcos: medir el tamaño real ANTES de escalar, y
+# calcular la escala necesaria para que el lado más largo mida
+# LARGO_AUTO_REAL metros de verdad).
+func _crear_modelo_auto() -> Node3D:
+	var escena: PackedScene = load(MODELO_AUTO)
+	if not escena:
+		return null
+	var instancia = escena.instantiate()
+	var caja_nativa: AABB = _calcular_aabb_local(instancia)
+	var dimension_mas_larga: float = max(caja_nativa.size.x, max(caja_nativa.size.y, caja_nativa.size.z))
+	var escala_auto: float = (LARGO_AUTO_REAL / dimension_mas_larga) if dimension_mas_larga > 0.001 else 1.0
+	instancia.scale = Vector3.ONE * escala_auto
+	# BUG REAL encontrado 2026-10-17 (reportado: "la trompa apunta para
+	# atrás, tiene que apuntar para adelante"): el modelo venía mirando al
+	# revés de "adelante" (-Z local, la misma convención que usa el avión)
+	# -- 180° lo da vuelta.
+	instancia.rotation_degrees = Vector3(0, 180, 0)
+	var centro_nativo: Vector3 = caja_nativa.position + caja_nativa.size * 0.5
+	instancia.position = -(instancia.basis * centro_nativo)
+
+	var contenedor := Node3D.new()
+	contenedor.name = "ModeloAuto"
+	contenedor.add_child(instancia)
+	contenedor.position = Vector3(0, ALTURA_FIGURA_A_PIE, 0)
+	return contenedor
+
+func _subir_al_avion() -> void:
+	if not modo_a_pie:
+		return
+	modo_a_pie = false
+	global_transform = _pose_avion_antes_de_bajar
+	velocidad_actual = 0.0
+	velocidad_a_pie_actual = 0.0
+	# BUG REAL encontrado 2026-10-22 (reportado: "subo al avión y ya no
+	# acelera, ni con un vuelo nuevo"): Estado.DETENIDO es del sistema VIEJO
+	# de aterrizaje de precisión -- su _procesar_detenido() no hace NADA más
+	# que esperar que aprietes "Despegar" (un botón que ni siquiera se
+	# muestra en el flujo de hoy), así que W/S nunca se procesaban. El modo
+	# tierra de verdad (el que usa esta función) necesita Estado.VOLANDO,
+	# igual que _confirmar_viaje()/_teletransportar_para_mision() al dejarte
+	# parado en tierra.
+	estado = Estado.VOLANDO
+	_reiniciar_estado_tierra()
+	en_tierra = true
+	if figura_a_pie:
+		figura_a_pie.visible = false
+	if not vista_sin_avion_activa:
+		modelo_externo.visible = true
+		var mostrar_primitivas = TIPOS_AVION[tipo_avion_indice]["modelo"] == ""
+		pieza_fuselaje.visible = mostrar_primitivas
+		pieza_nariz.visible = mostrar_primitivas
+		pieza_alas.visible = mostrar_primitivas
+		pieza_cola.visible = mostrar_primitivas
+		pieza_timon.visible = mostrar_primitivas
+		if luz_punta_ala_izq:
+			luz_punta_ala_izq.visible = mostrar_primitivas
+			luz_punta_ala_der.visible = mostrar_primitivas
+			luz_estroboscopica.visible = mostrar_primitivas
+			luz_iluminacion_ala.visible = mostrar_primitivas
+			luz_iluminacion_ala_2.visible = mostrar_primitivas
+	cartel_central.text = "🛩️ De vuelta en el avión"
+	cartel_central.visible = true
+	get_tree().create_timer(1.5).timeout.connect(func(): cartel_central.visible = false)
+
+# Decide cuándo mostrar/ocultar y qué texto poner en el botón fijo de
+# bajar/subir -- se llama cada cuadro desde _actualizar_hud (throttle de
+# siempre, no hace falta más rápido para un botón).
+func _actualizar_boton_bajar_subir() -> void:
+	if not boton_bajar_subir:
+		return
+	if modo_a_pie:
+		boton_bajar_subir.visible = true
+		boton_bajar_subir.text = "🚗 Subir al avión"
+	else:
+		# BUG REAL encontrado 2026-10-17 (reportado: "frené y no me apareció
+		# nada"): Estado.DETENIDO solo existe en el sistema VIEJO de
+		# aterrizaje de precisión (LLEGADA -> ESPACIO -> FRENANDO ->
+		# DETENIDO) -- el modo tierra de verdad (el que usan los Destinos
+		# Nacionales, las misiones civiles y la pestaña Torre) nunca pasa
+		# por ahí: frenás hasta 0 y el estado se queda en VOLANDO todo el
+		# tiempo, aunque estés parado en tierra. El botón tiene que
+		# aparecer con solo "parado en el piso", sin pedir ese estado viejo
+		# que en la práctica casi nunca se alcanza.
+		boton_bajar_subir.visible = en_tierra and abs(velocidad_actual) < 1.0
+		boton_bajar_subir.text = "🚶 Bajar del avión"
+
+func _crear_boton_modo_guerra() -> void:
+	boton_modo_guerra = Button.new()
+	boton_modo_guerra.text = "Modo guerra"
+	boton_modo_guerra.toggle_mode = true
+	boton_modo_guerra.custom_minimum_size = Vector2(150, 22)
+	boton_modo_guerra.add_theme_font_size_override("font_size", 11)
+	boton_modo_guerra.focus_mode = Control.FOCUS_NONE
+	boton_modo_guerra.tooltip_text = "Activa los blancos (cuadrados rojos y verdes, barcos, invasores) y sus contadores. Apagado: vuelo y aterrizaje sin nada en pantalla. Las misiones de guerra lo prenden solas al elegirlas."
+	boton_modo_guerra.toggled.connect(func(activo: bool):
+		modo_guerra = activo
+		_sincronizar_modo_guerra(0.0, true))
+
+# Pedido 2026-10-17 ("sos un desastre haciendo los menús flotantes -- trasladá
+# todo eso a una pestaña abajo, como hiciste con Aterrizaje, que quedó
+# bien"): TODAS las misiones (guerra y civiles) en una sola pestaña nueva,
+# mismo patrón EXACTO que _crear_solapa_aterrizaje (scroll horizontal,
+# columnas fijas, cada una con su explicación debajo) -- nada de paneles
+# flotantes centrados ni de listas escondidas adentro de otro panel.
+# -- no usa "Modo guerra" para nada (nunca hay que disparar).
+func _crear_solapa_mision() -> void:
+	var hud: Node = get_node("../HUD")
+	boton_solapa_7 = Button.new()
+	boton_solapa_7.custom_minimum_size = Vector2(70, 20)
+	boton_solapa_7.add_theme_font_size_override("font_size", 10)
+	boton_solapa_7.toggle_mode = true
+	boton_solapa_7.focus_mode = Control.FOCUS_NONE
+	boton_solapa_7.text = "Misión"
+	boton_solapa_7.pressed.connect(func(): _mostrar_solapa_inferior(7))
+	get_node("../HUD/SolapasInferior").add_child(boton_solapa_7)
+
+	panel_mision_tab = Panel.new()
+	panel_mision_tab.anchor_left = panel_config_tab.anchor_left
+	panel_mision_tab.anchor_top = panel_config_tab.anchor_top
+	panel_mision_tab.anchor_right = panel_config_tab.anchor_right
+	panel_mision_tab.anchor_bottom = panel_config_tab.anchor_bottom
+	panel_mision_tab.offset_left = panel_config_tab.offset_left
+	panel_mision_tab.offset_top = panel_config_tab.offset_top
+	panel_mision_tab.offset_right = panel_config_tab.offset_right
+	panel_mision_tab.offset_bottom = panel_config_tab.offset_bottom
+	panel_mision_tab.grow_horizontal = panel_config_tab.grow_horizontal
+	panel_mision_tab.grow_vertical = panel_config_tab.grow_vertical
+	var estilo: StyleBox = panel_config_tab.get_theme_stylebox("panel")
+	if estilo:
+		panel_mision_tab.add_theme_stylebox_override("panel", estilo)
+	panel_mision_tab.visible = false
+	hud.add_child(panel_mision_tab)
+
+	var scroll := ScrollContainer.new()
+	scroll.anchor_right = 1.0
+	scroll.anchor_bottom = 1.0
+	scroll.offset_left = 6.0
+	scroll.offset_top = 4.0
+	scroll.offset_right = -6.0
+	scroll.offset_bottom = -4.0
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	panel_mision_tab.add_child(scroll)
+	var fila := HBoxContainer.new()
+	fila.add_theme_constant_override("separation", 16)
+	scroll.add_child(fila)
+
+	# Columna del interruptor general "Modo guerra" (ver comentario en
+	# _crear_boton_modo_guerra -- se sacó de la barra de arriba, que ya
+	# estaba desbordada).
+	var col_modo_guerra := VBoxContainer.new()
+	col_modo_guerra.custom_minimum_size = Vector2(170, 0)
+	var titulo_modo_guerra := Label.new()
+	titulo_modo_guerra.text = "Modo guerra"
+	titulo_modo_guerra.add_theme_font_size_override("font_size", 11)
+	col_modo_guerra.add_child(titulo_modo_guerra)
+	col_modo_guerra.add_child(boton_modo_guerra)
+	var ayuda_modo_guerra := Label.new()
+	ayuda_modo_guerra.text = "Interruptor general: activa los blancos (cuadrados, barcos, invasores) y sus contadores. Las misiones de guerra de abajo lo prenden solas."
+	ayuda_modo_guerra.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	ayuda_modo_guerra.add_theme_font_size_override("font_size", 9)
+	ayuda_modo_guerra.add_theme_color_override("font_color", Color(0.75, 0.8, 0.85))
+	col_modo_guerra.add_child(ayuda_modo_guerra)
+	fila.add_child(col_modo_guerra)
+
+	# Misiones de GUERRA -- al elegir una, prende "Modo guerra" solo (antes
+	# había que prenderlo aparte); las comerciales no lo tocan para nada.
+	var misiones_guerra := [
+		{"titulo": "Modo Práctica", "desc": "Entrenamiento: primero Capital Federal, después los aeropuertos. Un solo tiro cada uno.", "aviso": "Bienvenido, piloto. Antes de las misiones de verdad, vamos a entrenar la puntería.", "secuencia": SECUENCIA_MODO_PRACTICA, "final": "¡MODO PRÁCTICA COMPLETO!"},
+		{"titulo": "Nivel 1 — Barcos", "desc": "Hundí 3 barcos en el río y volvé a Aeroparque.", "aviso": "Base a piloto: detectamos barcos enemigos en el río. Hundí 3 y volvé.", "secuencia": SECUENCIA_NIVEL_1, "final": "¡NIVEL 1 COMPLETO!"},
+		{"titulo": "Nivel 2 — Industria", "desc": "Fábricas enemigas en La Plata. Destruilas todas.", "aviso": "Base a piloto: hay fábricas enemigas trabajando en La Plata. Destruilas.", "secuencia": SECUENCIA_NIVEL_2, "final": "¡NIVEL 2 COMPLETO!"},
+		{"titulo": "Nivel 3 — Invasión", "desc": "Tropas desembarcando por la costa. Destruí 10.", "aviso": "Base a piloto: tropas enemigas desembarcando por la costa. No dejes que avancen.", "secuencia": SECUENCIA_NIVEL_3, "final": "¡NIVEL 3 COMPLETO!"},
+		{"titulo": "Nivel 4 — Defensa Total", "desc": "El final: barcos, aeropuertos, Capital e industria, todo junto.", "aviso": "Base a piloto: ataque simultáneo en todos los frentes. Es ahora o nunca.", "secuencia": SECUENCIA_NIVEL_4, "final": "¡FELICITACIONES, COMPLETASTE MODO GUERRA!"},
+	]
+	for datos_mision in misiones_guerra:
+		var columna := VBoxContainer.new()
+		columna.custom_minimum_size = Vector2(205, 0)
+		var titulo := Label.new()
+		titulo.text = "⚔️ " + datos_mision["titulo"]
+		titulo.add_theme_font_size_override("font_size", 11)
+		columna.add_child(titulo)
+		var boton := Button.new()
+		boton.text = "Volar"
+		boton.custom_minimum_size = Vector2(150, 22)
+		boton.focus_mode = Control.FOCUS_NONE
+		boton.pressed.connect(func():
+			boton_modo_guerra.button_pressed = true
+			_mostrar_cartel_aterrizaje(datos_mision["aviso"], Color(0.5, 0.8, 1.0))
+			_iniciar_secuencia_mision(datos_mision["secuencia"], datos_mision["final"]))
+		columna.add_child(boton)
+		var ayuda := Label.new()
+		ayuda.text = datos_mision["desc"]
+		ayuda.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ayuda.add_theme_font_size_override("font_size", 9)
+		ayuda.add_theme_color_override("font_color", Color(0.75, 0.8, 0.85))
+		columna.add_child(ayuda)
+		fila.add_child(columna)
+
+	# Misiones COMERCIALES -- civiles, de un punto A a un punto B, nunca
+	# teletransportan: arrancan desde donde esté el avión en ese momento.
+	for mision in MISIONES_COMERCIALES:
+		var columna := VBoxContainer.new()
+		columna.custom_minimum_size = Vector2(205, 0)
+		var titulo := Label.new()
+		titulo.text = "✈️ " + mision["nombre"]
+		titulo.add_theme_font_size_override("font_size", 11)
+		columna.add_child(titulo)
+		var etiqueta_precio_mision := Label.new()
+		etiqueta_precio_mision.text = "💵 $%d base" % int(mision.get("precio", 0))
+		etiqueta_precio_mision.add_theme_font_size_override("font_size", 10)
+		etiqueta_precio_mision.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+		columna.add_child(etiqueta_precio_mision)
+		var boton := Button.new()
+		boton.text = "Volar"
+		boton.custom_minimum_size = Vector2(150, 22)
+		boton.focus_mode = Control.FOCUS_NONE
+		boton.pressed.connect(_iniciar_mision_comercial.bind(mision))
+		columna.add_child(boton)
+		var ayuda := Label.new()
+		ayuda.text = mision["descripcion"]
+		ayuda.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ayuda.add_theme_font_size_override("font_size", 9)
+		ayuda.add_theme_color_override("font_color", Color(0.75, 0.8, 0.85))
+		columna.add_child(ayuda)
+		fila.add_child(columna)
+
+# Pedido 2026-10-17 ("separá los destinos de las misiones -- pestaña
+# aparte"): mismo patrón que _crear_solapa_mision, pestaña 8, solo con
+# los Destinos Nacionales (precio editable ▲▼, igual que antes).
+func _crear_solapa_destinos() -> void:
+	var hud: Node = get_node("../HUD")
+	boton_solapa_8 = Button.new()
+	boton_solapa_8.custom_minimum_size = Vector2(70, 20)
+	boton_solapa_8.add_theme_font_size_override("font_size", 10)
+	boton_solapa_8.toggle_mode = true
+	boton_solapa_8.focus_mode = Control.FOCUS_NONE
+	boton_solapa_8.text = "Destinos"
+	boton_solapa_8.pressed.connect(func(): _mostrar_solapa_inferior(8))
+	get_node("../HUD/SolapasInferior").add_child(boton_solapa_8)
+
+	panel_destinos_tab = Panel.new()
+	panel_destinos_tab.anchor_left = panel_config_tab.anchor_left
+	panel_destinos_tab.anchor_top = panel_config_tab.anchor_top
+	panel_destinos_tab.anchor_right = panel_config_tab.anchor_right
+	panel_destinos_tab.anchor_bottom = panel_config_tab.anchor_bottom
+	panel_destinos_tab.offset_left = panel_config_tab.offset_left
+	panel_destinos_tab.offset_top = panel_config_tab.offset_top
+	panel_destinos_tab.offset_right = panel_config_tab.offset_right
+	panel_destinos_tab.offset_bottom = panel_config_tab.offset_bottom
+	panel_destinos_tab.grow_horizontal = panel_config_tab.grow_horizontal
+	panel_destinos_tab.grow_vertical = panel_config_tab.grow_vertical
+	var estilo: StyleBox = panel_config_tab.get_theme_stylebox("panel")
+	if estilo:
+		panel_destinos_tab.add_theme_stylebox_override("panel", estilo)
+	panel_destinos_tab.visible = false
+	hud.add_child(panel_destinos_tab)
+
+	var scroll := ScrollContainer.new()
+	scroll.anchor_right = 1.0
+	scroll.anchor_bottom = 1.0
+	scroll.offset_left = 6.0
+	scroll.offset_top = 4.0
+	scroll.offset_right = -6.0
+	scroll.offset_bottom = -4.0
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	panel_destinos_tab.add_child(scroll)
+	var fila := HBoxContainer.new()
+	fila.add_theme_constant_override("separation", 16)
+	scroll.add_child(fila)
+
+	for destino in DESTINOS_NACIONALES:
+		var columna_destino := VBoxContainer.new()
+		columna_destino.custom_minimum_size = Vector2(205, 0)
+		var titulo_destino := Label.new()
+		titulo_destino.text = "🌎 " + destino["nombre"]
+		titulo_destino.add_theme_font_size_override("font_size", 11)
+		columna_destino.add_child(titulo_destino)
+		var fila_precio := HBoxContainer.new()
+		var etiqueta_precio_destino := Label.new()
+		etiqueta_precio_destino.text = "$%d" % int(destino["precio"])
+		etiqueta_precio_destino.custom_minimum_size = Vector2(60, 0)
+		etiqueta_precio_destino.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+		fila_precio.add_child(etiqueta_precio_destino)
+		var boton_menos_destino := Button.new()
+		boton_menos_destino.text = "▼"
+		boton_menos_destino.focus_mode = Control.FOCUS_NONE
+		boton_menos_destino.pressed.connect(func():
+			destino["precio"] = max(0, int(destino["precio"]) - PASO_PRECIO_DESTINO)
+			etiqueta_precio_destino.text = "$%d" % int(destino["precio"]))
+		fila_precio.add_child(boton_menos_destino)
+		var boton_mas_destino := Button.new()
+		boton_mas_destino.text = "▲"
+		boton_mas_destino.focus_mode = Control.FOCUS_NONE
+		boton_mas_destino.pressed.connect(func():
+			destino["precio"] = int(destino["precio"]) + PASO_PRECIO_DESTINO
+			etiqueta_precio_destino.text = "$%d" % int(destino["precio"]))
+		fila_precio.add_child(boton_mas_destino)
+		columna_destino.add_child(fila_precio)
+		var boton_volar_destino := Button.new()
+		boton_volar_destino.text = "Volar"
+		boton_volar_destino.custom_minimum_size = Vector2(150, 22)
+		boton_volar_destino.focus_mode = Control.FOCUS_NONE
+		boton_volar_destino.pressed.connect(_iniciar_destino_nacional.bind(destino))
+		columna_destino.add_child(boton_volar_destino)
+		fila.add_child(columna_destino)
+
+func _iniciar_mision_comercial(mision: Dictionary) -> void:
+	if mision.has("origen"):
+		_teletransportar_para_mision(float(mision["origen"]["lat"]), float(mision["origen"]["lon"]))
+	_mostrar_cartel_aterrizaje("MISIÓN: %s\n%s" % [mision["nombre"], mision["descripcion"]], Color(0.6, 0.85, 1.0))
+	_iniciar_secuencia_mision(mision["pasos"], "¡Misión cumplida: %s!" % mision["nombre"], int(mision.get("precio", 0)))
+
+# Pedido 2026-10-17 ("destinos nacionales... todos los que tenemos
+# trackeados, ordenados de más cerca a más lejos, con precio editable"):
+# vuelo simple Aeroparque -> destino, en el aire (mismo arranque que el
+# City Tour), paga al llegar.
+func _iniciar_destino_nacional(destino: Dictionary) -> void:
+	# Usa la posición del aeropuerto REAL (mundo.gd) si lo encuentra por
+	# nombre exacto -- ver comentario largo junto a DESTINOS_NACIONALES.
+	# Si por lo que sea no se encuentra (nombre no coincide), usa el lat/lon
+	# escrito a mano como respaldo, para no romper el viaje.
+	var lat_destino: float = float(destino["lat"])
+	var lon_destino: float = float(destino["lon"])
+	var aeropuerto_real_destino := _buscar_destino_por_nombre(destino.get("aeropuerto_real", ""))
+	if aeropuerto_real_destino:
+		lat_destino = float(aeropuerto_real_destino.get_meta("lat"))
+		lon_destino = float(aeropuerto_real_destino.get_meta("lon"))
+
+	var aeropuerto := _buscar_destino_por_nombre("Aeroparque")
+	if aeropuerto:
+		global_position = aeropuerto.global_position + _arriba_real() * 600.0
+		var punto_destino: Vector3 = mundo._posicion_desde_lat_lon(lat_destino, lon_destino, 0.0)
+		look_at(punto_destino, _arriba_real())
+		banco_actual = 0.0
+		var ajustes_actuales: Dictionary = _ajustes_avion_actual()
+		velocidad_actual = lerp(float(ajustes_actuales["vel_minima"]), float(ajustes_actuales["vel_maxima"]), 0.4)
+		_actualizar_etiqueta_velocidad()
+		_reiniciar_estado_tierra()
+		estado = Estado.VOLANDO
+	_mostrar_cartel_aterrizaje("DESTINO NACIONAL: %s\nSalís de Aeroparque. Pago: $%d" % [destino["nombre"], int(round(float(destino["precio"]) * _multiplicador_precio_avion()))], Color(0.6, 0.85, 1.0))
+	# Pedido 2026-10-17 ("ni bien aterrizo ya me da la plata -- si dice
+	# aterrizar, que pague solo al aterrizar"): 1500m era demasiado laxo
+	# (pagaba con solo pasar cerca). en_tierra (ver _paso_mision_actual_
+	# completo) ya exige un aterrizaje de verdad -- el radio se subió de
+	# 400 a 600m (reportado: "aterricé y no me pagó") porque varios
+	# aeropuertos del interior solo tienen una coordenada aproximada, no la
+	# pista real medida -- 600m es el mismo generoso que ya usa "Volver a
+	# base" (RADIO_VOLVER_BASE) en otras misiones.
+	var paso := [{"nombre": "Volar a " + destino["nombre"], "texto": "Destino: " + destino["nombre"] + ".", "tipo": "llegar_punto", "lat": lat_destino, "lon": lon_destino, "radio": RADIO_VOLVER_BASE}]
+	_iniciar_secuencia_mision(paso, "¡Llegaste a %s!" % destino["nombre"], int(destino["precio"]))
+
+# Pedido 2026-10-17, segunda vuelta ("al apretar Volar te tiene que
+# teletransportar al punto de partida, no respetar el destino estés donde
+# estés"): mismo patrón que ya usa _iniciar_city_tour para arrancar en un
+# lugar exacto -- acá siempre en tierra (parado, modo tierra prendido si el
+# avión lo tiene activado), porque casi todos los orígenes son hangares.
+func _teletransportar_para_mision(lat: float, lon: float) -> void:
+	var arriba: Vector3 = _arriba_real()
+	var punto_aproximado: Vector3 = mundo._posicion_desde_lat_lon(lat, lon, 0.0)
+	var space_state := get_world_3d().direct_space_state
+	var consulta := PhysicsRayQueryParameters3D.create(punto_aproximado + arriba * 2000.0, punto_aproximado - arriba * 2000.0)
+	consulta.collision_mask = 1
+	var resultado := space_state.intersect_ray(consulta)
+	var punto_piso: Vector3 = resultado["position"] if resultado.size() > 0 else punto_aproximado
+	var tren: float = _altura_tren_efectiva()
+	global_position = punto_piso + arriba * tren
+	banco_actual = 0.0
+	cabeceo_actual = 0.0
+	velocidad_actual = 0.0
+	_reiniciar_estado_tierra()
+	en_tierra = true
+	estado = Estado.VOLANDO
+	_actualizar_etiqueta_velocidad()
+
+func _crear_cartel_aterrizaje() -> void:
+	cartel_aterrizaje = Label.new()
+	cartel_aterrizaje.visible = false
+	cartel_aterrizaje.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cartel_aterrizaje.anchor_left = 0.15
+	cartel_aterrizaje.anchor_right = 0.85
+	cartel_aterrizaje.anchor_top = 0.22
+	cartel_aterrizaje.anchor_bottom = 0.22
+	cartel_aterrizaje.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	# BUG REAL encontrado 2026-10-17 (reportado: "A por Todo queda encimado
+	# arriba de las letras de abajo"): con GROW_BOTH, un texto de 2 líneas
+	# (como los carteles de misión nuevos, que tienen \n) crece tanto para
+	# arriba como para abajo de su punto de anclaje -- con una sola línea
+	# nunca se notaba. Solo hacia abajo, para que nunca invada el
+	# recordatorio de objetivo que está arriba.
+	cartel_aterrizaje.grow_vertical = Control.GROW_DIRECTION_END
+	cartel_aterrizaje.add_theme_font_size_override("font_size", 34)
+	cartel_aterrizaje.add_theme_color_override("font_outline_color", Color(0, 0, 0))
+	cartel_aterrizaje.add_theme_constant_override("outline_size", 8)
+	cartel_aterrizaje.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	get_node("../HUD").add_child(cartel_aterrizaje)
+
+func _mostrar_cartel_aterrizaje(texto: String, color: Color) -> void:
+	if not cartel_aterrizaje or cortina_de_carga.visible:
+		return
+	cartel_aterrizaje.text = texto
+	cartel_aterrizaje.add_theme_color_override("font_color", color)
+	cartel_aterrizaje.visible = true
+	cartel_aterrizaje_tiempo = 3.5
+
+func _actualizar_cartel_aterrizaje(delta: float) -> void:
+	if cartel_aterrizaje and cartel_aterrizaje.visible:
+		cartel_aterrizaje_tiempo -= delta
+		if cartel_aterrizaje_tiempo <= 0.0:
+			cartel_aterrizaje.visible = false
+
+# Una fila por cada valor editable: título, botones (grueso/fino) y un texto
+# corto de para qué sirve. "paso" es el salto fino; el grueso es 10 veces eso.
+const FILAS_ATERRIZAJE = [
+	{"clave": "altura_tren", "titulo": "Altura del tren", "paso": 0.05, "min": 0.0, "max": 60.0,
+		"ayuda": "Distancia del centro del avión a las ruedas. Si las ruedas se hunden en la pista, subila; si el avión flota, bajala. Viene medida sola del modelo (AUTO)."},
+	{"clave": "vel_despegue", "titulo": "Vel. de despegue", "paso": 5.0, "min": 0.0, "max": 3000.0,
+		"ayuda": "Por debajo de esta velocidad el avión queda pegado a la pista aunque tires para atrás. Al llegar a ella y tirar, despega."},
+	{"clave": "giro_suelo", "titulo": "Giro en tierra (°/s)", "paso": 2.0, "min": 1.0, "max": 120.0,
+		"ayuda": "Tope de qué tan rápido gira en pista con izquierda/derecha, aunque vaya rápido. El giro real también depende de la velocidad y del radio de giro."},
+	{"clave": "radio_giro", "titulo": "Radio de giro", "paso": 5.0, "min": 5.0, "max": 1000.0,
+		"ayuda": "Como en un auto: a menor radio, más cerrada la curva a la misma velocidad. Parado no gira. Subilo para que el avión necesite más espacio para doblar."},
+	{"clave": "acel_suelo", "titulo": "Aceleración en tierra", "paso": 1.0, "min": 0.5, "max": 200.0,
+		"ayuda": "Cuánta velocidad suma por segundo al apretar W en pista. Más bajo = más fino para rodar despacio hacia el gate; más alto = acelera de golpe."},
+	{"clave": "freno_suelo", "titulo": "Freno en tierra", "paso": 5.0, "min": 1.0, "max": 1000.0,
+		"ayuda": "Cuánto frena por segundo al apretar S (o el freno) estando en tierra. Más alto = frena más fuerte."},
+	{"clave": "rodadura", "titulo": "Rodadura", "paso": 1.0, "min": 0.0, "max": 200.0,
+		"ayuda": "Resistencia natural al rodar sin tocar nada. 0 = sigue rodando sin frenar solo (hay que usar el freno). Subilo para que se detenga de a poco."},
+	{"clave": "aterr_suave", "titulo": "Toque suave hasta", "paso": 0.5, "min": 0.25, "max": 60.0,
+		"ayuda": "Velocidad de descenso (m/s) al tocar. Por debajo de este valor el cartel dice Aterrizaje suave."},
+	{"clave": "aterr_brusco", "titulo": "Toque brusco desde", "paso": 0.5, "min": 0.5, "max": 100.0,
+		"ayuda": "Por encima de este descenso (m/s) el cartel avisa que venís muy fuerte y rebota. Entre este valor y el de suave es Aterrizaje normal."},
+	{"clave": "rebote_fuerza", "titulo": "Fuerza del rebote", "paso": 0.1, "min": 0.0, "max": 4.0,
+		"ayuda": "Qué tan alto rebota en un toque brusco. 0 = no rebota (queda solo el cartel)."},
+	{"clave": "rebotes", "titulo": "Cantidad de rebotes", "paso": 1.0, "min": 0.0, "max": 6.0,
+		"ayuda": "Cuántos rebotes da en un toque brusco antes de apoyarse del todo (cada uno más chico que el anterior)."},
+]
+
+func _texto_valor_aterrizaje(clave: String) -> String:
+	var cfg: Dictionary = _aterrizaje_actual()
+	match clave:
+		"altura_tren":
+			if float(cfg[clave]) < 0.0:
+				return "AUTO %.2f m" % altura_tren_auto
+			return "%.2f m" % float(cfg[clave])
+		"vel_despegue":
+			if float(cfg[clave]) <= 0.0:
+				return "AUTO %.0f" % _vel_despegue_efectiva()
+			return "%.0f" % float(cfg[clave])
+		"giro_suelo":
+			return "%.0f°/s" % float(cfg[clave])
+		"radio_giro", "freno_suelo", "rodadura":
+			return "%.0f" % float(cfg[clave])
+		"acel_suelo":
+			return "%.1f" % float(cfg[clave])
+		"aterr_suave", "aterr_brusco":
+			return "%.2f m/s" % float(cfg[clave])
+		"rebote_fuerza":
+			return "%.1fx" % float(cfg[clave])
+		"rebotes":
+			return "%d" % int(cfg[clave])
+	return str(cfg[clave])
+
+func _refrescar_panel_aterrizaje() -> void:
+	if not panel_aterrizaje_tab:
+		return
+	for clave in valores_aterrizaje_labels.keys():
+		valores_aterrizaje_labels[clave].text = _texto_valor_aterrizaje(clave)
+	if boton_modo_tierra:
+		var activo: bool = bool(_aterrizaje_actual()["modo_tierra"])
+		boton_modo_tierra.set_pressed_no_signal(activo)
+		boton_modo_tierra.text = "Modo tierra: SÍ" if activo else "Modo tierra: NO"
+
+func _ajustar_aterrizaje(clave: String, delta_valor: float, minimo: float, maximo: float) -> void:
+	var cfg: Dictionary = _aterrizaje_actual()
+	var actual: float = float(cfg[clave])
+	# Si estaba en AUTO, se parte del valor automático actual.
+	if clave == "altura_tren" and actual < 0.0:
+		actual = altura_tren_auto
+	if clave == "vel_despegue" and actual <= 0.0:
+		actual = _vel_despegue_efectiva()
+	var nuevo: float = clamp(actual + delta_valor, minimo, maximo)
+	if clave == "rebotes":
+		cfg[clave] = int(round(nuevo))
+	else:
+		cfg[clave] = nuevo
+	_refrescar_panel_aterrizaje()
+	_guardar_aterrizaje_aviones()
+
+func _poner_aterrizaje_auto(clave: String) -> void:
+	var cfg: Dictionary = _aterrizaje_actual()
+	cfg[clave] = -1.0 if clave == "altura_tren" else 0.0
+	_refrescar_panel_aterrizaje()
+	_guardar_aterrizaje_aviones()
+
+func _boton_aterrizaje(texto: String, accion: Callable, ayuda: String = "") -> Button:
+	var b := Button.new()
+	b.tooltip_text = ayuda
+	b.text = texto
+	b.custom_minimum_size = Vector2(28, 22)
+	b.add_theme_font_size_override("font_size", 11)
+	b.focus_mode = Control.FOCUS_NONE
+	b.pressed.connect(accion)
+	return b
+
+# Pestaña nueva en el panel de abajo (pedido 2026-10-16): todos los valores
+# del aterrizaje y el modo tierra, editables por avión con botones, para
+# afinar a ojo avión por avión sin tocar código.
+func _crear_solapa_aterrizaje() -> void:
+	var hud: Node = get_node("../HUD")
+	boton_solapa_6 = Button.new()
+	boton_solapa_6.custom_minimum_size = Vector2(70, 20)
+	boton_solapa_6.add_theme_font_size_override("font_size", 10)
+	boton_solapa_6.toggle_mode = true
+	boton_solapa_6.focus_mode = Control.FOCUS_NONE
+	boton_solapa_6.text = "Aterrizaje"
+	boton_solapa_6.pressed.connect(func(): _mostrar_solapa_inferior(6))
+	get_node("../HUD/SolapasInferior").add_child(boton_solapa_6)
+
+	panel_aterrizaje_tab = Panel.new()
+	panel_aterrizaje_tab.anchor_left = panel_config_tab.anchor_left
+	panel_aterrizaje_tab.anchor_top = panel_config_tab.anchor_top
+	panel_aterrizaje_tab.anchor_right = panel_config_tab.anchor_right
+	panel_aterrizaje_tab.anchor_bottom = panel_config_tab.anchor_bottom
+	panel_aterrizaje_tab.offset_left = panel_config_tab.offset_left
+	panel_aterrizaje_tab.offset_top = panel_config_tab.offset_top
+	panel_aterrizaje_tab.offset_right = panel_config_tab.offset_right
+	panel_aterrizaje_tab.offset_bottom = panel_config_tab.offset_bottom
+	panel_aterrizaje_tab.grow_horizontal = panel_config_tab.grow_horizontal
+	panel_aterrizaje_tab.grow_vertical = panel_config_tab.grow_vertical
+	var estilo: StyleBox = panel_config_tab.get_theme_stylebox("panel")
+	if estilo:
+		panel_aterrizaje_tab.add_theme_stylebox_override("panel", estilo)
+	panel_aterrizaje_tab.visible = false
+	hud.add_child(panel_aterrizaje_tab)
+
+	var scroll := ScrollContainer.new()
+	scroll.anchor_right = 1.0
+	scroll.anchor_bottom = 1.0
+	scroll.offset_left = 6.0
+	scroll.offset_top = 4.0
+	scroll.offset_right = -6.0
+	scroll.offset_bottom = -4.0
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	panel_aterrizaje_tab.add_child(scroll)
+	var fila := HBoxContainer.new()
+	fila.add_theme_constant_override("separation", 16)
+	scroll.add_child(fila)
+
+	# Columna del interruptor general
+	var col_modo := VBoxContainer.new()
+	col_modo.custom_minimum_size = Vector2(170, 0)
+	var titulo_modo := Label.new()
+	titulo_modo.text = "Modo tierra"
+	titulo_modo.add_theme_font_size_override("font_size", 11)
+	col_modo.add_child(titulo_modo)
+	var texto_modo: String = "SÍ: el avión se apoya en las ruedas, queda nivelado en pista y gira como un auto. NO: todo como antes."
+	titulo_modo.tooltip_text = texto_modo
+	titulo_modo.mouse_filter = Control.MOUSE_FILTER_STOP
+	boton_modo_tierra = Button.new()
+	boton_modo_tierra.toggle_mode = true
+	boton_modo_tierra.custom_minimum_size = Vector2(150, 22)
+	boton_modo_tierra.add_theme_font_size_override("font_size", 11)
+	boton_modo_tierra.focus_mode = Control.FOCUS_NONE
+	boton_modo_tierra.pressed.connect(func():
+		var cfg: Dictionary = _aterrizaje_actual()
+		cfg["modo_tierra"] = not bool(cfg["modo_tierra"])
+		if not bool(cfg["modo_tierra"]):
+			_reiniciar_estado_tierra()
+		_refrescar_panel_aterrizaje()
+		_guardar_aterrizaje_aviones())
+	boton_modo_tierra.tooltip_text = texto_modo
+	col_modo.add_child(boton_modo_tierra)
+	var ayuda_modo := Label.new()
+	ayuda_modo.text = "SÍ: el avión se apoya en las ruedas, queda nivelado en pista y gira como un auto. NO: todo como antes. Cada avión tiene sus propios valores."
+	ayuda_modo.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	ayuda_modo.add_theme_font_size_override("font_size", 9)
+	ayuda_modo.add_theme_color_override("font_color", Color(0.75, 0.8, 0.85))
+	col_modo.add_child(ayuda_modo)
+	fila.add_child(col_modo)
+
+	for spec in FILAS_ATERRIZAJE:
+		var clave: String = spec["clave"]
+		var paso: float = float(spec["paso"])
+		var minimo: float = float(spec["min"])
+		var maximo: float = float(spec["max"])
+		var columna := VBoxContainer.new()
+		columna.custom_minimum_size = Vector2(205, 0)
+		var titulo := Label.new()
+		titulo.text = spec["titulo"]
+		titulo.add_theme_font_size_override("font_size", 11)
+		columna.add_child(titulo)
+		# Al pasar el mouse por cualquier parte de la columna sale la explicación.
+		columna.tooltip_text = spec["ayuda"]
+		titulo.tooltip_text = spec["ayuda"]
+		titulo.mouse_filter = Control.MOUSE_FILTER_STOP
+		var botones := HBoxContainer.new()
+		botones.add_theme_constant_override("separation", 3)
+		botones.add_child(_boton_aterrizaje("◀◀", func(): _ajustar_aterrizaje(clave, -paso * 10.0, minimo, maximo), spec["ayuda"]))
+		botones.add_child(_boton_aterrizaje("◀", func(): _ajustar_aterrizaje(clave, -paso, minimo, maximo), spec["ayuda"]))
+		var valor := Label.new()
+		valor.custom_minimum_size = Vector2(78, 0)
+		valor.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		valor.add_theme_font_size_override("font_size", 11)
+		valor.tooltip_text = spec["ayuda"]
+		valor.mouse_filter = Control.MOUSE_FILTER_STOP
+		botones.add_child(valor)
+		botones.add_child(_boton_aterrizaje("▶", func(): _ajustar_aterrizaje(clave, paso, minimo, maximo), spec["ayuda"]))
+		botones.add_child(_boton_aterrizaje("▶▶", func(): _ajustar_aterrizaje(clave, paso * 10.0, minimo, maximo), spec["ayuda"]))
+		if clave == "altura_tren" or clave == "vel_despegue":
+			botones.add_child(_boton_aterrizaje("AUTO", func(): _poner_aterrizaje_auto(clave), spec["ayuda"]))
+		columna.add_child(botones)
+		valores_aterrizaje_labels[clave] = valor
+		var ayuda := Label.new()
+		ayuda.text = spec["ayuda"]
+		ayuda.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		ayuda.add_theme_font_size_override("font_size", 9)
+		ayuda.add_theme_color_override("font_color", Color(0.75, 0.8, 0.85))
+		columna.add_child(ayuda)
+		fila.add_child(columna)
+	_refrescar_panel_aterrizaje()
 
 func _actualizar_hud(delta: float) -> void:
 	var altura = mundo.altitud_avion + position.y - altura_piso
@@ -2845,6 +5837,10 @@ func _actualizar_hud(delta: float) -> void:
 	# vivía el reloj) -- ahora que se movió a la barra de arriba (siempre
 	# visible), tiene que refrescarse siempre.
 	_actualizar_etiqueta_hora()
+	_actualizar_etiqueta_ram(delta)
+	_actualizar_secuencia_mision(delta)
+	_actualizar_animacion_marcador_destino(delta)
+	_actualizar_boton_bajar_subir()
 
 	if destinos.is_empty():
 		destinos = mundo.obtener_destinos()
@@ -3007,6 +6003,29 @@ func _crear_luz_navegacion(posicion: Vector3, color: Color, padre: Node3D = null
 	luz.add_child(omni)
 	return luz
 
+func _texto_a_vector3(t: String) -> Vector3:
+	var p: PackedStringArray = t.split(",")
+	return Vector3(float(p[0]), float(p[1]), float(p[2]))
+
+# Lee ajustes_luces_debug.txt y devuelve las luces clavadas MÁS RECIENTES de
+# un avión ({"izq", "der", "estrobo"}), o {} si ese avión nunca se clavó. Cada
+# vez que se clava se agrega un renglón al final, así que si hay varios del
+# mismo avión gana el último.
+func _luces_clavadas_desde_archivo(nombre_avion: String) -> Dictionary:
+	if not FileAccess.file_exists(RUTA_AJUSTES_LUCES_DEBUG):
+		return {}
+	var texto: String = FileAccess.get_file_as_string(RUTA_AJUSTES_LUCES_DEBUG)
+	var rx := RegEx.new()
+	rx.compile(r'# "([^"]+)" -- [^\n]*\n"luces_manual": \{"izq": Vector3\(([^)]*)\), "der": Vector3\(([^)]*)\), "estrobo": Vector3\(([^)]*)\)\}')
+	var resultado: Dictionary = {}
+	for m in rx.search_all(texto):
+		if m.get_string(1) == nombre_avion:
+			resultado = {
+				"izq": _texto_a_vector3(m.get_string(2)),
+				"der": _texto_a_vector3(m.get_string(3)),
+				"estrobo": _texto_a_vector3(m.get_string(4))}
+	return resultado
+
 func _vector3_a_texto(v: Vector3) -> String:
 	return "Vector3(%.4f, %.4f, %.4f)" % [v.x, v.y, v.z]
 
@@ -3014,8 +6033,9 @@ func _vector3_a_texto(v: Vector3) -> String:
 # espacio local del modelo -- luz.position ya es exactamente eso, porque son
 # hijas directas de "instancia") a un archivo de texto, listas para pegar en
 # TIPOS_AVION como "luces_manual". No se guardan solas ni se tocan los
-# valores en caliente -- hace falta copiarlas a mano una vez conformes, para
-# no llenar el código de ediciones automáticas sin revisar.
+# valores en caliente. Desde 2026-10-16 el juego lee este archivo SOLO al
+# crear el avión (ver _luces_clavadas_desde_archivo): clavar y reiniciar alcanza,
+# no hace falta copiar nada a TIPOS_AVION.
 func _guardar_ajuste_luces_editadas() -> void:
 	if not luz_navegacion_izq_externa or not luz_navegacion_der_externa or not luz_estroboscopica_externa:
 		return
@@ -3036,6 +6056,28 @@ func _guardar_ajuste_luces_editadas() -> void:
 	print("📌 Luces clavadas para \"%s\" -- guardado en %s" % [nombre_avion, RUTA_AJUSTES_LUCES_DEBUG])
 	print(texto)
 
+# Pedido 2026-10-16 (A380: "hay una luz más grande que la otra -- ponelas las
+# dos del mismo tamaño, del tamaño de la más chica"): las dos esferas tienen
+# el MISMO radio real, pero la que queda más cerca de la cámara se ve más
+# grande. Se compensa por distancia: la más lejana (la que se ve más chica)
+# queda como está y la más cercana se achica en proporción, así las dos se ven
+# del mismo tamaño en pantalla desde cualquier ángulo. Solo para los aviones
+# con "luces_mismo_tamano" en TIPOS_AVION.
+func _igualar_tamano_luces_navegacion() -> void:
+	if not luces_igualar_tamano:
+		return
+	if not luz_navegacion_izq_externa or not luz_navegacion_der_externa:
+		return
+	if not is_instance_valid(luz_navegacion_izq_externa) or not is_instance_valid(luz_navegacion_der_externa):
+		return
+	if not camara:
+		return
+	var d_izq: float = camara.global_position.distance_to(luz_navegacion_izq_externa.global_position)
+	var d_der: float = camara.global_position.distance_to(luz_navegacion_der_externa.global_position)
+	var d_max: float = max(max(d_izq, d_der), 0.0001)
+	luz_navegacion_izq_externa.scale = Vector3.ONE * (d_izq / d_max)
+	luz_navegacion_der_externa.scale = Vector3.ONE * (d_der / d_max)
+
 # Destello CORTO y agudo (no una onda suave) para la estroboscópica -- pow()
 # con exponente alto deja la mayor parte del ciclo casi apagado y solo un
 # pico breve bien brillante, como un flash real de anticolisión.
@@ -3047,7 +6089,20 @@ func _actualizar_estroboscopica(_delta: float) -> void:
 	# externo actual (si hay uno cargado) -- solo una de las dos existe/está
 	# visible a la vez según el avión elegido, pero no cuesta nada chequear
 	# ambas acá en vez de duplicar esta función.
-	for luz in [luz_estroboscopica, luz_estroboscopica_externa]:
+	# Pedido 2026-10-11: las balizas de los barcos usan el MISMO parpadeo --
+	# se suman acá a la lista en vez de duplicar la función.
+	var luces: Array = [luz_estroboscopica, luz_estroboscopica_externa]
+	for barco in objetivos_barcos:
+		if is_instance_valid(barco):
+			var baliza_barco: Node = barco.get_node_or_null("BalizaBarco")
+			if baliza_barco:
+				luces.append(baliza_barco)
+	for objetivo_industria in objetivos_industria:
+		if is_instance_valid(objetivo_industria):
+			var baliza_industria: Node = objetivo_industria.get_node_or_null("BalizaParpadeante")
+			if baliza_industria:
+				luces.append(baliza_industria)
+	for luz in luces:
 		if not luz or not luz.visible:
 			continue
 		var mat: StandardMaterial3D = luz.get_surface_override_material(0)
@@ -3127,6 +6182,11 @@ func _generar_luces_para_modelo_externo(instancia: Node3D, datos: Dictionary) ->
 	var radio_luz: float = clamp(tamano_mundo * 0.012, 0.03, 0.4) / escala * 0.7
 	var y_medio: float = caja.position.y + caja.size.y * 0.55
 	var z_medio: float = caja.position.z + caja.size.z * 0.5
+	# La estroboscópica suele ser 1.2x más grande que la roja y la verde. Con
+	# "luces_mismo_tamano": true en TIPOS_AVION (pedido 2026-10-16, A380) las
+	# tres quedan del tamaño de la más chica.
+	var radio_estrobo_relativo: float = 1.0 if datos.get("luces_mismo_tamano", false) else 1.2
+	luces_igualar_tamano = datos.get("luces_mismo_tamano", false)
 
 	# "luces_manual" 2026-09-26 (reportado: "las luces aparecen arriba o de
 	# costado, nada que ver"): el cálculo automático de más abajo asume que
@@ -3136,11 +6196,18 @@ func _generar_luces_para_modelo_externo(instancia: Node3D, datos: Dictionary) ->
 	# adivinando el eje para cada modelo nuevo, se puede definir la posición
 	# EXACTA por avión en TIPOS_AVION (sacada con un dump de la escena real,
 	# usando piezas de referencia del propio modelo cuando las tenía).
-	if datos.has("luces_manual"):
-		var lm: Dictionary = datos["luces_manual"]
+	# Pedido 2026-10-16 ("que se aplique solo, sin tener que venir a avisarte
+	# avión por avión"): primero se mira lo CLAVADO en ajustes_luces_debug.txt
+	# (el último renglón de cada avión gana), después "luces_manual" de
+	# TIPOS_AVION, y si no hay ninguno de los dos, el cálculo automático de
+	# más abajo. Así clavar las luces con el editor y reiniciar alcanza.
+	var lm: Dictionary = _luces_clavadas_desde_archivo(datos["nombre"])
+	if lm.is_empty() and datos.has("luces_manual"):
+		lm = datos["luces_manual"]
+	if not lm.is_empty():
 		luz_navegacion_izq_externa = _crear_luz_navegacion(lm["izq"], Color(1.0, 0.1, 0.1), instancia, radio_luz)
 		luz_navegacion_der_externa = _crear_luz_navegacion(lm["der"], Color(0.1, 1.0, 0.2), instancia, radio_luz)
-		luz_estroboscopica_externa = _crear_luz_navegacion(lm["estrobo"], Color(1.0, 1.0, 1.0), instancia, radio_luz * 1.2)
+		luz_estroboscopica_externa = _crear_luz_navegacion(lm["estrobo"], Color(1.0, 1.0, 1.0), instancia, radio_luz * radio_estrobo_relativo)
 	else:
 		# "ajuste_izq"/"ajuste_der"/"ajuste_estrobo" (pedido 2026-10-01, Piper:
 		# la roja y la verde un centímetro para arriba y un centímetro hacia
@@ -3158,7 +6225,7 @@ func _generar_luces_para_modelo_externo(instancia: Node3D, datos: Dictionary) ->
 		var y_arriba: float = caja.end.y + caja.size.y * 0.08
 		luz_navegacion_izq_externa = _crear_luz_navegacion(Vector3(x_izq, y_medio + ajuste_izq.y, z_medio + ajuste_izq.z), Color(1.0, 0.1, 0.1), instancia, radio_luz)
 		luz_navegacion_der_externa = _crear_luz_navegacion(Vector3(x_der, y_medio + ajuste_der.y, z_medio + ajuste_der.z), Color(0.1, 1.0, 0.2), instancia, radio_luz)
-		luz_estroboscopica_externa = _crear_luz_navegacion(Vector3(caja.position.x + caja.size.x * 0.5 + ajuste_estrobo.x, y_arriba + ajuste_estrobo.y, z_medio + ajuste_estrobo.z), Color(1.0, 1.0, 1.0), instancia, radio_luz * 1.2)
+		luz_estroboscopica_externa = _crear_luz_navegacion(Vector3(caja.position.x + caja.size.x * 0.5 + ajuste_estrobo.x, y_arriba + ajuste_estrobo.y, z_medio + ajuste_estrobo.z), Color(1.0, 1.0, 1.0), instancia, radio_luz * radio_estrobo_relativo)
 
 	var rango_spot: float = clamp(tamano_mundo * 0.35, 1.0, 8.0) / escala
 	for signo in [1.0, -1.0]:
@@ -3175,6 +6242,8 @@ func _aplicar_tipo_avion(indice: int) -> void:
 	if indice < 0 or indice >= TIPOS_AVION.size():
 		return
 	tipo_avion_indice = indice
+	_reiniciar_estado_tierra()
+	call_deferred("_medir_altura_tren")
 	_aplicar_sonido_motor(indice)
 	if is_node_ready():
 		_refrescar_panel_sensibilidad()
@@ -3189,6 +6258,7 @@ func _aplicar_tipo_avion(indice: int) -> void:
 	luz_navegacion_izq_externa = null
 	luz_navegacion_der_externa = null
 	luz_arrastrada = null
+	luces_igualar_tamano = false
 	var mostrar_primitivas = datos["modelo"] == ""
 	pieza_fuselaje.visible = mostrar_primitivas
 	pieza_nariz.visible = mostrar_primitivas
@@ -3205,6 +6275,20 @@ func _aplicar_tipo_avion(indice: int) -> void:
 		var escena: PackedScene = load(datos["modelo"])
 		if escena:
 			var instancia = escena.instantiate()
+			# BUG REAL encontrado 2026-10-11 (reportado: "el A380 sigue
+			# invisible por más que lo achico"): mismo bug que el barco
+			# aquitaine -- el pivote (0,0,0) de este GLB en particular está
+			# clavado a miles de unidades del centro visual real (jerarquía
+			# deforme de export, típico de Sketchfab). Ningún valor de
+			# escala arregla eso, porque el casco entero queda lejos de
+			# donde la cámara mira, no importa cuán chico sea. Si el avión
+			# trae "recentrar_pivote": true, se mide el AABB nativo ANTES
+			# de escalar/rotar y se corrige la posición para que el centro
+			# geométrico real quede sobre el pivote, igual que se hizo con
+			# los barcos.
+			var caja_nativa_avion: AABB
+			if datos.get("recentrar_pivote", false):
+				caja_nativa_avion = _calcular_aabb_local(instancia)
 			instancia.scale = Vector3.ONE * datos["escala"]
 			instancia.rotation_degrees = datos["rotacion"]
 			# BUG REAL encontrado 2026-09-26 (reportado: "hay una base
@@ -3217,6 +6301,10 @@ func _aplicar_tipo_avion(indice: int) -> void:
 			if plano_sobrante:
 				plano_sobrante.queue_free()
 			modelo_externo.add_child(instancia)
+			if datos.get("recentrar_pivote", false):
+				var basis_final_avion: Basis = instancia.basis
+				var centro_nativo_avion: Vector3 = caja_nativa_avion.position + caja_nativa_avion.size * 0.5
+				instancia.position = -(basis_final_avion * centro_nativo_avion)
 			# Piper PA-18 (pedido 2026-10-01, "los colores de la textura no
 			# aparecieron"): investigado el .fbx a mano -- NO trae ninguna
 			# referencia a archivo de textura adentro (el exportador la dejó
@@ -3281,7 +6369,7 @@ func _poblar_lista_misiones() -> void:
 		var fila = HBoxContainer.new()
 
 		var etiqueta_nombre = Label.new()
-		etiqueta_nombre.text = ("🛬 " if datos["tipo"] == "aterrizaje" else "🎯 ") + datos["nombre"]
+		etiqueta_nombre.text = datos["nombre"]
 		etiqueta_nombre.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		fila.add_child(etiqueta_nombre)
 
@@ -3560,19 +6648,36 @@ func _guardar_lugares_marcados_en_archivo() -> void:
 # Elegís de dónde a dónde volar y confirmás: te teletransporta al origen
 # elegido, orientado hacia el destino, y la Torre empieza a guiarte para allá.
 func _confirmar_viaje() -> void:
+	# BUG REAL encontrado 2026-10-11 (reportado: "le doy a Empezar y no pasa
+	# nada"): si el desplegable "Desde" todavía no quedó seleccionado por
+	# algún motivo de timing (ej. recién se creó la pestaña nueva y
+	# _poblar_selector() no terminó de correr ese cuadro), esto devolvía
+	# -1 y la función cortaba en silencio, sin feedback -- parecía que el
+	# botón no hacía nada. En modo libre no hace falta destino, así que acá
+	# alcanza con un origen válido -- si no hay ninguno elegido a mano, se
+	# usa el primero de la lista en vez de no hacer nada.
 	var idx_origen = origen_option.selected
+	if idx_origen < 0 and not destinos.is_empty():
+		idx_origen = 0
 	var idx_destino = destino_option.selected
 	# Modo libre (pedido explícito 2026-09-28, "que sea un tilde chiquito
 	# aparte, no un ítem escondido en el desplegable de 180 aeropuertos"):
 	# ahora es un checkbox propio en el panel, no un ítem más de "Hasta".
-	var modo_libre: bool = check_vuelo_libre.button_pressed
+	# Pedido 2026-10-11 ("el destino que sea predeterminado vuelo libre --
+	# ahora no estamos para arreglar ese desplegable, probemos aviones"):
+	# por ahora modo_libre queda forzado en true siempre, sin importar el
+	# checkbox -- se vuelve a conectar al destino real cuando se arregle
+	# el selector de Hasta.
+	var modo_libre: bool = true
 	if idx_origen < 0 or (not modo_libre and (idx_destino < 0 or idx_origen == idx_destino)):
 		return
 
 	var nodo_origen = destinos[idx_origen]
 
 	_aplicar_tipo_avion(tipo_avion_option.selected)
-	global_position = nodo_origen.global_position + Vector3(0, 8, 0)
+	# Arranca en el aire (pedido 2026-10-16: "a mil metros, como hacía siempre"), así el
+	# modo tierra no se activa hasta que realmente aterrices.
+	global_position = nodo_origen.global_position + _arriba_real() * ALTURA_ARRANQUE_VUELO
 	if modo_libre:
 		# Sin destino hacia el cual orientarse -- arranca mirando al norte
 		# real (no el eje crudo del motor, mismo motivo de siempre: la
@@ -3587,6 +6692,7 @@ func _confirmar_viaje() -> void:
 		# a la vertical real de este punto del mapa.
 		look_at(nodo_destino.global_position, _arriba_real())
 		indice_destino = idx_destino
+	_reiniciar_objetivos_armamento()
 	banco_actual = 0.0
 	velocidad_actual = VELOCIDAD_INICIAL
 	_actualizar_etiqueta_velocidad()
@@ -3667,6 +6773,311 @@ func _rumbo_verdadero_hacia(lat1_deg: float, lon1_deg: float, lat2_deg: float, l
 # componente vertical igual que en todos lados de este archivo) y la
 # flechita apuntando al rumbo relativo (rumbo verdadero hacia el aeropuerto
 # menos el rumbo actual del avión).
+# Pedido 2026-10-16 ("un relojito que me diga cuánta RAM libre queda, así
+# si veo un crash puedo ir diagnosticando si es por baja memoria"):
+# OS.get_memory_info()["free"] da la RAM libre REAL del sistema (no la que
+# usa el proceso de Godot solo) -- se actualiza cada INTERVALO_RAM segundos
+# (no todos los cuadros, para no estar consultando al sistema operativo
+# constantemente) y cambia de color: verde con margen, amarillo bajando,
+# rojo en zona de riesgo de crash por "Out of memory" (ver memoria del
+# crash de Morón).
+func _actualizar_etiqueta_ram(delta: float) -> void:
+	if not etiqueta_ram:
+		return
+	_acumulador_ram += delta
+	if _acumulador_ram < INTERVALO_RAM:
+		return
+	_acumulador_ram = 0.0
+	var info: Dictionary = OS.get_memory_info()
+	var libre_mb: float = float(info.get("free", 0)) / 1024.0 / 1024.0
+	etiqueta_ram.text = "RAM\n%d MB" % int(round(libre_mb))
+	var color: Color
+	if libre_mb >= 2048.0:
+		color = Color(0.2, 1.0, 0.3, 1.0)  # verde, como los demás instrumentos
+	elif libre_mb >= 1024.0:
+		color = Color(1.0, 0.9, 0.2, 1.0)  # amarillo, empieza a estar justo
+	else:
+		color = Color(1.0, 0.25, 0.2, 1.0)  # rojo, zona de riesgo real de crash
+	etiqueta_ram.add_theme_color_override("font_color", color)
+
+# Arranca una secuencia de misiones. "texto_final" es lo que dice el cartel
+# al completar el último paso -- un parámetro, no una cadena de "elif"
+# comparando qué secuencia es (pedido 2026-10-17: misiones comerciales
+# nuevas, iba a ser un "elif" más por cada una -- mejor un dato, escala
+# solo con agregar misiones a las listas de abajo, sin tocar esta función).
+var _texto_final_mision_actual: String = "¡MISIÓN COMPLETA!"
+# Pedido 2026-10-17 ("cada misión tiene un precio en dólares, y según qué
+# avión uses te da más o menos plata -- Boeing más, Cessna menos"):
+# "pago_base" se multiplica acá mismo al arrancar la misión (no al
+# terminarla) para que el cartel de bienvenida ya pueda avisar cuánto va a
+# pagar con el avión actual.
+var mision_pago_pendiente: int = 0
+func _iniciar_secuencia_mision(secuencia: Array, texto_final: String = "¡MISIÓN COMPLETA!", pago_base: int = 0) -> void:
+	secuencia_mision_actual = secuencia
+	mision_paso_actual = 0
+	_texto_final_mision_actual = texto_final
+	mision_pago_pendiente = int(round(pago_base * _multiplicador_precio_avion()))
+	if secuencia == SECUENCIA_NIVEL_1:
+		mision_barcos_base = barcos_destruidos
+	elif secuencia == SECUENCIA_NIVEL_3:
+		mision_invasores_base = invasores_destruidos
+	_mostrar_paso_mision_actual()
+
+# Pedido 2026-10-17 ("en un Boeing que tiene más capacidad, la misión te da
+# más dólares, en un Cessna menos"): multiplicador simple por nombre del
+# avión actual -- no hay datos reales de capacidad de pasajeros todavía,
+# así que se agrupa a ojo por tamaño/categoría visible. Fácil de afinar
+# después con números reales por avión.
+func _multiplicador_precio_avion() -> float:
+	var nombre: String = String(TIPOS_AVION[tipo_avion_indice]["nombre"]).to_lower()
+	if nombre.contains("boeing") or nombre.contains("a380") or nombre.contains("777"):
+		return 3.0
+	elif nombre.contains("jet privado") or nombre.contains("pilatus") or nombre.contains("miljet"):
+		return 1.5
+	elif nombre.contains("cessna") or nombre.contains("piper"):
+		return 1.0
+	return 1.2  # resto de los aviones (militares, genéricos, etc.) -- valor intermedio
+
+func _mostrar_paso_mision_actual() -> void:
+	if mision_paso_actual < 0 or mision_paso_actual >= secuencia_mision_actual.size():
+		return
+	var paso: Dictionary = secuencia_mision_actual[mision_paso_actual]
+	_mostrar_cartel_aterrizaje(paso["texto"], Color(1.0, 0.9, 0.3))
+	if etiqueta_objetivo_mision:
+		etiqueta_objetivo_mision.text = "OBJETIVO: " + paso["nombre"]
+		etiqueta_objetivo_mision.visible = true
+	# Al cambiar de paso, re-sincronizar YA (no esperar los 0.5s del
+	# throttle normal) -- que el cuadrado nuevo aparezca y el viejo
+	# desaparezca en el mismo instante que cambia el cartel.
+	_sincronizar_modo_guerra(0.0, true)
+	_actualizar_contadores_mision_visibles()
+	_actualizar_marcador_destino_mision(paso)
+	_actualizar_guia_de_paso_mision(paso)
+
+# Pedido 2026-10-17 ("activá el rumbo/las flechas, me perdí yendo a
+# Rosario"): engancha "objetivo_mision" (el sistema de guía de rumbo/
+# flechas/distancia/línea que YA FUNCIONA para las misiones de
+# helicóptero) al paso actual, si es de tipo "llegar_aeropuerto" (reusa el
+# nodo real del aeropuerto, ya tiene lat/lon) o "llegar_punto" (arma un
+# marcador invisible temporal con la lat/lon exacta -- típicamente un
+# hangar trackeado con M). Si el paso no es de ninguno de los dos tipos
+# (una misión de guerra, por ejemplo), limpia el objetivo SOLO si era
+# nuestro, para no pisar una misión de helicóptero que esté en curso.
+func _actualizar_guia_de_paso_mision(paso: Dictionary) -> void:
+	if objetivo_mision_de_secuencia and is_instance_valid(objetivo_mision):
+		objetivo_mision.queue_free()
+	objetivo_mision_de_secuencia = false
+	var tipo: String = paso.get("tipo", "")
+	if tipo == "llegar_aeropuerto":
+		var aeropuerto := _buscar_destino_por_nombre(paso["destino"])
+		if aeropuerto:
+			objetivo_mision = aeropuerto
+			nombre_mision_actual = paso["destino"]
+			objetivo_mision_de_secuencia = false  # nodo real del mundo, no lo creamos ni lo borramos nosotros
+			objetivo_guia_actual = null
+			return
+	elif tipo == "llegar_punto":
+		var marcador := Node3D.new()
+		marcador.name = "ObjetivoGuiaMision"
+		var arriba: Vector3 = _arriba_real()
+		marcador.global_position = mundo._posicion_desde_lat_lon(float(paso["lat"]), float(paso["lon"]), 0.0) + arriba * 100.0
+		marcador.set_meta("lat", paso["lat"])
+		marcador.set_meta("lon", paso["lon"])
+		mundo.add_child(marcador)
+		objetivo_mision = marcador
+		nombre_mision_actual = paso["nombre"]
+		objetivo_mision_de_secuencia = true
+		objetivo_guia_actual = null
+		return
+	objetivo_mision = null
+
+# TERCERA VUELTA 2026-10-17 (reportado: "esto ni siquiera se ve" -- ni el
+# cartel bobeando ni el anillo de luces chicas funcionaron): esta vez se
+# reusa el método que SÍ se probó y anduvo bien hoy mismo (la columna de
+# luz + letra gigante de la prueba de los tanques) -- una columna fucsia
+# de 1500m de alto, gruesa, imposible de no ver desde cualquier ángulo, más
+# una "H" enorme flotando arriba. Fijo en tamaño real (NO se achica con la
+# distancia como el anillo anterior -- a 1500m de alto, no hace falta).
+var marcador_destino_mision: Node3D = null
+func _actualizar_marcador_destino_mision(paso: Dictionary) -> void:
+	if marcador_destino_mision and is_instance_valid(marcador_destino_mision):
+		marcador_destino_mision.queue_free()
+		marcador_destino_mision = null
+	if paso.get("tipo", "") != "llegar_punto":
+		return
+	var arriba: Vector3 = _arriba_real()
+	var punto: Vector3 = mundo._posicion_desde_lat_lon(float(paso["lat"]), float(paso["lon"]), 0.0)
+	marcador_destino_mision = Node3D.new()
+	marcador_destino_mision.name = "MarcadorDestinoMision"
+	mundo.add_child(marcador_destino_mision)
+	marcador_destino_mision.set_meta("latitud_objetivo", float(paso["lat"]))
+	marcador_destino_mision.set_meta("longitud_objetivo", float(paso["lon"]))
+	marcador_destino_mision.global_position = punto
+
+	var pilar := MeshInstance3D.new()
+	var malla := CylinderMesh.new()
+	malla.height = 1500.0
+	malla.top_radius = 20.0
+	malla.bottom_radius = 20.0
+	pilar.mesh = malla
+	var material_pilar := StandardMaterial3D.new()
+	material_pilar.albedo_color = Color(0.1, 1.0, 0.3, 1.0)
+	material_pilar.emission_enabled = true
+	material_pilar.emission = Color(0.1, 1.0, 0.3)
+	material_pilar.emission_energy_multiplier = 5.0
+	material_pilar.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	pilar.material_override = material_pilar
+	pilar.position = arriba * 750.0  # el cilindro queda centrado en su propio origen -- esto lo deja con la base al nivel del suelo
+	marcador_destino_mision.add_child(pilar)
+	marcador_destino_mision.set_meta("material_pilar", material_pilar)
+
+	var etiqueta := Label3D.new()
+	etiqueta.text = "⬇ HANGAR ⬇"
+	etiqueta.font_size = 700
+	etiqueta.outline_size = 70
+	etiqueta.modulate = Color(0.1, 1.0, 0.3, 1.0)
+	etiqueta.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	etiqueta.no_depth_test = true
+	etiqueta.position = arriba * 1600.0
+	marcador_destino_mision.add_child(etiqueta)
+	marcador_destino_mision.set_meta("etiqueta_marcador", etiqueta)
+
+# Llamado cada cuadro desde _actualizar_hud -- reposiciona (el origen se
+# recentra en el avión todo el tiempo) y hace parpadear la columna/letra.
+var _tiempo_animacion_marcador: float = 0.0
+func _actualizar_animacion_marcador_destino(delta: float) -> void:
+	# BUG REAL encontrado 2026-10-17 (reportado: "el instrumento de arriba
+	# decía 563 kilómetros cuando ya había aterrizado en Río Cuarto, pero la
+	# pestaña Torre mostraba la distancia bien"): el marcador invisible que
+	# usa _actualizar_torre para medir distancia a un "llegar_punto" (ver
+	# _actualizar_guia_de_paso_mision) se posiciona UNA sola vez, al arrancar
+	# el paso -- pero el origen del mundo se recentra en el avión TODO EL
+	# TIEMPO (mundo.gd), así que su global_position queda vieja/corrida
+	# después de volar lejos. Los aeropuertos reales no tienen este problema
+	# porque mundo.gd los reubica solo en cada recentrado -- este marcador
+	# ad-hoc no está en esa lista, así que lo recalculamos a mano, cada
+	# cuadro, igual que ya hacíamos con marcador_destino_mision (la columna
+	# de luz) un poco más abajo en esta misma función.
+	if objetivo_mision_de_secuencia and is_instance_valid(objetivo_mision) and objetivo_mision.has_meta("lat") and objetivo_mision.has_meta("lon"):
+		objetivo_mision.global_position = mundo._posicion_desde_lat_lon(
+			float(objetivo_mision.get_meta("lat")), float(objetivo_mision.get_meta("lon")), 0.0) + _arriba_real() * 100.0
+
+	if not marcador_destino_mision or not is_instance_valid(marcador_destino_mision):
+		return
+	_tiempo_animacion_marcador += delta
+	var arriba: Vector3 = _arriba_real()
+	var lat: float = marcador_destino_mision.get_meta("latitud_objetivo")
+	var lon: float = marcador_destino_mision.get_meta("longitud_objetivo")
+	marcador_destino_mision.global_position = mundo._posicion_desde_lat_lon(lat, lon, 0.0)
+	var destello: float = 0.3 + 0.7 * abs(sin(_tiempo_animacion_marcador * 2.5))  # prende y apaga
+	var material_pilar: StandardMaterial3D = marcador_destino_mision.get_meta("material_pilar")
+	if material_pilar:
+		material_pilar.emission_energy_multiplier = lerp(2.0, 9.0, destello)
+	var etiqueta_marcador: Label3D = marcador_destino_mision.get_meta("etiqueta_marcador")
+	if is_instance_valid(etiqueta_marcador):
+		etiqueta_marcador.modulate.a = 0.4 + 0.6 * destello
+
+# BUG REAL encontrado 2026-10-17 (reportado: "en Defensa Total solo aparecen
+# los barcos, no sé cuántos aeropuertos o Capital me faltan"): los
+# contadores de arriba a la derecha (CAPITAL/AEROPUERTOS/BARCOS/INDUSTRIA)
+# antes solo se hacían visibles la PRIMERA VEZ que le pegabas a algo de ese
+# tipo -- si una misión junta varios grupos (como Defensa Total) y todavía
+# no le diste a, por ejemplo, ningún aeropuerto, ese contador seguía oculto
+# aunque los blancos ya estuvieran activos y a la vista. Ahora se muestran
+# (con el número real ya puesto, no en 0 a ciegas) apenas arranca el paso
+# de misión que los necesita, y se ocultan los que no corresponden.
+func _actualizar_contadores_mision_visibles() -> void:
+	var grupos: Array = _grupos_relevantes_paso_actual()
+	if etiqueta_mision_verde:
+		etiqueta_mision_verde.visible = grupos.has("mision_verde")
+		if grupos.has("mision_verde"):
+			etiqueta_mision_verde.text = "CAPITAL: %d/10" % mision_verde_destruidos
+	if etiqueta_objetivo_destruido:
+		etiqueta_objetivo_destruido.visible = grupos.has("mision_aeropuertos")
+		if grupos.has("mision_aeropuertos"):
+			etiqueta_objetivo_destruido.text = "AEROPUERTOS: %d/5" % objetivos_destruidos
+	if etiqueta_barcos:
+		etiqueta_barcos.visible = grupos.has("mision_barcos")
+		if grupos.has("mision_barcos"):
+			etiqueta_barcos.text = "BARCOS: %d/%d" % [barcos_destruidos, BARCOS_RIO_AEROPARQUE.size()]
+	if etiqueta_industria:
+		etiqueta_industria.visible = grupos.has("mision_industria")
+		if grupos.has("mision_industria"):
+			etiqueta_industria.text = "INDUSTRIA: %d/%d" % [industria_destruidos, MISION_INDUSTRIA.size()]
+	if etiqueta_invasion:
+		etiqueta_invasion.visible = grupos.has("invasion")
+
+# El "chequeo" va por nombre del paso (o por "tipo", para las misiones
+# civiles genéricas) -- más simple de leer y de agregar pasos nuevos.
+# Pedido 2026-10-17 ("misiones comerciales, de un aeropuerto a otro, sin
+# disparar"): "tipo": "llegar_aeropuerto" / "llegar_punto" sirven para
+# CUALQUIER misión civil nueva sin escribir un "elif" por cada una -- el
+# propio paso trae el destino (nombre de aeropuerto, o lat/lon de un lugar
+# marcado con M, como los hangares).
+func _paso_mision_actual_completo() -> bool:
+	if mision_paso_actual < 0 or mision_paso_actual >= secuencia_mision_actual.size():
+		return false
+	var paso: Dictionary = secuencia_mision_actual[mision_paso_actual]
+	var tipo: String = paso.get("tipo", "")
+	if tipo == "llegar_aeropuerto":
+		var aeropuerto := _buscar_destino_por_nombre(paso["destino"])
+		if not aeropuerto:
+			return false
+		return global_position.distance_to(aeropuerto.global_position) < float(paso.get("radio", RADIO_VOLVER_BASE))
+	elif tipo == "llegar_punto":
+		# BUG REAL encontrado 2026-10-17 (reportado: "ni bien aterrizo ya me
+		# da la plata por ganada, si dice ir al hangar hay que llegar al
+		# hangar de verdad"): antes solo medía distancia -- ahora, además de
+		# estar cerca, exige estar REALMENTE en tierra (en_tierra == true),
+		# no solo sobrevolando la zona.
+		var punto: Vector3 = mundo._posicion_desde_lat_lon(float(paso["lat"]), float(paso["lon"]), 0.0)
+		return en_tierra and global_position.distance_to(punto) < float(paso.get("radio", 150.0))
+	var nombre: String = paso["nombre"]
+	if nombre == "Capital Federal":
+		return mision_verde_destruidos >= 10
+	elif nombre == "Aeropuertos":
+		return objetivos_destruidos >= 5
+	elif nombre == "Hundir 3 barcos":
+		return barcos_destruidos - mision_barcos_base >= 3
+	elif nombre == "Volver a base":
+		var aeropuerto := _buscar_destino_por_nombre("Aeroparque")
+		if not aeropuerto:
+			return false
+		return global_position.distance_to(aeropuerto.global_position) < RADIO_VOLVER_BASE
+	elif nombre == "Industria":
+		return industria_destruidos >= MISION_INDUSTRIA.size()
+	elif nombre == "Invasores":
+		return invasores_destruidos - mision_invasores_base >= 10
+	elif nombre == "Defensa Total":
+		return mision_verde_destruidos >= 10 and objetivos_destruidos >= 5 and barcos_destruidos >= BARCOS_RIO_AEROPARQUE.size() and industria_destruidos >= MISION_INDUSTRIA.size()
+	return false
+
+func _actualizar_secuencia_mision(delta: float) -> void:
+	if mision_paso_actual < 0:
+		return
+	if _paso_mision_actual_completo():
+		mision_paso_actual += 1
+		if mision_paso_actual >= secuencia_mision_actual.size():
+			var texto_pago: String = ""
+			if mision_pago_pendiente > 0:
+				PerfilJugador.modificar_plata(mision_pago_pendiente)
+				_actualizar_etiqueta_dinero()
+				texto_pago = "\n+$%d" % mision_pago_pendiente
+				mision_pago_pendiente = 0
+			_mostrar_cartel_aterrizaje(_texto_final_mision_actual + texto_pago, Color(0.3, 1.0, 0.4))
+			if etiqueta_objetivo_mision:
+				etiqueta_objetivo_mision.visible = false
+			if marcador_destino_mision and is_instance_valid(marcador_destino_mision):
+				marcador_destino_mision.queue_free()
+				marcador_destino_mision = null
+			if objetivo_mision_de_secuencia and is_instance_valid(objetivo_mision):
+				objetivo_mision.queue_free()
+			objetivo_mision = null
+			objetivo_mision_de_secuencia = false
+			mision_paso_actual = -1
+		else:
+			_mostrar_paso_mision_actual()
+
 func _actualizar_panel_torre(delta: float) -> void:
 	_acumulador_torre += delta
 	if _acumulador_torre < INTERVALO_TORRE:
@@ -3717,6 +7128,8 @@ func _actualizar_panel_torre(delta: float) -> void:
 			fila["distancia"].text = "--"
 			fila["flecha"].visible = false
 			fila["boton"].disabled = true
+			fila["etiqueta_precio"].text = "--"
+			fila["boton_ir"].disabled = true
 			continue
 		var candidato: Dictionary = candidatos[i]
 		var nombre: String = candidato["nombre"]
@@ -3732,6 +7145,20 @@ func _actualizar_panel_torre(delta: float) -> void:
 		fila["boton"].set_meta("nombre_aeropuerto", nombre)
 		fila["boton"].set_meta("lat_aeropuerto", candidato["lat"])
 		fila["boton"].set_meta("lon_aeropuerto", candidato["lon"])
+
+		# Precio editable por distancia (ver _precios_torre_override arriba)
+		# + botón "Ir" -- guardamos lat/lon/precio como metadata del botón,
+		# mismo truco que ya usa BotonIlsTorre, para leerlos frescos al
+		# apretar sin importar en qué índice haya quedado esta fila.
+		if not _precios_torre_override.has(nombre):
+			_precios_torre_override[nombre] = max(20.0, round(candidato["distancia"] / 1000.0 * TARIFA_TORRE_POR_KM / 5.0) * 5.0)
+		var precio_torre: float = _precios_torre_override[nombre]
+		fila["etiqueta_precio"].text = "$%d" % int(precio_torre)
+		fila["boton_ir"].disabled = false
+		fila["boton_ir"].set_meta("nombre_aeropuerto", nombre)
+		fila["boton_ir"].set_meta("lat_aeropuerto", candidato["lat"])
+		fila["boton_ir"].set_meta("lon_aeropuerto", candidato["lon"])
+		fila["boton_ir"].set_meta("precio_aeropuerto", precio_torre)
 		if not mundo.aeropuerto_tiene_ils(nombre):
 			# Sin datos de ILS cargados para este -- deshabilitado en vez de
 			# dejarlo "prenderse" un instante y apagarse solo (ver comentario
@@ -3769,6 +7196,45 @@ func _alternar_ils_torre(indice: int) -> void:
 		rumbo_guia_override_nombre = nombre
 		rumbo_guia_override_lat = boton.get_meta("lat_aeropuerto", 0.0)
 		rumbo_guia_override_lon = boton.get_meta("lon_aeropuerto", 0.0)
+
+# Pedido 2026-10-17 ("un botoncito que diga Ir, y arriba un precio con
+# más/menos"): ajusta el precio GUARDADO por nombre de aeropuerto (ver
+# _precios_torre_override) -- el índice de fila puede no corresponder más
+# al mismo aeropuerto en el próximo refresco (la lista se reordena por
+# distancia), por eso se guarda por nombre y no por índice.
+func _ajustar_precio_torre(indice: int, delta: int) -> void:
+	if indice < 0 or indice >= _filas_torre.size():
+		return
+	var boton: Button = _filas_torre[indice]["boton_ir"]
+	var nombre: String = boton.get_meta("nombre_aeropuerto", "")
+	if nombre == "" or not _precios_torre_override.has(nombre):
+		return
+	_precios_torre_override[nombre] = max(0.0, _precios_torre_override[nombre] + delta)
+	_filas_torre[indice]["etiqueta_precio"].text = "$%d" % int(_precios_torre_override[nombre])
+	boton.set_meta("precio_aeropuerto", _precios_torre_override[nombre])
+
+# Pedido 2026-10-17 ("encadenar viajes -- de acá a Córdoba, de Córdoba a La
+# Rioja, como ir parando el colectivo, hasta Brasil si quisiéramos"): arma
+# el viaje SIN teletransportar (sale de donde estés volando ahora mismo,
+# como pedido explícito), apuntando al aeropuerto real -- mismo mecanismo
+# de guía/paso de misión que ya usan los Destinos Nacionales, así que
+# también paga solo al tocar pista de verdad (en_tierra), sin hangar.
+func _ir_a_aeropuerto_torre(indice: int) -> void:
+	if indice < 0 or indice >= _filas_torre.size():
+		return
+	var boton: Button = _filas_torre[indice]["boton_ir"]
+	var nombre: String = boton.get_meta("nombre_aeropuerto", "")
+	if nombre == "":
+		return
+	var lat_destino: float = boton.get_meta("lat_aeropuerto", 0.0)
+	var lon_destino: float = boton.get_meta("lon_aeropuerto", 0.0)
+	var precio: int = int(boton.get_meta("precio_aeropuerto", 0.0))
+	_mostrar_cartel_aterrizaje("VIAJE: %s\nSalís desde donde estás. Pago: $%d" % [nombre, int(round(float(precio) * _multiplicador_precio_avion()))], Color(0.6, 0.85, 1.0))
+	# Radio generoso (ver mismo comentario en _iniciar_destino_nacional):
+	# muchos aeropuertos solo tienen una coordenada aproximada, no la pista
+	# real medida -- 600m da margen para no fallar el pago por eso.
+	var paso := [{"nombre": "Volar a " + nombre, "texto": "Destino: " + nombre + ".", "tipo": "llegar_punto", "lat": lat_destino, "lon": lon_destino, "radio": RADIO_VOLVER_BASE}]
+	_iniciar_secuencia_mision(paso, "¡Llegaste a %s!" % nombre, precio)
 
 func _actualizar_torre(altura: float) -> void:
 	# BUG REAL encontrado 2026-09-20 (el "reloj" del RUMBO, sospechado
@@ -3858,7 +7324,17 @@ func _actualizar_torre(altura: float) -> void:
 		# no tiene por qué coincidir exactamente con dónde está la pista real
 		# dentro del predio (los aeropuertos reales son áreas grandes). 40m era
 		# demasiado exigente para esa diferencia.
-		if estado == Estado.VOLANDO and distancia < 400.0 and altura < 30.0:
+		# BUG REAL encontrado 2026-10-10 (reportado: "cartel gigante 'ya
+		# llegaste a los parques' me persigue por todo el juego, tuve que
+		# frenar con ESPACIO y volver a despegar"): 400m/30m era generoso
+		# porque antes se volaba casi siempre a crucero hacia UN destino
+		# elegido. Ahora que se vuela bajo cazando blancos de industria por
+		# zonas con aeropuertos/destinos cerca (Quilmes-La Plata), es fácil
+		# pasar sin querer cerca del destino por defecto (índice 1, no uno
+		# elegido a propósito) y disparar una "llegada" falsa. Achicado a
+		# 150m/15m -- sigue alcanzando para un aterrizaje real, pero ya no
+		# salta por sobrevolar la zona en general.
+		if estado == Estado.VOLANDO and distancia < 150.0 and altura < 15.0:
 			estado = Estado.LLEGADA
 			cartel_central.text = "✅ ¡LLEGASTE A %s!\n\nApretá ESPACIO para frenar" % nombre_destino.to_upper()
 			cartel_central.visible = true
@@ -4002,6 +7478,1759 @@ func _buscar_destino_por_nombre(nombre: String) -> Node3D:
 		if nodo.get_meta("nombre_bonito", nodo.name) == nombre:
 			return nodo
 	return null
+
+# Crea blancos de práctica delante del avión. Son cuerpos físicos reales para
+# que el disparo pueda comprobar un impacto, no solo comparar posiciones HUD.
+func _reiniciar_objetivos_armamento() -> void:
+	objetivos_destruidos = 0
+	if etiqueta_objetivo_destruido:
+		etiqueta_objetivo_destruido.text = "AEROPUERTOS: 0/5"
+		etiqueta_objetivo_destruido.visible = true
+	# Pedido 2026-10-06: esto solo reinicia los blancos de AEROPUERTOS (grupo
+	# "mision_aeropuertos") -- los de la misión verde de Capital y los
+	# barquitos se crean una sola vez en _ready() y deben sobrevivir aunque
+	# el jugador elija un destino nuevo (no son parte de "este vuelo").
+	var conservar: Array[Node3D] = []
+	for objetivo in objetivos_armamento:
+		if not is_instance_valid(objetivo):
+			continue
+		if objetivo.is_in_group("mision_aeropuertos"):
+			objetivo.queue_free()
+		else:
+			conservar.append(objetivo)
+	objetivos_armamento = conservar
+	_crear_objetivos_armamento()
+	_sincronizar_modo_guerra(0.0, true)
+
+func _crear_objetivos_armamento() -> void:
+	var arriba: Vector3 = _arriba_real()
+	# BUG REAL encontrado 2026-10-10 (reportado: "el contador está pero no
+	# aparecen los cuadrados"): "destinos" solo se llena adentro de
+	# _actualizar_hud(), que corre en _process() -- la llamada nueva desde
+	# _ready() (call_deferred) dispara ANTES de que _process() haya corrido
+	# ni una vez, así que "destinos" todavía estaba vacío y
+	# _buscar_destino_por_nombre() no encontraba ningún aeropuerto (fallaba
+	# en silencio, sin error). Nos aseguramos acá mismo de que esté lleno.
+	if destinos.is_empty():
+		destinos = mundo.obtener_destinos()
+	call_deferred("_sincronizar_modo_guerra", 0.0, true)
+
+	# Dejamos un blanco grande y fijo en cada aeropuerto conocido.
+	for nombre in ["Ezeiza", "Morón", "El Palomar", "Campo de Mayo", "San Fernando"]:
+		var aeropuerto := _buscar_destino_por_nombre(nombre)
+		if aeropuerto:
+			var objetivo_aeropuerto := _crear_objetivo_armamento_en_posicion(aeropuerto.global_position + arriba * 120.0, "Objetivo_" + nombre, 200.0, -global_transform.basis.z, arriba)
+			objetivo_aeropuerto.add_to_group("mision_aeropuertos")
+			objetivo_aeropuerto.set_meta("latitud_objetivo", aeropuerto.get_meta("lat"))
+			objetivo_aeropuerto.set_meta("longitud_objetivo", aeropuerto.get_meta("lon"))
+			objetivo_aeropuerto.set_meta("altura_objetivo", 120.0)
+
+			# Pedido 2026-10-11 ("probemos el contraataque en tierra, en los
+			# aeropuertos, que son fijos y más fáciles de depurar que el
+			# agua -- que disparen desde las dos cabeceras de pista, como
+			# cañones a cada lado"): mismo sistema de vida/contraataque que
+			# los barcos, reusado tal cual. Las dos cabeceras (lat/lon reales
+			# de cada punta de pista) ya existen en mundo.gd para el ILS --
+			# se usan acá como los dos puntos de disparo.
+			objetivo_aeropuerto.set_meta("vida", VIDA_INICIAL_BARCO)
+			objetivo_aeropuerto.set_meta("vida_inicial", VIDA_INICIAL_BARCO)
+			var etiqueta_vida_aero := Label3D.new()
+			etiqueta_vida_aero.name = "VidaRestante"
+			etiqueta_vida_aero.text = str(VIDA_INICIAL_BARCO)
+			etiqueta_vida_aero.font_size = 150
+			etiqueta_vida_aero.outline_size = 20
+			etiqueta_vida_aero.modulate = Color(1.0, 0.3, 0.1, 1.0)
+			etiqueta_vida_aero.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+			etiqueta_vida_aero.no_depth_test = true
+			etiqueta_vida_aero.visible = false
+			# Pedido 2026-10-11 ("no te compliques, el cuadrado ya lo tenés
+			# hecho, en el medio ponés el número"): el cuadrado y la
+			# etiqueta son los dos billboard (siempre de frente a cámara),
+			# así que poniendo la etiqueta en el PIVOTE del cuadrado (0,0,
+			# un pelito adelante para no pisar la superficie) queda
+			# exactamente centrada en el medio, se la mire desde donde se
+			# la mire.
+			etiqueta_vida_aero.position = Vector3(0, 0, 1.5)
+			objetivo_aeropuerto.add_child(etiqueta_vida_aero)
+			objetivo_aeropuerto.set_meta("etiqueta_vida", etiqueta_vida_aero)
+			var origenes_canon: Array = []
+			for entrada_cab in mundo.contenedor_ils_dos_cabeceras:
+				if entrada_cab["nombre"] == nombre:
+					origenes_canon.append(mundo._posicion_desde_lat_lon(entrada_cab["cab1_lat"], entrada_cab["cab1_lon"], 0.0) + arriba * (float(entrada_cab.get("cab1_alt", 10.0)) + 15.0))
+					origenes_canon.append(mundo._posicion_desde_lat_lon(entrada_cab["cab2_lat"], entrada_cab["cab2_lon"], 0.0) + arriba * (float(entrada_cab.get("cab2_alt", 10.0)) + 15.0))
+					break
+			if origenes_canon.is_empty():
+				# Ezeiza no tiene datos de "dos cabeceras" todavía -- un solo
+				# cañón desde el propio blanco, mejor que nada.
+				origenes_canon = [objetivo_aeropuerto.global_position]
+			objetivo_aeropuerto.set_meta("origenes_disparo", origenes_canon)
+
+# Lugares reales dentro de Capital Federal para la "misión verde" de prueba
+# (pedido 2026-10-06: "en vez de cuadrados rojos, poneme verdes, bastantes,
+# dentro de Capital"). Coordenadas aproximadas de lugares conocidos.
+const OBJETIVOS_MISION_VERDE_CABA = [
+	{"nombre": "Nuñez", "lat": -34.545, "lon": -58.464},
+	{"nombre": "Belgrano", "lat": -34.562, "lon": -58.456},
+	{"nombre": "Planetario", "lat": -34.5677, "lon": -58.4136},
+	{"nombre": "Chacarita", "lat": -34.588, "lon": -58.4555},
+	{"nombre": "ParqueCentenario", "lat": -34.6061, "lon": -58.4342},
+	{"nombre": "Congreso", "lat": -34.6095, "lon": -58.3927},
+	{"nombre": "Caminito", "lat": -34.6345, "lon": -58.3631},
+	{"nombre": "Flores", "lat": -34.6283, "lon": -58.4650},
+	{"nombre": "Mataderos", "lat": -34.6598, "lon": -58.5094},
+	{"nombre": "VillaSoldati", "lat": -34.6730, "lon": -58.4650},
+]
+
+# Se crea UNA sola vez (llamado desde _ready) -- a diferencia de los
+# aeropuertos, esta misión no depende de qué destino elegiste, así que no
+# hace falta recrearla cada vez que confirmás un viaje nuevo.
+func _crear_mision_verde() -> void:
+	var arriba: Vector3 = _arriba_real()
+	for dato in OBJETIVOS_MISION_VERDE_CABA:
+		var pos: Vector3 = mundo._posicion_desde_lat_lon(dato["lat"], dato["lon"], 0.0) + arriba * 120.0
+		var objetivo := _crear_objetivo_armamento_en_posicion(pos, "MisionVerde_" + dato["nombre"], 200.0, -global_transform.basis.z, arriba, Color(0.08, 1.0, 0.2, 1.0))
+		objetivo.add_to_group("mision_verde")
+		objetivo.set_meta("latitud_objetivo", dato["lat"])
+		objetivo.set_meta("longitud_objetivo", dato["lon"])
+		objetivo.set_meta("altura_objetivo", 120.0)
+
+# 10 barquitos de prueba, repartidos de la costa de Aeroparque hacia adentro
+# del río (pedido 2026-10-07: "distribuidos, no uno al lado del otro, podés
+# usar hasta la orilla de Uruguay de radio"). Cuadraditos negros con brillo
+# por ahora -- el modelo 3D real de barco es un proyecto aparte para más
+# adelante. Van a baja altura (casi al nivel del agua, no a 120m).
+	# BUG REAL encontrado 2026-10-07, segunda vuelta (reportado: "ahora están
+	# todos arriba de la tierra, la mayoría"): el intento anterior subestimó
+	# cuánto se mete el PUERTO de Buenos Aires adentro del río (las
+	# terminales portuarias llegan hasta casi -58.35 de longitud en esta
+	# zona) -- varios puntos "cerca de la costa" caían arriba de las
+	# terminales, no en agua. Verificado a ojo con un mapa real (OpenStreetMap):
+	# a partir de -58.33 de longitud ya es agua abierta sin nada hasta
+	# Uruguay, para cualquier latitud entre -34.50 y -34.62. Esta vez los 10
+	# puntos arrancan TODOS en -58.33 o más al este (nunca más cerca de la
+	# costa que eso), así no hay forma de que caigan en tierra ni en el puerto.
+	# Pedido 2026-10-10 ("tenés un río gigante, no los amontones"): mucho más
+	# separados que antes (antes cabían en ~13x15km, ahora en ~33x27km).
+# Pedido 2026-10-10 ("tenés un río gigante, desparramalo" + "cerca de
+# Aeroparque yendo para Colonia del Sacramento, así sé dónde buscarlos"):
+# Pedido 2026-10-11 ("20 en total, 10 y 10, ya sacamos el submarino"):
+# bajado de 30 a 20 (10 de cada uno de los 2 tipos reales), manteniendo el
+# mismo recorrido completo Aeroparque -> Colonia del Sacramento, siempre en
+# agua confirmada (longitud -58.32 o más al este).
+const BARCOS_RIO_AEROPARQUE = [
+	{"lat": -34.590, "lon": -58.320}, {"lat": -34.540, "lon": -58.304}, {"lat": -34.525, "lon": -58.272},
+	{"lat": -34.560, "lon": -58.256}, {"lat": -34.545, "lon": -58.224}, {"lat": -34.575, "lon": -58.209},
+	{"lat": -34.565, "lon": -58.177}, {"lat": -34.590, "lon": -58.161}, {"lat": -34.570, "lon": -58.129},
+	{"lat": -34.525, "lon": -58.113}, {"lat": -34.585, "lon": -58.082}, {"lat": -34.545, "lon": -58.066},
+	{"lat": -34.530, "lon": -58.034}, {"lat": -34.565, "lon": -58.018}, {"lat": -34.540, "lon": -57.987},
+	{"lat": -34.570, "lon": -57.971}, {"lat": -34.560, "lon": -57.939}, {"lat": -34.585, "lon": -57.923},
+	{"lat": -34.575, "lon": -57.891}, {"lat": -34.565, "lon": -57.859},
+]
+# Pedido 2026-10-11 ("de día no se ven, parecen hundidos -- subilos
+# extremadamente, prioridad es verlos, no la precisión del calado"): el
+# cálculo de línea de flotación por AABB evidentemente no alcanza para
+# algunos modelos (o tienen un cabeceo propio de fábrica que lo hunde más
+# de lo esperado) -- en vez de seguir afinando a ciegas, directamente se
+# sube mucho el casco sobre el agua. Van a quedar "flotando alto" por
+# ahora, se puede bajar de a poco después con feedback visual real.
+# BAJADA 2026-10-11 (ahora que la orientación/posición de la flota de
+# Aeroparque-Quilmes quedó resuelta con el pitch de +25°, ya no hace falta
+# la altura de emergencia -- Pablo confirmó volando bien bajo que a 200m el
+# avión le pasa por ABAJO al barco: "bajalos 180 metros, que no se le pueda
+# pasar por abajo").
+# SUBIDA 2026-10-11 (reportado tras probar a 20m: "se ve el barco pero el
+# agua le llega a la cubierta, como hundido -- más hundido todavía yendo
+# para el lado de Quilmes, ahí ya solo se ve el mástil"): 20m no alcanzaba
+# -- la línea de flotación real varía un poco según la zona del río. Subido
+# 30m más como primer ajuste; Pablo lo vuelve a probar volando.
+const ALTURA_BARCO_FLOTA := 50.0
+# Pedido 2026-10-11 ("es muy fácil voltear barcos, de a uno no, que tenga un
+# contador, 10 está bien -- un misil (a futuro) resta 5, una bala resta 1"):
+# mismo patrón que VIDA_INICIAL_INDUSTRIA.
+const VIDA_INICIAL_BARCO := 10
+const DANIO_BALA_BARCO := 1
+const DANIO_MISIL_BARCO := 5  # todavía no usado -- el avión no carga misiles por ahora
+# "Despacito, pero que se note" (pedido 2026-10-07) -- la versión anterior
+# (0.000003 grados/seg) equivalía a ~0.27 m/s, invisible a simple vista en
+# una prueba corta. 2.5 m/s (~9 km/h) es un paso de barco lento, pero el
+# movimiento ya se nota. Convertimos metros/seg a grados de longitud usando
+# la distancia real de un grado en ESTA latitud (111320m * cos(lat)).
+const VELOCIDAD_BARCOS_MPS := 2.5
+# BUG REAL encontrado 2026-10-10/11 (reportado: "gigantesco, enterrado",
+# después "cae en picada, vertical"): con escala fija 1.0, los modelos
+# salían del tamaño NATIVO del archivo -- cada uno con unidades distintas.
+# Investigado en Blender 2026-10-11: el "sdf_destroyer" (el oscuro) resultó
+# ser en realidad una NAVE ESPACIAL (el propio archivo original se llama
+# "spaceship", con esqueleto de huesos tipo Source Engine) -- por eso nunca
+# se comportaba como un barco por más que se ajustara. Pedido explícito de
+# Pablo al confirmarlo: sacarlo de la rotación y repartir los 30 lugares
+# entre los otros dos modelos, que sí son barcos de mar reales y ya andaban
+# bien. "escala_extra" multiplica la escala automática (ambos +50%,
+# "cuesta divisarlos"). "roll_extra_grados" corrige la banda/inclinación
+# lateral del gris (zumwalt) -- unos pocos grados nomás, primer ajuste a
+# ojo desde la foto, afinar con feedback si todavía no queda perfecto.
+# BUG REAL encontrado 2026-10-11 investigando en Blender (pedido: "el gris
+# no se encuentra, arreglalo vos, no hagas que yo lo busque"): el Aquitaine
+# tiene su lado más largo en el eje X nativo (3.44 contra 0.74 de "largo" en
+# Z) -- al revés que el Zumwalt. look_at() siempre asume que el barco
+# "mira" hacia su -Z local, así que el Aquitaine quedaba orientado de
+# costado (90° de más) en vez de apuntar a donde viaja -- probablemente por
+# eso costaba reconocerlo como barco al pasar volando. "eje_largo_es_x"
+# dispara una rotación de 90° extra ANTES del look_at para compensar.
+# CORTADO POR LO SANO 2026-10-11 (diagnóstico de Gemini, confirmado con
+# capturas): zumwalt.glb quedaba "parado como un cuchillo" con look_at() --
+# el archivo trae sus ejes de proa/vertical desalineados de origen (no es
+# algo que se arregle bien con un roll_extra_grados por código, y parchearlo
+# iba a traer problemas colaterales el día que los barcos necesiten rotar
+# según rumbo o colisionar bien). aquitaine.glb quedó perfecto -- pedido
+# explícito de Pablo: sacar el zumwalt y quedarse solo con el que funciona,
+# duplicado para los 20 lugares.
+# "pitch_extra_grados" encontrado 2026-10-11 con el experimento de sweep
+# (20 barcos, cada uno con un pitch distinto de -95° a +95° de a 10°,
+# probado por Pablo en vuelo desde todos los ángulos): Barco_12 (pitch
+# +25°) quedó perfecto de cualquier lado; Barco_11 (+15°) quedaba casi bien
+# pero con una leve inclinación en la punta. Ganador: +25°.
+const MODELOS_BARCOS = [
+	{"ruta": "res://modelos_objetivos/barcos/aquitaine.glb", "escala_extra": 1.95, "ajuste_altura_extra": 0.0, "roll_extra_grados": 0.0, "eje_largo_es_x": true, "pitch_extra_grados": 25.0},
+]
+const LARGO_OBJETIVO_BARCO := 180.0
+
+# DIAGNÓSTICO CONFIRMADO 2026-10-11 (prueba de aislamiento sugerida por
+# Gemini, tras ver con la tecla J que el casco del aquitaine aparecía
+# hundido y torcido debajo del terreno): con el offset de flotación en 0 y
+# las correcciones de eje/roll desactivadas, los barcos aparecieron bien
+# ubicados -- confirmado por Pablo con capturas. El culpable era el cálculo
+# automático de "offset_flotacion" a partir del AABB nativo (roto para
+# aquitaine.glb, que trae una malla "HLOD-9000" con una jerarquía de
+# unidades deforme, típica de un export Sketchfab/FBX). Las correcciones de
+# "eje_largo_es_x" y "roll_extra_grados" NO eran el problema -- se ven mal
+# en las capturas de la prueba de aislamiento porque esa prueba también las
+# apagaba a propósito. Dejamos esta constante como documentación del
+# diagnóstico; ya no se usa en el código (offset_flotacion quedó fijo en 0
+# más abajo, eje/roll vuelven a aplicarse siempre).
+const DEBUG_BARCOS_AISLAR_TEST := false
+
+func _crear_barcos_rio() -> void:
+	var arriba: Vector3 = _arriba_real()
+	# Rumbo real de los barcos = OESTE (longitud decreciente, ver
+	# _actualizar_barcos) -- se orientan mirando hacia ahí con look_at, no
+	# con una base arbitraria como industria (a un barco SÍ le importa para
+	# qué lado mira, a un edificio no).
+	var oeste: Vector3 = -mundo.este_motor_actual
+	var indice := 0
+	for dato in BARCOS_RIO_AEROPARQUE:
+		var info_modelo: Dictionary = MODELOS_BARCOS[indice % MODELOS_BARCOS.size()]
+		var escena: PackedScene = load(info_modelo["ruta"])
+		if not escena:
+			indice += 1
+			continue
+		var instancia: Node3D = escena.instantiate()
+		# Escala automática: medimos el modelo a escala 1.0 (tamaño nativo
+		# del archivo) y calculamos cuánto achicarlo/agrandarlo para que su
+		# lado más largo (el barco puede estar modelado a lo largo de X o de
+		# Z según cómo lo haya hecho el autor) mida LARGO_OBJETIVO_BARCO,
+		# multiplicado por el ajuste manual de ese modelo en particular.
+		var caja_nativa: AABB = _calcular_aabb_local(instancia)
+		var largo_nativo: float = max(caja_nativa.size.x, caja_nativa.size.z)
+		var escala: float = (LARGO_OBJETIVO_BARCO / largo_nativo if largo_nativo > 0.001 else 1.0) * info_modelo["escala_extra"]
+		instancia.scale = Vector3.ONE * escala
+
+		# BUG REAL encontrado 2026-10-11 con ayuda de Gemini (prueba de
+		# aislamiento con la tecla J -- ver DEBUG_BARCOS_AISLAR_TEST más
+		# arriba): este offset calculado desde "caja_nativa.position.y" se
+		# rompía con aquitaine.glb -- esa malla ("HLOD-9000") viene con una
+		# jerarquía de unidades deforme (export Sketchfab/FBX), y el pivote
+		# calculado no correspondía a la base real del casco. Resultado: el
+		# barco quedaba hundido ~100m bajo el agua y además torcido. Se saca
+		# el cálculo automático -- con offset fijo en 0, ALTURA_BARCO solo,
+		# los barcos aparecieron derechos y bien ubicados (confirmado por
+		# Pablo con capturas). Si alguno queda con la línea de flotación fea
+		# (mitad adentro/afuera del agua), se corrige a mano con
+		# "ajuste_altura_extra" por modelo, no con este cálculo automático.
+		var offset_flotacion: float = 0.0
+		var punto_agua: Vector3 = mundo._posicion_desde_lat_lon(dato["lat"], dato["lon"], 0.0)
+		var pos: Vector3 = punto_agua - arriba * offset_flotacion + arriba * (ALTURA_BARCO_FLOTA + float(info_modelo["ajuste_altura_extra"]))
+		mundo.add_child(instancia)
+		instancia.global_position = pos
+		instancia.look_at(pos + oeste, arriba)
+
+		var cuerpo := StaticBody3D.new()
+		cuerpo.name = "Barco_%d" % indice
+		cuerpo.add_to_group("objetivos_armamento")
+		cuerpo.add_to_group("mision_barcos")
+		cuerpo.collision_layer = 2
+		cuerpo.collision_mask = 0
+		mundo.add_child(cuerpo)
+		cuerpo.global_position = pos
+		cuerpo.look_at(pos + oeste, arriba)
+		# Corrección fina de banda/inclinación lateral (pedido 2026-10-11,
+		# zumwalt "ladeado hacia la izquierda, muy poquito") -- rota un poco
+		# alrededor del eje de avance (oeste), DESPUÉS del look_at. Como
+		# "instancia" va a quedar colgada de "cuerpo" sin rotación propia,
+		# alcanza con rotar acá -- se propaga sola.
+		var roll_grados: float = info_modelo.get("roll_extra_grados", 0.0)
+		if roll_grados != 0.0:
+			cuerpo.rotate_object_local(Vector3.FORWARD, deg_to_rad(roll_grados))
+		instancia.get_parent().remove_child(instancia)
+		cuerpo.add_child(instancia)
+		var base_instancia := Basis.IDENTITY
+		if info_modelo.get("eje_largo_es_x", false):
+			base_instancia = base_instancia.rotated(Vector3.UP, deg_to_rad(90.0))
+		# Corrección de pitch (cabeceo) encontrada con el experimento de
+		# sweep de 20 barcos (ver comentario junto a MODELOS_BARCOS) -- el
+		# aquitaine queda "parado como un cuchillo" visto de frente/popa sin
+		# esto. Rotación sobre el eje local X (RIGHT), antes de escalar.
+		var pitch_grados: float = info_modelo.get("pitch_extra_grados", 0.0)
+		if pitch_grados != 0.0:
+			base_instancia = base_instancia.rotated(Vector3.RIGHT, deg_to_rad(pitch_grados))
+		var basis_final: Basis = base_instancia.scaled(Vector3.ONE * escala)
+		# BUG REAL encontrado 2026-10-11 (reportado: "la lucecita quedó a un
+		# costado, lejos del barco gris"): el pivote (0,0,0) de
+		# aquitaine.glb NO está centrado en el casco -- viene corrido feo
+		# por la jerarquía "HLOD" deforme de ese archivo (ver diagnóstico de
+		# offset_flotacion más arriba). La baliza se cuelga de "cuerpo" en
+		# el eje (0, altura, 0), siempre centrada en el pivote -- pero el
+		# casco se dibujaba lejos de ahí porque su propio pivote interno no
+		# coincide con su centro geométrico. Se recentra "instancia" acá
+		# para que el centro horizontal (X/Z) del casco quede exactamente
+		# sobre el pivote de "cuerpo" (mismo punto que la baliza), sin
+		# tocar la altura (eje Y, ya resuelto por separado con
+		# ALTURA_BARCO). Aplica a cualquier modelo con el pivote
+		# descentrado, no solo a este.
+		var centro_xz_nativo := Vector3(caja_nativa.position.x + caja_nativa.size.x * 0.5, 0.0, caja_nativa.position.z + caja_nativa.size.z * 0.5)
+		instancia.transform = Transform3D(basis_final, -(basis_final * centro_xz_nativo))
+
+		# Misma corrección que en industria: _calcular_aabb_local da el
+		# tamaño NATIVO, hay que multiplicarlo por la escala a mano.
+		var caja: AABB = _calcular_aabb_local(instancia)
+		caja.position *= escala
+		caja.size *= escala
+		var forma := CollisionShape3D.new()
+		var caja_forma := BoxShape3D.new()
+		if caja.size.length() > 0.001:
+			caja_forma.size = caja.size * 1.1
+			forma.position = caja.position + caja.size * 0.5
+		else:
+			caja_forma.size = Vector3(180, 30, 25)
+		forma.shape = caja_forma
+		cuerpo.add_child(forma)
+
+		# Pedido 2026-10-11 ("para misiones de noche, una lucecita blanca que
+		# parpadee como la del avión, pero más chica -- la mitad"): reusa
+		# EXACTAMENTE el mismo mecanismo de la estroboscópica del avión
+		# (mismo material, mismo parpadeo en _actualizar_estroboscopica) para
+		# que de noche no se apague por el post-proceso nocturno (ya
+		# resuelto para las luces de avión, se hereda gratis acá).
+		var baliza_barco := _crear_luz_navegacion(Vector3(0, caja.size.y + 3.0, 0), Color(1.0, 1.0, 1.0), cuerpo, 2.0)
+		baliza_barco.name = "BalizaBarco"
+
+		# Pedido 2026-10-11 ("es muy fácil voltear barcos, que para hundir
+		# cada uno tenga que darle varios tiros, con un contador visible,
+		# como ya tenemos en industria"): mismo sistema de "vida" +
+		# numerito flotante que _crear_mision_industria(), reusado tal
+		# cual. Arranca SIN número visible (barco "dormido") -- recién se
+		# muestra con el primer impacto, que es también lo que activa el
+		# contraataque del barco (ver VIDA_INICIAL_BARCO y el bloque de
+		# "sigue_con_vida" en _process).
+		var etiqueta_vida_barco := Label3D.new()
+		etiqueta_vida_barco.name = "VidaRestante"
+		etiqueta_vida_barco.text = str(VIDA_INICIAL_BARCO)
+		etiqueta_vida_barco.font_size = 150
+		etiqueta_vida_barco.outline_size = 20
+		etiqueta_vida_barco.modulate = Color(1.0, 0.3, 0.1, 1.0)
+		etiqueta_vida_barco.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		etiqueta_vida_barco.no_depth_test = true
+		etiqueta_vida_barco.visible = false
+		# Pedido 2026-10-11 ("no lo encuentro, ponelo donde está la luz, que
+		# ahí ya sé mirar"): EXACTAMENTE la misma posición local que la
+		# baliza (no una cercana) -- y letra grande + el mismo reescalado
+		# por distancia que ya usa la baliza (ver _actualizar_barcos), para
+		# que se lea desde lejos igual que la lucecita.
+		etiqueta_vida_barco.position = Vector3(0, caja.size.y + 3.0, 0)
+		cuerpo.add_child(etiqueta_vida_barco)
+		cuerpo.set_meta("vida", VIDA_INICIAL_BARCO)
+		cuerpo.set_meta("vida_inicial", VIDA_INICIAL_BARCO)
+		cuerpo.set_meta("etiqueta_vida", etiqueta_vida_barco)
+
+		cuerpo.set_meta("latitud_objetivo", dato["lat"])
+		cuerpo.set_meta("longitud_objetivo", dato["lon"])
+		# Guardamos la altura YA CORREGIDA por la línea de flotación -- si no,
+		# _actualizar_barcos() (que mueve el barco cada cuadro) lo volvería a
+		# poner a la altura CRUDA sin la corrección, y el efecto se perdía
+		# apenas el barco empezaba a moverse.
+		cuerpo.set_meta("altura_objetivo", ALTURA_BARCO_FLOTA + float(info_modelo["ajuste_altura_extra"]) - offset_flotacion)
+		objetivos_armamento.append(cuerpo)
+		objetivos_barcos.append(cuerpo)
+		indice += 1
+
+# DEBUG TEMPORAL 2026-10-11 (ver bloque F9 en _input): imprime en la consola
+# de Godot (ventana "Salida"/"Output" del editor, o godot.log) el estado real
+# del barco más cercano a la cámara -- posición global, si Godot lo considera
+# visible en el árbol, y el AABB de cada malla interna del GLB. Si
+# "Visible in Tree" es true y el AABB tiene tamaño > 0 pero el barco no se ve
+# en pantalla, el problema es oclusión por el terreno (ver F10) o cámara, NO
+# el código de creación del barco.
+func _diagnosticar_barco_mas_cercano() -> void:
+	if objetivos_barcos.is_empty():
+		print("🚢 DEBUG: no hay barcos creados todavía")
+		return
+	var mas_cercano: Node3D = null
+	var mejor_distancia := INF
+	for barco in objetivos_barcos:
+		if not is_instance_valid(barco):
+			continue
+		var d: float = camara.global_position.distance_to(barco.global_position)
+		if d < mejor_distancia:
+			mejor_distancia = d
+			mas_cercano = barco
+	if not mas_cercano:
+		print("🚢 DEBUG: ningún barco válido encontrado")
+		return
+	print("--- DIAGNÓSTICO DE BARCO: ", mas_cercano.name, " (distancia a cámara: ", mejor_distancia, "m) ---")
+	print("Global Position: ", mas_cercano.global_position)
+	print("Visible in Tree: ", mas_cercano.is_visible_in_tree())
+	if mas_cercano.has_meta("vida"):
+		print("Vida: ", mas_cercano.get_meta("vida"), " | activado: ", mas_cercano.get_meta("activado", false), " | en barcos_activados: ", barcos_activados.has(mas_cercano))
+	if mas_cercano.has_meta("latitud_objetivo"):
+		print("Lat/Lon: ", mas_cercano.get_meta("latitud_objetivo"), ", ", mas_cercano.get_meta("longitud_objetivo"))
+	var mallas := mas_cercano.find_children("*", "MeshInstance3D", true, false)
+	print("Cantidad de mallas encontradas: ", mallas.size())
+	for m in mallas:
+		if m is MeshInstance3D:
+			var caja: AABB = m.get_aabb()
+			print("  - Malla: ", m.name, " | visible local: ", m.visible, " | capa render: ", m.layers, " | AABB tamaño: ", caja.size, " | AABB posición: ", caja.position)
+			if m.material_override:
+				print("    material_override asignado (", m.material_override, ")")
+			elif m.mesh and m.mesh.surface_get_material(0):
+				print("    material de superficie 0: ", m.mesh.surface_get_material(0))
+			else:
+				print("    sin material propio -- usa el del GLB importado")
+
+# Pedido 2026-10-11 ("de altura las lucecitas son imperceptibles, me tuve
+# que acercar mucho -- que se vean bien parpadeantes desde 2000-3000m, y a
+# medida que te acercás que se achiquen, que no quede un círculo gigante
+# feo pegado al objetivo"): agranda la baliza según la distancia a la
+# cámara -- chica/normal de cerca, grande de lejos, compartida entre
+# barcos e industria.
+const DISTANCIA_REF_BALIZA := 300.0  # por debajo de esto, tamaño normal
+const FACTOR_MAXIMO_BALIZA := 14.0   # tope de agrandado a distancia
+func _escalar_baliza_por_distancia(baliza: Node3D, posicion_mundo: Vector3) -> void:
+	if not camara:
+		return
+	var distancia: float = camara.global_position.distance_to(posicion_mundo)
+	var factor: float = clamp(distancia / DISTANCIA_REF_BALIZA, 1.0, FACTOR_MAXIMO_BALIZA)
+	baliza.scale = Vector3.ONE * factor
+
+func _actualizar_barcos(delta: float) -> void:
+	var arriba: Vector3 = _arriba_real()
+	# Boceto de invasión 2026-10-11: un barco que cruza la longitud de la
+	# costa sin ser hundido "desembarca" -- se junta en una lista aparte
+	# porque no se puede hacer queue_free()/sacarlo de objetivos_barcos
+	# DENTRO del for que recorre esa misma lista.
+	var barcos_para_desembarcar: Array[Node3D] = []
+	for objetivo in objetivos_barcos:
+		if not is_instance_valid(objetivo) or not objetivo.has_meta("longitud_objetivo"):
+			continue
+		var latitud: float = objetivo.get_meta("latitud_objetivo")
+		var metros_por_grado_lon: float = 111320.0 * cos(deg_to_rad(latitud))
+		var grados_por_seg: float = VELOCIDAD_BARCOS_MPS / metros_por_grado_lon
+		var nueva_lon: float = objetivo.get_meta("longitud_objetivo") - grados_por_seg * delta
+		if nueva_lon <= LON_COSTA_DESEMBARCO:
+			barcos_para_desembarcar.append(objetivo)
+			continue
+		objetivo.set_meta("longitud_objetivo", nueva_lon)
+		var altura: float = objetivo.get_meta("altura_objetivo")
+		# look_at con origen=destino tiraría error si ya mira exactamente
+		# para ahí -- acá el rumbo (oeste) no cambia cuadro a cuadro, así
+		# que no hace falta reorientar cada vez, solo mover la posición.
+		objetivo.global_position = mundo._posicion_desde_lat_lon(latitud, nueva_lon, 0.0) + arriba * altura
+		var baliza_barco: Node3D = objetivo.get_node_or_null("BalizaBarco")
+		if baliza_barco:
+			_escalar_baliza_por_distancia(baliza_barco, baliza_barco.global_position)
+		var etiqueta_vida_actualizar: Node3D = objetivo.get_node_or_null("VidaRestante")
+		if etiqueta_vida_actualizar and etiqueta_vida_actualizar.visible:
+			_escalar_baliza_por_distancia(etiqueta_vida_actualizar, etiqueta_vida_actualizar.global_position)
+	for barco in barcos_para_desembarcar:
+		_desembarcar_barco(barco)
+
+const VIDA_CAPTURA_AEROPUERTO := 40
+
+# Un barco que cruzó la línea de costa sin ser hundido desaparece y larga
+# 5 unidades de invasión en su lugar.
+func _desembarcar_barco(barco: Node3D) -> void:
+	if not is_instance_valid(barco):
+		return
+	var lat: float = barco.get_meta("latitud_objetivo", 0.0)
+	var lon: float = barco.get_meta("longitud_objetivo", 0.0)
+	print("🪖 Desembarco -- barco llegó a la costa en lat=%.4f lon=%.4f, larga 5 unidades" % [lat, lon])
+	objetivos_armamento.erase(barco)
+	objetivos_barcos.erase(barco)
+	barcos_activados.erase(barco)
+	barco.queue_free()
+	for i in range(5):
+		_crear_unidad_invasion(lat, lon)
+
+# DEBUG TEMPORAL 2026-10-11 (ver tecla Y en _input): modelos candidatos para
+# reemplazar los cuadraditos negros de la invasión por vehículos 3D de
+# verdad. "eje_largo_es_x": revisado en Blender el T-80BV (antes de que
+# Blender crasheara por un problema del driver de video, no del modelo) --
+# el casco viene largo en el eje X nativo, igual que el aquitaine.glb, así
+# que arranca con la misma corrección de 90°. El EBRC Jaguar todavía no se
+# pudo mirar en Blender -- por eso entra en la MISMA prueba con las mismas 4
+# orientaciones, para que la fila visual confirme o corrija el valor en los
+# dos casos.
+# "roll_extra_grados" (pedido 2026-10-11, foto del T-80BV "tumbado para un
+# lado" ~25-30°): mismo mecanismo que ya usamos para el zumwalt/aquitaine --
+# un giro fijo sobre el eje de avance, DESPUÉS del yaw, para enderezar un
+# modelo que viene ladeado de origen. Arranca en 0 hasta confirmar con
+# Pablo si TODOS los T-80 salen torcidos igual (entonces es el modelo, se
+# corrige acá y listo) o si fue nomás esa unidad en particular.
+# Confirmado 2026-10-11 ("los marrones -- el Jaguar -- estaban torcidos, los
+# negros -- el T-80 -- bien derechos, y los dos marrones eran de la misma
+# marca"): es el modelo del Jaguar, no una unidad suelta. -25° es una
+# primera prueba a ciegas (no hay forma de saber el signo sin probarlo) --
+# avisame si quedó mejor, peor, o se fue para el otro lado, y seguimos
+# ajustando como con el roll del zumwalt/aquitaine.
+const MODELOS_PRUEBA_VEHICULOS := [
+	{"nombre": "T-80BV", "ruta": "res://modelos_objetivos/vehiculos/t80bv.glb", "eje_largo_es_x": true, "roll_extra_grados": 0.0},
+	{"nombre": "Jaguar", "ruta": "res://modelos_objetivos/vehiculos/jaguar.glb", "eje_largo_es_x": true, "roll_extra_grados": -25.0},
+]
+# "Tamaño muy grande" pedido explícito -- el objetivo de largo de referencia
+# (1.0x) ya arranca grande a propósito; los otros 3 tamaños de la fila de
+# tamaños van todavía más grandes, nunca más chicos.
+const LARGO_OBJETIVO_VEHICULO_PRUEBA := 45.0
+# BUG REAL encontrado 2026-10-11 (reportado con 3 capturas: "no veo nada,
+# la A tampoco", volando hasta la cabecera de Aeroparque sin encontrar ni
+# un camión): la versión anterior calculaba la posición con
+# mundo._posicion_desde_lat_lon(lat, lon, 0.0) + raycast al terreno -- pero
+# los CUADRADOS de misión que sí se ven siempre (ver _crear_objetivos_
+# armamento) usan otra referencia distinta: aeropuerto.global_position (el
+# nodo real ya puesto en la escena) + arriba*120.0, sin raycast. Evidentemente
+# esas dos formas de calcular "la misma" posición no dan el mismo punto --
+# mismo tipo de problema que ya tuvimos con el aquitaine y el A380 (un
+# cálculo automático que parece correcto pero no lo es). Solución: dejar de
+# inventar una posición nueva y clavar la prueba exactamente en la misma
+# fórmula que ya sabemos que funciona, con offsets en METROS reales (no en
+# grados de lat/lon) para separar cada copia.
+# Pedido 2026-10-11, segunda vuelta: ya los encontramos (tecla X), ahora la
+# foto de Pablo al lado del F/A-18 muestra el tanque 3-4 veces más largo que
+# el caza -- un T-80 real (~9.5m) es más CHICO que un F/A-18 (~17m), así que
+# 25x quedó muy exagerado. Bajado a un tamaño más realista como punto de
+# partida; se sigue ajustando con los números reales que tire _diagnosticar_
+# vehiculo_prueba_mas_cercano() (tecla Z) en vez de ir a ojo con capturas.
+var escala_exagerada_prueba: float = 6.0
+
+# Columna de luz fucsia bien gruesa y alta + una "A" gigante flotando
+# arriba (ver pedido 2026-10-11 junto al llamado de esta función) --
+# visible desde el aire a mucha distancia, no depende de encontrar
+# camiones chicos entre el pasto. "pos" ya viene calculada (misma fórmula
+# que los cuadrados de misión), no se recalcula acá.
+func _crear_baliza_ancla_prueba(pos: Vector3, arriba: Vector3) -> Node3D:
+	var cuerpo := Node3D.new()
+	cuerpo.name = "BalizaPruebaVehiculos"
+	mundo.add_child(cuerpo)
+	cuerpo.global_position = pos
+
+	var pilar := MeshInstance3D.new()
+	var malla := CylinderMesh.new()
+	malla.height = 1500.0
+	malla.top_radius = 15.0
+	malla.bottom_radius = 15.0
+	pilar.mesh = malla
+	var material_pilar := StandardMaterial3D.new()
+	material_pilar.albedo_color = Color(1.0, 0.0, 1.0, 1.0)
+	material_pilar.emission_enabled = true
+	material_pilar.emission = Color(1.0, 0.0, 1.0)
+	material_pilar.emission_energy_multiplier = 5.0
+	material_pilar.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	pilar.material_override = material_pilar
+	pilar.position = arriba * 750.0  # el cilindro queda centrado en su propio origen -- esto lo deja con la base al nivel del suelo
+	cuerpo.add_child(pilar)
+
+	var etiqueta := Label3D.new()
+	etiqueta.text = "A"
+	etiqueta.font_size = 700
+	etiqueta.outline_size = 70
+	etiqueta.modulate = Color(1.0, 0.0, 1.0, 1.0)
+	etiqueta.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	etiqueta.no_depth_test = true
+	etiqueta.position = arriba * 1600.0
+	cuerpo.add_child(etiqueta)
+	return cuerpo
+
+# TERCERA VUELTA 2026-10-11 (reportado: "aprieto X varias veces y van
+# rotando, ninguno queda derecho" -- el problema real: X agarraba las 4
+# unidades de invasión MÁS CERCANAS AL AVIÓN, que cambian cada vez que
+# Pablo se mueve, cada una con su propia orientación heredada de cuando se
+# creó -- por eso parecía que "rotaban" entre apretadas sin ton ni son).
+# Versión definitiva: SIEMPRE el mismo tanque y el mismo Jaguar, en el
+# mismo lugar exacto (anclados a aeropuerto.global_position, la fórmula
+# probada), mirando siempre para el mismo lado fijo (norte, para poder
+# chequear con la brújula/rumbo del avión) -- apretar X de nuevo solo
+# actualiza esos dos mismos vehículos con los valores de escala/roll
+# actuales, no crea ni elige otros.
+func _prueba_vehiculos_fija() -> void:
+	var aeropuerto := _buscar_destino_por_nombre("Aeroparque")
+	if not aeropuerto:
+		print("⚠️ No se encontró Aeroparque para la prueba de vehículos")
+		return
+	for nodo in nodos_prueba_vehiculos:
+		if is_instance_valid(nodo):
+			nodo.queue_free()
+	nodos_prueba_vehiculos.clear()
+
+	var arriba: Vector3 = _arriba_real()
+	var norte: Vector3 = mundo.norte_motor_actual
+	var este: Vector3 = mundo.este_motor_actual
+	var base: Vector3 = aeropuerto.global_position + arriba * 120.0
+	nodos_prueba_vehiculos.append(_crear_baliza_ancla_prueba(base, arriba))
+
+	var reporte := ""
+	var posiciones := [base + norte * 300.0, base + norte * 300.0 + este * 200.0]
+	for i in range(MODELOS_PRUEBA_VEHICULOS.size()):
+		var info_modelo: Dictionary = MODELOS_PRUEBA_VEHICULOS[i]
+		var escena: PackedScene = load(info_modelo["ruta"])
+		if not escena:
+			print("⚠️ No se pudo cargar ", info_modelo["ruta"])
+			continue
+		var pos: Vector3 = posiciones[i]
+		var cuerpo := Node3D.new()
+		cuerpo.name = "PruebaFija_" + info_modelo["nombre"]
+		mundo.add_child(cuerpo)
+		cuerpo.global_position = pos
+		cuerpo.look_at(pos + norte, arriba)  # siempre mirando al norte, fijo
+		var roll_grados: float = info_modelo.get("roll_extra_grados", 0.0)
+		if roll_grados != 0.0:
+			cuerpo.rotate_object_local(Vector3.FORWARD, deg_to_rad(roll_grados))
+
+		var instancia: Node3D = escena.instantiate()
+		var caja_nativa: AABB = _calcular_aabb_local(instancia)
+		var largo_nativo: float = max(caja_nativa.size.x, caja_nativa.size.z)
+		var escala: float = (LARGO_OBJETIVO_VEHICULO_PRUEBA / largo_nativo if largo_nativo > 0.001 else 1.0) * escala_exagerada_prueba
+		mundo.add_child(instancia)
+		var base_instancia := Basis.IDENTITY
+		if info_modelo.get("eje_largo_es_x", false):
+			base_instancia = base_instancia.rotated(Vector3.UP, deg_to_rad(90.0))
+		var basis_final: Basis = base_instancia.scaled(Vector3.ONE * escala)
+		var centro_xz_nativo := Vector3(caja_nativa.position.x + caja_nativa.size.x * 0.5, 0.0, caja_nativa.position.z + caja_nativa.size.z * 0.5)
+		instancia.get_parent().remove_child(instancia)
+		cuerpo.add_child(instancia)
+		instancia.transform = Transform3D(basis_final, -(basis_final * centro_xz_nativo))
+
+		var etiqueta := Label3D.new()
+		etiqueta.text = info_modelo["nombre"]
+		etiqueta.font_size = 400
+		etiqueta.outline_size = 50
+		etiqueta.modulate = Color(1.0, 1.0, 0.2, 1.0)
+		etiqueta.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		etiqueta.no_depth_test = true
+		etiqueta.position = Vector3(0, 150.0, 0)
+		cuerpo.add_child(etiqueta)
+		nodos_prueba_vehiculos.append(cuerpo)
+
+		# Diagnóstico de altura, mismo cálculo de antes pero ahora con la
+		# posición fija que ya conocemos -- piso real (rayo a Cesium) contra
+		# dónde termina de verdad la base del modelo ya escalado/rotado.
+		var space_state := get_world_3d().direct_space_state
+		var consulta := PhysicsRayQueryParameters3D.create(pos + arriba * 2000.0, pos - arriba * 2000.0)
+		consulta.collision_mask = 1
+		var resultado := space_state.intersect_ray(consulta)
+		var altura_piso_real: Vector3 = resultado["position"] if resultado.size() > 0 else pos
+		var transform_completo: Transform3D = cuerpo.global_transform * instancia.transform
+		var punto_mas_bajo_local := Vector3(caja_nativa.position.x + caja_nativa.size.x * 0.5, caja_nativa.position.y, caja_nativa.position.z + caja_nativa.size.z * 0.5)
+		var punto_mas_bajo_mundo: Vector3 = transform_completo * punto_mas_bajo_local
+		var diferencia_altura: float = (altura_piso_real - punto_mas_bajo_mundo).dot(arriba)
+		var estado: String = "ENTERRADO" if diferencia_altura > 0.0 else "FLOTANDO"
+		reporte += "%s: escala x%.2f, %s %.1fm\n" % [info_modelo["nombre"], escala, estado, abs(diferencia_altura)]
+		print("🪖 ", info_modelo["nombre"], " -- escala total: ", escala, " | ", estado, ": ", abs(diferencia_altura), "m")
+
+	etiqueta_diagnostico_vehiculo.text = reporte
+	etiqueta_diagnostico_vehiculo.visible = true
+	print("🪖 Prueba fija sembrada en Aeroparque, mirando al norte -- mirá el cartel grande en la parte de arriba de la pantalla")
+
+# Busca, entre los 5 aeropuertos conocidos, el más cercano a (lat,lon) que
+# todavía NO esté tomado. Devuelve {} si ya están todos tomados.
+# PAUSADO 2026-10-11: hubo una prueba acotando esto a solo Aeroparque/San
+# Fernando, revertida por falta de tiempo para terminar de probarla -- vuelve
+# a la lista original (Aeroparque y San Fernando quedan protegidos, como
+# siempre).
+func _aeropuerto_mas_cercano_libre(lat: float, lon: float) -> Dictionary:
+	var mejor := {}
+	var mejor_dist := INF
+	for nombre in ["Ezeiza", "Morón", "El Palomar", "Campo de Mayo", "San Fernando"]:
+		if aeropuertos_tomados.has(nombre):
+			continue
+		var aeropuerto := _buscar_destino_por_nombre(nombre)
+		if not aeropuerto:
+			continue
+		var alat: float = aeropuerto.get_meta("lat")
+		var alon: float = aeropuerto.get_meta("lon")
+		# Aproximación en grados nomás (no hace falta precisión de metros
+		# para elegir "cuál está más cerca" en un boceto).
+		var d: float = Vector2(lon - alon, lat - alat).length()
+		if d < mejor_dist:
+			mejor_dist = d
+			mejor = {"nombre": nombre, "lat": alat, "lon": alon}
+	return mejor
+
+# Crea una unidad chica de invasión en (lat,lon), con un raycast real al
+# piso (mismo patrón que industria) para que no quede enterrada ni
+# flotando. "destino_forzado" permite mandarla a un aeropuerto específico
+# en vez del más cercano (usado por la siembra inicial). "variante_indice"
+# elige tamaño/color de VARIANTES_TAMANO_INVASION (-1 = tamaño default).
+func _crear_unidad_invasion(lat: float, lon: float, destino_forzado: String = "", variante_indice: int = -1) -> void:
+	if unidades_invasion.size() >= MAX_UNIDADES_INVASION:
+		print("⚠️ Tope de unidades de invasión alcanzado (%d) -- no se crea ninguna más" % MAX_UNIDADES_INVASION)
+		return
+	var nombre_destino: String = destino_forzado
+	if nombre_destino == "":
+		var destino: Dictionary = _aeropuerto_mas_cercano_libre(lat, lon)
+		if destino.is_empty():
+			print("🏳️ Todos los aeropuertos ya están tomados -- no hay adónde mandar la unidad")
+			return
+		nombre_destino = destino["nombre"]
+	var arriba: Vector3 = _arriba_real()
+	var punto_aproximado: Vector3 = mundo._posicion_desde_lat_lon(lat, lon, 0.0)
+	var space_state := get_world_3d().direct_space_state
+	var consulta := PhysicsRayQueryParameters3D.create(punto_aproximado + arriba * 2000.0, punto_aproximado - arriba * 2000.0)
+	# BUG REAL encontrado 2026-10-11 (reportado: "salen cuadraditos disparados
+	# para el cielo como fuegos artificiales" cerca de Quilmes, con muchas
+	# unidades juntas): este rayo no tenía filtro de capa, así que podía
+	# chocar contra OTRA unidad de invasión (capa 2, la misma que usan todos
+	# los "objetivos_armamento") en vez del terreno real -- con varias
+	# unidades moviéndose cerca entre sí, el resultado era una posición
+	# saltando erráticamente. Capa 1 = terreno real únicamente.
+	consulta.collision_mask = 1
+	var resultado := space_state.intersect_ray(consulta)
+	var pos: Vector3 = (resultado["position"] if resultado.size() > 0 else punto_aproximado) + arriba * ALTURA_FLOTE_INVASION
+	# BUG REAL corregido 2026-10-11 (preocupación de Pablo desde el principio
+	# de la charla de los camiones: "tengo miedo que terminen apuntando para
+	# el otro lado, como pasó con los aviones"): antes "adelante" era la
+	# dirección del AVIÓN del jugador en el instante de la creación -- una
+	# foto fija que no tenía nada que ver hacia dónde iba a caminar la
+	# unidad. Ahora mira hacia su destino real desde el arranque; en
+	# _actualizar_unidades_invasion() se recalcula cada cuadro a medida que
+	# avanza, así que sirve para cualquier dirección sin tocar nada por
+	# zona.
+	var aeropuerto_destino_inicial := _buscar_destino_por_nombre(nombre_destino)
+	var adelante: Vector3 = -global_transform.basis.z
+	if aeropuerto_destino_inicial:
+		var lat_dest_inicial: float = aeropuerto_destino_inicial.get_meta("lat")
+		var lon_dest_inicial: float = aeropuerto_destino_inicial.get_meta("lon")
+		var punto_destino_inicial: Vector3 = mundo._posicion_desde_lat_lon(lat_dest_inicial, lon_dest_inicial, 0.0)
+		if punto_destino_inicial.distance_to(pos) > 1.0:
+			adelante = (punto_destino_inicial - pos).normalized()
+	# Pedido 2026-10-11: sweep de tamaño terminado -- un solo tamaño fijo
+	# (el más grande probado). "variante_indice" queda sin uso, se mantiene
+	# el parámetro para no romper las llamadas existentes.
+	# SEGUNDA VUELTA 2026-10-11 ("tipo semáforo: rojo, amarillo, verde y el
+	# otro disparo desaparece"): arrancan ROJO (recién llegados, 4 de
+	# vida), no negro -- el color real de ahí en más lo da
+	# _color_semaforo_invasion() en cada impacto.
+	var lado: float = VARIANTES_TAMANO_INVASION[VARIANTES_TAMANO_INVASION.size() - 1]["lado"]
+	var color := Color(0.9, 0.1, 0.05, 1.0)
+	var color_brillo := Color(0.9, 0.1, 0.05, 1.0)
+	# Pedido 2026-10-11 ("exigir más precisión, es muy fácil"): colisión más
+	# ajustada (1.3x el tamaño visual) que la de blancos grandes y quietos
+	# como los aeropuertos (3x).
+	var unidad := _crear_objetivo_armamento_en_posicion(pos, "Invasion_%d" % Time.get_ticks_msec(), lado, adelante, arriba, color, color_brillo, 1.3)
+	unidad.add_to_group("invasion")
+	invasores_totales_sembrados += 1
+	unidad.set_meta("vida", VIDA_UNIDAD_INVASION)
+	unidad.set_meta("vida_inicial", VIDA_UNIDAD_INVASION)
+	unidad.set_meta("latitud_objetivo", lat)
+	unidad.set_meta("longitud_objetivo", lon)
+	unidad.set_meta("destino_aeropuerto", nombre_destino)
+	var etiqueta := Label3D.new()
+	etiqueta.name = "VidaRestante"
+	etiqueta.text = str(VIDA_UNIDAD_INVASION)
+	etiqueta.font_size = 90
+	etiqueta.outline_size = 14
+	etiqueta.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	etiqueta.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	etiqueta.no_depth_test = true
+	etiqueta.position = Vector3(0, 0, 1.5)
+	unidad.add_child(etiqueta)
+	unidad.set_meta("etiqueta_vida", etiqueta)
+	# PAUSADO 2026-10-11 (pedido de Pablo -- se quedaba sin tokens para seguir
+	# probando en vivo, "dejá los cuadraditos negros como estaban para que
+	# pueda jugar"): el reemplazo visual por el tanque 3D funciona pero no
+	# llegamos a terminar de confirmarlo -- vuelve el cuadrado de siempre.
+	# Reactivar esta línea para retomar donde quedamos.
+	# _vestir_unidad_invasion_con_modelo_3d(unidad)
+	unidades_invasion.append(unidad)
+
+# Pedido 2026-10-11 ("sustituí los cuadrados por los tanquecitos, que vayan
+# yendo a su objetivo, pero antes achicalo 10 veces y bajalo"): apaga el
+# cuadrado visual (la colisión, la vida y el numerito de arriba quedan
+# intactos, se siguen usando igual) y le cuelga el T-80BV ya escalado, con
+# la misma corrección de eje que confirmamos en la prueba (eje_largo_es_x).
+func _vestir_unidad_invasion_con_modelo_3d(unidad: StaticBody3D) -> void:
+	var escena: PackedScene = load(MODELO_TANQUE_INVASION["ruta"])
+	if not escena:
+		return
+	for hijo in unidad.get_children():
+		if hijo is MeshInstance3D:
+			hijo.visible = false
+	var instancia: Node3D = escena.instantiate()
+	var caja_nativa: AABB = _calcular_aabb_local(instancia)
+	var largo_nativo: float = max(caja_nativa.size.x, caja_nativa.size.z)
+	var escala: float = (LARGO_OBJETIVO_TANQUE_INVASION / largo_nativo if largo_nativo > 0.001 else 1.0) * FACTOR_ESCALA_TANQUE_INVASION
+	unidad.add_child(instancia)
+	var base_instancia := Basis.IDENTITY
+	if MODELO_TANQUE_INVASION.get("eje_largo_es_x", false):
+		base_instancia = base_instancia.rotated(Vector3.UP, deg_to_rad(90.0))
+	var basis_final: Basis = base_instancia.scaled(Vector3.ONE * escala)
+	var centro_xz_nativo := Vector3(caja_nativa.position.x + caja_nativa.size.x * 0.5, 0.0, caja_nativa.position.z + caja_nativa.size.z * 0.5)
+	instancia.transform = Transform3D(basis_final, -(basis_final * centro_xz_nativo))
+
+# Mueve cada unidad de invasión en línea recta (por ahora, sin ruta real)
+# hacia su aeropuerto destino, con el piso corregido cada cuadro (el
+# terreno real varía a lo largo del camino). Si llega, captura el
+# aeropuerto.
+func _actualizar_unidades_invasion(delta: float) -> void:
+	if etiqueta_invasion:
+		# Pedido 2026-10-11 ("si maté a 5 y son 15, que ponga 5/15"):
+		# bajas/total sembrado, no solo cuántos quedan vivos ahora.
+		etiqueta_invasion.text = "INVASORES: %d/%d" % [invasores_destruidos, invasores_totales_sembrados]
+		etiqueta_invasion.visible = invasores_totales_sembrados > 0
+	# Pedido 2026-10-11 ("que a medida que los voy liquidando, vayan
+	# entrando más por la costa"): refuerzos periódicos, no solo la
+	# siembra inicial.
+	tiempo_hasta_proximo_refuerzo -= delta
+	if tiempo_hasta_proximo_refuerzo <= 0.0:
+		tiempo_hasta_proximo_refuerzo = INTERVALO_REFUERZO_INVASION
+		_sembrar_refuerzo_invasion()
+	var arriba: Vector3 = _arriba_real()
+	var space_state := get_world_3d().direct_space_state
+	var i := unidades_invasion.size() - 1
+	while i >= 0:
+		var unidad: Node3D = unidades_invasion[i]
+		if not is_instance_valid(unidad):
+			unidades_invasion.remove_at(i)
+			i -= 1
+			continue
+		var destino_nombre: String = unidad.get_meta("destino_aeropuerto", "")
+		if destino_nombre == "" or aeropuertos_tomados.has(destino_nombre):
+			var lat_u: float = unidad.get_meta("latitud_objetivo")
+			var lon_u: float = unidad.get_meta("longitud_objetivo")
+			var nuevo_destino: Dictionary = _aeropuerto_mas_cercano_libre(lat_u, lon_u)
+			if nuevo_destino.is_empty():
+				i -= 1
+				continue  # no quedan aeropuertos libres -- se queda quieta donde está
+			unidad.set_meta("destino_aeropuerto", nuevo_destino["nombre"])
+			destino_nombre = nuevo_destino["nombre"]
+		var aeropuerto_destino := _buscar_destino_por_nombre(destino_nombre)
+		if not aeropuerto_destino:
+			i -= 1
+			continue
+		var lat_dest: float = aeropuerto_destino.get_meta("lat")
+		var lon_dest: float = aeropuerto_destino.get_meta("lon")
+		var lat_actual: float = unidad.get_meta("latitud_objetivo")
+		var lon_actual: float = unidad.get_meta("longitud_objetivo")
+		var metros_por_grado_lat := 111320.0
+		var metros_por_grado_lon: float = 111320.0 * cos(deg_to_rad(lat_actual))
+		var distancia: float = Vector2((lon_dest - lon_actual) * metros_por_grado_lon, (lat_dest - lat_actual) * metros_por_grado_lat).length()
+		if distancia < RADIO_CAPTURA_AEROPUERTO:
+			_capturar_aeropuerto(destino_nombre)
+			objetivos_armamento.erase(unidad)
+			unidad.queue_free()
+			unidades_invasion.remove_at(i)
+			i -= 1
+			continue
+		var avance: float = velocidad_invasion * delta
+		var fraccion: float = clamp(avance / distancia, 0.0, 1.0)
+		var nueva_lat: float = lat_actual + (lat_dest - lat_actual) * fraccion
+		var nueva_lon: float = lon_actual + (lon_dest - lon_actual) * fraccion
+		unidad.set_meta("latitud_objetivo", nueva_lat)
+		unidad.set_meta("longitud_objetivo", nueva_lon)
+		var punto_aproximado: Vector3 = mundo._posicion_desde_lat_lon(nueva_lat, nueva_lon, 0.0)
+		var consulta := PhysicsRayQueryParameters3D.create(punto_aproximado + arriba * 2000.0, punto_aproximado - arriba * 2000.0)
+		consulta.collision_mask = 1  # solo terreno real -- ver comentario en _crear_unidad_invasion
+		var resultado := space_state.intersect_ray(consulta)
+		unidad.global_position = (resultado["position"] if resultado.size() > 0 else punto_aproximado) + arriba * ALTURA_FLOTE_INVASION
+		# Reorienta cada cuadro hacia el destino actual (ver comentario en
+		# _crear_unidad_invasion) -- así sirve para cualquier rumbo, incluso
+		# si el destino cambia a mitad de camino (aeropuerto tomado por otro
+		# lado, reasignación más arriba en esta misma función).
+		var punto_destino_mundo: Vector3 = mundo._posicion_desde_lat_lon(lat_dest, lon_dest, 0.0)
+		unidad.look_at(unidad.global_position + (punto_destino_mundo - unidad.global_position).normalized(), arriba)
+		i -= 1
+
+# Un aeropuerto queda "tomado": marca grande marrón con 40 de vida, y larga
+# 5 unidades nuevas hacia otros aeropuertos todavía libres.
+func _capturar_aeropuerto(nombre: String) -> void:
+	if aeropuertos_tomados.has(nombre):
+		return
+	aeropuertos_tomados[nombre] = true
+	print("🚩 Aeropuerto TOMADO por la invasión: ", nombre)
+	var aeropuerto := _buscar_destino_por_nombre(nombre)
+	if not aeropuerto:
+		return
+	var lat: float = aeropuerto.get_meta("lat")
+	var lon: float = aeropuerto.get_meta("lon")
+	var arriba: Vector3 = _arriba_real()
+	var pos: Vector3 = mundo._posicion_desde_lat_lon(lat, lon, 0.0) + arriba * 120.0
+	var marca := _crear_objetivo_armamento_en_posicion(pos, "AeropuertoTomado_" + nombre, 220.0, -global_transform.basis.z, arriba, Color(0.45, 0.28, 0.12, 1.0))
+	marca.add_to_group("aeropuerto_invadido")
+	marca.set_meta("vida", VIDA_CAPTURA_AEROPUERTO)
+	marca.set_meta("vida_inicial", VIDA_CAPTURA_AEROPUERTO)
+	marca.set_meta("latitud_objetivo", lat)
+	marca.set_meta("longitud_objetivo", lon)
+	marca.set_meta("altura_objetivo", 120.0)
+	marca.set_meta("nombre_aeropuerto_tomado", nombre)
+	var etiqueta := Label3D.new()
+	etiqueta.name = "VidaRestante"
+	etiqueta.text = str(VIDA_CAPTURA_AEROPUERTO)
+	etiqueta.font_size = 150
+	etiqueta.outline_size = 20
+	etiqueta.modulate = Color(1.0, 1.0, 1.0, 1.0)
+	etiqueta.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	etiqueta.no_depth_test = true
+	etiqueta.position = Vector3(0, 0, 1.5)
+	marca.add_child(etiqueta)
+	marca.set_meta("etiqueta_vida", etiqueta)
+	for j in range(5):
+		_crear_unidad_invasion(lat, lon)
+
+# Pedido 2026-10-11 ("no esperemos a que desembarque un barco, de aburrido
+# voy a matar a alguno -- que ya arranque la invasión desde tierra. Más
+# cantidad, que entren por varias zonas distintas -- Quilmes, Olivos, cerca
+# de Aeroparque y cerca de San Fernando -- para dispersarse como ejércitos
+# reales, no todos en fila. Que NO tomen Aeroparque ni San Fernando -- esos
+# son fáciles y no me puedo defender en todos lados. Que vayan a Morón,
+# Ezeiza y El Palomar"): 4 zonas de entrada, cada una manda unidades a los
+# 3 destinos permitidos, con offsets al azar (dispersión) y las 5 variantes
+# de tamaño/color para que Pablo elija cuál queda mejor.
+# PAUSADO 2026-10-11: hubo una prueba acotada a solo Quilmes->Aeroparque/San
+# Fernando (para probar el tanque 3D en línea recta), revertida por falta
+# de tiempo para terminar de confirmarla -- vuelve a esto, que ya sabemos
+# que anda bien.
+const ZONAS_SIEMBRA_INICIAL := [
+	{"nombre": "Quilmes", "lat": -34.706667, "lon": -58.244444},
+	{"nombre": "Olivos", "lat": -34.5095, "lon": -58.4875},
+	{"nombre": "cerca de Aeroparque", "lat": -34.5800, "lon": -58.4000},
+	{"nombre": "cerca de San Fernando", "lat": -34.4700, "lon": -58.5600},
+]
+func _sembrar_invasion_inicial() -> void:
+	var objetivos_primera_oleada := ["Morón", "Ezeiza", "El Palomar"]
+	var variante := 0
+	var total := 0
+	for zona in ZONAS_SIEMBRA_INICIAL:
+		for nombre_destino in objetivos_primera_oleada:
+			for j in range(3):  # pedido 2026-10-11: "más cantidad de invasores"
+				var offset_lat: float = randf_range(-0.025, 0.025)
+				var offset_lon: float = randf_range(-0.025, 0.025)
+				_crear_unidad_invasion(float(zona["lat"]) + offset_lat, float(zona["lon"]) + offset_lon, nombre_destino, variante % VARIANTES_TAMANO_INVASION.size())
+				variante += 1
+				total += 1
+	print("🪖 Invasión inicial sembrada en 4 zonas (Quilmes, Olivos, cerca de Aeroparque, cerca de San Fernando) -- %d unidades hacia Morón/Ezeiza/El Palomar, tamaños mezclados para elegir" % total)
+
+# Pedido 2026-10-11 ("que a medida que los voy liquidando vayan entrando
+# más por la costa"): tanda chica de refuerzos cada INTERVALO_REFUERZO_
+# INVASION segundos, desde una zona al azar, hacia un destino libre al
+# azar (respeta MAX_UNIDADES_INVASION -- _crear_unidad_invasion ya corta
+# sola si se llega al tope).
+func _sembrar_refuerzo_invasion() -> void:
+	var objetivos_posibles := ["Morón", "Ezeiza", "El Palomar"].filter(func(n): return not aeropuertos_tomados.has(n))
+	if objetivos_posibles.is_empty():
+		print("🏳️ Refuerzo de invasión cancelado -- ya no quedan aeropuertos libres entre los permitidos")
+		return
+	var zona: Dictionary = ZONAS_SIEMBRA_INICIAL[randi() % ZONAS_SIEMBRA_INICIAL.size()]
+	var creadas := 0
+	for j in range(UNIDADES_POR_REFUERZO):
+		var nombre_destino: String = objetivos_posibles[randi() % objetivos_posibles.size()]
+		var offset_lat: float = randf_range(-0.025, 0.025)
+		var offset_lon: float = randf_range(-0.025, 0.025)
+		if unidades_invasion.size() >= MAX_UNIDADES_INVASION:
+			break
+		_crear_unidad_invasion(float(zona["lat"]) + offset_lat, float(zona["lon"]) + offset_lon, nombre_destino)
+		creadas += 1
+	print("🪖 Refuerzo de invasión -- %d unidades nuevas entrando por %s" % [creadas, zona["nombre"]])
+
+# DEBUG TEMPORAL 2026-10-11 (ver bloque H en _input): activa el
+# contraataque de los 3 barcos de la flota real más lejanos al avión, SIN
+# impactarlos (no toca "vida" ni "activado" -- si después los herís de
+# verdad, van a seguir contando sus 10 golpes normal).
+# DEBUG TEMPORAL 2026-10-11 (ver bloque G en _input): fuerza el desembarco
+# del barco real más cercano al avión, sin esperar a que llegue solo a la
+# costa (a su velocidad normal tardaría demasiado para probar esta noche).
+func _forzar_desembarco_de_prueba() -> void:
+	var mas_cercano: Node3D = null
+	var mejor_distancia := INF
+	for barco in objetivos_barcos:
+		if is_instance_valid(barco) and barco.is_in_group("mision_barcos"):
+			var d: float = global_position.distance_to(barco.global_position)
+			if d < mejor_distancia:
+				mejor_distancia = d
+				mas_cercano = barco
+	if not mas_cercano:
+		print("🧪 DEBUG G -- no hay ningún barco real para desembarcar")
+		return
+	print("🧪 DEBUG G -- forzando desembarco de ", mas_cercano.name, " (distancia: %.0fm)" % mejor_distancia)
+	_desembarcar_barco(mas_cercano)
+
+# DEBUG TEMPORAL 2026-10-11 (ver bloque P en _input): diagnóstico del avión
+# puesto ahora mismo -- AABB real (en espacio LOCAL de modelo_externo, SIN
+# la escala de TIPOS_AVION aplicada todavía, mismo criterio que usa
+# _calcular_aabb_local en todo el resto del proyecto), posición global, y
+# distancia/posición de la cámara respecto al avión. Si el AABB queda muy
+# lejos de (0,0,0), el modelo tiene el pivote descentrado (como nos pasó
+# con el aquitaine) y por eso no se ve aunque la escala esté bien.
+func _diagnosticar_modelo_avion_actual() -> void:
+	if not modelo_externo or modelo_externo.get_child_count() == 0:
+		print("🧪 DEBUG P -- no hay modelo externo cargado (¿avión clásico sin GLB?)")
+		return
+	var caja: AABB = _calcular_aabb_local(modelo_externo)
+	var escala_actual: float = TIPOS_AVION[tipo_avion_indice]["escala"]
+	print("--- DIAGNÓSTICO AVIÓN: ", TIPOS_AVION[tipo_avion_indice]["nombre"], " ---")
+	print("Escala aplicada: ", escala_actual)
+	print("AABB nativo (sin escalar) -- tamaño: ", caja.size, " | posición (centro del pivote 0,0,0 si está bien centrado): ", caja.position)
+	print("AABB tamaño YA escalado (tamaño real en el juego): ", caja.size * escala_actual)
+	print("Avión global_position: ", global_position, " | visible: ", modelo_externo.visible)
+	print("Cámara global_position: ", camara.global_position, " | distancia avión-cámara: ", global_position.distance_to(camara.global_position))
+
+func _activar_contraataque_de_prueba() -> void:
+	print("🧪 DEBUG H presionada -- objetivos_barcos totales: ", objetivos_barcos.size(), " | ya activados: ", barcos_activados.size())
+	var candidatos: Array[Node3D] = []
+	for barco in objetivos_barcos:
+		if is_instance_valid(barco) and barco.is_in_group("mision_barcos"):
+			candidatos.append(barco)
+	print("🧪 DEBUG H -- candidatos válidos en grupo mision_barcos: ", candidatos.size())
+	if candidatos.is_empty():
+		print("🧪 DEBUG H -- no hay ningún barco real todavía (¿no se terminó de cargar la flota?)")
+		return
+	# BUG REAL encontrado 2026-10-11 (reportado: "nunca vi las balas"): acá
+	# se elegían los 3 MÁS LEJANOS de TODA la flota (que puede estar a 30+
+	# km, mucho más que el alcance real de la bala). Se filtra primero a
+	# los que están a una distancia donde la bala realmente puede llegar
+	# (bastante menos que ALCANCE_MAXIMO_BALA_BARCO, con margen), y de ESOS
+	# se eligen los más lejanos -- así da tiempo de reacción sin ser
+	# imposible de alcanzar.
+	const DISTANCIA_MAXIMA_PARA_PRUEBA_H := 2500.0
+	var candidatos_en_rango: Array[Node3D] = candidatos.filter(func(b): return global_position.distance_to(b.global_position) <= DISTANCIA_MAXIMA_PARA_PRUEBA_H)
+	if candidatos_en_rango.is_empty():
+		print("🧪 DEBUG H -- ningún barco a menos de %dm, usando los más cercanos de todos" % int(DISTANCIA_MAXIMA_PARA_PRUEBA_H))
+		candidatos_en_rango = candidatos
+		candidatos_en_rango.sort_custom(func(a, b): return global_position.distance_to(a.global_position) < global_position.distance_to(b.global_position))
+	else:
+		candidatos_en_rango.sort_custom(func(a, b): return global_position.distance_to(a.global_position) > global_position.distance_to(b.global_position))
+	candidatos = candidatos_en_rango
+	var activados := 0
+	for barco in candidatos:
+		if activados >= 3:
+			break
+		if not barcos_activados.has(barco):
+			print("🧪 DEBUG H -- activando: ", barco.name, " (distancia: %.0fm, vida: %s)" % [global_position.distance_to(barco.global_position), str(barco.get_meta("vida", "SIN META VIDA"))])
+			_activar_contraataque_barco(barco)
+		else:
+			print("🧪 DEBUG H -- ", barco.name, " ya estaba activado")
+		activados += 1
+
+# Pedido 2026-10-11: un barco recién impactado por primera vez queda
+# "armado" -- un instante de carga (para que se note que empezó a
+# apuntarte) y arranca su primera ráfaga.
+func _activar_contraataque_barco(barco: Node3D) -> void:
+	barco.set_meta("rafaga_temporizador", CARGA_INICIAL_ATAQUE_BARCO)
+	barco.set_meta("rafaga_balas_restantes", RAFAGA_TAMANO_BARCO)
+	barcos_activados.append(barco)
+
+# Avanza el reloj de cada barco activado: cuenta regresiva -> dispara una
+# bala de la ráfaga -> cuando se acaban las 3, enfriamiento más largo antes
+# de la próxima ráfaga. Todo por metadata, sin un Timer por barco.
+func _actualizar_contraataque_barcos(delta: float) -> void:
+	var i := barcos_activados.size() - 1
+	while i >= 0:
+		var barco: Node3D = barcos_activados[i]
+		if not is_instance_valid(barco):
+			barcos_activados.remove_at(i)
+			i -= 1
+			continue
+		var temporizador: float = barco.get_meta("rafaga_temporizador", 0.0) - delta
+		if temporizador <= 0.0:
+			var balas_restantes: int = barco.get_meta("rafaga_balas_restantes", 0)
+			if balas_restantes > 0:
+				_disparar_bala_barco(barco)
+				barco.set_meta("rafaga_balas_restantes", balas_restantes - 1)
+				barco.set_meta("rafaga_temporizador", INTERVALO_ENTRE_BALAS_RAFAGA)
+			else:
+				barco.set_meta("rafaga_balas_restantes", RAFAGA_TAMANO_BARCO)
+				barco.set_meta("rafaga_temporizador", ENFRIAMIENTO_ENTRE_RAFAGAS)
+		else:
+			barco.set_meta("rafaga_temporizador", temporizador)
+		i -= 1
+
+# Pedido 2026-10-11 ("que no sea una sola bala fácil de esquivar, que sean
+# cañonazos de a tres -- cada uno reapuntando a donde estoy en ESE
+# instante, no que me persigan como un misil"): bala recta y visible, sin
+# homing DESPUÉS de salir -- el "reapuntado" pasa entre bala y bala de la
+# ráfaga (cada llamada a esta función apunta a la posición ACTUAL del
+# avión), no durante el vuelo de cada bala individual.
+func _disparar_bala_barco(barco: Node3D) -> void:
+	# Pedido 2026-10-11 ("en los aeropuertos, que disparen desde las dos
+	# cabeceras de pista, como cañones a cada lado"): si el blanco tiene
+	# "origenes_disparo" (puntos fijos, ver _crear_objetivos_armamento),
+	# dispara UNA bala desde CADA uno -- eso son los aeropuertos. Si no
+	# tiene esa metadata, usa la posición actual del blanco (eso son los
+	# barcos, que se mueven).
+	var origenes: Array = barco.get_meta("origenes_disparo", [])
+	if origenes.is_empty():
+		origenes = [barco.global_position + _arriba_real() * 10.0]
+	for origen in origenes:
+		var direccion: Vector3 = (global_position - origen)
+		if direccion.length() < 0.5:
+			continue
+		direccion = direccion.normalized()
+		var bala := MeshInstance3D.new()
+		bala.name = "BalaBarco"
+		var esfera := SphereMesh.new()
+		esfera.radius = 1.5
+		esfera.height = 3.0
+		bala.mesh = esfera
+		var material := StandardMaterial3D.new()
+		material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		material.albedo_color = Color(1.0, 0.45, 0.05, 1.0)
+		material.emission_enabled = true
+		material.emission = Color(1.0, 0.35, 0.02)
+		material.emission_energy_multiplier = 5.0
+		bala.material_override = material
+		mundo.add_child(bala)
+		bala.global_position = origen
+		balas_barcos.append({"nodo": bala, "direccion": direccion, "distancia_recorrida": 0.0})
+	# Sin sonido propio todavía a propósito -- reusar sonido_disparo (el
+	# cañón del avión) sonaría idéntico al tiro del jugador y es un solo
+	# AudioStreamPlayer compartido, se cortarían entre sí. Pendiente: sonido
+	# dedicado cuando ajustemos "los efectos de las balas" (pedido explícito
+	# de Pablo, para otra sesión).
+
+# Mueve cada bala en línea recta (sin perseguir), chequea impacto contra el
+# avión por proximidad, y la destruye si pasó su vida útil (tiro errado que
+# se perdió de largo) o si impactó.
+func _actualizar_balas_barcos(delta: float) -> void:
+	var i := balas_barcos.size() - 1
+	while i >= 0:
+		var info: Dictionary = balas_barcos[i]
+		var bala: MeshInstance3D = info["nodo"]
+		if not is_instance_valid(bala):
+			balas_barcos.remove_at(i)
+			i -= 1
+			continue
+		var avance: float = velocidad_bala_barco * delta
+		bala.global_position += info["direccion"] * avance
+		var distancia_recorrida: float = info["distancia_recorrida"] + avance
+		var distancia_al_avion: float = bala.global_position.distance_to(global_position)
+		if distancia_al_avion < RADIO_IMPACTO_BALA_BARCO:
+			_recibir_impacto_jugador()
+			bala.queue_free()
+			balas_barcos.remove_at(i)
+		elif distancia_recorrida >= ALCANCE_MAXIMO_BALA_BARCO:
+			bala.queue_free()
+			balas_barcos.remove_at(i)
+		else:
+			balas_barcos[i]["distancia_recorrida"] = distancia_recorrida
+		i -= 1
+
+# Pedido 2026-10-11 ("una barrita roja de 10, por una bala no me va a sacar
+# del juego"): baja un segmento del HUD. Qué pasa al llegar a 0 todavía no
+# se definió -- por ahora se queda en 0 sin más efecto.
+func _recibir_impacto_jugador() -> void:
+	if vida_jugador <= 0:
+		return
+	vida_jugador -= 1
+	mira_feedback_tiempo = 0.25
+	if vida_jugador < segmentos_vida_jugador.size():
+		var segmento: ColorRect = segmentos_vida_jugador[vida_jugador]
+		if is_instance_valid(segmento):
+			segmento.color = Color(0.15, 0.15, 0.15, 1.0)
+
+# Pedido 2026-10-11 ("que cambie de color para saber si le estoy pegando --
+# arranca bien oscuro/intenso, negro, después marrón, después azul, y
+# cuando le faltan dos tiros, amarillo/blanco, casi liquidado"): gradiente
+# de 4 colores según el % de vida que le queda al blanco (cualquiera, no
+# solo invasión -- barcos, aeropuertos, industria también lo heredan).
+func _color_por_vida_restante(vida_restante: int, vida_inicial: int) -> Color:
+	if vida_inicial <= 0:
+		vida_inicial = 1
+	var negro := Color(0.05, 0.05, 0.05, 1.0)
+	var marron := Color(0.45, 0.28, 0.12, 1.0)
+	var azul := Color(0.15, 0.45, 0.95, 1.0)
+	var blanco := Color(1.0, 0.95, 0.55, 1.0)
+	# Los últimos 2 impactos SIEMPRE quedan blanco/amarillo, sin importar la
+	# vida inicial (pedido explícito: "cuando le falten dos tiros").
+	if vida_restante <= 2:
+		return blanco
+	var fraccion: float = float(vida_restante) / float(vida_inicial)  # 1.0 = recién empezado, 0.0 = casi muerto
+	if fraccion > 0.66:
+		return negro.lerp(marron, (1.0 - fraccion) / 0.34)
+	elif fraccion > 0.33:
+		return marron.lerp(azul, (0.66 - fraccion) / 0.33)
+	else:
+		return azul.lerp(blanco, (0.33 - fraccion) / 0.33)
+
+# Pedido 2026-10-11, SEGUNDA VUELTA ("4 tiros, tipo semáforo: rojo,
+# amarillo, verde y el otro disparo desaparece"): paleta propia y más
+# simple para las unidades de invasión, en vez del gradiente de 4 colores
+# de _color_por_vida_restante -- con VIDA_UNIDAD_INVASION=4, cada impacto
+# avanza un color del semáforo.
+func _color_semaforo_invasion(vida_restante: int) -> Color:
+	match vida_restante:
+		3:
+			return Color(0.9, 0.1, 0.05, 1.0)   # rojo
+		2:
+			return Color(1.0, 0.85, 0.1, 1.0)   # amarillo
+		_:
+			return Color(0.15, 0.9, 0.2, 1.0)   # verde (vida_restante == 1, o cualquier otro caso)
+
+# Misión Industria, QUINTA versión (pedido 2026-10-11, elegido por Pablo
+# viendo las 37 piezas desplegadas juntas en Blender: "la única que me
+# interesa son dos -- building-c (dos tanques, más vistoso, poné más
+# cantidad) y building-r (un tanque, parecido). Los demás son redondelitos
+# que no sirven"). Se sacan todos los modelos anteriores (tanques
+# redondos, chimeneas, contenedores) -- solo estos dos, pensados para
+# verse como una instalación real tipo central eléctrica/nuclear.
+# Pedido 2026-10-17 ("la misión Quilmes es aburrida, están uno al lado del
+# otro y hay que dar muchas vueltas -- dejala en La Plata, que están bien
+# distribuidos, y agregale 3 más"): se sacan los 6 de Quilmes, quedan los 4
+# de La Plata que ya andaban bien + 3 nuevos, bien separados entre sí
+# (misma lógica de "bien afuera del predio" que los originales).
+const MISION_INDUSTRIA = [
+	# --- La Plata (aeropuerto real: -34.9744, -57.8956) -- bien afuera del predio ---
+	{"lat": -34.9844, "lon": -57.9056, "modelo": "building-c"},
+	{"lat": -34.9644, "lon": -57.8856, "modelo": "building-c"},
+	{"lat": -34.9844, "lon": -57.8756, "modelo": "building-r"},
+	{"lat": -34.9644, "lon": -57.9156, "modelo": "building-c"},
+	{"lat": -34.9944, "lon": -57.8956, "modelo": "building-r"},
+	{"lat": -34.9744, "lon": -57.8556, "modelo": "building-c"},
+	{"lat": -34.9544, "lon": -57.9056, "modelo": "building-r"},
+]
+const ESCALA_MODELO_INDUSTRIA := 60.0  # pedido 2026-10-11: agrandar un 100% mas, despues se achica si hace falta
+# Pedido 2026-10-10 ("pintalos de flúor para verlos primero, después les
+# dejamos el color real"): true = tiñe todos los modelos de industria de
+# magenta brillante, bien imposible de no ver, para confirmar que el
+# posicionamiento anda. Poner en false cuando esté confirmado.
+const DEBUG_INDUSTRIA_FLUOR := false  # pedido 2026-10-11: ya con la luz blanca se encuentran, mostrar el color real
+# Pedido 2026-10-16 ("ponerle un amarillo tenue, tipo pastel, para poder
+# identificarlos y que no se nos mezcle con el resto de los edificios"):
+# a diferencia de DEBUG_INDUSTRIA_FLUOR (que reemplaza TODO el material
+# por un color plano chillón, solo para diagnosticar posición), esto es
+# permanente y suave -- mismo mecanismo (_aplicar_material_recursivo) pero
+# con un color pastel y apenas brillo, para que se note sin dejar de
+# parecer un edificio real.
+const COLOR_TINTE_INDUSTRIA := Color(1.0, 0.92, 0.65, 1.0)  # amarillo pastel
+const VIDA_INICIAL_INDUSTRIA := 5  # cantidad de impactos para destruir uno
+
+func _crear_mision_industria() -> void:
+	var arriba: Vector3 = _arriba_real()
+	# Base ortonormal con Y = vertical REAL del lugar (no Vector3.UP) --
+	# misma regla de oro de siempre. X/Z son arbitrarios pero perpendiculares
+	# entre sí: a un edificio/tanque no le importa para qué lado "mira".
+	var referencia: Vector3 = Vector3.FORWARD
+	if abs(arriba.dot(referencia)) > 0.99:
+		referencia = Vector3.RIGHT
+	var derecha: Vector3 = referencia.cross(arriba).normalized()
+	var adelante_prop: Vector3 = arriba.cross(derecha).normalized()
+	var base_vertical := Basis(derecha, arriba, adelante_prop)
+
+	var space_state := get_world_3d().direct_space_state
+	for dato in MISION_INDUSTRIA:
+		var escena: PackedScene = load("res://modelos_objetivos/%s.glb" % dato["modelo"])
+		if not escena:
+			continue
+		var instancia: Node3D = escena.instantiate()
+		instancia.scale = Vector3.ONE * ESCALA_MODELO_INDUSTRIA
+		# BUG REAL encontrado 2026-10-10 (reportado: "fui a Quilmes, no me
+		# aparecieron"): se posicionaba con altitud 0.0 fija, como si todo el
+		# terreno estuviera al nivel del mar -- Quilmes/La Plata tienen
+		# elevación real de varios metros, así que quedaban enterrados bajo
+		# el terreno de Cesium. Mismo arreglo que ya se usó para las luces de
+		# pista (mundo.gd) y el piso del avión (_limitar_piso): un rayo real
+		# hacia abajo contra la colisión física del terreno, no una altura
+		# asumida.
+		var punto_aproximado: Vector3 = mundo._posicion_desde_lat_lon(dato["lat"], dato["lon"], 0.0)
+		var origen_rayo: Vector3 = punto_aproximado + arriba * 2000.0
+		var destino_rayo: Vector3 = punto_aproximado - arriba * 2000.0
+		var consulta_piso := PhysicsRayQueryParameters3D.create(origen_rayo, destino_rayo)
+		consulta_piso.collision_mask = 1  # solo terreno real, ver bug de unidades de invasión más arriba
+		var resultado_piso := space_state.intersect_ray(consulta_piso)
+		# BUG REAL encontrado 2026-10-10, segunda vuelta (reportado: "fui al
+		# aeropuerto mismo con el ILS activado, no veo nada"): el rayo al
+		# piso se tira UNA sola vez, apenas arranca el juego -- a esa altura
+		# Cesium todavía no cargó el terreno de Quilmes/La Plata (están lejos
+		# de Aeroparque, donde arranca el avión), así que el rayo no
+		# encontraba nada y caía al cálculo viejo (altura asumida). Se marca
+		# "piso_confirmado=false" para que _actualizar_objetivos_armamento()
+		# reintente cuadro a cuadro hasta que el terreno real ya esté
+		# cargado (cuando te acerques) y recién ahí se asiente de verdad.
+		var piso_confirmado: bool = resultado_piso.size() > 0
+		# Pedido 2026-10-11 ("uno de La Plata se ve la luz pero no el
+		# edificio -- debe ser terreno raro ahí"): margen de seguridad chico
+		# (8m) para que un punto de piso ligeramente mal encontrado (una
+		# pendiente, un saliente del terreno) no deje el modelo semi-enterrado.
+		var posicion: Vector3 = (resultado_piso["position"] if piso_confirmado else punto_aproximado) + arriba * 8.0
+		# DIAGNÓSTICO pedido 2026-10-10 ("ponele un cuadrado al lado de cada
+		# asset -- si no se ve ni el cuadrado, está enterrado; si se ve el
+		# cuadrado pero no el asset, el problema es el asset en sí"): el
+		# cuadrado usa EXACTAMENTE la misma función ya probada de los
+		# aeropuertos rojos, 30m al costado de la posición real.
+		if DEBUG_INDUSTRIA_FLUOR:
+			# BUG REAL encontrado 2026-10-11 (reportado: "no vi ni un solo
+			# cuadrado al lado"): con el modelo agrandado a escala 15, su
+			# propio tamaño probablemente se tragaba un cuadrado puesto a
+			# solo 30m -- lo alejamos mucho más, bien afuera de cualquier
+			# modelo por más gigante que esté.
+			var pos_cuadrado: Vector3 = posicion + derecha * 150.0
+			var cuadrado_ref := _crear_objetivo_armamento_en_posicion(pos_cuadrado, "RefCuadrado_" + dato["modelo"], 15.0, adelante_prop, arriba, Color(1.0, 1.0, 0.0, 1.0), Color(1.0, 1.0, 0.0))
+			cuadrado_ref.add_to_group("mision_industria")
+		mundo.add_child(instancia)
+		instancia.global_transform = Transform3D(base_vertical, posicion)
+		if DEBUG_INDUSTRIA_FLUOR:
+			# Pedido explícito 2026-10-10 ("pintalos de flúor para
+			# visualizarlos primero, después les dejamos el color real"):
+			# tinte bien visible mientras confirmamos que el posicionamiento
+			# anda -- sacar DEBUG_INDUSTRIA_FLUOR (una sola constante, más
+			# abajo) para volver al color normal de cada modelo.
+			var material_fluor := StandardMaterial3D.new()
+			material_fluor.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			material_fluor.albedo_color = Color(1.0, 0.0, 1.0, 1.0)
+			material_fluor.emission_enabled = true
+			material_fluor.emission = Color(1.0, 0.0, 1.0)
+			material_fluor.emission_energy_multiplier = 3.0
+			_aplicar_material_recursivo(instancia, material_fluor)
+		else:
+			# Pedido 2026-10-16 (ver COLOR_TINTE_INDUSTRIA más arriba): tinte
+			# pastel permanente, bien suave -- se nota al pasar volando pero
+			# no grita como el flúor de diagnóstico.
+			var material_industria := StandardMaterial3D.new()
+			material_industria.albedo_color = COLOR_TINTE_INDUSTRIA
+			_aplicar_material_recursivo(instancia, material_industria)
+
+		# Colisión a medida: calculamos la caja delimitadora REAL del modelo
+		# ya escalado (estos Kenney .glb son mallas simples, sin huesos, así
+		# que esto sí funciona bien -- distinto del problema que tuvimos con
+		# el avión de guerra).
+		var cuerpo := StaticBody3D.new()
+		cuerpo.name = "Industria_" + dato["modelo"] + "_" + str(objetivos_industria.size())
+		cuerpo.add_to_group("objetivos_armamento")
+		cuerpo.add_to_group("mision_industria")
+		cuerpo.collision_layer = 2
+		cuerpo.collision_mask = 0
+		mundo.add_child(cuerpo)
+		cuerpo.global_transform = Transform3D(base_vertical, posicion)
+		instancia.get_parent().remove_child(instancia)
+		cuerpo.add_child(instancia)
+		instancia.transform = Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * ESCALA_MODELO_INDUSTRIA), Vector3.ZERO)
+
+		# BUG propio encontrado al escribir esto: _calcular_aabb_local()
+		# devuelve el tamaño NATIVO de la malla (no aplica la escala de
+		# "instancia" porque la función ignora el transform del nodo raíz
+		# que le pasamos, solo usa el de sus hijos) -- sin corregir, la caja
+		# de colisión quedaría 3 veces más chica que lo que se ve. Se
+		# multiplica a mano por la misma escala que se le aplicó al modelo.
+		var caja: AABB = _calcular_aabb_local(instancia)
+		caja.position *= ESCALA_MODELO_INDUSTRIA
+		caja.size *= ESCALA_MODELO_INDUSTRIA
+		var forma := CollisionShape3D.new()
+		var caja_forma := BoxShape3D.new()
+		if caja.size.length() > 0.001:
+			caja_forma.size = caja.size * 1.1  # un poco de margen
+			forma.position = caja.position + caja.size * 0.5
+		else:
+			caja_forma.size = Vector3(8, 8, 8) * ESCALA_MODELO_INDUSTRIA
+		forma.shape = caja_forma
+		cuerpo.add_child(forma)
+
+		# Numerito de "vida" flotando arriba del modelo (billboard, como los
+		# blancos cuadrados) -- se actualiza con cada impacto no letal.
+		var etiqueta_vida := Label3D.new()
+		etiqueta_vida.name = "VidaRestante"
+		etiqueta_vida.text = str(VIDA_INICIAL_INDUSTRIA)
+		etiqueta_vida.font_size = 72
+		etiqueta_vida.outline_size = 12
+		etiqueta_vida.modulate = Color(1.0, 0.9, 0.2, 1.0)
+		etiqueta_vida.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		etiqueta_vida.no_depth_test = true
+		etiqueta_vida.position = Vector3(0, max(caja.size.y, 4.0) + 2.0, 0)
+		cuerpo.add_child(etiqueta_vida)
+
+		# BUG REAL encontrado 2026-10-11 (reportado: "fui a La Plata, se ve la
+		# luz pero no encuentro nada" -- en realidad: "la luz de industria
+		# era roja, de noche se pierde contra el cielo oscuro; la de los
+		# barcos es blanca y ESA sí se ve de lejos"): misma luz blanca que
+		# los barcos, reusando _crear_luz_navegacion (que además ya trae el
+		# arreglo de capa nocturna) y el mismo parpadeo suave de la
+		# estroboscópica, en vez de un apagado/prendido brusco aparte.
+		var baliza := _crear_luz_navegacion(Vector3(0, max(caja.size.y, 4.0) + 12.0, 0), Color(1.0, 1.0, 1.0), cuerpo, 3.0)
+		baliza.name = "BalizaParpadeante"
+
+		# Pedido 2026-10-17 ("ponerle un cuadradito abajo o al costado de la
+		# luz, para que no quede la luz sola si el edificio no se llega a
+		# ver"): PURAMENTE visual -- sin colisión ni "vida" propia, no es un
+		# blanco nuevo para disparar, solo un refuerzo pegado al mismo cuerpo
+		# que ya se dispara, para nunca depender solo del modelo 3D.
+		var malla_cuadrado_ref := MeshInstance3D.new()
+		malla_cuadrado_ref.name = "CuadradoReferencia"
+		var caja_cuadrado_ref := BoxMesh.new()
+		caja_cuadrado_ref.size = Vector3(25, 25, 2)
+		malla_cuadrado_ref.mesh = caja_cuadrado_ref
+		var material_cuadrado_ref := StandardMaterial3D.new()
+		material_cuadrado_ref.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		material_cuadrado_ref.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		material_cuadrado_ref.albedo_color = COLOR_TINTE_INDUSTRIA
+		material_cuadrado_ref.emission_enabled = true
+		material_cuadrado_ref.emission = COLOR_TINTE_INDUSTRIA
+		material_cuadrado_ref.emission_energy_multiplier = 1.5
+		malla_cuadrado_ref.material_override = material_cuadrado_ref
+		malla_cuadrado_ref.position = Vector3(20, max(caja.size.y, 4.0) + 12.0, 0)
+		cuerpo.add_child(malla_cuadrado_ref)
+
+		cuerpo.set_meta("vida", VIDA_INICIAL_INDUSTRIA)
+		cuerpo.set_meta("vida_inicial", VIDA_INICIAL_INDUSTRIA)
+		cuerpo.set_meta("etiqueta_vida", etiqueta_vida)
+		# BUG REAL encontrado 2026-10-10: faltaba esta metadata -- sin ella,
+		# _actualizar_objetivos_armamento() NUNCA reubicaba estos objetos
+		# cuando el origen se recentra (pasa todo el tiempo mientras volás).
+		# Quedaban fijos en coordenadas de MOTOR, no de GPS real -- con el
+		# tiempo se iban a la deriva de su posición real de verdad.
+		cuerpo.set_meta("latitud_objetivo", dato["lat"])
+		cuerpo.set_meta("longitud_objetivo", dato["lon"])
+		# "altura_objetivo" guarda cuánto por encima del punto lat/lon/alt=0
+		# está el piso real encontrado (o 0.3 si todavía no se confirmó
+		# ningún piso real -- ver el reintento en _actualizar_objetivos_armamento).
+		var altura_sobre_referencia: float = 0.3
+		if piso_confirmado:
+			altura_sobre_referencia = (resultado_piso["position"] - punto_aproximado).dot(arriba) + 0.3
+		cuerpo.set_meta("altura_objetivo", altura_sobre_referencia)
+		cuerpo.set_meta("piso_confirmado", piso_confirmado)
+		objetivos_armamento.append(cuerpo)
+		objetivos_industria.append(cuerpo)
+
+func _crear_objetivo_armamento_en_posicion(posicion: Vector3, nombre: String, lado: float, adelante: Vector3, arriba: Vector3, color: Color = Color(1.0, 0.18, 0.03, 1.0), color_brillo: Color = Color(-1.0, -1.0, -1.0), multiplicador_colision: float = 3.0) -> StaticBody3D:
+	var objetivo := StaticBody3D.new()
+	objetivo.name = nombre
+	objetivo.add_to_group("objetivos_armamento")
+	objetivo.collision_layer = 2
+	objetivo.collision_mask = 0
+	var malla := MeshInstance3D.new()
+	var cubo := BoxMesh.new()
+	cubo.size = Vector3(lado, lado, 2.0)
+	malla.mesh = cubo
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	material.albedo_color = color
+	material.emission_enabled = true
+	# Si no se pasa un color de brillo aparte, se deriva del propio color
+	# (como antes). Hace falta un color de brillo APARTE para los blancos
+	# oscuros/negros (pedido 2026-10-07: barcos negros) -- si el brillo
+	# también sale de un color casi negro, el cuadradito queda invisible.
+	if color_brillo.r < 0.0:
+		color_brillo = Color(color.r * 0.3, color.g * 0.3, color.b * 0.3)
+	material.emission = color_brillo
+	material.emission_energy_multiplier = 3.0
+	malla.material_override = material
+	objetivo.add_child(malla)
+	# Pedido 2026-10-11 ("que cambie de color EL CUADRADO, no el número"):
+	# se guarda el material como meta para que el manejador de impactos
+	# pueda recolorearlo en vivo según la vida restante.
+	objetivo.set_meta("material_cuadrado", material)
+	var forma := CollisionShape3D.new()
+	var caja := BoxShape3D.new()
+	# Área de impacto algo mayor que lo visible para que la prueba no exija
+	# acertar un píxel exacto en el centro. "multiplicador_colision" más
+	# chico = hace falta apuntar más preciso (pedido 2026-10-11 para los
+	# cuadraditos de invasión: "es muy fácil, casi no hay que corregir la
+	# puntería aunque el blanco y el avión se estén moviendo").
+	var lado_colision: float = lado * multiplicador_colision
+	caja.size = Vector3(lado_colision, lado_colision, 200.0)
+	forma.shape = caja
+	objetivo.add_child(forma)
+	mundo.add_child(objetivo)
+	objetivo.global_position = posicion
+	objetivo.look_at(posicion + adelante, arriba)
+	objetivos_armamento.append(objetivo)
+	return objetivo
+
+func _actualizar_objetivos_armamento() -> void:
+	var arriba: Vector3 = _arriba_real()
+	var space_state := get_world_3d().direct_space_state
+	for objetivo in objetivos_armamento:
+		if not is_instance_valid(objetivo) or not objetivo.has_meta("latitud_objetivo"):
+			continue
+		if objetivo.is_in_group("mision_industria"):
+			# El parpadeo en sí ahora lo hace _actualizar_estroboscopica()
+			# (mismo mecanismo que barcos/avión) -- acá solo el tamaño según
+			# distancia.
+			var baliza: Node3D = objetivo.get_node_or_null("BalizaParpadeante")
+			if baliza:
+				_escalar_baliza_por_distancia(baliza, baliza.global_position)
+		if objetivo.is_in_group("mision_barcos"):
+			continue  # los barcos se actualizan aparte, en _actualizar_barcos (se mueven)
+		# BUG REAL encontrado 2026-10-11 (reportado: "no arranca, error Nil a
+		# float" -- pantallazo del depurador de Godot): las unidades de
+		# invasión tienen "latitud_objetivo"/"longitud_objetivo" pero NUNCA
+		# "altura_objetivo" (su altura la define el raycast al piso en
+		# _actualizar_unidades_invasion, que es quien ya las mueve cada
+		# cuadro) -- esta función intentaba leer esa meta inexistente y
+		# crasheaba. Se excluyen acá, igual que los barcos.
+		if objetivo.is_in_group("invasion"):
+			continue  # las unidades de invasión se actualizan aparte, en _actualizar_unidades_invasion
+		var latitud: float = objetivo.get_meta("latitud_objetivo")
+		var longitud: float = objetivo.get_meta("longitud_objetivo")
+		# Pedido 2026-10-10 ("fui al aeropuerto con el ILS puesto y no veo
+		# nada"): para industria, si el piso real todavía no se confirmó
+		# (Cesium puede no tener cargado el terreno de esa zona recién
+		# arrancado el juego, lejos de Aeroparque), reintentamos el rayo al
+		# piso CADA CUADRO hasta que encuentre algo -- una vez confirmado,
+		# se guarda la altura real y se deja de tirar rayos (barato).
+		if objetivo.is_in_group("mision_industria") and not objetivo.get_meta("piso_confirmado", false):
+			var punto_aproximado: Vector3 = mundo._posicion_desde_lat_lon(latitud, longitud, 0.0)
+			var consulta := PhysicsRayQueryParameters3D.create(punto_aproximado + arriba * 2000.0, punto_aproximado - arriba * 2000.0)
+			consulta.collision_mask = 1  # solo terreno real -- no chocar con unidades de invasión cercanas (capa 2)
+			var resultado := space_state.intersect_ray(consulta)
+			if resultado:
+				# Mismo margen de seguridad de 8m que en la creación inicial.
+				var altura_real: float = (resultado["position"] - punto_aproximado).dot(arriba) + 8.0
+				objetivo.set_meta("altura_objetivo", altura_real)
+				objetivo.set_meta("piso_confirmado", true)
+				objetivo.global_position = resultado["position"] + arriba * 8.0
+				continue
+		var altura: float = objetivo.get_meta("altura_objetivo")
+		objetivo.global_position = mundo._posicion_desde_lat_lon(latitud, longitud, 0.0) + arriba * altura
+
+func _disparar_hacia_mira() -> Dictionary:
+	var centro_pantalla: Vector2 = get_viewport().get_visible_rect().size * 0.5
+	var punto_mira := centro_pantalla + mira_hud_posicion
+	# El origen técnico del avión queda retrasado respecto del modelo. La
+	# traza sale unos metros hacia adelante, mientras la cámara solo define
+	# la dirección.
+	var origen: Vector3 = global_position
+	# SOLUCIÓN SIMPLIFICADA 2026-10-11 (pedido explícito: "las dos luces ya
+	# están orientadas, de ahí sale UNA línea hasta el centro de la mira,
+	# no hace falta nada más complicado"): si las dos luces de ala existen,
+	# el origen es el PUNTO MEDIO entre ambas -- un solo número, usado para
+	# todo (el rayo de impacto Y la traza visual), nada de dos segmentos
+	# que convergen ni de prioridades por nivel. Más simple, menos lugares
+	# donde se puede romper.
+	var hay_luz_izq: bool = luz_navegacion_izq_externa and is_instance_valid(luz_navegacion_izq_externa)
+	var hay_luz_der: bool = luz_navegacion_der_externa and is_instance_valid(luz_navegacion_der_externa)
+	if hay_luz_izq and hay_luz_der:
+		origen = (luz_navegacion_izq_externa.global_position + luz_navegacion_der_externa.global_position) * 0.5
+		# DEBUG TEMPORAL 2026-10-11 (sugerido por Gemini, para el reporte
+		# "el tiro sigue saliendo de atrás" pese a que las luces se ven bien
+		# en pantalla): si el origen calculado queda demasiado lejos del
+		# avión, algo anda mal con el orden de recentrado -- ver
+		# "process_priority = 10" en _ready(). Sacar este bloque una vez
+		# confirmado que el disparo sale bien.
+		var distancia_sospechosa: float = global_position.distance_to(origen)
+		if distancia_sospechosa > 50.0:
+			print("⚠️ DEBUG DISPARO -- origen lejos del avión (", distancia_sospechosa, "m)")
+			print("   Pos avión: ", global_position, " | Luz izq: ", luz_navegacion_izq_externa.global_position, " | Luz der: ", luz_navegacion_der_externa.global_position, " | Origen: ", origen)
+	elif hay_luz_izq:
+		origen = luz_navegacion_izq_externa.global_position
+	elif hay_luz_der:
+		origen = luz_navegacion_der_externa.global_position
+	elif luz_punta_ala_izq and is_instance_valid(luz_punta_ala_izq) and luz_punta_ala_izq.visible:
+		origen = luz_punta_ala_izq.global_position
+	elif modelo_externo and is_instance_valid(modelo_externo) and modelo_externo.visible:
+		# Último recurso si ni siquiera las luces existen todavía: posición
+		# del modelo visual corrida hacia adelante -- sigue siendo mejor que
+		# el pivote del avión (atrás de verdad).
+		var frente_modelo: Vector3 = -modelo_externo.global_transform.basis.z.normalized()
+		origen = modelo_externo.global_position + frente_modelo * 6.0
+	var direccion: Vector3 = camara.project_ray_normal(punto_mira).normalized()
+	var destino: Vector3 = origen + direccion * 5000.0
+	var consulta := PhysicsRayQueryParameters3D.create(origen, destino)
+	consulta.collision_mask = 2
+	consulta.collide_with_areas = true
+	var resultado := get_world_3d().direct_space_state.intersect_ray(consulta)
+	if not resultado.is_empty() and resultado["collider"] is Node3D and resultado["collider"].is_in_group("objetivos_armamento"):
+		return {"origen": origen, "destino": resultado["position"], "impacto": true, "objetivo": resultado["collider"]}
+
+	# TOLERANCIA POR CERCANÍA, REDISEÑADA 2026-10-10 (pregunta muy válida de
+	# Pablo: "si el cartel de 'fuera de alcance' detecta que le estoy dando
+	# cerca, ¿por qué no cuenta directamente?"). Tenía razón -- la versión
+	# anterior tenía DOS umbrales (uno que contaba, otro más generoso que
+	# solo avisaba sin contar), y esa zona gris era exactamente lo que se
+	# sentía como un bug. Ahora hay un solo umbral, pero ESCALA con la
+	# distancia: cerca sigue siendo exigente (40m), lejos se vuelve más
+	# generoso (100m) -- lo que entra en el umbral, cuenta siempre, sin
+	# excepciones ni zona intermedia.
+	const TOLERANCIA_CERCA := 40.0   # metros, a corta distancia
+	const TOLERANCIA_LEJOS := 100.0  # metros, a partir de DISTANCIA_LEJOS
+	const DISTANCIA_LEJOS := 2500.0  # metros -- a partir de acá, tolerancia máxima
+	var mejor_objetivo: Node3D = null
+	var mejor_distancia := TOLERANCIA_LEJOS  # cota superior para el bucle; cada blanco usa SU propia tolerancia según su distancia
+	var mejor_punto := destino
+	for objetivo in objetivos_armamento:
+		if not is_instance_valid(objetivo):
+			continue
+		var centro: Vector3 = objetivo.global_position
+		var hacia_centro: Vector3 = centro - origen
+		var avance: float = hacia_centro.dot(direccion)
+		if avance <= 0.0:
+			continue  # el blanco quedó detrás del disparo
+		var tolerancia_aqui: float = lerp(TOLERANCIA_CERCA, TOLERANCIA_LEJOS, clamp(avance / DISTANCIA_LEJOS, 0.0, 1.0))
+		# Pedido 2026-10-11 ("le pegué una vez y después casi no hay que
+		# corregir la puntería aunque el blanco y yo nos movamos -- tendría
+		# que exigir más precisión"): los cuadraditos de invasión usan una
+		# tolerancia bastante más chica y FIJA (no la generosa de siempre,
+		# pensada para blancos grandes y quietos como los aeropuertos).
+		if objetivo.is_in_group("invasion"):
+			tolerancia_aqui = min(tolerancia_aqui, 22.0)
+		var punto_mas_cercano: Vector3 = origen + direccion * avance
+		var distancia_al_centro: float = punto_mas_cercano.distance_to(centro)
+		if distancia_al_centro < tolerancia_aqui and distancia_al_centro < mejor_distancia:
+			mejor_distancia = distancia_al_centro
+			mejor_objetivo = objetivo
+			mejor_punto = punto_mas_cercano
+	if mejor_objetivo:
+		return {"origen": origen, "destino": mejor_punto, "impacto": true, "objetivo": mejor_objetivo}
+
+	return {"origen": origen, "destino": destino, "impacto": false, "objetivo": null}
+
+# Traza visible desde el centro delantero del avión hasta el punto alcanzado.
+func _crear_segmento_traza(origen: Vector3, destino: Vector3) -> void:
+	var traza := MeshInstance3D.new()
+	traza.name = "TrazaArmamentoPrototipo"
+	var malla := BoxMesh.new()
+	var distancia: float = maxf(0.05, origen.distance_to(destino))
+	malla.size = Vector3(0.12, 0.12, distancia)
+	traza.mesh = malla
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = Color(1.0, 0.22, 0.03, 0.9)
+	material.emission_enabled = true
+	material.emission = Color(1.0, 0.08, 0.01)
+	material.emission_energy_multiplier = 4.0
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	traza.material_override = material
+	mundo.add_child(traza)
+	traza.global_position = origen.lerp(destino, 0.5)
+	traza.look_at(destino, _arriba_real())
+	# Pedido 2026-10-11 ("de noche no se ve el láser del disparo"): mismo
+	# motivo y misma solución que las balizas (ver _crear_luz_navegacion) --
+	# la capa normal (1) se apaga con tonemap_exposure de noche. La traza
+	# pasa a la capa de marcadores (6), que la cámara de marcadores dibuja
+	# siempre a brillo completo, sin el post-proceso nocturno.
+	traza.set_layer_mask_value(1, false)
+	traza.set_layer_mask_value(CAPA_MARCADORES_NOCTURNOS, true)
+	get_tree().create_timer(0.12).timeout.connect(func():
+		if is_instance_valid(traza):
+			traza.queue_free())
+
+# Pedido 2026-10-11 ("una sola línea desde las luces hasta la mira, nada
+# más complicado"): el origen YA es el punto medio entre las dos luces de
+# ala (ver _disparar_hacia_mira) -- acá solo se dibuja esa única línea
+# recta. Se saca el efecto de dos líneas convergiendo (2026-10-10): sumaba
+# complejidad sin resolver el problema real.
+func _crear_traza_armamento(origen: Vector3, destino: Vector3) -> void:
+	_crear_segmento_traza(origen, destino)
+
+# Pedido 2026-10-10 ("la traza queda fea, sacala -- mejor un puntito rojo
+# que titile donde impactó la bala, en el terreno o en el blanco"): esfera
+# chica, emisiva, que titila 3 veces (prendido/apagado) y desaparece sola.
+# Reemplaza a _crear_traza_armamento como feedback visual del disparo.
+func _crear_marca_impacto(punto: Vector3) -> void:
+	# BUG REAL encontrado 2026-10-11 (reportado: "esa bolita no aparece"):
+	# 0.6m de radio y medio segundo de vida total -- a la distancia real a
+	# la que se dispara (cientos/miles de metros), eso es invisible aunque
+	# esté ahí. Agrandada y con no_depth_test para que nunca quede tapada
+	# por el terreno/otro objeto, y titila más tiempo para dar tiempo a
+	# verla.
+	var marca := MeshInstance3D.new()
+	marca.name = "MarcaImpacto"
+	var esfera := SphereMesh.new()
+	esfera.radius = 5.0
+	esfera.height = 10.0
+	marca.mesh = esfera
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.albedo_color = Color(1.0, 0.1, 0.05, 1.0)
+	material.emission_enabled = true
+	material.emission = Color(1.0, 0.05, 0.0)
+	material.emission_energy_multiplier = 8.0
+	material.no_depth_test = true
+	marca.material_override = material
+	marca.extra_cull_margin = 16384.0  # que no desaparezca si la caja de recorte automática se equivoca
+	mundo.add_child(marca)
+	marca.global_position = punto
+
+	# Titila prendido/apagado 3 veces (0.2s cada estado, ~1.2s en total) y
+	# se borra sola.
+	var pasos := [true, false, true, false, true, false]
+	var t := 0.0
+	for prendido in pasos:
+		get_tree().create_timer(t).timeout.connect(func():
+			if is_instance_valid(marca):
+				marca.visible = prendido)
+		t += 0.2
+	get_tree().create_timer(t).timeout.connect(func():
+		if is_instance_valid(marca):
+			marca.queue_free())
+
+func _generar_sonido_disparo() -> AudioStreamWAV:
+	var muestras_por_segundo := 44100
+	var duracion := 0.16
+	var total_muestras := int(muestras_por_segundo * duracion)
+	var datos := PackedByteArray()
+	datos.resize(total_muestras * 2)
+	for i in total_muestras:
+		var t: float = float(i) / muestras_por_segundo
+		var envolvente: float = exp(-24.0 * t)
+		var golpe: float = sin(TAU * (95.0 - 55.0 * t) * t) * 0.7
+		var ruido: float = randf_range(-1.0, 1.0) * 0.55
+		var muestra: float = clamp((golpe + ruido) * envolvente, -1.0, 1.0)
+		datos.encode_s16(i * 2, int(muestra * 32767.0))
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = muestras_por_segundo
+	stream.stereo = false
+	stream.data = datos
+	return stream
+
+func _generar_sonido_explosion() -> AudioStreamWAV:
+	var muestras_por_segundo := 44100
+	var duracion := 0.7
+	var total_muestras := int(muestras_por_segundo * duracion)
+	var datos := PackedByteArray()
+	datos.resize(total_muestras * 2)
+	for i in total_muestras:
+		var t: float = float(i) / muestras_por_segundo
+		var envolvente: float = exp(-5.8 * t)
+		var golpe_grave: float = sin(TAU * (52.0 - 20.0 * t) * t) * 0.95
+		var subgrave: float = sin(TAU * 31.0 * t) * 0.45
+		var ruido: float = randf_range(-1.0, 1.0) * 0.8 * exp(-7.0 * t)
+		var muestra: float = clamp((golpe_grave + subgrave + ruido) * envolvente, -1.0, 1.0)
+		datos.encode_s16(i * 2, int(muestra * 32767.0))
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = muestras_por_segundo
+	stream.stereo = false
+	stream.data = datos
+	return stream
+
+# Arpegio corto ascendente (do-mi-sol-do agudo) para "misión completada" --
+# sintetizado igual que el disparo/explosión, sin depender de ningún archivo.
+func _generar_sonido_mision_completada() -> AudioStreamWAV:
+	var muestras_por_segundo := 44100
+	var notas := [523.25, 659.25, 783.99, 1046.50]  # Do5, Mi5, Sol5, Do6
+	var duracion_nota := 0.14
+	var total_muestras := int(muestras_por_segundo * duracion_nota * notas.size())
+	var datos := PackedByteArray()
+	datos.resize(total_muestras * 2)
+	for i in total_muestras:
+		var t: float = float(i) / muestras_por_segundo
+		var indice_nota: int = min(int(t / duracion_nota), notas.size() - 1)
+		var t_nota: float = t - indice_nota * duracion_nota
+		var envolvente: float = exp(-6.0 * t_nota)
+		var muestra: float = sin(TAU * notas[indice_nota] * t_nota) * 0.8 * envolvente
+		datos.encode_s16(i * 2, int(clamp(muestra, -1.0, 1.0) * 32767.0))
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = muestras_por_segundo
+	stream.stereo = false
+	stream.data = datos
+	return stream
 
 func _iniciar_city_tour() -> void:
 	var nodo_aeroparque := _buscar_destino_por_nombre("Aeroparque")
@@ -4306,10 +9535,21 @@ func _mostrar_solapa_inferior(numero: int) -> void:
 	panel_sensibilidad.visible = numero == 2
 	panel_sonidos.visible = numero == 3
 	panel_config_tab.visible = numero == 4
+	panel_vuelo_tab.visible = numero == 5
 	boton_solapa_1.button_pressed = numero == 1
 	boton_solapa_2.button_pressed = numero == 2
 	boton_solapa_3.button_pressed = numero == 3
 	boton_solapa_4.button_pressed = numero == 4
+	boton_solapa_5.button_pressed = numero == 5
+	if panel_aterrizaje_tab:
+		panel_aterrizaje_tab.visible = numero == 6
+		boton_solapa_6.button_pressed = numero == 6
+	if panel_mision_tab:
+		panel_mision_tab.visible = numero == 7
+		boton_solapa_7.button_pressed = numero == 7
+	if panel_destinos_tab:
+		panel_destinos_tab.visible = numero == 8
+		boton_solapa_8.button_pressed = numero == 8
 	if numero != 4:
 		esperando_asignacion = ""
 

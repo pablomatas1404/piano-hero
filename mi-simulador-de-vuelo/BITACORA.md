@@ -399,3 +399,83 @@ plugin `cesium_godot` esté activado en Proyecto → Configuración del
 Proyecto → Plugins (debería venir solo), y si el panel no aparece o hay
 errores raros, "cerrar Godot completo y reabrir sin tocar el checkbox"
 (ya funcionó antes para esto).
+
+## Sesión 2026-10-07: sistema de armamento de prueba (mira, blancos, 3 misiones)
+
+El bug del terreno "de costado" de la sección de arriba terminó
+resolviéndose hace rato (combinación de `_recentrar_origen_en_avion()` en
+`mundo.gd` + `_alinear_con_vertical_real()` y `_actualizar_camara()` en
+`principal.gd`, las tres a la vez) -- queda documentado acá por si alguien
+lee esta bitácora de punta a punta, pero ya no es un problema activo.
+
+Hoy se portó un prototipo de armamento que ChatGPT había armado en su
+propia copia del proyecto (rama `piano-hero-chatgpt`, carpeta `Simulador de
+Avión Chat GPT/`), adaptándolo a mano (Claude leyó su código fuente
+directo, no un resumen en texto) y extendiéndolo con 2 misiones nuevas.
+
+**Qué quedó funcionando:**
+- Mira acumulativa en el HUD (cruz blanca, se mueve con joystick, no vuelve
+  sola al centro).
+- 3 grupos de blancos, cada uno con su contador propio y su "🎉 MISIÓN
+  COMPLETADA" + fanfarria al terminar:
+  - `mision_aeropuertos` (rojo, 5): Ezeiza, Morón, El Palomar, Campo de
+    Mayo, San Fernando.
+  - `mision_verde` (verde, 10): lugares reales de Capital Federal,
+    repartidos por toda la ciudad.
+  - `mision_barcos` (negro con brillo naranja, 10): en el Río de la Plata,
+    con movimiento lento real (2.5 m/s) hacia la costa.
+- Disparo con traza, sonidos reales (`cannon_fire.ogg` para disparo,
+  `explosion_impacto.mp3` para tierra, `explosion_barco.mp3` para barcos),
+  2 sliders nuevos de volumen (balas/explosiones) en el panel de Sonidos.
+
+**Intentos que fallaron y cómo se terminaron resolviendo** (para no repetir
+el mismo camino si el bug vuelve a aparecer):
+
+1. *Origen del disparo ("sale de atrás, no de la nariz")* -- 3 intentos:
+   - Offset fijo de 3 metros desde el modelo: corto en aviones grandes.
+   - Caja delimitadora automática (AABB) del modelo 3D para calcular la
+     punta de la nariz en teoría: seguía fallando en el avión de guerra,
+     probablemente por la jerarquía de huesos/Skeleton3D del `.glb` que el
+     recorrido de nodos no manejaba bien -- nunca se confirmó la causa
+     exacta porque no se pudo debuggear en vivo.
+   - SOLUCIÓN FINAL (idea de Pablo): usar la posición de la luz de
+     navegación de ala izquierda (`luz_navegacion_izq_externa.global_position`),
+     que YA se crea como nodo real y YA está calibrada a mano por avión
+     (ver sección de luces, más arriba en este archivo) -- no hace falta
+     calcular nada nuevo, y como el disparo sale de donde ya hay una luz,
+     no se nota que no es la nariz exacta.
+
+2. *Barcos apareciendo sobre tierra* -- 2 intentos:
+   - Coordenadas elegidas a ojo sobre un área grande: varios puntos
+     quedaron en tierra por la curva real de la costa.
+   - Segundo intento, offset en metros desde un punto "de agua" supuesto
+     cerca de Aeroparque: TODAVÍA varios quedaron en tierra -- resultó que
+     el puerto de Buenos Aires se mete en el río mucho más de lo que
+     parece a ojo (las terminales portuarias llegan a longitud ~-58.35).
+   - SOLUCIÓN FINAL: se verificó con un mapa real (OpenStreetMap, navegado
+     con el browser) ANTES de tocar el código -- a partir de longitud
+     -58.33 es agua abierta sin nada hasta Uruguay, para cualquier latitud
+     entre -34.50 y -34.62. Las 10 coordenadas arrancan todas ahí o más al
+     este. Moraleja: para geografía real, confirmar con un mapa de verdad
+     en vez de estimar coordenadas de memoria.
+
+3. *Sonidos de explosión "sonaban como un disparo"* -- había un corte
+   forzado a los 0.5 segundos de reproducción, copiado de una época en que
+   el sonido de explosión era muy corto. Los sonidos nuevos (más largos)
+   quedaban con la cola cortada, y lo que se alcanzaba a escuchar (solo el
+   golpe inicial) sonaba parecido a un disparo. Se sacó el corte -- ahora
+   cada explosión termina sola.
+
+4. *Disco lleno a mitad de sesión (0.06GB libres), Chrome se cerraba solo
+   con error 0xc000012d* -- mismo patrón de siempre: volcados de crash
+   viejos + restos de carpetas temp de Godot. Se liberó espacio y además se
+   borraron los 2 "worktrees" de git abandonados desde hacía rato (ver
+   bitácora de la sesión de Ernesto, si existe un archivo separado para
+   eso) -- quedó en ~1.15GB libres, justo pero funcional.
+
+**Para la próxima sesión:** la idea hablada con Pablo es un sistema de
+misiones narradas (un cartel tipo "andá a aterrizar en tal lugar, cargá
+cargamento", después "andá a destruir los barcos") en vez de los 3 grupos
+siempre activos a la vez -- los barcos en particular, de a uno, no los 10
+juntos. Y reemplazar los cuadraditos por gráficos reales: barcos de verdad,
+objetivos en tierra temáticos (centrales nucleares, zonas con luces, etc.).

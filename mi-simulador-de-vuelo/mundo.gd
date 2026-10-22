@@ -43,6 +43,27 @@ extends Node3D
 @onready var camara_minimapa: Camera3D = get_node("HUD/MinimapaViewport/CamaraMinimapa")
 @onready var camara_mapa: Camera3D = get_node("HUD/MapaViewport/CamaraMapa")
 
+# Pedido 2026-10-22 ("los edificios 3D de Google aparecen como triángulos que
+# se terminan de construir cuando ya los sobrevolaste -- probemos el enfoque
+# de GeoFS: terreno + foto aérea de Bing, sin mallas de edificios"). Lo probó
+# primero ChatGPT en una copia aparte y pasó la receta -- land acá, en la
+# vista PRINCIPAL (no es el mapa de calles chico de HUD/MapaViewport, que es
+# otra cosa aislada). Mismo patrón ya usado para ese mapa de calles: una
+# CesiumGeoreference propia, sincronizada por ECEF cada cuadro con la
+# principal, para no compartir estado interno de Cesium Native con el
+# Cesium3DTileset de Google (eso YA lo probamos con los DOS en el mismo
+# World3D -- ver "INTENTO 1" más arriba -- y rompió el terreno principal).
+@onready var georeferencia_mapa_plano: CesiumGeoreference = get_node("CesiumGeoreferenceMapaPlano")
+@onready var tileset_mapa_plano: Cesium3DTileset = get_node("CesiumGeoreferenceMapaPlano/TerrenoMapaPlano")
+# Pedido 2026-10-22 ("quiero que se vea el terreno plano primero"): arranca
+# en true -- Pablo ya sabe el riesgo (dos tilesets georreferenciados activos
+# a la vez rompieron el render una vez, ver comentario arriba) y lo quiere
+# probar como default. Si vuelve a romperse, un botón arriba (no F9 -- su
+# teclado/notebook no tiene teclas de función cómodas) lo vuelve a Google al
+# toque, ver boton_mapa_plano en principal.gd.
+const MAPA_PLANO_POR_DEFECTO := true
+var modo_mapa_plano: bool = MAPA_PLANO_POR_DEFECTO
+
 # Ciclo día/noche (pedido 2026-09-25) -- "hora_del_dia" (0.0 a 24.0) maneja
 # TODO: la posición del sol en el cielo, su color/intensidad, y los colores
 # del cielo procedural. Por defecto avanza sola durante el vuelo (un día
@@ -566,6 +587,17 @@ var nodos_pueblos: Array = []
 
 var nodos_aeropuertos: Array = []
 
+# Pedido 2026-10-17 ("iluminar de noche la ruta que trackeé, con bombitas
+# cada tanto, sin prender todo junto para no comerse la RAM"): luces chicas
+# y livianas (sin cartel, sin parpadeo) a lo largo de una ruta elegida desde
+# afuera (ver _limpiar_y_elegir_ruta_para_luces en principal.gd, que decide
+# QUÉ puntos mandar -- acá solo se dibujan). Misma lista "nodos_X" + mismo
+# patrón de recentrado que aeropuertos/pueblos (ver _recentrar_origen_en_
+# avion) para que no les pase el bug de la distancia de 563km que tuvimos
+# con el marcador de misión (quedarse quietas en el lugar viejo mientras el
+# origen se mueve).
+var nodos_luces_ruta: Array = []
+
 # Misiones de helicóptero -- REEMPLAZADO 2026-09-20 con las coordenadas que
 # el propio usuario trackeó a mano volando (ver lugares_marcados.json),
 # muchísimo más precisas que mis geocodificaciones por dirección de antes
@@ -703,6 +735,13 @@ func _ready() -> void:
 		georeferencia_mapa.longitude = georeferencia.longitude
 		georeferencia_mapa.altitude = georeferencia.altitude
 
+	if georeferencia_mapa_plano:
+		georeferencia_mapa_plano.origin_type = 0
+		georeferencia_mapa_plano.latitude = georeferencia.latitude
+		georeferencia_mapa_plano.longitude = georeferencia.longitude
+		georeferencia_mapa_plano.altitude = georeferencia.altitude
+		_aplicar_modo_mapa(modo_mapa_plano)
+
 	# El overlay de calles se ve BLANCO LISO (terreno sin textura) si se
 	# declara como hijo fijo en la escena -- sospecha: en Godot los nodos
 	# hijos entran al árbol (_ready) ANTES que el padre, y si el overlay
@@ -717,6 +756,17 @@ func _ready() -> void:
 		overlay_calles.asset_id = 3830184
 		tileset_mapa.add_child(overlay_calles)
 		print("🗺️ Overlay de calles agregado por código al tileset del mapa")
+
+	# Mismo motivo que el overlay de arriba -- la imagen aérea de Bing para
+	# el modo mapa plano TAMBIÉN se agrega por código, no como hijo fijo.
+	if tileset_mapa_plano:
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var overlay_bing := CesiumIonRasterOverlay.new()
+		overlay_bing.name = "ImagenAereaBing"
+		overlay_bing.asset_id = 2
+		tileset_mapa_plano.add_child(overlay_bing)
+		print("🗺️ Overlay de Bing agregado por código al mapa plano")
 
 # El tileset de Cesium necesita que le avisemos, cuadro a cuadro, dónde está
 # la cámara -- si no, no sabe qué baldosas cargar y no muestra nada (esto lo
@@ -739,7 +789,20 @@ func _process(delta: float) -> void:
 	_actualizar_ils_dos_cabeceras_frame()
 	_actualizar_luces_pista_frame()
 	_actualizar_faros_frame()
-	if tileset and camara_juego:
+	# Pedido 2026-10-22 (modo mapa plano Bing, ver comentario junto a
+	# georeferencia_mapa_plano): de los DOS tilesets georreferenciados de la
+	# vista principal (Google de siempre + este nuevo de Bing), solo se le
+	# pide update_tileset() al que esté activo en este momento -- el otro
+	# queda con su estado interno QUIETO (no "compitiendo" cuadro a cuadro
+	# por el mismo World3D, que es justo lo que rompió el terreno la vez que
+	# probamos tener dos activos a la vez, ver "INTENTO 1").
+	if modo_mapa_plano and tileset_mapa_plano and georeferencia_mapa_plano and camara_juego:
+		georeferencia_mapa_plano.ecefX = georeferencia.get_ecef_x()
+		georeferencia_mapa_plano.ecefY = georeferencia.get_ecef_y()
+		georeferencia_mapa_plano.ecefZ = georeferencia.get_ecef_z()
+		var plano_xform_ecef = georeferencia_mapa_plano.get_tx_engine_to_ecef() * camara_juego.global_transform
+		tileset_mapa_plano.update_tileset(plano_xform_ecef)
+	elif tileset and camara_juego:
 		var camara_xform_ecef = georeferencia.get_tx_engine_to_ecef() * camara_juego.global_transform
 		tileset.update_tileset(camara_xform_ecef)
 	# El mapa de calles ahora tiene su PROPIA georreferencia (georeferencia_mapa),
@@ -748,6 +811,21 @@ func _process(delta: float) -> void:
 	if tileset_mapa and georeferencia_mapa and camara_mapa:
 		var mapa_xform_ecef = georeferencia_mapa.get_tx_engine_to_ecef() * camara_mapa.global_transform
 		tileset_mapa.update_tileset(mapa_xform_ecef)
+
+func _unhandled_input(event: InputEvent) -> void:
+	# Pedido 2026-10-22: F9 alterna entre el terreno fotorrealista de Google
+	# (de siempre) y el modo mapa plano (terreno + foto aérea Bing, sin
+	# edificios 3D) -- para comparar en vivo sin reiniciar el juego.
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F9:
+		modo_mapa_plano = not modo_mapa_plano
+		_aplicar_modo_mapa(modo_mapa_plano)
+
+func _aplicar_modo_mapa(plano: bool) -> void:
+	if tileset:
+		tileset.visible = not plano
+	if tileset_mapa_plano:
+		tileset_mapa_plano.visible = plano
+	print("🗺️ Modo mapa plano (Bing): ", plano)
 
 func _recentrar_origen_en_avion() -> void:
 	# IMPORTANTE (precision): el ECEF tiene magnitud ~6.37 millones de metros.
@@ -890,6 +968,12 @@ func _recentrar_origen_en_avion() -> void:
 	for nodo_pueblo in nodos_pueblos:
 		_actualizar_transform_aeropuerto(nodo_pueblo, nodo_pueblo.get_meta("lat"), nodo_pueblo.get_meta("lon"))
 
+	# Mismo motivo -- las bombitas de la ruta iluminada (ver iluminar_ruta)
+	# también, si no, exactamente el mismo bug de los 563km que tuvimos con
+	# el marcador de misión.
+	for nodo_luz in nodos_luces_ruta:
+		nodo_luz.transform = Transform3D(Basis.IDENTITY, _posicion_desde_lat_lon(nodo_luz.get_meta("lat"), nodo_luz.get_meta("lon"), 5.0))
+
 	# Los aeropuertos marcados por el usuario también necesitan reubicarse
 	# Y reorientarse (la orientación se pierde cada vez que
 	# _actualizar_transform_aeropuerto resetea el transform a Basis.IDENTITY).
@@ -917,11 +1001,25 @@ func _recentrar_origen_en_avion() -> void:
 # la Tierra): la dirección del sol se arma sobre arriba_motor_actual/
 # este_motor_actual (la vertical/horizontal REAL), nunca sobre Vector3.UP
 # crudo -- si no, en Buenos Aires el sol saldría ~34.5° inclinado de más.
+const HORA_AMANECER = 6.0
+const HORA_ATARDECER = 21.0   # a esta hora el sol se pone (antes: 18)
+
 func _actualizar_ciclo_dia_noche(delta: float) -> void:
 	if avance_automatico_hora:
 		hora_del_dia = fposmod(hora_del_dia + (delta / SEGUNDOS_POR_DIA_COMPLETO) * 24.0, 24.0)
 
-	var theta_grados: float = (12.0 - hora_del_dia) * 15.0
+	# Pedido 2026-10-16 ("a las 5 de la tarde ya está de noche, que sea a las 21"):
+	# el reloj muestra la hora normal, pero el sol se mueve con una "hora solar"
+	# reajustada -- el día (6 a 21 hs) se estira a las 12 horas de sol de siempre y
+	# la noche (21 a 6 hs) se comprime en las 12 de oscuridad. Resultado: el
+	# atardecer cae a las ~21 y el amanecer sigue en las ~6.
+	var hora_solar: float
+	if hora_del_dia >= HORA_AMANECER and hora_del_dia < HORA_ATARDECER:
+		hora_solar = 6.0 + (hora_del_dia - HORA_AMANECER) * 12.0 / (HORA_ATARDECER - HORA_AMANECER)
+	else:
+		var desde_atardecer: float = fposmod(hora_del_dia - HORA_ATARDECER, 24.0)
+		hora_solar = 18.0 + desde_atardecer * 12.0 / (24.0 - HORA_ATARDECER + HORA_AMANECER)
+	var theta_grados: float = (12.0 - hora_solar) * 15.0
 	var theta_rad: float = deg_to_rad(theta_grados)
 	var direccion_al_sol: Vector3 = (cos(theta_rad) * arriba_motor_actual + sin(theta_rad) * este_motor_actual).normalized()
 	# look_at apunta el eje -Z local hacia el punto dado -- como la luz brilla
@@ -1068,6 +1166,34 @@ func _actualizar_transform_aeropuerto(nodo: Node3D, lat_deg: float, lon_deg: flo
 	nodo.set_meta("lat", lat_deg)
 	nodo.set_meta("lon", lon_deg)
 	var pos = _posicion_desde_lat_lon(lat_deg, lon_deg, 5.0)
+
+	# BUG REAL encontrado 2026-10-17 (reportado: "en Río Cuarto el cartel del
+	# aeropuerto no desapareció hasta los últimos 50 metros del aterrizaje"):
+	# los 5.0m de acá arriba son una altura FIJA sobre el elipsoide, para
+	# TODOS los aeropuertos del país por igual -- en Buenos Aires (casi a
+	# nivel del mar) es una aproximación razonable del piso real, pero Río
+	# Cuarto/Córdoba/San Luis están varios cientos de metros más alto de
+	# verdad, así que este punto quedaba esos mismos cientos de metros
+	# clavado bajo tierra -- el avión parecía estar mucho más alto sobre el
+	# aeropuerto de lo que en realidad estaba, y el cartel (que se apaga por
+	# ALTURA sobre el aeropuerto, ver ALTURA_BEACON_OCULTO/_actualizar_
+	# beacons) tardaba una eternidad en apagarse, "hasta los últimos 50m".
+	# FIX: si el aeropuerto está lo bastante cerca como para que Cesium ya
+	# tenga esa zona cargada (si no, el rayo no encuentra nada igual, por
+	# eso el chequeo de distancia), se tira un rayo al piso real -- mismo
+	# patrón ya probado en _limitar_piso() de principal.gd -- y se usa ESE
+	# punto en vez del aproximado. Aeropuertos lejos (fuera de rango) siguen
+	# con la aproximación de siempre -- no importa, todavía no estás ahí.
+	if pos.length() < 5000.0:
+		var space_state = get_world_3d().direct_space_state
+		var origen_rayo: Vector3 = pos + arriba_motor_actual * 20000.0
+		var destino_rayo: Vector3 = pos - arriba_motor_actual * 20000.0
+		var consulta := PhysicsRayQueryParameters3D.create(origen_rayo, destino_rayo)
+		consulta.collision_mask = 1  # solo terreno real
+		var resultado := space_state.intersect_ray(consulta)
+		if resultado:
+			pos = resultado["position"] + arriba_motor_actual * 5.0
+
 	# OJO: el ajuste de orientación con eus_at_ecef que había puesto acá
 	# (para que la pista no pareciera "un palo" lejos del origen) resultó
 	# estar mal calculado -- volvió la pista un cuadrilátero gigante y
@@ -1108,6 +1234,10 @@ func _generar_aeropuerto(nombre: String, longitud_pista: float = 150.0) -> Node3
 	etiqueta.font_size = 110
 	etiqueta.outline_size = 14
 	etiqueta.position = Vector3(-28, 14, -75)
+	# Capa de marcadores nocturnos: si no, el post-proceso de noche (exposición)
+	# lo apaga igual que al terreno y de noche no se leía el nombre.
+	etiqueta.set_layer_mask_value(1, false)
+	etiqueta.set_layer_mask_value(CAPA_MARCADORES_NOCTURNOS, true)
 	raiz.add_child(etiqueta)
 	etiquetas_cercanas.append(etiqueta)
 
@@ -1170,6 +1300,53 @@ func _generar_aeropuerto(nombre: String, longitud_pista: float = 150.0) -> Node3
 	# beacon con la pista -- el usuario prefiere solo el cartel, sin palito.
 
 	return raiz
+
+# Una "bombita" simple -- una esfera chica, emisiva, sin parpadeo ni texto,
+# a la altura de un poste de luz (4m). Deliberadamente mucho más liviana que
+# _generar_aeropuerto (nada de Label3D grande ni cartel): la idea es poder
+# poner muchas a lo largo de una ruta sin pesar.
+func _crear_luz_ruta(lat_deg: float, lon_deg: float) -> Node3D:
+	var raiz := Node3D.new()
+	raiz.name = "LuzRuta"
+	raiz.set_meta("lat", lat_deg)
+	raiz.set_meta("lon", lon_deg)
+	raiz.transform = Transform3D(Basis.IDENTITY, _posicion_desde_lat_lon(lat_deg, lon_deg, 5.0))
+	add_child(raiz)
+
+	var bombita := MeshInstance3D.new()
+	var malla := SphereMesh.new()
+	malla.radius = 1.2
+	malla.height = 2.4
+	bombita.mesh = malla
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(1.0, 0.75, 0.3, 1.0)
+	material.emission_enabled = true
+	material.emission = Color(1.0, 0.75, 0.3)
+	material.emission_energy_multiplier = 4.0
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	bombita.material_override = material
+	bombita.position = Vector3(0, 4.0, 0)
+	# Capa de marcadores nocturnos (igual que el beacon de arriba) -- se ve
+	# brillante de noche en vez de apagarse con el post-proceso oscuro como
+	# el terreno normal.
+	bombita.set_layer_mask_value(1, false)
+	bombita.set_layer_mask_value(CAPA_MARCADORES_NOCTURNOS, true)
+	raiz.add_child(bombita)
+
+	return raiz
+
+# Pedido 2026-10-17: prende una bombita en CADA punto que le pasen (la
+# selección/regularidad de "uno de cada 3" ya la hizo el que llama, en
+# principal.gd -- acá no se vuelve a filtrar nada). Si ya había una ruta
+# iluminada de antes, se borra primero (si no, cada vez que se llama esto
+# se sumarían bombitas duplicadas, una encima de la otra).
+func iluminar_ruta(puntos: Array) -> void:
+	for nodo in nodos_luces_ruta:
+		if is_instance_valid(nodo):
+			nodo.queue_free()
+	nodos_luces_ruta.clear()
+	for punto in puntos:
+		nodos_luces_ruta.append(_crear_luz_ruta(float(punto["lat"]), float(punto["lon"])))
 
 # Ver comentario en el beacon de _generar_aeropuerto: lejos parpadea suave
 # (llama la atención), cerca se apaga del todo (para no tapar la vista con
@@ -1265,8 +1442,22 @@ func agregar_aeropuerto_usuario(nombre: String, lat: float, lon: float, orientac
 func _orientar_aeropuerto_usuario(nodo: Node3D) -> void:
 	var orientacion: float = nodo.get_meta("orientacion_usuario")
 	var rumbo_rad: float = deg_to_rad(orientacion)
-	var direccion: Vector3 = (norte_motor_actual * cos(rumbo_rad) + este_motor_actual * sin(rumbo_rad)).normalized()
-	nodo.look_at(nodo.global_position + direccion, arriba_motor_actual)
+	var direccion_cruda: Vector3 = norte_motor_actual * cos(rumbo_rad) + este_motor_actual * sin(rumbo_rad)
+	# BUG REAL encontrado 2026-10-10 (reportado: "lagueo cada 3 segundos" --
+	# en realidad era TODOS los cuadros, 54 mil veces en una sesión):
+	# cuando este_motor_actual/norte_motor_actual todavía no están
+	# calculados (primer cuadro, antes de que _recentrar_origen_en_avion
+	# termine su primera pasada), dan Vector3.ZERO y "direccion" sale cero
+	# -- look_at() con origen=destino tira un ERROR real cada vez que se
+	# llama, y como esto corre en _process() de mundo.gd, imprimía un error
+	# completo (con backtrace) en CADA CUADRO del juego entero. Eso explica
+	# el "frenón cada tanto" (el log escribiendo a disco sin parar) y de
+	# paso el salto de la mira y los tiros irregulares (el delta entre
+	# cuadros dejaba de ser parejo). Si la dirección da degenerada, no
+	# reorientamos este cuadro -- se corrige solo en el próximo.
+	if direccion_cruda.length_squared() < 0.0001:
+		return
+	nodo.look_at(nodo.global_position + direccion_cruda.normalized(), arriba_motor_actual)
 
 # ILS visual, TERCER intento (2026-09-21) -- dos correcciones sobre lo
 # reportado por el usuario probando El Palomar y Mariano Moreno:
