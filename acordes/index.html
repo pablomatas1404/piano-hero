@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acordes para tocar</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Aplicación aparte (hermana de Piano Hero): ficha de acordes + teclado virtual + teclado MIDI real (Web MIDI).
+   Ámbar = lo que hay que tocar; azul = lo que tocaste; verde = acertaste. */
+:root{
+  --bg:#f2f4f7; --panel:#ffffff; --ink:#18202b; --muted:#5b6675; --line:#d5dbe3;
+  --cell:#e9edf2; --accent:#c77d00; --accent-ink:#ffffff; --next:#2b6cb0; --ok:#1f7a4d; --bad:#b3372f;
+  --wkey:#ffffff; --bkey:#1c232d; --font-chord:'Barlow Condensed','Arial Narrow',sans-serif; --font-body:'Source Sans 3',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12171e; --panel:#1b222b; --ink:#e8edf3; --muted:#9aa6b5; --line:#2f3946;
+  --cell:#262f3a; --accent:#f2b23a; --accent-ink:#1a1300; --next:#6fb0ff; --ok:#5fd39a; --bad:#ff7b72;
+  --wkey:#e9edf2; --bkey:#0b0f14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12171e; --panel:#1b222b; --ink:#e8edf3; --muted:#9aa6b5; --line:#2f3946;
+  --cell:#262f3a; --accent:#f2b23a; --accent-ink:#1a1300; --next:#6fb0ff; --ok:#5fd39a; --bad:#ff7b72;
+  --wkey:#e9edf2; --bkey:#0b0f14; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.45;margin:0;
+  padding:0 max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+.wrap{max-width:900px;margin:0 auto}
+header{padding:16px 0 8px}
+h1{font-family:var(--font-chord);font-size:2rem;margin:0;line-height:1.1}
+.sub{color:var(--muted);margin:2px 0 0}
+.setup{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:10px 0;display:grid;gap:3px}
+.setup b{font-family:var(--font-chord);font-size:1.1rem;letter-spacing:.02em}
+.setup .row{display:flex;flex-wrap:wrap;gap:4px 18px}
+.setup small{color:var(--muted)}
+.midi{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:.95rem}
+.dot{width:11px;height:11px;border-radius:50%;background:var(--muted);flex:none}
+.dot.on{background:var(--ok)}
+.stage{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0 10px;border-bottom:1px solid var(--line)}
+.now-next{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+.now,.next{border-radius:12px;padding:8px 14px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.now{background:var(--accent);color:var(--accent-ink)}
+.next{background:var(--panel);border:2px solid var(--next)}
+.lbl{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;font-weight:600;opacity:.85}
+.big{font-family:var(--font-chord);font-weight:700;line-height:1;font-size:clamp(3rem,13vw,5.5rem)}
+.mid{font-family:var(--font-chord);font-weight:700;line-height:1;font-size:clamp(2rem,8vw,3.2rem);color:var(--next)}
+.beats{display:flex;gap:6px;margin-top:8px}
+.beats i{flex:1;height:8px;border-radius:4px;background:var(--cell)}
+.beats i.on{background:var(--accent)}
+.kb{position:relative;display:flex;height:150px;margin-top:10px;user-select:none;touch-action:manipulation}
+.w{flex:1;background:var(--wkey);border:1px solid #8b97a6;border-radius:0 0 6px 6px;position:relative;display:flex;align-items:flex-end;justify-content:center;
+  padding-bottom:4px;font-size:.7rem;color:#4a5563;cursor:pointer}
+.w.tgt{box-shadow:inset 0 -10px 0 var(--accent);background:color-mix(in srgb,var(--accent) 35%,var(--wkey))}
+.w.prs{background:color-mix(in srgb,var(--next) 55%,var(--wkey))}
+.w.tgt.prs{background:color-mix(in srgb,var(--ok) 60%,var(--wkey))}
+.b{position:absolute;top:0;width:3.6%;height:62%;background:var(--bkey);border-radius:0 0 4px 4px;z-index:2;cursor:pointer;transform:translateX(-50%)}
+.b.tgt{background:var(--accent)}
+.b.prs{background:var(--next)}
+.b.tgt.prs{background:var(--ok)}
+.eval{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:8px;min-height:2.2rem}
+.badge{font-family:var(--font-chord);font-weight:700;font-size:1.5rem;padding:2px 12px;border-radius:8px;background:var(--cell)}
+.badge.ok{background:var(--ok);color:#fff}.badge.bad{background:var(--bad);color:#fff}
+.hint{color:var(--muted)}
+.controls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:10px}
+.controls label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.9rem}
+input,select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+input[type=number]{width:4.5em} input[type=checkbox]{width:1.1em;height:1.1em}
+button{font:inherit;font-weight:600;border:0;border-radius:9px;padding:9px 16px;cursor:pointer;background:var(--cell);color:var(--ink)}
+button.go{background:var(--ok);color:#fff} button.stop{background:var(--bad);color:#fff}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--next);outline-offset:2px}
+section.part{margin-top:20px}
+h2{font-family:var(--font-chord);font-size:1.4rem;margin:0 0 6px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+h2 small{font-family:var(--font-body);font-weight:400;font-size:.85rem;color:var(--muted)}
+.chords{display:flex;flex-wrap:wrap;gap:8px}
+.c{font-family:var(--font-chord);font-weight:700;font-size:1.8rem;min-width:4rem;text-align:center;padding:8px 12px;border-radius:9px;background:var(--cell);border:2px solid transparent;cursor:pointer}
+.c.act{background:var(--accent);color:var(--accent-ink)} .c.nxt{border-color:var(--next)} .c.dim{opacity:.6}
+details{margin-top:8px} summary{cursor:pointer;color:var(--muted);font-size:.92rem}
+textarea{width:100%;min-height:6rem;margin-top:6px;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px}
+.note{color:var(--muted);font-size:.92rem;margin-top:18px} a{color:var(--next)}
+@media (max-width:520px){.now-next{grid-template-columns:3fr 2fr}.kb{height:120px}.c{font-size:1.5rem;min-width:3.4rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Lamento boliviano</h1>
+  <p class="sub">Enanitos Verdes · Mi menor · acordes en el orden en que aparecen</p>
+  <div class="setup">
+    <b>En el Yamaha (PSR-E583 / E483)</b>
+    <div class="row"><span>Armadura de estilo: <b>SP1</b></span><span>Acordes: <b>035</b></span><span>Salen: <b>Em · Bm · Am · Em</b></span></div>
+    <small>Receta corta: AUTO CHORD PLAY [SELECT], mirar que diga 035, y [START/STOP].</small>
+  </div>
+  <div class="midi"><span class="dot" id="midiDot"></span><span id="midiTxt">Buscando teclado MIDI…</span></div>
+</header>
+
+<div class="stage" aria-live="polite">
+  <div class="now-next">
+    <div class="now"><span class="lbl">Tocá ahora</span><span class="big" id="nowChord">–</span></div>
+    <div class="next"><span class="lbl">Sigue</span><span class="mid" id="nextChord">–</span></div>
+  </div>
+  <div class="beats" id="beats" aria-hidden="true"></div>
+  <div class="kb" id="kb" aria-label="Teclado virtual"></div>
+  <div class="eval"><span class="badge" id="played">–</span><span class="hint" id="evalTxt">Elegí un acorde de abajo o apretá Empezar. Podés tocar el teclado real o hacer clic en el virtual.</span></div>
+  <div class="controls">
+    <button class="go" id="goBtn" type="button">Empezar</button>
+    <label for="bpm">Tempo <input type="number" id="bpm" min="30" max="200" value="80"></label>
+    <label for="per">Cada acorde dura
+      <select id="per"><option value="4">1 compás</option><option value="8" selected>2 compases</option><option value="2">2 tiempos</option></select></label>
+    <label for="wait"><input type="checkbox" id="wait"> Esperar a que toque el acorde</label>
+    <label for="simple"><input type="checkbox" id="simple" checked> Acordes simples</label>
+  </div>
+</div>
+
+<div id="parts"></div>
+
+<p class="note">La letra no está acá. Si querés verla junto a los acordes, pegala en la caja "Tu letra" de cada parte; queda guardada en este navegador. La cifra completa con letra está en
+<a href="https://acordesweb.com/cancion/los-enanitos-verdes/lamento-boliviano" target="_blank" rel="noopener">acordesweb</a>. El orden de acordes sale de esa cifra; cuánto dura cada uno lo elegís vos.
+Esta página no hace sonido: el sonido lo pone tu teclado.</p>
+</div>
+
+<script>
+const SONG = { parts: [
+  {id:'estrofa', name:'Estrofa', chords:['Em','Em','Bm','Am7','Em','B7','Em','Bm','Am7','Em','B7']},
+  {id:'pre', name:'Antes del estribillo', chords:['Em','Bm','Am7','Em','B7']},
+  {id:'estribillo', name:'Estribillo', chords:['Em','Bm','Am7','Em','B7','Em','Bm','Am7','Em','B7']},
+  {id:'solo', name:'Solo', chords:['Em','Bm','Am','Em','B7','Em','Bm','Am','Em','B7']}
+]};
+const $ = id => document.getElementById(id);
+const store = { get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}} };
+const simplify = c => c.replace(/^Am7$/,'Am').replace(/^B7$/,'B');
+const label = c => $('simple').checked ? simplify(c) : c;
+
+/* ---- teoría mínima ---- */
+const NAMES = ['Do','Do#','Re','Re#','Mi','Fa','Fa#','Sol','Sol#','La','La#','Si'];
+const ROOTS = {C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11};
+const TYPES = [ ['',[0,4,7]], ['m',[0,3,7]], ['7',[0,4,7,10]], ['m7',[0,3,7,10]] ];
+function parse(chord){
+  const m = /^([A-G][#b]?)(.*)$/.exec(chord); const root = ROOTS[m[1]]; const q = m[2];
+  const t = TYPES.find(x=>x[0]===q) || TYPES[0];
+  return { root, tones: t[1].map(i => (root+i)%12) };
+}
+function requiredTones(chord){ const p = parse(label(chord)); return p.tones.slice(0,3); }   // lo mínimo: la tríada
+function allowedTones(chord){ return parse(label(chord)).tones; }                              // la tríada + la séptima si la tiene
+function nameOfSet(set){
+  const a = [...set].sort((x,y)=>x-y);
+  for (let r=0;r<12;r++) for (const [q,iv] of TYPES){
+    const s = iv.map(i=>(r+i)%12).sort((x,y)=>x-y);
+    if (s.length===a.length && s.every((v,i)=>v===a[i])) return NAMES[r] + (q==='m'?' menor':q==='7'?' 7':q==='m7'?' m7':'');
+  }
+  return a.length ? 'notas sueltas' : '–';
+}
+
+/* ---- teclado virtual: do central a do (2 octavas) ---- */
+const LOW = 48, HIGH = 71;              // Do3 a Si4
+const BLACK = new Set([1,3,6,8,10]);
+const pressed = new Map();               // midi -> cantidad de fuentes que lo mantienen
+function buildKb(){
+  const kb = $('kb'); kb.innerHTML = '';
+  const whites = []; for (let m=LOW;m<=HIGH;m++) if(!BLACK.has(m%12)) whites.push(m);
+  whites.forEach(m=>{ const k=document.createElement('div'); k.className='w'; k.dataset.m=m; k.textContent = NAMES[m%12]; wire(k,m); kb.appendChild(k); });
+  const wpct = 100/whites.length;
+  for (let m=LOW;m<=HIGH;m++) if (BLACK.has(m%12)){
+    const idx = whites.filter(w=>w<m).length;
+    const k=document.createElement('div'); k.className='b'; k.dataset.m=m; k.style.left=(idx*wpct)+'%'; wire(k,m); kb.appendChild(k);
+  }
+}
+function wire(el,m){
+  const down = e => { e.preventDefault(); e.stopPropagation(); press(m,'mouse'); };
+  const up = e => { release(m,'mouse'); };
+  el.addEventListener('pointerdown', down); el.addEventListener('pointerup', up); el.addEventListener('pointerleave', up); el.addEventListener('pointercancel', up);
+}
+function press(m,src){ pressed.set(m,(pressed.get(m)||0)+1); refreshKb(); evaluate(); }
+function release(m,src){ const n=(pressed.get(m)||0)-1; if(n<=0) pressed.delete(m); else pressed.set(m,n); refreshKb(); evaluate(); }
+
+/* ---- estado de la canción ---- */
+let flat = [], pos = -1, timer = null, tick = 0, target = null;
+function paintKeys(){
+  const tg = target ? new Set(allowedTones(target)) : new Set();
+  document.querySelectorAll('#kb [data-m]').forEach(el=>{
+    const m = +el.dataset.m; el.classList.toggle('tgt', tg.has(m%12)); el.classList.toggle('prs', pressed.has(m));
+  });
+}
+function refreshKb(){ paintKeys(); }
+function evaluate(){
+  const set = new Set([...pressed.keys()].map(m=>m%12));
+  $('played').textContent = nameOfSet(set); $('played').className = 'badge';
+  if (!target){ $('evalTxt').textContent = 'Elegí un acorde de abajo o apretá Empezar.'; return false; }
+  const req = requiredTones(target), allow = new Set(allowedTones(target));
+  if (!set.size){ $('evalTxt').textContent = 'Tocá ' + label(target) + ': ' + req.map(t=>NAMES[t]).join(' – ') + '.'; return false; }
+  const missing = req.filter(t=>!set.has(t)), extra = [...set].filter(t=>!allow.has(t));
+  if (!missing.length && !extra.length){
+    $('played').className = 'badge ok'; $('evalTxt').textContent = '¡Bien! ' + label(target); return true;
+  }
+  $('played').className = 'badge bad';
+  const parts = []; if (missing.length) parts.push('te falta ' + missing.map(t=>NAMES[t]).join(', ')); if (extra.length) parts.push('sobra ' + extra.map(t=>NAMES[t]).join(', '));
+  $('evalTxt').textContent = parts.join(' · '); return false;
+}
+function setTarget(c){ target = c; paintKeys(); evaluate(); }
+
+function buildParts(){
+  const box = $('parts'); box.innerHTML=''; flat=[];
+  SONG.parts.forEach(p=>{
+    const sec=document.createElement('section'); sec.className='part';
+    const h=document.createElement('h2'); h.innerHTML=p.name+' <small>'+p.chords.length+' acordes</small>';
+    const row=document.createElement('div'); row.className='chords';
+    p.chords.forEach(c=>{
+      const el=document.createElement('div'); el.className='c'; el.textContent=label(c); el.tabIndex=0; el.dataset.i=flat.length;
+      const i=flat.length; flat.push({chord:c,el});
+      el.addEventListener('click',()=>{ if(timer) return; setTarget(c); markOnly(i); });
+      row.appendChild(el);
+    });
+    const det=document.createElement('details'); const sum=document.createElement('summary'); sum.textContent='Tu letra';
+    const ta=document.createElement('textarea'); ta.id='letra-'+p.id; ta.placeholder='Pegá acá la letra de esta parte'; ta.value=store.get('acordes-'+p.id)||'';
+    ta.addEventListener('input',()=>store.set('acordes-'+p.id,ta.value)); det.append(sum,ta); if(ta.value) det.open=true;
+    sec.append(h,row,det); box.appendChild(sec);
+  });
+}
+function markOnly(i){ flat.forEach((f,k)=>{ f.el.classList.toggle('act',k===i); f.el.classList.remove('nxt','dim'); });
+  $('nowChord').textContent=label(flat[i].chord); $('nextChord').textContent=flat[i+1]?label(flat[i+1].chord):'Fin'; }
+function paint(){
+  flat.forEach((f,i)=>{ f.el.textContent=label(f.chord); f.el.classList.toggle('act',i===pos); f.el.classList.toggle('nxt',pos>=0&&i===pos+1); f.el.classList.toggle('dim',pos>=0&&i<pos); });
+  const cur=flat[pos], nx=flat[pos+1];
+  $('nowChord').textContent=cur?label(cur.chord):'–'; $('nextChord').textContent=nx?label(nx.chord):(cur?'Fin':'–');
+  if(cur) cur.el.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+}
+function drawBeats(n,on){ const b=$('beats'); if(b.children.length!==n){ b.innerHTML=''; for(let i=0;i<n;i++) b.appendChild(document.createElement('i')); } [...b.children].forEach((x,i)=>x.classList.toggle('on',i<on)); }
+
+/* ---- marcador ---- */
+let satisfied = false;
+function step(){
+  const per=+$('per').value;
+  if ($('wait').checked && pos>=0 && !satisfied){ // modo espera: no avanza hasta que toque el acorde
+    drawBeats(Math.min(per,8), Math.min(per,8)); return;
+  }
+  const idx=Math.floor(tick/per);
+  if(idx>=flat.length){ stop(); pos=flat.length-1; paint(); $('nextChord').textContent='Fin'; return; }
+  if(idx!==pos){ pos=idx; satisfied=false; setTarget(flat[pos].chord); paint(); }
+  drawBeats(Math.min(per,8),(tick%per)%8+1); tick++;
+}
+function start(){
+  stop(); pos=-1; tick=0; satisfied=false;
+  const bpm=Math.max(30,Math.min(200,+$('bpm').value||80)); $('bpm').value=bpm;
+  $('goBtn').textContent='Parar'; $('goBtn').className='stop';
+  const ms=60000/bpm; const t0=performance.now(); let n=0; step();
+  timer=setInterval(()=>{ const due=Math.floor((performance.now()-t0)/ms); while(n<due){ n++; step(); if(!timer) break; } },40);
+}
+function stop(){ if(timer){clearInterval(timer);timer=null;} $('goBtn').textContent='Empezar'; $('goBtn').className='go'; }
+$('goBtn').addEventListener('click',()=>{ if(timer){ stop(); pos=-1; target=null; paint(); paintKeys(); drawBeats(4,0); evaluate(); } else start(); });
+// al acertar (con el marcador andando), se recuerda para poder avanzar en modo espera
+setInterval(()=>{ if(timer && target && evaluate()) { if(!satisfied){ satisfied=true; if($('wait').checked){ tick=Math.ceil(tick/(+$('per').value))*(+$('per').value); } } } },80);
+
+$('simple').addEventListener('change',()=>{ store.set('acordes-simple',$('simple').checked?'1':'0'); paint(); if(target) setTarget(target); });
+['bpm','per'].forEach(id=>$(id).addEventListener('change',()=>{ store.set('acordes-'+id,$(id).value); if(timer) start(); }));
+$('wait').addEventListener('change',()=>store.set('acordes-wait',$('wait').checked?'1':'0'));
+
+/* ---- teclado MIDI real (Web MIDI) ---- */
+const held = new Set();
+function onMidi(e){
+  const [st,m,v]=e.data; const cmd=st&0xf0;
+  if(cmd===0x90 && v>0){ if(!held.has(m)){ held.add(m); press(m,'midi'); } }
+  else if(cmd===0x80 || (cmd===0x90&&v===0)){ if(held.has(m)){ held.delete(m); release(m,'midi'); } }
+}
+function bindInputs(access){
+  const ins=[...access.inputs.values()];
+  ins.forEach(i=>{ i.onmidimessage=onMidi; });
+  $('midiDot').classList.toggle('on',ins.length>0);
+  $('midiTxt').textContent = ins.length ? 'Teclado conectado: ' + ins.map(i=>i.name||'(sin nombre)').join(', ') : 'No hay teclado MIDI. Conectalo por USB y tocá una tecla.';
+}
+if(navigator.requestMIDIAccess){
+  navigator.requestMIDIAccess().then(a=>{ bindInputs(a); a.onstatechange=()=>bindInputs(a); })
+    .catch(()=>{ $('midiTxt').textContent='El navegador no dejó usar el teclado MIDI. Usá Chrome y aceptá el permiso, o tocá el teclado de la pantalla.'; });
+} else { $('midiTxt').textContent='Este navegador no soporta MIDI. Usá Chrome en la computadora, o tocá el teclado de la pantalla.'; }
+
+/* ---- arranque ---- */
+(function(){
+  const s=store.get('acordes-simple'); if(s!==null) $('simple').checked=s==='1';
+  const b=store.get('acordes-bpm'); if(b) $('bpm').value=b; const p=store.get('acordes-per'); if(p) $('per').value=p;
+  $('wait').checked = store.get('acordes-wait')==='1';
+  buildKb(); buildParts(); paint(); drawBeats(4,0); evaluate();
+})();
+</script>
+</body>
+</html>
