@@ -56,6 +56,8 @@ h1{font-family:var(--font-chord);font-size:2rem;margin:0;line-height:1.1}
 .b.tgt{background:var(--accent)}
 .b.prs{background:var(--next)}
 .b.tgt.prs{background:var(--ok)}
+.teacher{margin-top:10px;border-left:5px solid var(--next);background:var(--panel);border-radius:8px;padding:8px 12px;font-size:1.05rem}
+.teacher b{font-family:var(--font-chord);letter-spacing:.04em;color:var(--next);margin-right:6px}
 .eval{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:8px;min-height:2.2rem}
 .badge{font-family:var(--font-chord);font-weight:700;font-size:1.5rem;padding:2px 12px;border-radius:8px;background:var(--cell)}
 .badge.ok{background:var(--ok);color:#fff}.badge.bad{background:var(--bad);color:#fff}
@@ -98,6 +100,7 @@ textarea{width:100%;min-height:6rem;margin-top:6px;font:inherit;color:var(--ink)
     <div class="next"><span class="lbl">Sigue</span><span class="mid" id="nextChord">–</span></div>
   </div>
   <div class="beats" id="beats" aria-hidden="true"></div>
+  <div class="teacher" id="teacher" hidden><b>PROFESOR</b><span id="teacherTxt"></span></div>
   <div class="kb" id="kb" aria-label="Teclado virtual"></div>
   <div class="eval"><span class="badge" id="played">–</span><span class="hint" id="evalTxt">Elegí un acorde de abajo o apretá Empezar. Podés tocar el teclado real o hacer clic en el virtual.</span></div>
   <div class="controls">
@@ -168,21 +171,40 @@ function wire(el,m){
   const up = e => { release(m,'mouse'); };
   el.addEventListener('pointerdown', down); el.addEventListener('pointerup', up); el.addEventListener('pointerleave', up); el.addEventListener('pointercancel', up);
 }
-function press(m,src){ pressed.set(m,(pressed.get(m)||0)+1); refreshKb(); evaluate(); }
-function release(m,src){ const n=(pressed.get(m)||0)-1; if(n<=0) pressed.delete(m); else pressed.set(m,n); refreshKb(); evaluate(); }
+const LOG=[];
+function note(type,m,src){ const ok=evaluate(); LOG.push({t:Date.now(),type,midi:m,nota:NAMES[m%12],src,held:[...pressed.keys()].sort((a,b)=>a-b),tocado:$('played').textContent,ok,msg:$('evalTxt').textContent,pedido:custom?custom.text:(target||null)}); if(LOG.length>400) LOG.shift(); }
+function press(m,src){ pressed.set(m,(pressed.get(m)||0)+1); refreshKb(); note('on',m,src); }
+function release(m,src){ const n=(pressed.get(m)||0)-1; if(n<=0) pressed.delete(m); else pressed.set(m,n); refreshKb(); note('off',m,src); }
+/* API del profesor: lo usa Claude para poner ejercicios y leer lo que tocaste */
+window.tutor={
+  set(o){ custom={midis:o.midis||[],tones:new Set((o.midis||[]).map(m=>m%12)),text:o.text||''}; $('teacher').hidden=false; $('teacherTxt').textContent=o.text||''; paintKeys(); evaluate(); },
+  clear(){ custom=null; $('teacher').hidden=true; paintKeys(); evaluate(); },
+  say(t){ $('teacher').hidden=false; $('teacherTxt').textContent=t; },
+  log(n){ return LOG.slice(-(n||30)); },
+  reset(){ LOG.length=0; },
+  state(){ return {pedido:custom?custom.text:null, tocando:[...pressed.keys()].sort((a,b)=>a-b), tocado:$('played').textContent, ok:evaluate(), teclado:$('midiTxt').textContent, cancion:target}; }
+};
 
 /* ---- estado de la canción ---- */
 let flat = [], pos = -1, timer = null, tick = 0, target = null;
+let custom = null;   // {midis:[...], tones:Set, text}  puesto por el profesor (window.tutor.set)
 function paintKeys(){
-  const tg = target ? new Set(allowedTones(target)) : new Set();
+  const tg = custom ? new Set() : (target ? new Set(allowedTones(target)) : new Set());
   document.querySelectorAll('#kb [data-m]').forEach(el=>{
-    const m = +el.dataset.m; el.classList.toggle('tgt', tg.has(m%12)); el.classList.toggle('prs', pressed.has(m));
+    const m = +el.dataset.m; el.classList.toggle('tgt', custom ? custom.midis.includes(m) : tg.has(m%12)); el.classList.toggle('prs', pressed.has(m));
   });
 }
 function refreshKb(){ paintKeys(); }
 function evaluate(){
   const set = new Set([...pressed.keys()].map(m=>m%12));
   $('played').textContent = nameOfSet(set); $('played').className = 'badge';
+  if (custom){
+    const need=[...custom.tones], miss=need.filter(t=>!set.has(t)), ext=[...set].filter(t=>!custom.tones.has(t));
+    if(!set.size){ $('evalTxt').textContent=custom.text||''; return false; }
+    if(!miss.length && !ext.length){ $('played').className='badge ok'; $('evalTxt').textContent='¡Bien!'; return true; }
+    $('played').className='badge bad'; const q=[]; if(miss.length) q.push('te falta '+miss.map(t=>NAMES[t]).join(', ')); if(ext.length) q.push('sobra '+ext.map(t=>NAMES[t]).join(', '));
+    $('evalTxt').textContent=q.join(' · '); return false;
+  }
   if (!target){ $('evalTxt').textContent = 'Elegí un acorde de abajo o apretá Empezar.'; return false; }
   const req = requiredTones(target), allow = new Set(allowedTones(target));
   if (!set.size){ $('evalTxt').textContent = 'Tocá ' + label(target) + ': ' + req.map(t=>NAMES[t]).join(' – ') + '.'; return false; }
