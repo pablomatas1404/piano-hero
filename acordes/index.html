@@ -104,7 +104,8 @@ textarea{width:100%;min-height:6rem;margin-top:6px;font:inherit;color:var(--ink)
   <div class="kb" id="kb" aria-label="Teclado virtual"></div>
   <div class="eval"><span class="badge" id="played">–</span><span class="hint" id="evalTxt">Elegí un acorde de abajo o apretá Empezar. Podés tocar el teclado real o hacer clic en el virtual.</span></div>
   <div class="controls">
-    <button class="go" id="goBtn" type="button">Empezar</button>
+    <button class="go" id="lessonBtn" type="button">Lección guiada</button>
+    <button id="goBtn" type="button" class="go" style="background:var(--cell);color:var(--ink)">Empezar</button>
     <label for="bpm">Tempo <input type="number" id="bpm" min="30" max="200" value="80"></label>
     <label for="per">Cada acorde dura
       <select id="per"><option value="4">1 compás</option><option value="8" selected>2 compases</option><option value="2">2 tiempos</option></select></label>
@@ -291,6 +292,34 @@ if(navigator.requestMIDIAccess){
   navigator.requestMIDIAccess().then(a=>{ bindInputs(a); a.onstatechange=()=>bindInputs(a); })
     .catch(()=>{ $('midiTxt').textContent='El navegador no dejó usar el teclado MIDI. Usá Chrome y aceptá el permiso, o tocá el teclado de la pantalla.'; });
 } else { $('midiTxt').textContent='Este navegador no soporta MIDI. Usá Chrome en la computadora, o tocá el teclado de la pantalla.'; }
+
+/* ---- lección guiada: sola, sin depender de nadie (el profesor pone el texto, la página avanza al acertar) ---- */
+const LESSON=[
+  {m:[52,55,59], t:'Acorde 1 de la canción: Mi menor (Em). Tocá Mi, Sol y Si juntas.'},
+  {m:[59,62,66], t:'Acorde 2: Si menor (Bm). Tocá Si, Re y Fa# (la tecla negra) juntas.'},
+  {m:[57,60,64], t:'Acorde 3: La menor (Am). Tocá La, Do y Mi juntas.'},
+  {m:[59,63,66], t:'Acorde 4: Si mayor (B). Tocá Si, Re# y Fa# (las dos negras) juntas.'},
+  {m:[52,55,59], t:'Ahora la canción en orden. Empezá con Em.'},
+  {m:[59,62,66], t:'Sigue Bm.'},
+  {m:[57,60,64], t:'Sigue Am.'},
+  {m:[52,55,59], t:'Vuelve Em.'},
+  {m:[59,63,66], t:'Y cierra con B.'}
+];
+let lesson=null;   // {i, armed}
+function lessonShow(){
+  const s=LESSON[lesson.i]; tutor.set({midis:s.m, text:'Paso '+(lesson.i+1)+' de '+LESSON.length+'. '+s.t}); lesson.armed=false;
+}
+function lessonStart(){ lesson={i:0,armed:false}; $('lessonBtn').textContent='Salir de la lección'; lessonShow(); }
+function lessonStop(){ lesson=null; $('lessonBtn').textContent='Lección guiada'; tutor.clear(); }
+$('lessonBtn').addEventListener('click',()=> lesson? lessonStop() : lessonStart());
+setInterval(()=>{
+  if(!lesson) return;
+  if(!lesson.armed){ if(!pressed.size) lesson.armed=true; return; }   // primero hay que soltar todo
+  if(evaluate()){
+    lesson.armed=false; $('teacherTxt').textContent='¡Bien!';
+    setTimeout(()=>{ if(!lesson) return; lesson.i++; if(lesson.i>=LESSON.length){ lessonStop(); tutor.say('¡Terminaste! Tocaste los cuatro acordes y la canción en orden.'); } else lessonShow(); },900);
+  }
+},100);
 
 /* ---- arranque ---- */
 (function(){
