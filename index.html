@@ -3380,7 +3380,7 @@ function organPatternFor(styleKey) {
   const minTime = Math.min(...song.notes.map(n => n.time));
   return { rootMidi, notes: song.notes.map(n => ({ midi: n.midi, time: n.time - minTime, duration: n.duration })) };
 }
-function triggerAccompanimentPattern(triggerMidi) {
+function triggerAccompanimentPattern(triggerMidi, wantQuality) {
   const pattern = organPatternFor(organActiveStyle);
   if (!pattern) return;
   stopOrganPlayback(); // una tecla nueva REEMPLAZA a la que estaba sonando, no se suman
@@ -3391,18 +3391,28 @@ function triggerAccompanimentPattern(triggerMidi) {
   const rate = Math.max(0.1, speed || 1);
   const lastNote = pattern.notes[pattern.notes.length - 1];
   const patternEndSec = (lastNote.time + lastNote.duration) / rate;
-  organLastChordInfo = { rootPc: ((triggerMidi % 12) + 12) % 12, quality: chordInfo.quality };
+  const outQuality = wantQuality || chordInfo.quality;
+  organLastChordInfo = { rootPc: ((triggerMidi % 12) + 12) % 12, quality: outQuality };
+  // Si la letra pide un acorde de otra calidad que el patrón (ej.: patrón mayor, acorde menor), se baja/sube la tercera medio tono.
+  const thirdShift = (n) => {
+    if (outQuality === chordInfo.quality) return 0;
+    const iv = (((n.midi - chordInfo.rootPc) % 12) + 12) % 12;
+    if (chordInfo.quality === 'mayor' && iv === 4) return -1;
+    if (chordInfo.quality === 'menor' && iv === 3) return 1;
+    return 0;
+  };
   pattern.notes.forEach(n => {
+    const outMidi = n.midi + semitones + thirdShift(n);
     const id = setTimeout(() => {
-      playAutoNote(n.midi + semitones, n.duration / rate, false, organAccGain);
-      registerRecordedNoteEvent(n.midi + semitones, n.duration / rate);
+      playAutoNote(outMidi, n.duration / rate, false, organAccGain);
+      registerRecordedNoteEvent(outMidi, n.duration / rate);
     }, (n.time / rate) * 1000);
     organPendingTimeouts.push(id);
   });
   // Loop automático: al llegar al final del patrón, se vuelve a disparar solo, hasta que cambiés
   // de tecla (stopOrganPlayback cancela este timeout también) o apagués el estilo.
   if (organLoopOn) {
-    const loopId = setTimeout(() => triggerAccompanimentPattern(triggerMidi), patternEndSec * 1000);
+    const loopId = setTimeout(() => triggerAccompanimentPattern(triggerMidi, wantQuality), patternEndSec * 1000);
     organPendingTimeouts.push(loopId);
   }
 }
@@ -13504,9 +13514,19 @@ function adjustCifraPanelTop() {
 window.addEventListener('resize', () => { if (cifraPanelOpen) adjustCifraPanelTop(); });
 function closeCifraPanel() {
   const wrap = document.getElementById('cifraPanelWrap'); if (wrap) wrap.style.display = 'none';
-  cifraPanelOpen = false; cifraChordInfo = null; paintCifraTargets([]);
+  cifraPanelOpen = false; cifraChordInfo = null; cifraPlaying = false; paintCifraTargets([]);
+  if (organActiveStyle) stopOrganPlayback();
   const b = document.getElementById('cifraClubBtn'); if (b) { b.textContent = '🎼 Tocar con Cifra Club'; b.classList.remove('on'); }
   lastScaleHighlightKey = null; if (typeof updateScaleHighlight === 'function') updateScaleHighlight();
+}
+// Acompañamiento automático (Pablo, 24/10/2026): con un estilo de Órgano armado y la letra corriendo, cada cambio de
+// acorde de la letra dispara el patrón en esa raíz y calidad. Se frena al pausar la letra.
+let cifraPlaying = false;
+function cifraDriveAccompaniment() {
+  if (!cifraPanelOpen || !cifraPlaying || !organActiveStyle || !cifraChordInfo) return;
+  const pc = cifraChordInfo.rootPc;
+  const midi = 48 + (((pc - 48) % 12) + 12) % 12; // zona de la mano izquierda (Do3 a Si3), debajo del Do central
+  triggerAccompanimentPattern(midi, cifraChordInfo.quality);
 }
 function paintCifraTargets(midis) {
   document.querySelectorAll('.cifra-target').forEach(el => el.classList.remove('cifra-target'));
@@ -13523,6 +13543,10 @@ window.addEventListener('message', e => {
   if (d.type === 'chord') {
     cifraChordInfo = (d.root === null || d.root === undefined) ? null : { rootPc: d.root, quality: d.quality === 'menor' ? 'menor' : 'mayor' };
     lastScaleHighlightKey = null; updateScaleHighlight();
+    cifraDriveAccompaniment();
+  } else if (d.type === 'play') {
+    cifraPlaying = !!d.on;
+    if (!cifraPlaying) { if (organActiveStyle) stopOrganPlayback(); } else cifraDriveAccompaniment();
   } else if (d.type === 'target') {
     paintCifraTargets(Array.isArray(d.midis) ? d.midis : []);
   }

@@ -394,7 +394,7 @@ function loadCifra(){
 /* ============ karaoke: la letra corre sola ============ */
 let playing=false, lpm=+(store.get('acordes-lpm')||12), lastT=0;
 function setSpeed(v){ lpm=Math.max(3,Math.min(60,v)); store.set('acordes-lpm',String(lpm)); $('spdV').textContent=lpm; }
-function setPlaying(p){ playing=p; lastT=0; $('playBtn').textContent=p?'⏸ Pausa':'▶ Pasar letra'; $('playBtn').className=p?'stop':'go'; }
+function setPlaying(p){ playing=p; lastT=0; toParent({type:'play',on:p}); $('playBtn').textContent=p?'⏸ Pausa':'▶ Pasar letra'; $('playBtn').className=p?'stop':'go'; }
 function frame(t){
   requestAnimationFrame(frame); if(!lastT) lastT=t; const dt=Math.min(.1,(t-lastT)/1000); lastT=t;
   if(playing && LINES.length){ kPos+=dt*lpm/60; const end=LINES.length-0.001; if(kPos>=end){ kPos=end; setPlaying(false); } refresh(); }
