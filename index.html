@@ -2980,6 +2980,11 @@ const ORGAN_STYLE_TITLES = {
 // - Balada 3: un acorde arpegiado ("rodado") del piano de mano izquierda de "Ciega Sordomuda"
 //   (Shakira) — mismo estilo balada, pero con las notas desplegadas en vez de en bloque.
 const ORGAN_BUILTIN_PATTERNS = {
+  // Cuerdas (24/10/2026, Pablo: "un string plano, así uno le va cantando encima y no tiene los rebotes del piano"):
+  // el acorde entero sostenido, sin ritmo, con violín + cello. Es el estilo por defecto al abrir Cifra Club.
+  cuerdas: { rootMidi: 48, voice: 'strings', notes: [
+    { midi: 48, time: 0, duration: 4 }, { midi: 55, time: 0, duration: 4 }, { midi: 64, time: 0, duration: 4 }, { midi: 67, time: 0, duration: 4 }, { midi: 72, time: 0, duration: 4 },
+  ]},
   // Cumbia 1: grabación TUYA recuperada del navegador viejo (24/10/2026) -- "TRIADA SIMPLE BALADA EN DO MAYOR".
   cumbia: { rootMidi: 60, notes: [
     { midi: 64, time: 0, duration: 0.419 },
@@ -3194,6 +3199,7 @@ const ORGAN_BUILTIN_PATTERNS = {
 // nuevo: agregarlo a ORGAN_BUILTIN_PATTERNS (o ORGAN_STYLE_TITLES si es una grabación tuya) Y acá
 // — el desplegable se arma solo con esto, no hay que tocar el HTML nunca más.
 const ORGAN_STYLE_META = {
+  cuerdas: { label: 'Cuerdas (sonido plano, sin ritmo)', category: 'Cuerdas' },
   cumbia: { label: 'Cumbia 1', category: 'Cumbia' },
   balada: { label: 'Balada 1', category: 'Balada' },
   balada2: { label: 'Balada 2', category: 'Balada' },
@@ -3294,6 +3300,8 @@ let organPendingTimeouts = [];
 function stopOrganPlayback() {
   organPendingTimeouts.forEach(id => clearTimeout(id));
   organPendingTimeouts = [];
+  // las cuerdas quedan sonando largo: se sueltan (con su fundido) al cambiar de acorde o frenar
+  if (organStringsOn) { organStringsOn = false; try { if (violinSynth && violinSynth.releaseAll) violinSynth.releaseAll(); if (celloSynth && celloSynth.releaseAll) celloSynth.releaseAll(); } catch (e) {} }
 }
 function selectOrganStyle(styleKey) {
   organActiveStyle = styleKey;
@@ -3385,6 +3393,15 @@ function organPatternFor(styleKey) {
   const minTime = Math.min(...song.notes.map(n => n.time));
   return { rootMidi, notes: song.notes.map(n => ({ midi: n.midi, time: n.time - minTime, duration: n.duration })) };
 }
+// Cuerdas = cello para lo grave + violín para lo agudo (ya están cargados, no hace falta comprarlos para este uso).
+let organStringsOn = false;
+function playStringsNote(midi, duration, gain) {
+  if (soundOutputMode === 'midi' && midiOutputRef) { playAutoNote(midi, duration, false, gain); return; }
+  if (!audioReady) return;
+  organStringsOn = true;
+  const v = midi < 60 ? celloSynth : violinSynth;
+  if (v) v.triggerAttackRelease(midiToNoteName(midi), duration, undefined, gain);
+}
 function triggerAccompanimentPattern(triggerMidi, wantQuality) {
   const pattern = organPatternFor(organActiveStyle);
   if (!pattern) return;
@@ -3409,7 +3426,8 @@ function triggerAccompanimentPattern(triggerMidi, wantQuality) {
   pattern.notes.forEach(n => {
     const outMidi = n.midi + semitones + thirdShift(n);
     const id = setTimeout(() => {
-      playAutoNote(outMidi, n.duration / rate, false, organAccGain);
+      if (pattern.voice === 'strings') playStringsNote(outMidi, n.duration / rate, organAccGain);
+      else playAutoNote(outMidi, n.duration / rate, false, organAccGain);
       registerRecordedNoteEvent(outMidi, n.duration / rate);
     }, (n.time / rate) * 1000);
     organPendingTimeouts.push(id);
@@ -13619,6 +13637,7 @@ function openCifraPanel() {
   }
   wrap.style.display = 'block'; cifraPanelOpen = true;
   adjustCifraPanelTop();
+  if (!organActiveStyle) selectOrganStyle('cuerdas'); // por defecto, acompañamiento plano de cuerdas
   const b = document.getElementById('cifraClubBtn'); if (b) { b.textContent = '⬅ Cerrar Cifra Club'; b.classList.add('on'); }
   lastScaleHighlightKey = null; updateScaleHighlight();
 }
