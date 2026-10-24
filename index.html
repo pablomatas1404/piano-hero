@@ -1623,6 +1623,11 @@
       <!-- Constructor de canciones: botón chiquito que abre la ventana de armado (4 acordes, estilo,
            duración). La tira grande con los alfileres NO va acá — Construir la manda a la pantalla
            central, ocupando todo el ancho, en vez de meterla apretada en este panel angosto. -->
+      <div class="zoom-bar" id="organAccVolRow" style="margin-top:8px; display:flex; align-items:center; gap:8px;" title="Baja o sube SOLO el acompañamiento del Órgano. Lo que tocás vos con la mano derecha no cambia.">
+        <span style="font-size:13px; white-space:nowrap;">🔉 Acompañamiento</span>
+        <input type="range" id="organAccVol" min="5" max="100" step="5" value="100" style="flex:1; min-width:0;" oninput="setOrganAccVol(this.value)">
+        <b id="organAccVolTxt" style="min-width:42px; text-align:right; font-size:13px;">100%</b>
+      </div>
       <div class="zoom-bar" id="songEditorEntryRow" style="margin-top:8px;">
         <button class="btn" onclick="openSongEditor()" title="Armar una pista de acompañamiento a medida: elegís hasta 6 acordes, un estilo y una duración">🔧 Constructor</button>
         <button class="btn" onclick="openCifraChordHelper()" title="Pegás la letra y acordes de Cifra Club, y te digo qué acordes distintos aparecen — para que los anotes vos en el Constructor. Esto NO arma nada solo.">🎼 Ayuda de Cifra Club</button>
@@ -3283,6 +3288,19 @@ function stopOrganStyle() { selectOrganStyle(null); }
 // estilo — apagado, cada tecla toca el fragmento una sola vez. Arranca PRENDIDO (pedido explícito
 // de Pablo: "es lo que más vamos a usar").
 let organLoopOn = true;
+// "Volumen del acompañamiento" (24/10/2026, Pablo: "el acompañamiento del modo órgano estaba muy fuerte comparado
+// con la melodía"): escala SOLO lo que dispara el Órgano (triggerAccompanimentPattern), nunca lo que tocás vos.
+let organAccGain = 1;
+try { const g = parseFloat(localStorage.getItem('pianoHero_organAccGain')); if (g >= 0.05 && g <= 1) organAccGain = g; } catch (e) {}
+function setOrganAccVol(pct) {
+  organAccGain = Math.max(0.05, Math.min(1, (parseFloat(pct) || 100) / 100));
+  try { localStorage.setItem('pianoHero_organAccGain', String(organAccGain)); } catch (e) {}
+  const t = document.getElementById('organAccVolTxt'); if (t) t.textContent = Math.round(organAccGain * 100) + '%';
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const s = document.getElementById('organAccVol'); if (s) s.value = Math.round(organAccGain * 100);
+  const t = document.getElementById('organAccVolTxt'); if (t) t.textContent = Math.round(organAccGain * 100) + '%';
+});
 function toggleOrganLoop(btnEl) {
   organLoopOn = !organLoopOn;
   btnEl.classList.toggle('on', organLoopOn);
@@ -3356,7 +3374,7 @@ function triggerAccompanimentPattern(triggerMidi) {
   organLastChordInfo = { rootPc: ((triggerMidi % 12) + 12) % 12, quality: chordInfo.quality };
   pattern.notes.forEach(n => {
     const id = setTimeout(() => {
-      playAutoNote(n.midi + semitones, n.duration / rate, false);
+      playAutoNote(n.midi + semitones, n.duration / rate, false, organAccGain);
       registerRecordedNoteEvent(n.midi + semitones, n.duration / rate);
     }, (n.time / rate) * 1000);
     organPendingTimeouts.push(id);
@@ -4083,7 +4101,7 @@ NativePianoSampler.prototype.nearestSampleName = function (midi) {
   for (const name in this.buffers) { if (this.midiFromNoteName(name) === best) return name; }
   return null;
 };
-NativePianoSampler.prototype.triggerAttack = function (noteName) {
+NativePianoSampler.prototype.triggerAttack = function (noteName, time, velocity) {
   const midi = this.midiFromNoteName(noteName);
   const nearestName = this.nearestSampleName(midi);
   if (!nearestName) return; // ninguna muestra lista todavía, no pasa nada raro
@@ -4095,7 +4113,7 @@ NativePianoSampler.prototype.triggerAttack = function (noteName) {
   const gain = this.ctx.createGain();
   const now = this.ctx.currentTime;
   gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(1, now + 0.012); // fundido de entrada, sin click de arranque
+  gain.gain.exponentialRampToValueAtTime(typeof velocity === 'number' ? Math.max(0.0002, Math.min(1, velocity)) : 1, now + 0.012); // fundido de entrada, sin click de arranque (velocity = volumen de esta nota, 0..1)
   src.connect(gain);
   gain.connect(this.destination);
   src.start(now);
@@ -4115,8 +4133,8 @@ NativePianoSampler.prototype.stopVoice = function (noteName, instant) {
   delete this.voices[noteName];
 };
 NativePianoSampler.prototype.triggerRelease = function (noteName) { this.stopVoice(noteName, false); };
-NativePianoSampler.prototype.triggerAttackRelease = function (noteName, duration) {
-  this.triggerAttack(noteName);
+NativePianoSampler.prototype.triggerAttackRelease = function (noteName, duration, time, velocity) {
+  this.triggerAttack(noteName, time, velocity);
   const self = this;
   setTimeout(function () { self.stopVoice(noteName, false); }, (typeof duration === 'number' ? duration : 0.5) * 1000);
 };
@@ -6865,15 +6883,16 @@ function sendMidiNoteOff(midi) { if (midiOutputRef) midiOutputRef.send([0x80, mi
 // sigue la misma regla que el resto: si el sonido va al teclado, TODO lo musical va al teclado (la
 // voz que felicita al terminar es la única excepción posible — esa nunca puede salir por MIDI,
 // porque no es una nota, es audio de verdad, así que esa siempre sigue sonando en la compu).
-function playAutoNote(midi, duration, isDrum) {
+function playAutoNote(midi, duration, isDrum, gain) {
   if (soundOutputMode === 'midi' && midiOutputRef) {
     const onByte = isDrum ? 0x99 : 0x90, offByte = isDrum ? 0x89 : 0x80; // canal 10 (percusión GM) para batería
-    midiOutputRef.send([onByte, midi, 100]);
+    midiOutputRef.send([onByte, midi, gain == null ? 100 : Math.max(1, Math.round(100 * gain))]);
     const ms = Math.max(30, (duration || 0.3) * 1000);
     setTimeout(() => { if (midiOutputRef) midiOutputRef.send([offByte, midi, 0]); }, ms);
   } else if (audioReady) {
     if (isDrum) triggerDrumSound(midi);
-    else activeVoice().triggerAttackRelease(midiToNoteName(midi), duration);
+    else if (gain == null) activeVoice().triggerAttackRelease(midiToNoteName(midi), duration);
+    else activeVoice().triggerAttackRelease(midiToNoteName(midi), duration, undefined, gain);
   }
 }
 
