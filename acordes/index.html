@@ -54,14 +54,24 @@ input[type=checkbox]{width:1.1em;height:1.1em}
 .teacher b{font-family:var(--font-chord);letter-spacing:.04em;color:var(--next);margin-right:6px}
 /* La pantalla grande: toma todo el alto que sobra */
 .tele{flex:1;min-height:0;overflow-y:auto;padding:10px 16px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.telewrap{position:relative;flex:1;min-height:0;display:flex}
+.readline{position:absolute;left:0;right:0;top:33%;border-top:2px dashed color-mix(in srgb,var(--accent) 70%,transparent);pointer-events:none}
+.sp{height:30vh}
+.lyhead{margin:20px 0 6px;font-family:var(--font-chord);font-size:1.8rem;font-weight:700;color:var(--accent)}
+.spd{display:inline-flex;align-items:center;gap:6px}
+.spd button{padding:6px 12px}
+.spd b{min-width:2.2em;text-align:center;font-family:var(--font-chord);font-size:1.2rem}
+.ch-edit{font:inherit;font-weight:700;font-size:1.3rem;width:9em;padding:2px 6px}
+body.fs .seg .tx{font-size:2.3rem}body.fs .seg .ch{font-size:1.9rem}
 .tele:empty::before{content:"Acá va a aparecer la letra con los acordes. Tocá \"Pegar cifra\", pegá la cifra y apretá \"Cargar cifra\".";color:var(--muted)}
 .lyline{display:flex;flex-wrap:wrap;align-items:flex-end;margin:6px 0;line-height:1.25}
 .seg{display:inline-flex;flex-direction:column;white-space:pre}
-.seg .ch{font-family:var(--font-chord);font-weight:700;font-size:1.35rem;color:var(--next);min-height:1.4em;padding:0 .7em 0 0;border-radius:5px;cursor:pointer}
+.seg .ch{font-family:var(--font-chord);font-weight:700;font-size:1.6rem;color:var(--next);min-height:1.4em;padding:0 .7em 0 0;border-radius:5px;cursor:pointer}
 .seg .ch.cur{background:var(--accent);color:var(--accent-ink);padding-left:.3em}
-.seg .tx{white-space:pre-wrap;font-size:1.55rem}
+.seg .tx{white-space:pre-wrap;font-size:1.9rem}
 .lyplain{margin:12px 0 2px;font-weight:600;color:var(--muted);font-size:1.1rem}
-.eval{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;min-height:2rem}
+.eval{display:none;flex-wrap:wrap;align-items:center;gap:4px 12px;min-height:2rem}
+body.les .eval{display:flex}   /* el cartel de "notas sueltas / te falta..." solo se ve en la lección guiada */
 .badge{font-family:var(--font-chord);font-weight:700;font-size:1.3rem;padding:0 12px;border-radius:8px;background:var(--cell)}
 .badge.ok{background:var(--ok);color:#fff}.badge.bad{background:var(--bad);color:#fff}
 .hint{color:var(--muted)}
@@ -73,6 +83,8 @@ input[type=checkbox]{width:1.1em;height:1.1em}
 .w.tgt.prs{background:color-mix(in srgb,var(--ok) 60%,var(--wkey))}
 .b{position:absolute;top:0;width:3.6%;height:62%;background:var(--bkey);border-radius:0 0 4px 4px;z-index:2;cursor:pointer;transform:translateX(-50%)}
 .b.tgt{background:var(--accent)} .b.prs{background:var(--next)} .b.tgt.prs{background:var(--ok)}
+.w.nx:not(.tgt){box-shadow:inset 0 -6px 0 var(--next)}
+.b.nx:not(.tgt){outline:3px solid var(--next);outline-offset:-3px}
 /* Panel para pegar la cifra (aparece encima; se cierra solo al cargar) */
 .paste{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px}
 .paste[hidden]{display:none}
@@ -92,7 +104,9 @@ a{color:var(--next)}
     <span class="brand">Lamento boliviano<small>Enanitos Verdes · Mi menor</small></span>
     <span class="midi"><span class="dot" id="midiDot"></span><span id="midiTxt">Buscando teclado MIDI…</span></span>
     <button type="button" id="pasteBtn">Pegar cifra</button>
-    <button type="button" class="go" id="lessonBtn">Lección guiada</button>
+    <button type="button" class="go" id="playBtn">▶ Pasar letra</button>
+    <span class="spd" title="Velocidad con la que corre la letra"><button type="button" id="spdM">−</button><b id="spdV">30</b><button type="button" id="spdP">+</button></span>
+    <button type="button" id="lessonBtn">Lección guiada</button>
     <details class="opt">
       <summary>Opciones</summary>
       <div class="pop">
@@ -111,7 +125,7 @@ a{color:var(--next)}
   </div>
   <div class="teacher" id="teacher" hidden><b>PROFESOR</b><span id="teacherTxt"></span></div>
 
-  <div class="tele" id="cifraView" aria-live="off"></div>
+  <div class="telewrap"><div class="tele" id="cifraView" aria-live="off"></div><div class="readline" aria-hidden="true"></div></div>
 
   <div class="eval"><span class="badge" id="played">–</span><span class="hint" id="evalTxt">Cargá una cifra, o apretá "Lección guiada".</span></div>
   <div class="kb" id="kb" aria-label="Teclado virtual"></div>
@@ -211,10 +225,17 @@ window.tutor={
 /* ---- estado de la canción ---- */
 let flat = [], pos = -1, timer = null, tick = 0, target = null;
 let custom = null;   // {midis:[...], tones:Set, text}  puesto por el profesor (window.tutor.set)
+/* notas del acorde que SIGUE (para ir preparando la mano): borde azul, mientras que el actual va en ámbar */
+function nextTones(){
+  try{ if(custom||typeof cifIdx==='undefined'||cifIdx<0) return new Set(); const el=cifEls()[cifIdx+1]; if(!el) return new Set();
+    return new Set(parse(label(cifCode(el.dataset.tok))).tones.slice(0,3)); }catch(e){ return new Set(); }
+}
+let nxTones=new Set();
 function paintKeys(){
+  nxTones=nextTones();
   const tg = custom ? new Set() : (target ? new Set(allowedTones(target)) : new Set());
   document.querySelectorAll('#kb [data-m]').forEach(el=>{
-    const m = +el.dataset.m; el.classList.toggle('tgt', custom ? custom.midis.includes(m) : tg.has(m%12)); el.classList.toggle('prs', pressed.has(m));
+    const m = +el.dataset.m; el.classList.toggle('tgt', custom ? custom.midis.includes(m) : tg.has(m%12)); el.classList.toggle('prs', pressed.has(m)); el.classList.toggle('nx', nxTones.has(m%12));
   });
 }
 function refreshKb(){ paintKeys(); }
@@ -345,7 +366,7 @@ function chordEs(tok,simple){ const p=parseChordTok(tok); if(!p) return tok;
   return w; }
 function chordKey(tok){ const p=parseChordTok(tok); return p? p.root+(p.q==='m'||p.q==='min'?'m':'') : null; }
 function renderCifra(){
-  const txt=$('cifraTxt').value, box=$('cifraView'); box.innerHTML='';
+  const txt=$('cifraTxt').value, box=$('cifraView'); box.innerHTML=''; evN=0; EDITS=loadEdits(); lastRow=-1;
   if(!txt.trim()){ $('cifraStatus').textContent='La caja está vacía. Pegá la cifra y apretá "Cargar cifra".'; return; }
   const lines=txt.replace(/\r/g,'').split('\n'), simple=$('simple').checked;
   for(let i=0;i<lines.length;i++){
@@ -355,27 +376,58 @@ function renderCifra(){
       const cols=[], re=/\S+/g; let m; while((m=re.exec(l))) cols.push({i:m.index,t:m[0]});
       const row=document.createElement('div'); row.className='lyline';
       const text = useNext ? nxt : '';
-      const seg=(chord,txt2)=>{ const s=document.createElement('span'); s.className='seg';
-        const c=document.createElement('span'); c.className='ch'; c.textContent=chord?chordEs(chord,simple):' '; if(chord){ const k=chordKey(chord); if(k!==null){ c.dataset.k=k; c.dataset.tok=chord; c.addEventListener('click',()=>cifGoEl(c)); } }
+      const seg=(chord,txt2)=>{ const s=document.createElement('span'); s.className='seg'; let myIdx=-1; if(chord && !CH_OTHER.has(chord) && chordKey(chord)!==null){ myIdx=evN++; if(EDITS[myIdx]) chord=EDITS[myIdx]; }
+        const c=document.createElement('span'); c.className='ch'; c.textContent=chord?chordEs(chord,simple):' '; if(chord){ const k=chordKey(chord); if(k!==null){ c.dataset.k=k; c.dataset.tok=chord; c.dataset.idx=myIdx; c.title='Un clic: ir a este acorde. Doble clic: corregirlo.'; c.addEventListener('click',()=>cifGoEl(c)); c.addEventListener('dblclick',()=>chordEdit(c)); } }
         const t=document.createElement('span'); t.className='tx'; t.textContent=txt2||' '; s.append(c,t); row.appendChild(s); };
       if(useNext && cols[0].i>0) seg(null,text.slice(0,cols[0].i));
       cols.forEach((c,k)=>{ const end=k+1<cols.length?cols[k+1].i:undefined; seg(CH_OTHER.has(c.t)?null:c.t, useNext? text.slice(c.i,end):''); });
       if(useNext) i++;   // la línea de letra ya quedó dibujada junto a sus acordes
       box.appendChild(row);
-    } else if(l.trim()){ const d=document.createElement('div'); d.className='lyplain'; d.textContent=l; box.appendChild(d); }
+    } else if(l.trim()){ const d=document.createElement('div'); d.className = l.trim().startsWith('[') ? 'lyhead' : 'lyplain'; d.textContent=l; box.appendChild(d); }
     else { const d=document.createElement('div'); d.style.height='.6rem'; box.appendChild(d); }
   }
+  if(box.firstChild){ const a=document.createElement('div'); a.className='sp'; box.insertBefore(a,box.firstChild); const z=document.createElement('div'); z.className='sp'; box.appendChild(z); }
   cifIdx=-1; markCifra();
   const n=cifEls().length; $('cifraStatus').textContent = n ? ('Listo: '+n+' acordes cargados. La letra está arriba, junto al piano. Doble toque en la tecla de salto para empezar.') : 'Pegaste texto, pero no encontré acordes. Copiá también las líneas de arriba, donde están los acordes (Em, Bm, Am…).';
 }
-let cifIdx=-1;
+let cifIdx=-1, EDITS={}, evN=0, lastRow=-1, holdUntil=0;
+/* correcciones de acordes: se guardan por cifra, para que no se pierdan al recargar */
+function cifraHash(){ const t=$('cifraTxt').value; let x=7; for(let i=0;i<t.length;i++) x=(x*31+t.charCodeAt(i))%1000000007; return String(x); }
+function loadEdits(){ try{ return JSON.parse(store.get('acordes-edits-'+cifraHash())||'{}'); }catch(e){ return {}; } }
+function saveEdits(){ store.set('acordes-edits-'+cifraHash(), JSON.stringify(EDITS)); }
+/* "mi menor", "Si mayor", "re 7", "sol", "la m7", "fa# menor" -> Em, B, D7, G, Am7, F#m */
+function esToTok(s){
+  const direct=CH_RE.exec(s.trim()); if(direct) return s.trim();
+  let t=s.toLowerCase().trim(); const from='áéíóú', to='aeiou'; for(let i=0;i<5;i++) t=t.split(from[i]).join(to[i]);
+  t=t.split('sostenido').join('#').split('bemol').join('b');
+  const roots=[['sol','G'],['do','C'],['re','D'],['mi','E'],['fa','F'],['la','A'],['si','B']]; let L=null;
+  for(const r of roots){ if(t.startsWith(r[0])){ L=r[1]; t=t.slice(r[0].length); break; } }
+  if(!L) return null;
+  t=t.split(' ').join(''); let acc=''; if(t.startsWith('#')||t.startsWith('b')){ acc=t[0]; t=t.slice(1); }
+  t=t.split('menor').join('m').split('min').join('m').split('mayor').join('');
+  if(t===''||t==='m'||t==='7'||t==='m7') return L+acc+t;
+  return null;
+}
+function chordEdit(c){
+  const idx=+c.dataset.idx; const inp=document.createElement('input'); inp.className='ch-edit'; inp.value=c.textContent.trim();
+  inp.placeholder='ej: mi menor, si mayor, re 7'; let done=false;
+  const finish=ok=>{ if(done) return; done=true;
+    if(ok){ const tok=esToTok(inp.value); if(!tok){ done=false; inp.style.outline='2px solid var(--bad)'; $('cifraStatus').textContent='No entendí ese acorde. Escribilo como "mi menor", "si mayor", "re 7".'; return; }
+      EDITS[idx]=tok; saveEdits(); }
+    const tele=$('cifraView'), sc=tele.scrollTop, keep=cifIdx; renderCifra(); tele.scrollTop=sc; if(keep>=0) cifGo(keep,true); };
+  inp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') finish(true); else if(e.key==='Escape') finish(false); });
+  inp.addEventListener('blur',()=>setTimeout(()=>finish(false),150));
+  c.replaceWith(inp); inp.focus(); inp.select();
+}
 function cifEls(){ return [...document.querySelectorAll('#cifraView .ch[data-tok]')]; }
 function cifCode(tok){ const m=CH_RE.exec(tok); const minor=m[2]==='m'||m[2]==='min'; return m[1]+(minor?'m':'')+(!$('simple').checked && m[3]==='7'?'7':''); }
 function cifGoEl(el){ cifGo(cifEls().indexOf(el)); }
-function cifGo(i){ const els=cifEls(); if(i<0||i>=els.length) return; cifIdx=i;
+function cifGo(i,quiet){ const els=cifEls(); if(i<0||i>=els.length) return; cifIdx=i;
   const code=cifCode(els[i].dataset.tok); setTarget(code);
   $('nowChord').textContent=show(code); const nx=els[i+1]; $('nextChord').textContent=nx?show(cifCode(nx.dataset.tok)):'Fin';
-  const tele=$('cifraView'), row=els[i].closest('.lyline'); if(row){ const r=row.getBoundingClientRect(), t=tele.getBoundingClientRect(); tele.scrollTop += (r.top-t.top) - tele.clientHeight/3; } }
+  const tele=$('cifraView'), row=els[i].closest('.lyline');
+  if(row){ lastRow=[...tele.querySelectorAll('.lyline')].indexOf(row);
+    if(!quiet){ holdUntil=Date.now()+700; const r=row.getBoundingClientRect(), t=tele.getBoundingClientRect(); if(r.top<t.top+10||r.bottom>t.bottom-10) tele.scrollTop += (r.top-t.top) - tele.clientHeight*0.33; } } }
 function markCifra(){ cifEls().forEach((c,i)=>c.classList.toggle('cur', i===cifIdx)); }
 $('cifraTxt').addEventListener('input',()=>{ store.set('acordes-cifra',$('cifraTxt').value); renderCifra(); });
 $('cifraTxt').value = store.get('acordes-cifra')||''; $('cifraDet').open = !$('cifraTxt').value;
@@ -400,8 +452,8 @@ let lesson=null;   // {i, armed}
 function lessonShow(){
   const s=LESSON[lesson.i]; tutor.set({midis:s.m, text:'Paso '+(lesson.i+1)+' de '+LESSON.length+'. '+s.t+' Vale en cualquier octava.'}); lesson.armed=false;
 }
-function lessonStart(){ lesson={i:0,armed:false}; $('lessonBtn').textContent='Salir de la lección'; lessonShow(); }
-function lessonStop(){ lesson=null; $('lessonBtn').textContent='Lección guiada'; tutor.clear(); }
+function lessonStart(){ document.body.classList.add('les'); lesson={i:0,armed:false}; $('lessonBtn').textContent='Salir de la lección'; lessonShow(); }
+function lessonStop(){ document.body.classList.remove('les'); lesson=null; $('lessonBtn').textContent='Lección guiada'; tutor.clear(); }
 $('lessonBtn').addEventListener('click',()=> lesson? lessonStop() : lessonStart());
 setInterval(()=>{
   if(!lesson) return;
@@ -411,6 +463,28 @@ setInterval(()=>{
     setTimeout(()=>{ if(!lesson) return; lesson.i++; if(lesson.i>=LESSON.length){ lessonStop(); tutor.say('¡Terminaste! Tocaste los cuatro acordes y la canción en orden.'); } else lessonShow(); },900);
   }
 },100);
+
+/* ---- teleprompter: la letra corre sola; Pausa para hablar; más / menos para la velocidad ---- */
+let playing=false, speed=+(store.get('acordes-speed')||30), accY=0, lastT=0;
+function setSpeed(v){ speed=Math.max(5,Math.min(200,v)); store.set('acordes-speed',String(speed)); $('spdV').textContent=speed; }
+function setPlaying(p){ playing=p; lastT=0; $('playBtn').textContent=p?'⏸ Pausa':'▶ Pasar letra'; $('playBtn').className=p?'stop':'go'; }
+function readUpdate(){
+  if(Date.now()<holdUntil) return; const tele=$('cifraView'); const rows=tele.querySelectorAll('.lyline'); if(!rows.length) return;
+  const readY=tele.getBoundingClientRect().top+tele.clientHeight*0.33; let cur=-1;
+  for(let i=0;i<rows.length;i++){ if(rows[i].getBoundingClientRect().top<=readY) cur=i; else break; }
+  if(cur<0||cur===lastRow) return; lastRow=cur;
+  const first=rows[cur].querySelector('.ch[data-tok]'); if(first) cifGo(cifEls().indexOf(first),true);
+}
+function prompterFrame(t){
+  requestAnimationFrame(prompterFrame); const tele=$('cifraView'); if(!lastT) lastT=t; const dt=Math.min(.1,(t-lastT)/1000); lastT=t;
+  if(playing && tele.firstChild){ accY+=speed*dt; const w=Math.floor(accY); if(w>=1){ tele.scrollTop+=w; accY-=w; } }
+  readUpdate();
+}
+requestAnimationFrame(prompterFrame);
+$('playBtn').addEventListener('click',()=>setPlaying(!playing));
+$('spdM').addEventListener('click',()=>setSpeed(speed-5)); $('spdP').addEventListener('click',()=>setSpeed(speed+5));
+document.addEventListener('keydown',e=>{ if(e.key===' ' && !/INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName)){ e.preventDefault(); setPlaying(!playing); } });
+setSpeed(speed);
 
 /* ---- panel para pegar la cifra y pantalla completa ---- */
 function togglePaste(show){ $('pastePanel').hidden=!show; if(show) $('cifraTxt').focus(); }
