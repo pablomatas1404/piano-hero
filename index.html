@@ -11322,6 +11322,13 @@ const STORE_ITEMS = [
 
 let ownedItems = JSON.parse(localStorage.getItem('pianoHero_owned') || '[]');
 function saveOwnedItems() { localStorage.setItem('pianoHero_owned', JSON.stringify(ownedItems)); }
+// A pedido de Pablo (24/10/2026, "no tengo tiempo de comprar... ponémelos como si los hubiera comprado todos"):
+// todos los estilos de Órgano de la Tienda quedan regalados -- también los que se agreguen después.
+(function giftAllOrganStyles() {
+  let changed = false;
+  STORE_ITEMS.forEach(i => { if (i.type === 'organstyle' && !ownedItems.includes(i.id)) { ownedItems.push(i.id); changed = true; } });
+  if (changed) saveOwnedItems();
+})();
 
 // Las "cositas" (gatito, confeti, reloj...) se pueden prender y apagar sin perderlas, a diferencia
 // del saxo o los temas. Por defecto, apenas se compran quedan prendidas.
