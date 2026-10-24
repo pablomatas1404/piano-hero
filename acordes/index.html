@@ -89,6 +89,7 @@ textarea{width:100%;min-height:6rem;margin-top:6px;font:inherit;color:var(--ink)
   <div class="setup">
     <b>En el Yamaha (PSR-E583 / E483)</b>
     <div class="row"><span>Armadura de estilo: <b>SP1</b></span><span>Acordes: <b>035</b></span><span>Salen: <b>Mi menor · Si menor · La menor · Mi menor</b></span></div>
+    <small>Vale tocar el acorde en cualquier octava y en cualquier orden. Doble toque en la tecla de salto (la más aguda, Do7) pasa al acorde siguiente.</small>
     <small>La pantalla del Yamaha usa letras: Em = Mi menor · Bm = Si menor · Am = La menor · B = Si mayor.</small>
     <small>Receta corta: AUTO CHORD PLAY [SELECT], mirar que diga 035, y [START/STOP].</small>
   </div>
@@ -110,6 +111,7 @@ textarea{width:100%;min-height:6rem;margin-top:6px;font:inherit;color:var(--ink)
     <label for="bpm">Tempo <input type="number" id="bpm" min="30" max="200" value="80"></label>
     <label for="per">Cada acorde dura
       <select id="per"><option value="4">1 compás</option><option value="8" selected>2 compases</option><option value="2">2 tiempos</option></select></label>
+    <label>Tecla de salto: <b id="skipName">Do7</b> <button type="button" id="skipBtn" style="padding:4px 10px;font-size:.85rem">Cambiar</button></label>
     <label for="wait"><input type="checkbox" id="wait"> Esperar a que toque el acorde</label>
     <label for="simple"><input type="checkbox" id="simple" checked> Acordes simples</label>
   </div>
@@ -241,7 +243,8 @@ function buildParts(){
     sec.append(h,row,det); box.appendChild(sec);
   });
 }
-function markOnly(i){ flat.forEach((f,k)=>{ f.el.classList.toggle('act',k===i); f.el.classList.remove('nxt','dim'); });
+let selIdx=-1;
+function markOnly(i){ selIdx=i; flat.forEach((f,k)=>{ f.el.classList.toggle('act',k===i); f.el.classList.remove('nxt','dim'); });
   $('nowChord').textContent=show(flat[i].chord); $('nextChord').textContent=flat[i+1]?show(flat[i+1].chord):'Fin'; }
 function paint(){
   flat.forEach((f,i)=>{ f.el.textContent=show(f.chord); f.el.classList.toggle('act',i===pos); f.el.classList.toggle('nxt',pos>=0&&i===pos+1); f.el.classList.toggle('dim',pos>=0&&i<pos); });
@@ -281,8 +284,20 @@ $('wait').addEventListener('change',()=>store.set('acordes-wait',$('wait').check
 
 /* ---- teclado MIDI real (Web MIDI) ---- */
 const held = new Set();
+/* ---- tecla de salto: doble toque en la tecla más aguda (por defecto Do7) pasa al acorde siguiente ---- */
+let skipKey = +(store.get('acordes-skipkey')||96), learning=false, lastSkipOn=0;
+const octName = m => NAMES[m%12] + (Math.floor(m/12)-1);
+function showSkip(){ $('skipName').textContent = learning ? 'tocá la tecla…' : octName(skipKey); }
+function nextStep(){
+  if (lesson){ lesson.i++; if(lesson.i>=LESSON.length){ lessonStop(); tutor.say('¡Terminaste! Pasaste por todos los pasos.'); } else lessonShow(); return; }
+  if (selIdx>=0 && selIdx+1<flat.length){ setTarget(flat[selIdx+1].chord); markOnly(selIdx+1); flat[selIdx+1].el.scrollIntoView({block:'nearest'}); }
+  else tutor.say('No hay más acordes.');
+}
+$('skipBtn').addEventListener('click',()=>{ learning=true; showSkip(); });
 function onMidi(e){
   const [st,m,v]=e.data; const cmd=st&0xf0;
+  if (learning && cmd===0x90 && v>0){ skipKey=m; learning=false; store.set('acordes-skipkey',String(m)); showSkip(); return; }
+  if (m===skipKey){ if(cmd===0x90 && v>0){ const t=Date.now(); if(t-lastSkipOn<450){ lastSkipOn=0; nextStep(); } else lastSkipOn=t; } return; }   // ni suena ni cuenta como nota tocada
   if(cmd===0x90 && v>0){ if(!held.has(m)){ held.add(m); press(m,'midi'); } }
   else if(cmd===0x80 || (cmd===0x90&&v===0)){ if(held.has(m)){ held.delete(m); release(m,'midi'); } }
 }
@@ -311,7 +326,7 @@ const LESSON=[
 ];
 let lesson=null;   // {i, armed}
 function lessonShow(){
-  const s=LESSON[lesson.i]; tutor.set({midis:s.m, text:'Paso '+(lesson.i+1)+' de '+LESSON.length+'. '+s.t}); lesson.armed=false;
+  const s=LESSON[lesson.i]; tutor.set({midis:s.m, text:'Paso '+(lesson.i+1)+' de '+LESSON.length+'. '+s.t+' Vale en cualquier octava.'}); lesson.armed=false;
 }
 function lessonStart(){ lesson={i:0,armed:false}; $('lessonBtn').textContent='Salir de la lección'; lessonShow(); }
 function lessonStop(){ lesson=null; $('lessonBtn').textContent='Lección guiada'; tutor.clear(); }
@@ -330,7 +345,7 @@ setInterval(()=>{
   const s=store.get('acordes-simple'); if(s!==null) $('simple').checked=s==='1';
   const b=store.get('acordes-bpm'); if(b) $('bpm').value=b; const p=store.get('acordes-per'); if(p) $('per').value=p;
   $('wait').checked = store.get('acordes-wait')==='1';
-  buildKb(); buildParts(); paint(); drawBeats(4,0); evaluate();
+  buildKb(); buildParts(); paint(); drawBeats(4,0); evaluate(); showSkip();
 })();
 </script>
 </body>
