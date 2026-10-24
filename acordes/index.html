@@ -389,7 +389,8 @@ function refresh(){ // cada vez que cambia la posición
   const cur=Math.min(LINES.length-1,Math.floor(kPos));
   if(cur!==lastShownLine||nShow!==lastShownN){ renderBig(); markSide(); }
   const p=Math.max(0,Math.min(1,kPos-cur)); bigRefs.forEach((t,k)=>t.style.setProperty('--p',k===0?(p*100).toFixed(1)+'%':'0%'));
-  const e=eventAt(kPos); if(e!==curEv) setCurrentEvent(e);
+  const e=(playing&&EVENTS.length&&!marksDone()&&marks.length>0)?marks.length-1:eventAt(kPos); /* marcando: el acorde lo manda tu doble toque, no la posición del texto */
+  if(e!==curEv) setCurrentEvent(e);
 }
 function goLine(li){ kPos=Math.max(0,Math.min(LINES.length-1,li)); refresh(); }
 function nextStep(){
@@ -491,6 +492,7 @@ function setPlaying(p){
     if(marksDone()) tClock=timeAtPos(kPos);
     else if(marks.length===0 && curEv<=0){ marks=[0]; markT=0; saveMarks(); } }
   playing=p; lastT=0; toParent({type:'play',on:p});
+  if(!p && EVENTS.length && marks.length>0 && !marksDone()){ kPos=posOfEvent(marks.length-1); curEv=-2; refresh(); }  /* al pausar a mitad de marcado, el texto vuelve al acorde marcado */
   $('nowChord').classList.toggle('canedit',!p && EVENTS.length>0);
   if(p) updateMarkUI(); $('playBtn').textContent=p?'⏸ Pausa':'▶ Pasar letra'; $('playBtn').className=p?'stop':'go'; }
 function frame(t){
@@ -501,8 +503,7 @@ function frame(t){
       tClock+=rdt*lpm/12; const p=posAtTime(tClock);
       if(p<0){ kPos=Math.max(kPos,posOfEvent(EVENTS.length-1)); kPos+=dt*lpm/60; } else kPos=p;
     } else if(EVENTS.length){                    /* marcando: el texto corre, pero el acorde espera tu doble toque */
-      markT+=rdt; const lim=(curEv+1<EVENTS.length && curEv>=0)?posOfEvent(curEv+1)-0.002:end;
-      kPos=Math.min(kPos+dt*lpm/60, lim);
+      markT+=rdt; kPos+=dt*lpm/60;
     } else kPos+=dt*lpm/60;
     if(kPos>=end){ kPos=end; setPlaying(false); } refresh(); }
 }
