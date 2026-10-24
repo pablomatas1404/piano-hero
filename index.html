@@ -756,6 +756,19 @@
   .help-content li{ margin-bottom:4px; }
   .help-content b{ color:var(--accent-2); }
   .speed-row{ display:flex; gap:6px; }
+  .metronome-bpm-control{
+    display:inline-flex; align-items:center; gap:3px; padding:2px 4px; border:1px solid var(--line);
+    border-radius:8px; background:var(--panel); color:var(--muted); font-size:11px; white-space:nowrap;
+  }
+  .metronome-bpm-control button{
+    width:20px; height:20px; padding:0; border:1px solid var(--line); border-radius:5px;
+    background:var(--panel-2); color:var(--text); cursor:pointer; font-weight:800; line-height:18px;
+  }
+  .metronome-bpm-control input{
+    width:42px; height:22px; padding:0 3px; border:1px solid var(--line); border-radius:5px;
+    background:var(--bg-1); color:var(--text); text-align:center; font:700 11px 'Consolas','Courier New',monospace;
+  }
+  .metronome-bpm-control input:focus{ border-color:var(--accent); outline:none; }
   /* Muestras de color para "Bolitas" (22/08/2026, a pedido de Pablo) — círculos de color clicables,
      con un aro blanco en el que está elegido ahora. */
   .bolita-color-swatch{
@@ -1003,7 +1016,19 @@
      encabezado se escondía, ni aparecía el botoncito ☰ para volver a mostrarlo -- quedaba en un
      estado intermedio invisible, sin ningún efecto ni forma de notar que "ya estaba prendido".
      Ahora los dos números coinciden. */
+  /* FIX (3/11/2026, Pablo: "desaparecieron de la vista las monedas, tiene que aparecer a la vista, porque es lo mas
+     importante, es la plata para la Tienda"): los creditos viven DENTRO del encabezado, y en modo compacto (ventana de
+     700px de alto o menos -- pasa tambien en una notebook) el encabezado entero se esconde, creditos incluidos.
+     Este contador flotante vive FUERA del encabezado y aparece justo cuando el encabezado esta escondido. */
+  .credits-float{ display:none; position:fixed; top:calc(env(safe-area-inset-top, 0px) + 8px); left:50%; transform:translateX(-50%);
+    z-index:60; align-items:center; gap:8px; background:#04120a; border:2px solid #0f4a2c; border-radius:14px; padding:5px 14px;
+    box-shadow:0 4px 14px rgba(0,0,0,.45); pointer-events:none; }
+  .credits-float .coin{ font-size:20px; }
+  .credits-float b{ font-family:'Consolas','Courier New',monospace; font-size:24px; font-weight:700; letter-spacing:2px; color:#4dff9e;
+    text-shadow:0 0 6px rgba(77,255,158,.75), 0 0 14px rgba(77,255,158,.35); font-variant-numeric:tabular-nums; }
+  .credits-float small{ font-size:11px; font-weight:800; color:#4dff9e; opacity:.8; letter-spacing:1px; }
   @media (max-height:700px){
+    body.header-collapsed .credits-float{ display:flex; }
     body.header-collapsed header{ display:none; }
     body.header-collapsed .header-expand-btn{ display:flex; }
   }
@@ -1203,6 +1228,7 @@
 </style>
 </head>
 <body>
+<div class="credits-float" id="creditsFloat" title="Tus créditos: se ganan tocando canciones y ejercicios completos, y se gastan en la Tienda"><span class="coin">⭐</span><b id="creditsCountFloat">0</b><small>CR</small></div>
 
 <!-- Cartel de "esperá, no toques nada" (22/08/2026, a pedido de Pablo): el archivo es grande, así
      que puede tardar en aparecer el teclado — sin este aviso, la tentación es empezar a apretar
@@ -1508,7 +1534,7 @@
              anteojos a mano): solo aparece en pantallas chicas (tablet/celular) -- en escritorio no
              hace falta, ahí ya se ve grande de sobra. -->
         <button class="btn zoom-1oct-btn" onclick="setZoom(7, this)" title="Las teclas más grandes posibles, una octava entera de ancho de pantalla">1 octava</button>
-        <button class="btn on" id="zoom-2oct" onclick="setZoom(14, this)">2 octavas</button>
+        <button class="btn" id="zoom-2oct" onclick="setZoom(14, this)">2 octavas</button>
         <button class="btn" id="zoom-3oct" onclick="setZoom(21, this)">3 octavas</button>
         <!-- Acceso directo a "Bolitas" (22/08/2026, a pedido de Pablo desde el iPad viejo, donde
              el botón de Configuración todavía no se puede tocar — para no depender de eso, un
@@ -1517,7 +1543,7 @@
              neón si no eligió ninguno) — para el color a elección, con más opciones, sigue
              estando Configuración cuando se pueda usar. -->
         <button class="btn" id="quickBolitaBtn" onclick="toggleQuickBolita(this)" title="Cambia los ladrillos de Cascada por bolitas de color, directo, sin ir a Configuración">⚫ Modo Bolita</button>
-        <button class="btn" onclick="setZoom(52, this)">Piano completo (88 teclas)</button>
+        <button class="btn on" id="zoom-full" onclick="setZoom(52, this)">Piano completo (88 teclas)</button>
       </div>
 
       <!-- Diagnóstico de rendimiento (22/08/2026): junta datos solo durante 10s de una canción
@@ -1754,7 +1780,14 @@
       <span class="mini-toolbar-sep mini-toolbar-collapsible"></span>
       <span class="mini-toolbar-group mini-toolbar-collapsible">
         <button class="btn on" id="btn-wait" onclick="toggleWaitMode(this)" title="La canción se frena hasta que toques la nota correcta">⏳ Modo Espera</button>
-        <button class="btn" id="btn-metronome" onclick="toggleMetronome(this)" title="Clic por cada tiempo del compás (si la canción no trae tempo, marca 100 pulsos por minuto)">🥁 Metrónomo</button>
+        <button class="btn" id="btn-metronome" onclick="toggleMetronome(this)" title="Activa solo el metrónomo, sin iniciar ni reanudar ninguna pista">🥁 Metrónomo</button>
+        <span class="metronome-bpm-control" title="Tempo independiente del metrónomo">
+          <span>♩</span>
+          <button type="button" onclick="nudgeMetronomeBpm(-5)" aria-label="Bajar BPM">−</button>
+          <input id="metronomeBpm" type="number" min="30" max="300" step="1" value="100" onchange="setMetronomeBpm(this.value)" aria-label="BPM del metrónomo">
+          <button type="button" onclick="nudgeMetronomeBpm(5)" aria-label="Subir BPM">+</button>
+          <span>BPM</span>
+        </span>
         <button class="btn" id="btn-notenames" onclick="toggleNoteNames(this)" title="Mostrar/ocultar el nombre de cada nota en el Modo Profesional">🔤 Nombres de nota</button>
         <button class="btn on" id="btn-autoplay-offscreen" onclick="toggleAutoPlayOffscreen(this)" title="Lo que quede fuera de la parte visible del teclado (por el zoom o el scroll) lo toca la máquina sola, para no tener que ir corriendo el teclado">🎹 Auto fuera de pantalla</button>
       </span>
@@ -1866,7 +1899,14 @@
       <button class="btn" data-iv-flag="playControls" style="font-size:10px; padding:4px 7px;" onclick="playSong()" title="Reproducir">▶ Reproducir</button>
       <button class="btn" data-iv-flag="playControls" style="font-size:10px; padding:4px 7px;" onclick="pauseSong()" title="Pausa">⏸ Pausa</button>
       <button class="btn" data-iv-flag="playControls" style="font-size:10px; padding:4px 7px;" onclick="rewindSong(3)" title="Volver 3 segundos atrás">⏪ Rebobinar</button>
-      <button class="btn" data-iv-flag="metronome" id="btn-metronome-iv" onclick="toggleMetronomeIv(this)" style="font-size:10px; padding:4px 7px;" title="Clic por cada tiempo del compás">🥁 Metrónomo</button>
+      <button class="btn" data-iv-flag="metronome" id="btn-metronome-iv" onclick="toggleMetronomeIv(this)" style="font-size:10px; padding:4px 7px;" title="Activa solo el metrónomo, sin iniciar ni reanudar ninguna pista">🥁 Metrónomo</button>
+      <span class="metronome-bpm-control" data-iv-flag="metronome" title="Tempo independiente del metrónomo">
+        <span>♩</span>
+        <button type="button" onclick="nudgeMetronomeBpm(-5)" aria-label="Bajar BPM">−</button>
+        <input id="metronomeBpmIv" type="number" min="30" max="300" step="1" value="100" onchange="setMetronomeBpm(this.value)" aria-label="BPM del metrónomo">
+        <button type="button" onclick="nudgeMetronomeBpm(5)" aria-label="Subir BPM">+</button>
+        <span>BPM</span>
+      </span>
     </div>
     <div id="ivControlsRow2" style="display:none; flex-wrap:wrap; align-items:center; justify-content:center; gap:4px; row-gap:4px; margin-top:4px; margin-bottom:6px;">
       <button class="btn" data-iv-flag="loopMarkers" style="font-size:10px; padding:4px 7px;" onclick="markLoopPoint('start')" title="Marca el inicio del tramo difícil">🔖 Marcar inicio</button>
@@ -1986,6 +2026,14 @@
       <button class="tab-btn" id="tab-trash" onclick="switchTab('trash')" title="Lo que borraste no se pierde: queda acá para recuperarlo o borrarlo para siempre">🗑️ Papelera</button>
     </div>
     <div class="speed-row level-filter-row" id="levelFilterRow" style="display:flex; flex-wrap:wrap;">
+      <!-- 🔎 Buscador (3/10/2026, a pedido de Pablo/Ernesto -- "como el de Google"): filtra mientras escribis, con las
+           primeras letras de cualquier palabra del titulo o del autor, sin importar mayusculas ni tildes. Mientras
+           hay algo escrito ignora el filtro de nivel (Facil/Medio...) y busca en todo Canciones (o todo Ejercicios). -->
+      <div style="position:relative; flex:1 1 100%; margin-bottom:6px;">
+        <input type="search" id="songSearchInput" placeholder="🔎 Buscar canción o autor…" autocomplete="off" spellcheck="false"
+          oninput="setSongSearch(this.value)" onkeydown="if(event.key==='Escape'){this.value='';setSongSearch('');}"
+          style="width:100%; box-sizing:border-box; padding:9px 12px; font-size:14px; border-radius:10px; border:1px solid var(--line); background:var(--panel-2); color:var(--text);">
+      </div>
       <button class="btn" onclick="setLevelFilter('all', this)">Todas</button>
       <button class="btn on" onclick="setLevelFilter('facil', this)">Fácil</button>
       <button class="btn" onclick="setLevelFilter('medio', this)">Medio</button>
@@ -3285,6 +3333,7 @@ let drumKick = null, drumSnare = null, drumHihat = null, drumTom = null, drumCym
 let violinSynth = null, fluteSynth = null, celloSynth = null;
 let currentInstrument = localStorage.getItem('pianoHero_instrument') || 'piano';
 let metronomeSynth = null;
+let metronomeNativeContext = null;
 let errorSynth = null;
 
 // FIX (28/08/2026, reportado por Pablo desde el iPad viejo -- "le falta el sonido... en el resto,
@@ -3315,7 +3364,10 @@ function playBellArpeggio(notes, toneDuration, offsetSeconds, nativeDuration) {
   }
 }
 let metronomeOn = false;
-let lastMetronomeBeat = -1;
+let metronomeBpm = Math.max(30, Math.min(300, parseInt(localStorage.getItem('pianoHero_metronomeBpm') || '100', 10) || 100));
+let metronomeTimer = null;
+let metronomeGeneration = 0;
+let metronomeBeat = 0;
 // Esconde/muestra de un toque toda la botonera de arriba del teclado (menos la barra de progreso,
 // que Pablo pidió explícitamente que se quede siempre visible) — para que, mientras jugás, los
 // ladrillos caigan justo hasta la tecla, sin que la botonera robe altura. Se cierra con otro toque
@@ -3711,9 +3763,122 @@ function closeSidePanels() {
 }
 function toggleMetronome(btnEl) {
   metronomeOn = !metronomeOn;
-  if (metronomeOn && !audioReady && typeof startAudio === 'function') startAudio(); // el sintetizador del clic recien existe despues de arrancar el audio
-  document.getElementById('btn-metronome').classList.toggle('on', metronomeOn);
-  lastMetronomeBeat = -1;
+  updateMetronomeButtonUI();
+  if (!metronomeOn) {
+    stopMetronomeClock();
+    return;
+  }
+
+  // El metrónomo es una herramienta independiente. Si había una pista avanzando, la pausa
+  // evita que queden piano/acompañamiento mezclados con el clic; nunca se llama a playSong(),
+  // listenOnly() ni a ningún disparador de pista desde este flujo.
+  if (isPlaying || inCountdown) {
+    isPlaying = false;
+    inCountdown = false;
+    const overlay = document.getElementById('countdownOverlay');
+    if (overlay) overlay.style.display = 'none';
+  }
+  if (typeof stopOrganPlayback === 'function') stopOrganPlayback();
+
+  const audioPromise = (!audioReady && typeof startAudio === 'function') ? startAudio() : null;
+  startMetronomeClock(true);
+  if (audioPromise && typeof audioPromise.then === 'function') {
+    audioPromise.then(() => { if (metronomeOn) startMetronomeClock(false); }).catch(() => {});
+  }
+}
+
+function updateMetronomeButtonUI() {
+  ['btn-metronome', 'btn-metronome-iv'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.classList.toggle('on', metronomeOn);
+  });
+  ['metronomeBpm', 'metronomeBpmIv'].forEach(id => {
+    const input = document.getElementById(id);
+    if (input) input.value = metronomeBpm;
+  });
+}
+
+function setMetronomeBpm(value) {
+  const parsed = parseInt(value, 10);
+  metronomeBpm = Math.max(30, Math.min(300, Number.isFinite(parsed) ? parsed : 100));
+  localStorage.setItem('pianoHero_metronomeBpm', String(metronomeBpm));
+  updateMetronomeButtonUI();
+  if (metronomeOn) startMetronomeClock();
+}
+
+function nudgeMetronomeBpm(delta) {
+  setMetronomeBpm(metronomeBpm + delta);
+}
+
+function stopMetronomeClock() {
+  metronomeGeneration++;
+  if (metronomeTimer !== null) {
+    clearTimeout(metronomeTimer);
+    metronomeTimer = null;
+  }
+  metronomeBeat = 0;
+}
+
+// Reloj de audio que usa el clic (Tone si esta cargado, si no el contexto nativo): el vigilante agenda en ESTE reloj.
+function metronomeAudioNow() {
+  if (metronomeSynth && window.Tone) { try { return Tone.now(); } catch (e) { /* cae al nativo */ } }
+  return (metronomeNativeContext && metronomeNativeContext.currentTime) || 0;
+}
+// when = instante ABSOLUTO (en metronomeAudioNow) en que tiene que sonar el clic; sin when, suena ya.
+function playMetronomeClick(accent, when) {
+  const ahead = when ? Math.max(0, when - metronomeAudioNow()) : 0;
+  if (metronomeSynth && window.Tone) {
+    try {
+      metronomeSynth.triggerAttackRelease(accent ? 'C7' : 'G6', 0.04, when ? Math.max(when, Tone.now()) : Tone.now());
+      return;
+    } catch (e) { /* cae al clic nativo si Tone no está disponible todavía */ }
+  }
+  const ctx = metronomeNativeContext;
+  if (!ctx || !ctx.createOscillator) return;
+  try {
+    if (ctx.state === 'suspended' && ctx.resume) ctx.resume().catch(() => {});
+    const now = when ? Math.max(when, ctx.currentTime) : ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(accent ? 1760 : 1320, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.18, now + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.055);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(now); osc.stop(now + 0.06);
+  } catch (e) { /* un navegador sin Web Audio no debe romper el piano */ }
+}
+
+function startMetronomeClock(playImmediately) {
+  stopMetronomeClock();
+  if (!metronomeOn) return;
+  const generation = metronomeGeneration;
+  // El primer clic puede ser inmediato; después se programa un único timeout autorearmable. Esto
+  // evita intervalos duplicados cuando se cambia BPM o se vuelve de la inicialización de audio.
+  // Cuando el audio acaba de inicializarse, se espera un tiempo para no repetir el clic inicial.
+  // (el primer clic tambien va por la misma grilla de tiempos exactos, ver mas abajo -- si sonara aparte,
+  // el primer intervalo salia desparejo)
+  metronomeBeat = 0;
+  // FIX (3/10/2026, Pablo/Ernesto: 'el metronomo tiene que sonar siempre al mismo tiempo, no puede variar'):
+  // antes cada clic se programaba con un setTimeout encadenado desde el hilo principal -- cada uno
+  // llegaba con unos milisegundos de atraso (mas cuando el dibujo de la cascada esta ocupado) y el
+  // atraso se acumulaba, asi que el pulso bailaba. Ahora cada clic tiene un instante ABSOLUTO calculado
+  // desde el primero (sin acumular error) y se le pide al reloj de audio que lo toque justo a esa hora:
+  // un vigilante cada 25ms solo reparte los proximos ~120ms, no decide cuando suena.
+  const periodSec = 60 / metronomeBpm;
+  let nextAt = metronomeAudioNow() + (playImmediately !== false ? 0.03 : 0.12);
+  const pump = () => {
+    if (!metronomeOn || generation !== metronomeGeneration) return;
+    const now = metronomeAudioNow();
+    while (nextAt < now + 0.15) {
+      playMetronomeClick(metronomeBeat % 4 === 0, nextAt);
+      metronomeBeat++;
+      nextAt += periodSec;
+    }
+    metronomeTimer = setTimeout(pump, 25);
+  };
+  pump();
 }
 
 // Doble toque a mano en las tarjetas de canción, sin depender del evento "dblclick" del navegador
@@ -3891,10 +4056,12 @@ async function startAudio() {
         C7: "C7.mp3", "D#7": "Ds7.mp3", "F#7": "Fs7.mp3", A7: "A7.mp3",
         C8: "C8.mp3"
       }, nativeCtx.destination);
+      metronomeNativeContext = nativeCtx;
       audioReady = true; // el piano nativo empieza a sonar apenas cada muestra termina de cargar
       pill.classList.remove('needs-click', 'loading');
       pill.classList.add('ready');
       txt.textContent = "🎹 Piano real (modo compatible) listo";
+      if (metronomeOn) startMetronomeClock(false);
     } catch (e) {
       console.error('Plan B (piano nativo) tampoco se pudo armar.', e);
       pill.classList.remove('loading');
@@ -4065,6 +4232,7 @@ async function startAudio() {
   // (65-130 Hz), un golpe grave tan corto que en parlantes de notebook/monitor directamente no se oye.
   // Ahora es un 'tic' agudo (triangular, ~1-2 kHz) que se oye en cualquier parlante, incluso sobre la musica.
   metronomeSynth = new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.02 }, volume: -2 }).connect(masterLimiter);
+  if (metronomeOn) startMetronomeClock(false);
 
   // Tienda: "Aviso sonoro al errar" — un zumbido cortito y disonante (nada agresivo) para saber
   // que fallaste SIN tener que ver la pantalla, pensado para cuando cuesta ver el X rojo.
@@ -6596,7 +6764,10 @@ window.addEventListener('keyup', e => {
 // Arranca en 2 octavas (24/08/2026, a pedido de Pablo -- "el dos octavas ponelo predeterminado en
 // CUALQUIER modo, no solo iPad Viejo" -- antes el teclado normal arrancaba en 3). El botón "on" del
 // panel Vista se sincroniza más abajo (ver zoom-2oct en el HTML).
-let zoomWhiteKeys = 14;
+// CAMBIO (3/10/2026, Ernesto/Pablo: 'el piano por default tiene que ser el piano completo'): antes 14
+// (2 octavas); ahora arranca en 52 (las 88 teclas). El boton "on" (zoom-full) esta a juego en el HTML.
+// iPad Viejo mantiene su propio teclado chico (ivZoomOctaves), no cambia.
+let zoomWhiteKeys = 52;
 let lastWhiteWidth = 42;
 
 function setZoom(n, btnEl) {
@@ -8394,6 +8565,27 @@ let currentTab = 'songs'; // 'songs' | 'exercises'
 // Arranca en 'facil' (8/09/2026, a pedido de Pablo -- va a mandar el link a un amigo nuevo y quiere
 // que apenas entre a Canciones ya esté filtrado en Fácil, sin que tenga que saber que ese botón
 // existe). El botón "Fácil" en el HTML también arranca marcado "on" a juego con esto.
+// Buscador de canciones (ver el input #songSearchInput): texto ya normalizado (minusculas, sin tildes).
+let songSearchQuery = '';
+let songSearchTimer = null;
+function normSearch(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+function setSongSearch(v) {
+  songSearchQuery = normSearch(v).trim();
+  clearTimeout(songSearchTimer);
+  songSearchTimer = setTimeout(() => { if (typeof renderSongList === 'function') renderSongList(); }, 120); // espera un instante: no redibuja la lista entera en cada letra
+}
+// Todas las palabras escritas tienen que aparecer (en cualquier orden) en el titulo o autor. Devuelve un puntaje
+// de relevancia (0 = mejor) o -1 si no coincide: 0 = el titulo empieza con lo escrito, 1 = alguna palabra del
+// titulo empieza con eso, 2 = esta adentro del titulo o del autor.
+function songSearchRank(song) {
+  const title = normSearch(song.title), hay = title + ' ' + normSearch(song.author);
+  const tokens = songSearchQuery.split(/s+/).filter(Boolean);
+  if (!tokens.length) return 0;
+  if (!tokens.every(t => hay.includes(t))) return -1;
+  if (title.startsWith(songSearchQuery)) return 0;
+  if (tokens.every(t => title.split(/[^a-z0-9ñ]+/).some(w => w.startsWith(t)))) return 1;
+  return 2;
+}
 let levelFilter = 'facil';  // 'all' | 'facil' | 'medio' | 'dificil'
 const LEVEL_LABEL = { facil: 'Fácil', medio: 'Medio', dificil: 'Difícil' };
 const LEVEL_COLOR = { facil: 'var(--good)', medio: 'var(--accent-2)', dificil: 'var(--bad)' };
@@ -8999,7 +9191,13 @@ function renderSongList() {
       else filtered = filtered.filter(s => !s.collection);
     }
   }
-  if (levelFilter === 'proyecto-partitura') {
+  const searching = !!songSearchQuery && currentTab !== 'banda' && currentTab !== 'kids';
+  if (searching) {
+    filtered = SONGS.filter(s => (s.type || 'song') === wantedType && s.collection !== 'kids' && s.collection !== 'acompanamiento' && s.collection !== 'bvsc');
+  }
+  if (searching) {
+    // buscando: el filtro de nivel no aplica (se busca en todo)
+  } else if (levelFilter === 'proyecto-partitura') {
     // Ya quedó filtrado arriba (para que no lo tape la exclusión general de "collection") --
     // esta rama solo existe para que NO caiga en el "else" de más abajo, que lo confundiría con
     // un nivel de dificultad literal llamado "proyecto-partitura" (no existe) y mostraría vacío.
@@ -9037,6 +9235,12 @@ function renderSongList() {
   } else {
     filtered = sortByTitleOrder(filtered, customOrder[wantedType]);
   }
+  if (songSearchQuery && (searching || currentTab === 'banda' || currentTab === 'kids')) {
+    const ranked = [];
+    filtered.forEach((s, i) => { const r = songSearchRank(s); if (r >= 0) ranked.push({ s, r, i }); });
+    ranked.sort((a, b) => (a.r - b.r) || (a.i - b.i)); // mas relevante primero; empate: el orden de siempre
+    filtered = ranked.map(x => x.s);
+  }
   // Páginas curadas de iPad Viejo (24/08/2026) -- PISA todo el filtrado de arriba a propósito: las
   // páginas curadas (ver ivCuratedPages()) tienen su propio criterio de qué mostrar y en qué orden,
   // no dependen de wantedType/levelFilter (que además, mientras tanto, quedan escondidos en esta
@@ -9054,7 +9258,7 @@ function renderSongList() {
     filtered = filtered.slice().sort((a, b) => (a.collection === 'acompanamiento' ? 1 : 0) - (b.collection === 'acompanamiento' ? 1 : 0));
   }
   if (!filtered.length) {
-    list.innerHTML = `<div style="color:var(--muted); font-size:12px; text-align:center; padding:14px 4px;">Nada acá todavía.</div>`;
+    list.innerHTML = `<div style="color:var(--muted); font-size:12px; text-align:center; padding:14px 4px;">${songSearchQuery ? 'Sin resultados para lo que escribiste.' : 'Nada acá todavía.'}</div>`;
     return;
   }
   let lastCollectionSeen = null;
@@ -9808,7 +10012,6 @@ function startPlayWithCountdown(fromTime) {
   isPlaying = false; inCountdown = true;
   playhead = fromTime || 0;
   __autoPlayIdx = lowerBoundByTime(fallingNotes, playhead); // el puntero de "tocar solas" arranca desde donde arranca la canción (0, o el tramo marcado)
-  lastMetronomeBeat = -1;
   maxComboStreakThisSession = 0; // arranca un intento nuevo, la racha de este intento vuelve a cero
   const overlay = document.getElementById('countdownOverlay');
   overlay.style.display = 'flex';
@@ -13185,42 +13388,6 @@ function frameInner(ts) {
     }
     updateTimeLabel();
 
-    // Metrónomo: un clic por cada tiempo del compás (asumiendo 4/4), solo si la canción tiene un
-    // tempo fijo conocido — los MIDI importados/con manos separadas no traen un solo BPM, así que ahí no suena.
-    // Sin bpm conocido (MIDI importados, grabaciones, multipista) antes el metronomo quedaba MUDO sin avisar;
-    // ahora cae en 100 bpm fijos: mejor un pulso parejo que silencio.
-    // FIX 2 (3/10/2026, Ernesto probando con un ejercicio de escalas: 'puse metronomo y no suena'): en Modo
-    // Espera la cancion se congela esperando la primera tecla, y como el clic dependia del avance de la
-    // cancion, el metronomo quedaba muerto justo ahi (y entre nota y nota). Mientras esta congelada, ahora
-    // marca por reloj real, al tempo de la cancion por la velocidad elegida.
-    if (metronomeOn && frozen && isPlaying) {
-      const nowMs = performance.now();
-      const periodMs = 60000 / ((activeSong.bpm || 100) * (speed || 1));
-      if (!window.__metroFrozenLast || nowMs - window.__metroFrozenLast >= periodMs) {
-        window.__metroFrozenLast = nowMs;
-        window.__metroFrozenN = ((window.__metroFrozenN || 0) + 1);
-        const bpmBar = (activeSong.timeSig && activeSong.timeSig.num) || 4;
-        if (metronomeSynth) metronomeSynth.triggerAttackRelease(window.__metroFrozenN % bpmBar === 1 ? 'C7' : 'G6', 0.03);
-      }
-    } else window.__metroFrozenLast = 0;
-    if (metronomeOn && !frozen) {
-      const beatSec = 60 / (activeSong.bpm || 100);
-      const beatIndex = Math.floor(playhead / beatSec);
-      if (beatIndex !== lastMetronomeBeat && playhead >= 0) {
-        lastMetronomeBeat = beatIndex;
-        const beatsPerMeasure = (activeSong.timeSig && activeSong.timeSig.num) || 4;
-        if (metronomeSynth) metronomeSynth.triggerAttackRelease(beatIndex % beatsPerMeasure === 0 ? 'C7' : 'G6', 0.03);
-        // Tienda: "Metrónomo con voz" — en vez de (o además de) el clic, una voz cuenta el tiempo
-        // real del compás (1, 2, 3...) en el que estás, según el compás real de la canción.
-        if (isFeatureActive('metrohablado') && window.speechSynthesis) {
-          window.speechSynthesis.cancel();
-          const utter = new SpeechSynthesisUtterance(String((beatIndex % beatsPerMeasure) + 1));
-          utter.lang = 'es-AR'; utter.rate = 1.3; utter.volume = 0.8;
-          window.speechSynthesis.speak(utter);
-        }
-      }
-    }
-
     // Cambiado (23/08/2026, a partir de un aviso de Pablo: "las notas de fondo/mano izquierda de
     // una canción compleja se traban y salen 3 juntas"): estos 3 bloques recorrían TODAS las notas
     // de la canción, en cada cuadro, igual que "detectar falladas" antes de arreglarlo -- con una
@@ -13453,6 +13620,7 @@ loadSongEditorSongsFromStorage();
 renderOrganGenreGrid();
 buildKeyboard();
 centerKeyboardOnMiddleC();
+updateMetronomeButtonUI();
 // FIX (8/09/2026, reportado por Pablo -- "apenas entrás se ven las teclas alargadas y feas, hasta
 // que apretás pantalla completa"): mismo problema de fondo que ya se resolvió para el cambio de
 // pantalla completa (ver el comentario grande junto a rebuildKeyboardAfterFullscreenChange, más
@@ -14248,6 +14416,12 @@ if (ownedItems.includes('mascota')) {
 document.getElementById('headerMascot').style.display = 'none';
 
 requestAnimationFrame(frame);
+</script>
+<script>
+(function(){ var src=document.getElementById('creditsCount'), dst=document.getElementById('creditsCountFloat'); if(!src||!dst) return;
+  function sync(){ dst.textContent=src.textContent; }
+  sync(); try{ new MutationObserver(sync).observe(src,{childList:true,characterData:true,subtree:true}); }catch(e){ setInterval(sync,500); }
+})();
 </script>
 </body>
 </html>
