@@ -28,6 +28,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-siz
 header{padding:16px 0 8px}
 h1{font-family:var(--font-chord);font-size:2rem;margin:0;line-height:1.1}
 .sub{color:var(--muted);margin:2px 0 0}
+.help{margin:8px 0;color:var(--muted);font-size:.92rem}.help p{margin:6px 0}
 .setup{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:10px 0;display:grid;gap:3px}
 .setup b{font-family:var(--font-chord);font-size:1.1rem;letter-spacing:.02em}
 .setup .row{display:flex;flex-wrap:wrap;gap:4px 18px}
@@ -77,6 +78,12 @@ h2 small{font-family:var(--font-body);font-weight:400;font-size:.85rem;color:var
 .c.act{background:var(--accent);color:var(--accent-ink)} .c.nxt{border-color:var(--next)} .c.dim{opacity:.6}
 details{margin-top:8px} summary{cursor:pointer;color:var(--muted);font-size:.92rem}
 textarea{width:100%;min-height:6rem;margin-top:6px;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px}
+.lyline{display:flex;flex-wrap:wrap;align-items:flex-end;margin:3px 0;line-height:1.25}
+.seg{display:inline-flex;flex-direction:column;white-space:pre}
+.seg .ch{font-family:var(--font-chord);font-weight:700;font-size:1.05rem;color:var(--next);min-height:1.3em;padding-right:.7em;border-radius:4px}
+.seg .ch.hl{background:var(--accent);color:var(--accent-ink)}
+.seg .tx{white-space:pre-wrap}
+.lyplain{margin:6px 0 2px;font-weight:600;color:var(--muted)}
 .note{color:var(--muted);font-size:.92rem;margin-top:18px} a{color:var(--next)}
 @media (max-width:520px){.now-next{grid-template-columns:3fr 2fr}.kb{height:120px}.c{font-size:1.5rem;min-width:3.4rem}}
 </style>
@@ -86,13 +93,10 @@ textarea{width:100%;min-height:6rem;margin-top:6px;font:inherit;color:var(--ink)
 <header>
   <h1>Lamento boliviano</h1>
   <p class="sub">Enanitos Verdes · Mi menor · acordes en el orden en que aparecen</p>
-  <div class="setup">
-    <b>En el Yamaha (PSR-E583 / E483)</b>
-    <div class="row"><span>Armadura de estilo: <b>SP1</b></span><span>Acordes: <b>035</b></span><span>Salen: <b>Mi menor · Si menor · La menor · Mi menor</b></span></div>
-    <small>Vale tocar el acorde en cualquier octava y en cualquier orden. Doble toque en la tecla de salto (la más aguda, Do7) pasa al acorde siguiente.</small>
-    <small>La pantalla del Yamaha usa letras: Em = Mi menor · Bm = Si menor · Am = La menor · B = Si mayor.</small>
-    <small>Receta corta: AUTO CHORD PLAY [SELECT], mirar que diga 035, y [START/STOP].</small>
-  </div>
+  <details class="help"><summary>Ayuda</summary>
+    <p>Vale tocar el acorde en cualquier octava y en cualquier orden. Doble toque en la tecla de salto (la más aguda, Do7) pasa al acorde siguiente.</p>
+    <p>Yamaha: armadura SP1, acordes 035. La pantalla del Yamaha usa letras: Em = Mi menor · Bm = Si menor · Am = La menor · B = Si mayor.</p>
+  </details>
   <div class="midi"><span class="dot" id="midiDot"></span><span id="midiTxt">Buscando teclado MIDI…</span></div>
 </header>
 
@@ -117,6 +121,13 @@ textarea{width:100%;min-height:6rem;margin-top:6px;font:inherit;color:var(--ink)
   </div>
 </div>
 
+<section class="part" id="cifraBox">
+  <h2>Letra con acordes <small>pegá la cifra y los acordes quedan en do, re, mi sobre cada parte de la letra</small></h2>
+  <details id="cifraDet"><summary>Pegar la cifra</summary>
+    <textarea id="cifraTxt" placeholder="Copiá la cifra completa de acordesweb o Cifra Club (acordes arriba, letra abajo) y pegala acá" style="min-height:9rem"></textarea>
+  </details>
+  <div id="cifraView"></div>
+</section>
 <div id="parts"></div>
 
 <p class="note">La letra no está acá. Si querés verla junto a los acordes, pegala en la caja "Tu letra" de cada parte; queda guardada en este navegador. La cifra completa con letra está en
@@ -223,7 +234,7 @@ function evaluate(){
   const parts = []; if (missing.length) parts.push('te falta ' + missing.map(t=>NAMES[t]).join(', ')); if (extra.length) parts.push('sobra ' + extra.map(t=>NAMES[t]).join(', '));
   $('evalTxt').textContent = parts.join(' · '); return false;
 }
-function setTarget(c){ target = c; paintKeys(); evaluate(); }
+function setTarget(c){ target = c; paintKeys(); evaluate(); if(typeof markCifra==='function') markCifra(); }
 
 function buildParts(){
   const box = $('parts'); box.innerHTML=''; flat=[];
@@ -312,6 +323,53 @@ if(navigator.requestMIDIAccess){
     .catch(()=>{ $('midiTxt').textContent='El navegador no dejó usar el teclado MIDI. Usá Chrome y aceptá el permiso, o tocá el teclado de la pantalla.'; });
 } else { $('midiTxt').textContent='Este navegador no soporta MIDI. Usá Chrome en la computadora, o tocá el teclado de la pantalla.'; }
 
+/* ---- cifra pegada: acordes arriba / letra abajo -> acordes en español encima de cada palabra ---- */
+const CH_RE=/^([A-G][#b]?)(maj7|maj|min|m|M|dim|aug|sus2|sus4|sus)?(\d{1,2})?(\/[A-G][#b]?)?$/;
+const CH_OTHER=new Set(['|','-','x2','(x2)','x3','(x3)','N.C.','%']);
+function parseChordTok(t){ const m=CH_RE.exec(t); if(!m) return null; return {root:ROOTS[m[1]],q:m[2]||'',n:m[3]||'',bass:m[4]?ROOTS[m[4].slice(1)]:null}; }
+function isChordLine(l){ const toks=l.trim().split(/\s+/).filter(Boolean); if(!toks.length) return false; let c=0; for(const t of toks){ if(parseChordTok(t)) c++; else if(!CH_OTHER.has(t)) return false; } return c>0; }
+function chordEs(tok,simple){ const p=parseChordTok(tok); if(!p) return tok;
+  let q=p.q, n=p.n, minor=(q==='m'||q==='min');
+  if(simple){ n=''; q=minor?'m':''; if(/^(dim|aug|sus)/.test(p.q)) q=''; }
+  let w=NAMES[p.root];
+  if(q==='maj7'||q==='maj'||q==='M'||q==='') w+= n? (' '+n) : ' mayor';
+  else if(minor) w+=' menor'+(n?' '+n:'');
+  else w+=' '+q+(n?n:'');
+  if(!simple && p.bass!==null) w+=' /'+NAMES[p.bass];
+  return w; }
+function chordKey(tok){ const p=parseChordTok(tok); return p? p.root+(p.q==='m'||p.q==='min'?'m':'') : null; }
+function renderCifra(){
+  const txt=$('cifraTxt').value, box=$('cifraView'); box.innerHTML='';
+  if(!txt.trim()) return;
+  const lines=txt.replace(/\r/g,'').split('\n'), simple=$('simple').checked;
+  for(let i=0;i<lines.length;i++){
+    const l=lines[i];
+    if(isChordLine(l)){
+      const nxt=lines[i+1]; const useNext = nxt!==undefined && nxt.trim() && !isChordLine(nxt);
+      const cols=[], re=/\S+/g; let m; while((m=re.exec(l))) cols.push({i:m.index,t:m[0]});
+      const row=document.createElement('div'); row.className='lyline';
+      const text = useNext ? nxt : '';
+      const seg=(chord,txt2)=>{ const s=document.createElement('span'); s.className='seg';
+        const c=document.createElement('span'); c.className='ch'; c.textContent=chord?chordEs(chord,simple):' '; if(chord){ const k=chordKey(chord); if(k!==null) c.dataset.k=k; }
+        const t=document.createElement('span'); t.className='tx'; t.textContent=txt2||' '; s.append(c,t); row.appendChild(s); };
+      if(useNext && cols[0].i>0) seg(null,text.slice(0,cols[0].i));
+      cols.forEach((c,k)=>{ const end=k+1<cols.length?cols[k+1].i:undefined; seg(CH_OTHER.has(c.t)?null:c.t, useNext? text.slice(c.i,end):''); });
+      if(useNext) i++;   // la línea de letra ya quedó dibujada junto a sus acordes
+      box.appendChild(row);
+    } else if(l.trim()){ const d=document.createElement('div'); d.className='lyplain'; d.textContent=l; box.appendChild(d); }
+    else { const d=document.createElement('div'); d.style.height='.6rem'; box.appendChild(d); }
+  }
+  markCifra();
+}
+function markCifra(){
+  const cur = lesson ? LESSON[lesson.i] : null; let key=null;
+  if(target){ key=chordKey(label(target)); }
+  document.querySelectorAll('#cifraView .ch').forEach(c=>c.classList.toggle('hl', key!==null && c.dataset.k!==undefined && +c.dataset.k.replace('m','')===+String(key).replace('m','') && c.dataset.k.endsWith('m')===String(key).endsWith('m')));
+}
+$('cifraTxt').addEventListener('input',()=>{ store.set('acordes-cifra',$('cifraTxt').value); renderCifra(); });
+$('cifraTxt').value = store.get('acordes-cifra')||''; $('cifraDet').open = !$('cifraTxt').value;
+$('simple').addEventListener('change',()=>renderCifra());
+
 /* ---- lección guiada: sola, sin depender de nadie (el profesor pone el texto, la página avanza al acertar) ---- */
 const LESSON=[
   {m:[52,55,59], t:'Acorde 1 de la canción: Mi menor. Tocá Mi, Sol y Si juntas.'},
@@ -345,7 +403,7 @@ setInterval(()=>{
   const s=store.get('acordes-simple'); if(s!==null) $('simple').checked=s==='1';
   const b=store.get('acordes-bpm'); if(b) $('bpm').value=b; const p=store.get('acordes-per'); if(p) $('per').value=p;
   $('wait').checked = store.get('acordes-wait')==='1';
-  buildKb(); buildParts(); paint(); drawBeats(4,0); evaluate(); showSkip();
+  buildKb(); buildParts(); paint(); drawBeats(4,0); evaluate(); showSkip(); renderCifra();
 })();
 </script>
 </body>
