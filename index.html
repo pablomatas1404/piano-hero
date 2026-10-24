@@ -3300,6 +3300,32 @@ function inferPatternQuality(pattern) {
   });
   return best === 3 ? 'menor' : 'mayor'; // si no se pudo inferir, mayor es el fallback más común
 }
+// FIX (24/10/2026, Pablo: "toco el Do, el Re, el La... las teclas que se iluminan suenan muy feo"): la
+// raíz del acorde NO es siempre la nota más grave del patrón (Salsa: bajo en Fa pero el acorde es Si♭;
+// Pop Latino: acorde de Do con bajo en Sol). Antes la iluminación y el transporte usaban "la nota más
+// grave", así que la escala quedaba corrida y apretar un Do daba un acorde que no era de Do. Ahora se
+// averigua el acorde REAL del patrón (el triángulo mayor/menor que más notas, por duración, abarca) y
+// la tecla que apretás pasa a ser la raíz de ese acorde.
+function organPatternChord(pattern) {
+  if (pattern._chord) return pattern._chord;
+  const lowest = Math.min(...pattern.notes.map(n => n.midi));
+  const w = new Array(12).fill(0);
+  pattern.notes.forEach(n => { w[((n.midi % 12) + 12) % 12] += Math.min(n.duration, 2); });
+  let best = null;
+  for (let r = 0; r < 12; r++) {
+    for (const q of ['mayor', 'menor']) {
+      const third = q === 'mayor' ? 4 : 3;
+      const inChord = w[r] + w[(r + third) % 12] + w[(r + 7) % 12];
+      const score = inChord + (((lowest % 12) + 12) % 12 === r ? 0.3 : 0) + (w[r] > 0 ? 0.2 : 0);
+      if (!best || score > best.score + 1e-9) best = { score, rootPc: r, quality: q };
+    }
+  }
+  // desplazamiento (en semitonos) desde la nota más grave hasta la raíz real, el más corto posible
+  let rel = ((best.rootPc - lowest) % 12 + 12) % 12;
+  if (rel > 6) rel -= 12;
+  pattern._chord = { rootPc: best.rootPc, quality: best.quality, rel };
+  return pattern._chord;
+}
 // El acorde que iluminan las escalas mientras estás en Órgano: el último que disparaste con la
 // mano izquierda (se actualiza en vivo, sin necesitar ninguna canción cargada ni sonando).
 let organLastChordInfo = null;
@@ -3320,13 +3346,14 @@ function triggerAccompanimentPattern(triggerMidi) {
   const pattern = organPatternFor(organActiveStyle);
   if (!pattern) return;
   stopOrganPlayback(); // una tecla nueva REEMPLAZA a la que estaba sonando, no se suman
-  const semitones = triggerMidi - pattern.rootMidi;
+  const chordInfo = organPatternChord(pattern);
+  const semitones = triggerMidi - pattern.rootMidi - chordInfo.rel; // la tecla que apretás = raíz del acorde
   // El control de Tempo de arriba del teclado también acelera/frena el sample — a más velocidad,
   // los tiempos se achican (por eso se divide por "speed", no se multiplica).
   const rate = Math.max(0.1, speed || 1);
   const lastNote = pattern.notes[pattern.notes.length - 1];
   const patternEndSec = (lastNote.time + lastNote.duration) / rate;
-  organLastChordInfo = { rootPc: ((triggerMidi % 12) + 12) % 12, quality: inferPatternQuality(pattern) };
+  organLastChordInfo = { rootPc: ((triggerMidi % 12) + 12) % 12, quality: chordInfo.quality };
   pattern.notes.forEach(n => {
     const id = setTimeout(() => {
       playAutoNote(n.midi + semitones, n.duration / rate, false);
