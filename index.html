@@ -1020,6 +1020,9 @@
      importante, es la plata para la Tienda"): los creditos viven DENTRO del encabezado, y en modo compacto (ventana de
      700px de alto o menos -- pasa tambien en una notebook) el encabezado entero se esconde, creditos incluidos.
      Este contador flotante vive FUERA del encabezado y aparece justo cuando el encabezado esta escondido. */
+  .acc-slider{ flex:1; min-width:0; -webkit-appearance:none; appearance:none; height:10px; border-radius:6px; background:#3a4a6a; outline:none; cursor:pointer; }
+  .acc-slider::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:24px; height:24px; border-radius:50%; background:#4dff9e; border:2px solid #04120a; cursor:grab; }
+  .acc-slider::-moz-range-thumb{ width:22px; height:22px; border-radius:50%; background:#4dff9e; border:2px solid #04120a; cursor:grab; }
   .credits-float{ display:none; position:fixed; top:calc(env(safe-area-inset-top, 0px) + 8px); left:50%; transform:translateX(-50%);
     z-index:60; align-items:center; gap:8px; background:#04120a; border:2px solid #0f4a2c; border-radius:14px; padding:5px 14px;
     box-shadow:0 4px 14px rgba(0,0,0,.45); pointer-events:none; }
@@ -1623,10 +1626,17 @@
       <!-- Constructor de canciones: botón chiquito que abre la ventana de armado (4 acordes, estilo,
            duración). La tira grande con los alfileres NO va acá — Construir la manda a la pantalla
            central, ocupando todo el ancho, en vez de meterla apretada en este panel angosto. -->
-      <div class="zoom-bar" id="organAccVolRow" style="margin-top:8px; display:flex; align-items:center; gap:8px;" title="Baja o sube SOLO el acompañamiento del Órgano. Lo que tocás vos con la mano derecha no cambia.">
-        <span style="font-size:13px; white-space:nowrap;">🔉 Acompañamiento</span>
-        <input type="range" id="organAccVol" min="5" max="100" step="5" value="100" style="flex:1; min-width:0;" oninput="setOrganAccVol(this.value)">
-        <b id="organAccVolTxt" style="min-width:42px; text-align:right; font-size:13px;">100%</b>
+      <div id="organAccVolRow" style="margin-top:10px; padding:8px 10px; border:1px solid var(--line); border-radius:10px;" title="Baja o sube SOLO el acompañamiento del Órgano. Lo que tocás vos con la mano derecha no cambia. También se mueve con la ruedita del mouse.">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;">
+          <span style="font-size:13px; font-weight:700;">🔉 Volumen del acompañamiento</span>
+          <b id="organAccVolTxt" style="font-size:20px;">100%</b>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="btn" style="padding:4px 12px; font-size:18px; line-height:1;" onclick="nudgeOrganAccVol(-10)" title="Más bajo">−</button>
+          <input type="range" id="organAccVol" class="acc-slider" min="20" max="100" step="5" value="100" oninput="setOrganAccVol(this.value)">
+          <button class="btn" style="padding:4px 12px; font-size:18px; line-height:1;" onclick="nudgeOrganAccVol(10)" title="Más alto">+</button>
+        </div>
+        <div style="font-size:11px; opacity:.75; margin-top:4px;">Abajo = acompañamiento más suave. Lo que tocás vos no cambia.</div>
       </div>
       <div class="zoom-bar" id="songEditorEntryRow" style="margin-top:8px;">
         <button class="btn" onclick="openSongEditor()" title="Armar una pista de acompañamiento a medida: elegís hasta 6 acordes, un estilo y una duración">🔧 Constructor</button>
@@ -3291,13 +3301,17 @@ let organLoopOn = true;
 // "Volumen del acompañamiento" (24/10/2026, Pablo: "el acompañamiento del modo órgano estaba muy fuerte comparado
 // con la melodía"): escala SOLO lo que dispara el Órgano (triggerAccompanimentPattern), nunca lo que tocás vos.
 let organAccGain = 1;
-try { const g = parseFloat(localStorage.getItem('pianoHero_organAccGain')); if (g >= 0.05 && g <= 1) organAccGain = g; } catch (e) {}
+try { const g = parseFloat(localStorage.getItem('pianoHero_organAccGain')); if (g >= 0.2 && g <= 1) organAccGain = g; } catch (e) {} // un valor viejo menor a 20% (casi mudo) se descarta: vuelve a 100%
 function setOrganAccVol(pct) {
-  organAccGain = Math.max(0.05, Math.min(1, (parseFloat(pct) || 100) / 100));
+  organAccGain = Math.max(0.2, Math.min(1, (parseFloat(pct) || 100) / 100)); // nunca menos de 20%: así no se "apaga" el acompañamiento sin querer
+  const sl = document.getElementById('organAccVol'); if (sl && Number(sl.value) !== Math.round(organAccGain * 100)) sl.value = Math.round(organAccGain * 100);
   try { localStorage.setItem('pianoHero_organAccGain', String(organAccGain)); } catch (e) {}
   const t = document.getElementById('organAccVolTxt'); if (t) t.textContent = Math.round(organAccGain * 100) + '%';
 }
+function nudgeOrganAccVol(delta) { setOrganAccVol(Math.round(organAccGain * 100) + delta); }
 document.addEventListener('DOMContentLoaded', () => {
+  const row = document.getElementById('organAccVolRow');
+  if (row) row.addEventListener('wheel', e => { e.preventDefault(); nudgeOrganAccVol(e.deltaY < 0 ? 5 : -5); }, { passive: false });
   const s = document.getElementById('organAccVol'); if (s) s.value = Math.round(organAccGain * 100);
   const t = document.getElementById('organAccVolTxt'); if (t) t.textContent = Math.round(organAccGain * 100) + '%';
 });
