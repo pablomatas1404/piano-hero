@@ -6,7 +6,7 @@
 <title>Acordes para tocar</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap">
 <style>
-/* Aplicación aparte (hermana de Piano Hero): ficha de acordes + teclado virtual + teclado MIDI real (Web MIDI).
+/* App aparte, de una sola pantalla: barra fina arriba, el acorde, la pantalla grande de la letra, y el teclado abajo.
    Ámbar = lo que hay que tocar; azul = lo que tocaste; verde = acertaste. */
 :root{
   --bg:#f2f4f7; --panel:#ffffff; --ink:#18202b; --muted:#5b6675; --line:#d5dbe3;
@@ -22,126 +22,122 @@
   --cell:#262f3a; --accent:#f2b23a; --accent-ink:#1a1300; --next:#6fb0ff; --ok:#5fd39a; --bad:#ff7b72;
   --wkey:#e9edf2; --bkey:#0b0f14; color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.45;margin:0;
-  padding:0 max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
-.wrap{max-width:900px;margin:0 auto}
-header{padding:16px 0 8px}
-h1{font-family:var(--font-chord);font-size:2rem;margin:0;line-height:1.1}
-.sub{color:var(--muted);margin:2px 0 0}
-.help{margin:8px 0;color:var(--muted);font-size:.92rem}.help p{margin:6px 0}
-.setup{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:10px 0;display:grid;gap:3px}
-.setup b{font-family:var(--font-chord);font-size:1.1rem;letter-spacing:.02em}
-.setup .row{display:flex;flex-wrap:wrap;gap:4px 18px}
-.setup small{color:var(--muted)}
-.midi{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:.95rem}
-.dot{width:11px;height:11px;border-radius:50%;background:var(--muted);flex:none}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.4;margin:0;
+  padding:0 max(12px,env(safe-area-inset-right,0px)) 0 max(12px,env(safe-area-inset-left,0px))}
+.app{max-width:1100px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;gap:8px;padding:8px 0}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.brand{font-family:var(--font-chord);font-weight:700;font-size:1.4rem;margin-right:auto;white-space:nowrap}
+.brand small{font-family:var(--font-body);font-weight:400;font-size:.8rem;color:var(--muted);margin-left:8px}
+.midi{display:flex;align-items:center;gap:6px;font-size:.85rem;color:var(--muted)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:none}
 .dot.on{background:var(--ok)}
-.stage{position:sticky;top:0;z-index:5;background:var(--bg);padding:6px 0 8px;border-bottom:1px solid var(--line)}
-.now-next{display:grid;grid-template-columns:2fr 1fr;gap:10px}
-.now,.next{border-radius:12px;padding:4px 12px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+body.fs .brand small,body.fs .midi span:last-child{display:none}
+button{font:inherit;font-weight:600;border:0;border-radius:9px;padding:8px 14px;cursor:pointer;background:var(--cell);color:var(--ink)}
+button.go{background:var(--ok);color:#fff} button.stop{background:var(--bad);color:#fff}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--next);outline-offset:2px}
+.opt{position:relative}
+.opt summary{list-style:none;cursor:pointer;padding:8px 14px;border-radius:9px;background:var(--cell);font-weight:600}
+.opt summary::-webkit-details-marker{display:none}
+.opt .pop{position:absolute;right:0;top:110%;z-index:20;width:min(330px,88vw);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.opt label{display:flex;align-items:center;gap:8px}
+.opt p{margin:0;color:var(--muted);font-size:.88rem}
+input[type=checkbox]{width:1.1em;height:1.1em}
+.now-next{display:grid;grid-template-columns:2fr 1fr;gap:8px}
+.now,.next{border-radius:12px;padding:4px 14px;display:flex;flex-direction:column;justify-content:center;min-width:0}
 .now{background:var(--accent);color:var(--accent-ink)}
 .next{background:var(--panel);border:2px solid var(--next)}
-.lbl{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;font-weight:600;opacity:.85}
-.big{font-family:var(--font-chord);font-weight:700;line-height:1;font-size:clamp(1.6rem,5vw,2.4rem)}
-.mid{font-family:var(--font-chord);font-weight:700;line-height:1.05;font-size:clamp(1.1rem,3vw,1.5rem);color:var(--next)}
-.beats{display:flex;gap:6px;margin-top:8px}
-.beats i{flex:1;height:8px;border-radius:4px;background:var(--cell)}
-.beats i.on{background:var(--accent)}
-.kb{position:relative;display:flex;height:104px;margin-top:6px;user-select:none;touch-action:manipulation}
+.lbl{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;font-weight:600;opacity:.85}
+.big{font-family:var(--font-chord);font-weight:700;line-height:1;font-size:clamp(1.8rem,5vw,2.8rem)}
+.mid{font-family:var(--font-chord);font-weight:700;line-height:1.05;font-size:clamp(1.2rem,3vw,1.7rem);color:var(--next)}
+.teacher{border-left:5px solid var(--next);background:var(--panel);border-radius:8px;padding:6px 12px;font-size:1.05rem}
+.teacher b{font-family:var(--font-chord);letter-spacing:.04em;color:var(--next);margin-right:6px}
+/* La pantalla grande: toma todo el alto que sobra */
+.tele{flex:1;min-height:0;overflow-y:auto;padding:10px 16px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.tele:empty::before{content:"Acá va a aparecer la letra con los acordes. Tocá \"Pegar cifra\", pegá la cifra y apretá \"Cargar cifra\".";color:var(--muted)}
+.lyline{display:flex;flex-wrap:wrap;align-items:flex-end;margin:6px 0;line-height:1.25}
+.seg{display:inline-flex;flex-direction:column;white-space:pre}
+.seg .ch{font-family:var(--font-chord);font-weight:700;font-size:1.35rem;color:var(--next);min-height:1.4em;padding:0 .7em 0 0;border-radius:5px;cursor:pointer}
+.seg .ch.cur{background:var(--accent);color:var(--accent-ink);padding-left:.3em}
+.seg .tx{white-space:pre-wrap;font-size:1.55rem}
+.lyplain{margin:12px 0 2px;font-weight:600;color:var(--muted);font-size:1.1rem}
+.eval{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;min-height:2rem}
+.badge{font-family:var(--font-chord);font-weight:700;font-size:1.3rem;padding:0 12px;border-radius:8px;background:var(--cell)}
+.badge.ok{background:var(--ok);color:#fff}.badge.bad{background:var(--bad);color:#fff}
+.hint{color:var(--muted)}
+.kb{position:relative;display:flex;height:clamp(84px,17vh,130px);user-select:none;touch-action:manipulation;flex:none}
 .w{flex:1;background:var(--wkey);border:1px solid #8b97a6;border-radius:0 0 6px 6px;position:relative;display:flex;align-items:flex-end;justify-content:center;
   padding-bottom:4px;font-size:.7rem;color:#4a5563;cursor:pointer}
 .w.tgt{box-shadow:inset 0 -10px 0 var(--accent);background:color-mix(in srgb,var(--accent) 35%,var(--wkey))}
 .w.prs{background:color-mix(in srgb,var(--next) 55%,var(--wkey))}
 .w.tgt.prs{background:color-mix(in srgb,var(--ok) 60%,var(--wkey))}
 .b{position:absolute;top:0;width:3.6%;height:62%;background:var(--bkey);border-radius:0 0 4px 4px;z-index:2;cursor:pointer;transform:translateX(-50%)}
-.b.tgt{background:var(--accent)}
-.b.prs{background:var(--next)}
-.b.tgt.prs{background:var(--ok)}
-.teacher{margin-top:10px;border-left:5px solid var(--next);background:var(--panel);border-radius:8px;padding:8px 12px;font-size:1.05rem}
-.teacher b{font-family:var(--font-chord);letter-spacing:.04em;color:var(--next);margin-right:6px}
-.eval{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:8px;min-height:2.2rem}
-.badge{font-family:var(--font-chord);font-weight:700;font-size:1.5rem;padding:2px 12px;border-radius:8px;background:var(--cell)}
-.badge.ok{background:var(--ok);color:#fff}.badge.bad{background:var(--bad);color:#fff}
-.hint{color:var(--muted)}
-.controls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:10px}
-.controls label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.9rem}
+.b.tgt{background:var(--accent)} .b.prs{background:var(--next)} .b.tgt.prs{background:var(--ok)}
+/* Panel para pegar la cifra (aparece encima; se cierra solo al cargar) */
+.paste{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+.paste[hidden]{display:none}
+.paste .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;width:min(760px,100%);max-height:92dvh;display:grid;gap:10px}
+.paste h2{font-family:var(--font-chord);font-size:1.5rem;margin:0}
+.paste textarea{width:100%;height:42dvh;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px}
+.paste .row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
 input,select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
-input[type=number]{width:4.5em} input[type=checkbox]{width:1.1em;height:1.1em}
-button{font:inherit;font-weight:600;border:0;border-radius:9px;padding:9px 16px;cursor:pointer;background:var(--cell);color:var(--ink)}
-button.go{background:var(--ok);color:#fff} button.stop{background:var(--bad);color:#fff}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--next);outline-offset:2px}
-section.part{margin-top:20px}
-h2{font-family:var(--font-chord);font-size:1.4rem;margin:0 0 6px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
-h2 small{font-family:var(--font-body);font-weight:400;font-size:.85rem;color:var(--muted)}
-.chords{display:flex;flex-wrap:wrap;gap:8px}
-.c{font-family:var(--font-chord);font-weight:700;font-size:1.45rem;min-width:5.6rem;text-align:center;padding:8px 12px;border-radius:9px;background:var(--cell);border:2px solid transparent;cursor:pointer}
-.c.act{background:var(--accent);color:var(--accent-ink)} .c.nxt{border-color:var(--next)} .c.dim{opacity:.6}
-details{margin-top:8px} summary{cursor:pointer;color:var(--muted);font-size:.92rem}
-textarea{width:100%;min-height:6rem;margin-top:6px;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px}
-.lyline{display:flex;flex-wrap:wrap;align-items:flex-end;margin:3px 0;line-height:1.25}
-.seg{display:inline-flex;flex-direction:column;white-space:pre}
-.seg .ch{font-family:var(--font-chord);font-weight:700;font-size:1.05rem;color:var(--next);min-height:1.3em;padding-right:.7em;border-radius:4px}
-.seg .ch.hl{background:var(--accent);color:var(--accent-ink)}
-.seg .tx{white-space:pre-wrap;font-size:1.15rem}
-.tele{height:7.4rem;overflow-y:auto;margin-top:6px;padding:4px 10px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
-.tele:empty{display:none}
-.seg .ch{cursor:pointer}
-.seg .ch.cur{background:var(--accent);color:var(--accent-ink)}
-.lyplain{margin:6px 0 2px;font-weight:600;color:var(--muted)}
-.note{color:var(--muted);font-size:.92rem;margin-top:18px} a{color:var(--next)}
-@media (max-width:520px){.now-next{grid-template-columns:3fr 2fr}.kb{height:120px}.c{font-size:1.5rem;min-width:3.4rem}}
+.hid{display:none!important}
+a{color:var(--next)}
+@media (max-width:560px){.now-next{grid-template-columns:3fr 2fr}.seg .tx{font-size:1.3rem}}
 </style>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <h1>Lamento boliviano</h1>
-  <p class="sub">Enanitos Verdes · Mi menor · acordes en el orden en que aparecen</p>
-  <details class="help"><summary>Ayuda</summary>
-    <p>Vale tocar el acorde en cualquier octava y en cualquier orden. Doble toque en la tecla de salto (la más aguda, Do7) pasa al acorde siguiente.</p>
-    <p>Yamaha: armadura SP1, acordes 035. La pantalla del Yamaha usa letras: Em = Mi menor · Bm = Si menor · Am = La menor · B = Si mayor.</p>
-  </details>
-  <div class="midi"><span class="dot" id="midiDot"></span><span id="midiTxt">Buscando teclado MIDI…</span></div>
-</header>
+<div class="app">
+  <div class="top">
+    <span class="brand">Lamento boliviano<small>Enanitos Verdes · Mi menor</small></span>
+    <span class="midi"><span class="dot" id="midiDot"></span><span id="midiTxt">Buscando teclado MIDI…</span></span>
+    <button type="button" id="pasteBtn">Pegar cifra</button>
+    <button type="button" class="go" id="lessonBtn">Lección guiada</button>
+    <details class="opt">
+      <summary>Opciones</summary>
+      <div class="pop">
+        <label for="simple"><input type="checkbox" id="simple" checked> Acordes simples (sin séptimas)</label>
+        <label>Tecla de salto: <b id="skipName">Do7</b> <button type="button" id="skipBtn" style="padding:4px 10px;font-size:.85rem">Cambiar</button></label>
+        <p>Doble toque en la tecla de salto (la más aguda, Do7) pasa al acorde siguiente. Vale tocar el acorde en cualquier octava y en cualquier orden.</p>
+        <p>Yamaha: armadura SP1, acordes 035. La pantalla del Yamaha usa letras: Em = Mi menor · Bm = Si menor · Am = La menor · B = Si mayor.</p>
+      </div>
+    </details>
+    <button type="button" id="fsBtn">Pantalla completa</button>
+  </div>
 
-<div class="stage" aria-live="polite">
-  <div class="now-next">
+  <div class="now-next" aria-live="polite">
     <div class="now"><span class="lbl">Tocá ahora</span><span class="big" id="nowChord">–</span></div>
     <div class="next"><span class="lbl">Sigue</span><span class="mid" id="nextChord">–</span></div>
   </div>
-  <div class="beats" id="beats" aria-hidden="true"></div>
   <div class="teacher" id="teacher" hidden><b>PROFESOR</b><span id="teacherTxt"></span></div>
+
   <div class="tele" id="cifraView" aria-live="off"></div>
+
+  <div class="eval"><span class="badge" id="played">–</span><span class="hint" id="evalTxt">Cargá una cifra, o apretá "Lección guiada".</span></div>
   <div class="kb" id="kb" aria-label="Teclado virtual"></div>
-  <div class="eval"><span class="badge" id="played">–</span><span class="hint" id="evalTxt">Elegí un acorde de abajo o apretá Empezar. Podés tocar el teclado real o hacer clic en el virtual.</span></div>
+
+  <!-- Piezas del marcador por tiempo (antes visibles): se dejan ocultas, la letra y el doble toque las reemplazan -->
+  <div class="hid">
+    <div class="beats" id="beats"></div>
+    <button type="button" id="goBtn">Empezar</button>
+    <input type="number" id="bpm" value="80"><select id="per"><option value="4">1</option><option value="8" selected>2</option><option value="2">0</option></select>
+    <input type="checkbox" id="wait">
+    <div id="parts"></div>
+  </div>
 </div>
-<div class="controls" style="margin-top:12px">
-    <button class="go" id="lessonBtn" type="button">Lección guiada</button>
-    <button id="goBtn" type="button" class="go" style="background:var(--cell);color:var(--ink)">Empezar</button>
-    <label for="bpm">Tempo <input type="number" id="bpm" min="30" max="200" value="80"></label>
-    <label for="per">Cada acorde dura
-      <select id="per"><option value="4">1 compás</option><option value="8" selected>2 compases</option><option value="2">2 tiempos</option></select></label>
-    <label>Tecla de salto: <b id="skipName">Do7</b> <button type="button" id="skipBtn" style="padding:4px 10px;font-size:.85rem">Cambiar</button></label>
-    <label for="wait"><input type="checkbox" id="wait"> Esperar a que toque el acorde</label>
-    <label for="simple"><input type="checkbox" id="simple" checked> Acordes simples</label>
-  </div>
 
-<section class="part" id="cifraBox">
-  <h2>Letra con acordes <small>pegá la cifra: la letra aparece arriba, junto al piano, con los acordes en do, re, mi. Doble toque en la tecla de salto y pasa al acorde siguiente</small></h2>
-  <details id="cifraDet"><summary>Pegar la cifra</summary>
-    <textarea id="cifraTxt" placeholder="Copiá la cifra completa de acordesweb o Cifra Club (acordes arriba, letra abajo) y pegala acá" style="min-height:9rem"></textarea>
-  </details>
-  <div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:8px">
-    <button type="button" class="go" id="cifraGo">Cargar cifra</button>
-    <button type="button" id="cifraClear">Borrar</button>
-    <span class="hint" id="cifraStatus">Pegá la cifra en la caja y apretá "Cargar cifra".</span>
+<div class="paste" id="pastePanel" hidden>
+  <div class="card">
+    <h2>Pegar la cifra</h2>
+    <textarea id="cifraTxt" placeholder="Copiá la cifra completa de Cifra Club (acordes arriba, letra abajo) y pegala acá"></textarea>
+    <div class="row">
+      <button type="button" class="go" id="cifraGo">Cargar cifra</button>
+      <button type="button" id="cifraClear">Borrar</button>
+      <button type="button" id="pasteClose">Cerrar</button>
+      <span class="hint" id="cifraStatus">Pegá la cifra y apretá "Cargar cifra".</span>
+    </div>
+    <details id="cifraDet" class="hid" open><summary></summary></details>
   </div>
-</section>
-<div id="parts"></div>
-
-<p class="note">La letra no está acá. Si querés verla junto a los acordes, pegala en la caja "Tu letra" de cada parte; queda guardada en este navegador. La cifra completa con letra está en
-<a href="https://acordesweb.com/cancion/los-enanitos-verdes/lamento-boliviano" target="_blank" rel="noopener">acordesweb</a>. El orden de acordes sale de esa cifra; cuánto dura cada uno lo elegís vos.
-Esta página no hace sonido: el sonido lo pone tu teclado.</p>
 </div>
 
 <script>
@@ -232,7 +228,7 @@ function evaluate(){
     $('played').className='badge bad'; const q=[]; if(miss.length) q.push('te falta '+miss.map(t=>NAMES[t]).join(', ')); if(ext.length) q.push('sobra '+ext.map(t=>NAMES[t]).join(', '));
     $('evalTxt').textContent=q.join(' · '); return false;
   }
-  if (!target){ $('evalTxt').textContent = 'Elegí un acorde de abajo o apretá Empezar.'; return false; }
+  if (!target){ $('evalTxt').textContent = 'Cargá una cifra o apretá "Lección guiada".'; return false; }
   const req = requiredTones(target), allow = new Set(allowedTones(target));
   if (!set.size){ $('evalTxt').textContent = 'Tocá ' + show(target) + ': ' + req.map(t=>NAMES[t]).join(' – ') + '.'; return false; }
   const missing = req.filter(t=>!set.has(t)), extra = [...set].filter(t=>!allow.has(t));
@@ -384,7 +380,7 @@ function markCifra(){ cifEls().forEach((c,i)=>c.classList.toggle('cur', i===cifI
 $('cifraTxt').addEventListener('input',()=>{ store.set('acordes-cifra',$('cifraTxt').value); renderCifra(); });
 $('cifraTxt').value = store.get('acordes-cifra')||''; $('cifraDet').open = !$('cifraTxt').value;
 $('simple').addEventListener('change',()=>renderCifra());
-$('cifraGo').addEventListener('click',()=>{ store.set('acordes-cifra',$('cifraTxt').value); renderCifra(); if(cifEls().length){ $('cifraDet').open=false; window.scrollTo({top:0}); } });
+$('cifraGo').addEventListener('click',()=>{ store.set('acordes-cifra',$('cifraTxt').value); renderCifra(); if(cifEls().length){ togglePaste(false); } });
 $('cifraClear').addEventListener('click',()=>{ $('cifraTxt').value=''; store.set('acordes-cifra',''); renderCifra(); $('cifraDet').open=true; });
 $('cifraTxt').addEventListener('paste',()=>setTimeout(()=>{ store.set('acordes-cifra',$('cifraTxt').value); renderCifra(); },60));
 
@@ -415,6 +411,19 @@ setInterval(()=>{
     setTimeout(()=>{ if(!lesson) return; lesson.i++; if(lesson.i>=LESSON.length){ lessonStop(); tutor.say('¡Terminaste! Tocaste los cuatro acordes y la canción en orden.'); } else lessonShow(); },900);
   }
 },100);
+
+/* ---- panel para pegar la cifra y pantalla completa ---- */
+function togglePaste(show){ $('pastePanel').hidden=!show; if(show) $('cifraTxt').focus(); }
+$('pasteBtn').addEventListener('click',()=>togglePaste(true));
+$('pasteClose').addEventListener('click',()=>togglePaste(false));
+$('pastePanel').addEventListener('click',e=>{ if(e.target===$('pastePanel')) togglePaste(false); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('pastePanel').hidden) togglePaste(false); });
+$('fsBtn').addEventListener('click',()=>{
+  if(document.fullscreenElement){ document.exitFullscreen(); }
+  else if(document.documentElement.requestFullscreen){ document.documentElement.requestFullscreen().catch(()=>{ $('fsBtn').textContent='Tu navegador no permite pantalla completa (probá F11)'; }); }
+  else $('fsBtn').textContent='Probá F11';
+});
+document.addEventListener('fullscreenchange',()=>{ const f=!!document.fullscreenElement; document.body.classList.toggle('fs',f); $('fsBtn').textContent=f?'Salir de pantalla completa':'Pantalla completa'; });
 
 /* ---- arranque ---- */
 (function(){
