@@ -13632,7 +13632,7 @@ function openCifraPanel() {
     const f = document.createElement('iframe');
     f.id = 'cifraFrame'; f.title = 'Tocar con Cifra Club';
     f.style.cssText = 'width:100%; height:100%; border:0; display:block; background:#0b0f14;';
-    f.src = 'acordes/index.html?embed=1';
+    f.src = 'acordes/index.html?embed=1&v=' + Date.now(); // sin caché: siempre la versión última del panel
     wrap.appendChild(f);
   }
   wrap.style.display = 'block'; cifraPanelOpen = true;

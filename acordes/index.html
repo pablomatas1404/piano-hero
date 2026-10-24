@@ -149,6 +149,7 @@ body.embed .kb, body.embed #fsBtn, body.embed .midi{display:none}
   <div class="main">
     <div class="kpanel" aria-live="off">
       <div class="kleft">
+        <div class="cbox" id="markBanner" hidden style="background:var(--accent-ink);color:var(--accent);font-weight:800;text-align:center">⏺ MARCANDO<br><span style="font-weight:600;font-size:.85rem">Doble toque en el Do agudo cuando cambie el acorde</span></div>
         <div class="cbox cnow"><span class="lbl">Tocá ahora</span><span class="big" id="nowChord">–</span></div>
         <div class="cbox cnext"><span class="lbl">Sigue</span><span class="mid" id="nextChord">–</span></div>
         <div class="cbox picker" id="picker" hidden><span class="lbl">¿Qué acorde va acá?</span><div class="pb" id="pickBtns"></div>
@@ -423,6 +424,7 @@ function timeAtPos(p){
   return marks[n-1];
 }
 function updateMarkUI(){
+  $('markBanner').hidden=!(playing && EVENTS.length && !marksDone());
   $('remarkBtn').hidden=!(marks.length>0);
   $('introBtn').hidden=!(LINES.length>1 && LINES[0].head && /intro/i.test(LINES[0].head));
   if(!EVENTS.length) return;
@@ -494,7 +496,7 @@ function setPlaying(p){
   playing=p; lastT=0; toParent({type:'play',on:p});
   if(!p && EVENTS.length && marks.length>0 && !marksDone()){ kPos=posOfEvent(marks.length-1); curEv=-2; refresh(); }  /* al pausar a mitad de marcado, el texto vuelve al acorde marcado */
   $('nowChord').classList.toggle('canedit',!p && EVENTS.length>0);
-  if(p) updateMarkUI(); $('playBtn').textContent=p?'⏸ Pausa':'▶ Pasar letra'; $('playBtn').className=p?'stop':'go'; }
+  updateMarkUI(); $('playBtn').textContent=p?'⏸ Pausa':'▶ Pasar letra'; $('playBtn').className=p?'stop':'go'; }
 function frame(t){
   requestAnimationFrame(frame); if(!lastT) lastT=t; const rdt=Math.min(2,(t-lastT)/1000), dt=Math.min(.1,(t-lastT)/1000); lastT=t;
   if(playing && LINES.length){
