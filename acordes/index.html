@@ -41,8 +41,8 @@ h1{font-family:var(--font-chord);font-size:2rem;margin:0;line-height:1.1}
 .now{background:var(--accent);color:var(--accent-ink)}
 .next{background:var(--panel);border:2px solid var(--next)}
 .lbl{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;font-weight:600;opacity:.85}
-.big{font-family:var(--font-chord);font-weight:700;line-height:1;font-size:clamp(3rem,13vw,5.5rem)}
-.mid{font-family:var(--font-chord);font-weight:700;line-height:1;font-size:clamp(2rem,8vw,3.2rem);color:var(--next)}
+.big{font-family:var(--font-chord);font-weight:700;line-height:1;font-size:clamp(2.2rem,9vw,3.8rem)}
+.mid{font-family:var(--font-chord);font-weight:700;line-height:1.05;font-size:clamp(1.4rem,5.5vw,2.2rem);color:var(--next)}
 .beats{display:flex;gap:6px;margin-top:8px}
 .beats i{flex:1;height:8px;border-radius:4px;background:var(--cell)}
 .beats i.on{background:var(--accent)}
@@ -73,7 +73,7 @@ section.part{margin-top:20px}
 h2{font-family:var(--font-chord);font-size:1.4rem;margin:0 0 6px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
 h2 small{font-family:var(--font-body);font-weight:400;font-size:.85rem;color:var(--muted)}
 .chords{display:flex;flex-wrap:wrap;gap:8px}
-.c{font-family:var(--font-chord);font-weight:700;font-size:1.8rem;min-width:4rem;text-align:center;padding:8px 12px;border-radius:9px;background:var(--cell);border:2px solid transparent;cursor:pointer}
+.c{font-family:var(--font-chord);font-weight:700;font-size:1.45rem;min-width:5.6rem;text-align:center;padding:8px 12px;border-radius:9px;background:var(--cell);border:2px solid transparent;cursor:pointer}
 .c.act{background:var(--accent);color:var(--accent-ink)} .c.nxt{border-color:var(--next)} .c.dim{opacity:.6}
 details{margin-top:8px} summary{cursor:pointer;color:var(--muted);font-size:.92rem}
 textarea{width:100%;min-height:6rem;margin-top:6px;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px}
@@ -88,7 +88,8 @@ textarea{width:100%;min-height:6rem;margin-top:6px;font:inherit;color:var(--ink)
   <p class="sub">Enanitos Verdes · Mi menor · acordes en el orden en que aparecen</p>
   <div class="setup">
     <b>En el Yamaha (PSR-E583 / E483)</b>
-    <div class="row"><span>Armadura de estilo: <b>SP1</b></span><span>Acordes: <b>035</b></span><span>Salen: <b>Em · Bm · Am · Em</b></span></div>
+    <div class="row"><span>Armadura de estilo: <b>SP1</b></span><span>Acordes: <b>035</b></span><span>Salen: <b>Mi menor · Si menor · La menor · Mi menor</b></span></div>
+    <small>La pantalla del Yamaha usa letras: Em = Mi menor · Bm = Si menor · Am = La menor · B = Si mayor.</small>
     <small>Receta corta: AUTO CHORD PLAY [SELECT], mirar que diga 035, y [START/STOP].</small>
   </div>
   <div class="midi"><span class="dot" id="midiDot"></span><span id="midiTxt">Buscando teclado MIDI…</span></div>
@@ -131,7 +132,10 @@ const SONG = { parts: [
 const $ = id => document.getElementById(id);
 const store = { get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}} };
 const simplify = c => c.replace(/^Am7$/,'Am').replace(/^B7$/,'B');
-const label = c => $('simple').checked ? simplify(c) : c;
+const label = c => $('simple').checked ? simplify(c) : c;   // código interno (letras): solo para la lógica
+// Todo lo que se VE va en do, re, mi...: 'Em' -> 'Mi menor', 'B' -> 'Si mayor', 'B7' -> 'Si 7'
+function show(c){ const m=/^([A-G][#b]?)(.*)$/.exec(label(c)); const r=ROOTS[m[1]]; const q=m[2];
+  return NAMES[r] + (q===''?' mayor':q==='m'?' menor':q==='7'?' 7':q==='m7'?' menor 7':' '+q); }
 
 /* ---- teoría mínima ---- */
 const NAMES = ['Do','Do#','Re','Re#','Mi','Fa','Fa#','Sol','Sol#','La','La#','Si'];
@@ -148,7 +152,7 @@ function nameOfSet(set){
   const a = [...set].sort((x,y)=>x-y);
   for (let r=0;r<12;r++) for (const [q,iv] of TYPES){
     const s = iv.map(i=>(r+i)%12).sort((x,y)=>x-y);
-    if (s.length===a.length && s.every((v,i)=>v===a[i])) return NAMES[r] + (q==='m'?' menor':q==='7'?' 7':q==='m7'?' m7':'');
+    if (s.length===a.length && s.every((v,i)=>v===a[i])) return NAMES[r] + (q===''?' mayor':q==='m'?' menor':q==='7'?' 7':' menor 7');
   }
   return a.length ? 'notas sueltas' : '–';
 }
@@ -208,10 +212,10 @@ function evaluate(){
   }
   if (!target){ $('evalTxt').textContent = 'Elegí un acorde de abajo o apretá Empezar.'; return false; }
   const req = requiredTones(target), allow = new Set(allowedTones(target));
-  if (!set.size){ $('evalTxt').textContent = 'Tocá ' + label(target) + ': ' + req.map(t=>NAMES[t]).join(' – ') + '.'; return false; }
+  if (!set.size){ $('evalTxt').textContent = 'Tocá ' + show(target) + ': ' + req.map(t=>NAMES[t]).join(' – ') + '.'; return false; }
   const missing = req.filter(t=>!set.has(t)), extra = [...set].filter(t=>!allow.has(t));
   if (!missing.length && !extra.length){
-    $('played').className = 'badge ok'; $('evalTxt').textContent = '¡Bien! ' + label(target); return true;
+    $('played').className = 'badge ok'; $('evalTxt').textContent = '¡Bien! ' + show(target); return true;
   }
   $('played').className = 'badge bad';
   const parts = []; if (missing.length) parts.push('te falta ' + missing.map(t=>NAMES[t]).join(', ')); if (extra.length) parts.push('sobra ' + extra.map(t=>NAMES[t]).join(', '));
@@ -226,7 +230,7 @@ function buildParts(){
     const h=document.createElement('h2'); h.innerHTML=p.name+' <small>'+p.chords.length+' acordes</small>';
     const row=document.createElement('div'); row.className='chords';
     p.chords.forEach(c=>{
-      const el=document.createElement('div'); el.className='c'; el.textContent=label(c); el.tabIndex=0; el.dataset.i=flat.length;
+      const el=document.createElement('div'); el.className='c'; el.textContent=show(c); el.tabIndex=0; el.dataset.i=flat.length;
       const i=flat.length; flat.push({chord:c,el});
       el.addEventListener('click',()=>{ if(timer) return; setTarget(c); markOnly(i); });
       row.appendChild(el);
@@ -238,11 +242,11 @@ function buildParts(){
   });
 }
 function markOnly(i){ flat.forEach((f,k)=>{ f.el.classList.toggle('act',k===i); f.el.classList.remove('nxt','dim'); });
-  $('nowChord').textContent=label(flat[i].chord); $('nextChord').textContent=flat[i+1]?label(flat[i+1].chord):'Fin'; }
+  $('nowChord').textContent=show(flat[i].chord); $('nextChord').textContent=flat[i+1]?show(flat[i+1].chord):'Fin'; }
 function paint(){
-  flat.forEach((f,i)=>{ f.el.textContent=label(f.chord); f.el.classList.toggle('act',i===pos); f.el.classList.toggle('nxt',pos>=0&&i===pos+1); f.el.classList.toggle('dim',pos>=0&&i<pos); });
+  flat.forEach((f,i)=>{ f.el.textContent=show(f.chord); f.el.classList.toggle('act',i===pos); f.el.classList.toggle('nxt',pos>=0&&i===pos+1); f.el.classList.toggle('dim',pos>=0&&i<pos); });
   const cur=flat[pos], nx=flat[pos+1];
-  $('nowChord').textContent=cur?label(cur.chord):'–'; $('nextChord').textContent=nx?label(nx.chord):(cur?'Fin':'–');
+  $('nowChord').textContent=cur?show(cur.chord):'–'; $('nextChord').textContent=nx?show(nx.chord):(cur?'Fin':'–');
   if(cur) cur.el.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
 }
 function drawBeats(n,on){ const b=$('beats'); if(b.children.length!==n){ b.innerHTML=''; for(let i=0;i<n;i++) b.appendChild(document.createElement('i')); } [...b.children].forEach((x,i)=>x.classList.toggle('on',i<on)); }
@@ -295,15 +299,15 @@ if(navigator.requestMIDIAccess){
 
 /* ---- lección guiada: sola, sin depender de nadie (el profesor pone el texto, la página avanza al acertar) ---- */
 const LESSON=[
-  {m:[52,55,59], t:'Acorde 1 de la canción: Mi menor (Em). Tocá Mi, Sol y Si juntas.'},
-  {m:[59,62,66], t:'Acorde 2: Si menor (Bm). Tocá Si, Re y Fa# (la tecla negra) juntas.'},
-  {m:[57,60,64], t:'Acorde 3: La menor (Am). Tocá La, Do y Mi juntas.'},
-  {m:[59,63,66], t:'Acorde 4: Si mayor (B). Tocá Si, Re# y Fa# (las dos negras) juntas.'},
-  {m:[52,55,59], t:'Ahora la canción en orden. Empezá con Em.'},
-  {m:[59,62,66], t:'Sigue Bm.'},
-  {m:[57,60,64], t:'Sigue Am.'},
-  {m:[52,55,59], t:'Vuelve Em.'},
-  {m:[59,63,66], t:'Y cierra con B.'}
+  {m:[52,55,59], t:'Acorde 1 de la canción: Mi menor. Tocá Mi, Sol y Si juntas.'},
+  {m:[59,62,66], t:'Acorde 2: Si menor. Tocá Si, Re y Fa# (la tecla negra) juntas.'},
+  {m:[57,60,64], t:'Acorde 3: La menor. Tocá La, Do y Mi juntas.'},
+  {m:[59,63,66], t:'Acorde 4: Si mayor. Tocá Si, Re# y Fa# (las dos negras) juntas.'},
+  {m:[52,55,59], t:'Ahora la canción en orden. Empezá con Mi menor.'},
+  {m:[59,62,66], t:'Sigue Si menor.'},
+  {m:[57,60,64], t:'Sigue La menor.'},
+  {m:[52,55,59], t:'Vuelve Mi menor.'},
+  {m:[59,63,66], t:'Y cierra con Si mayor.'}
 ];
 let lesson=null;   // {i, armed}
 function lessonShow(){
