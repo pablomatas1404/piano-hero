@@ -532,6 +532,8 @@
      vistazo. Ahora es relleno completo, en un verde bien suave (no choca con .upcoming, que es
      celeste) — se ve clarísimo qué teclas son de la escala. */
   .wkey.scale-tone{ background:#c9f5e0; }
+  .wkey.cifra-target{ box-shadow: inset 0 -14px 0 #e8a21a; }
+  .bkey.cifra-target{ background:#e8a21a !important; }
   .bkey.scale-tone{ background:#1d5c46; }
   .view-bar{
     display:flex; align-items:center; gap:6px; padding:6px 20px; background:var(--panel);
@@ -1680,6 +1682,9 @@
     </div>
     <div class="cascade-wrap">
       <canvas id="cascade"></canvas>
+      <!-- "Tocar con Cifra Club" (24/10/2026, a pedido de Pablo): la app de acordes (carpeta acordes/) metida en la
+           pantalla negra del medio del Órgano. Solo existe mientras se aprieta el botón. -->
+      <div id="cifraPanelWrap" style="display:none; position:absolute; inset:0; z-index:40; background:#0b0f14;"></div>
       <!-- Zoom flotante del Modo Profesional (24/08/2026) -- ver el comentario grande en el CSS
            (.pro-zoom-floating) para el porqué. -->
       <div class="pro-zoom-floating" id="proZoomFloating" title="Zoom de la partitura">
@@ -1766,6 +1771,7 @@
            repaso antes de sumar dificultad. Siempre visible como Configuración/Micrófono, no
            escondido en el grupo colapsable. -->
       <button class="btn" onclick="openLearnHub()" title="Curso guiado de 8 lecciones: de tres notas con la mano derecha hasta tocar con las dos manos juntas">🎓 Aprender</button>
+      <button class="btn" id="cifraClubBtn" style="display:none" onclick="toggleCifraPanel()" title="Pegás una cifra de Cifra Club y la pantalla negra te va mostrando la letra y los acordes que tenés que tocar, como un karaoke">🎼 Tocar con Cifra Club</button>
       <span class="mini-toolbar-sep"></span>
       <span class="mini-toolbar-group mini-toolbar-collapsible">
         <button class="btn primary" onclick="playSong()">▶ Reproducir</button>
@@ -4528,6 +4534,7 @@ function activeVoice() {
 // Local Control, y el resultado se escuchaba como un achurado/latencia. Ahora, si la nota ya vino
 // de tu teclado, no le mandamos nada de vuelta — dejamos que suene solo, como corresponde.
 function playNote(midi, viaHardwareMidi) {
+  forwardNoteToCifra(midi, true);
   // Si vino del teclado físico Y estamos en modo "Teclado MIDI", Local Control ya la hizo sonar
   // sola, al instante — no hace falta (ni conviene) mandar nada de vuelta. En cualquier otro caso
   // (mouse, teclado de la compu, o modo "Computadora" aunque toques el teclado físico) sigue igual
@@ -4554,6 +4561,7 @@ function playNote(midi, viaHardwareMidi) {
   if (cardMode) registerCardNoteOn(midi);
 }
 function stopNote(midi, viaHardwareMidi) {
+  forwardNoteToCifra(midi, false);
   const alreadySoundingLocally = viaHardwareMidi && soundOutputMode === 'midi' && midiOutputRef;
   if (!alreadySoundingLocally) {
     if (soundOutputMode === 'midi' && midiOutputRef) sendMidiNoteOff(midi);
@@ -9246,6 +9254,8 @@ function switchTab(tab) {
   // irte de ahí, se apaga el estilo que estuviera sonando y las escalas, como si cerraras el
   // programa aparte.
   const inOrgano = tab === 'banda';
+  { const cb = document.getElementById('cifraClubBtn'); if (cb) cb.style.display = inOrgano ? '' : 'none'; }
+  if (!inOrgano && cifraPanelOpen) closeCifraPanel();
   document.getElementById('sideLeftDefault').style.display = inOrgano ? 'none' : '';
   document.getElementById('sideLeftOrgano').style.display = inOrgano ? '' : 'none';
   document.getElementById('scaleToolbar').style.display = inOrgano ? 'flex' : 'none';
@@ -9888,7 +9898,7 @@ function trashDateLabel(ts) {
 
 function backupSave() {
   const data = {};
-  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('pianoHero_') === 0) data[k] = localStorage.getItem(k); }
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && (k.indexOf('pianoHero_') === 0 || k.indexOf('acordes-') === 0)) data[k] = localStorage.getItem(k); }
   const d = new Date(), p = n => String(n).padStart(2, '0');
   const name = 'PianoHero-mis-cambios-' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()) + '.json';
   const a = document.createElement('a');
@@ -9905,7 +9915,7 @@ function backupLoad(input) {
       const obj = JSON.parse(r.result);
       if (!obj || obj.app !== 'pianoHero' || !obj.data) throw new Error('no es un archivo de Piano Hero');
       showConfirmModal('¿Cargar este archivo? Reemplaza tu orden, borrados, papelera y estrellas actuales por los del archivo.', () => {
-        Object.keys(obj.data).forEach(k => { if (k.indexOf('pianoHero_') === 0) lsSet(k, obj.data[k]); });
+        Object.keys(obj.data).forEach(k => { if (k.indexOf('pianoHero_') === 0 || k.indexOf('acordes-') === 0) lsSet(k, obj.data[k]); });
         showBigToast('📂 Cargado. Reiniciando…'); setTimeout(() => location.reload(), 900);
       }, { title: '📂 ¿Cargar mis cambios?', okLabel: '📂 Cargar' });
     } catch (e) { showBigToast('⚠️ Ese archivo no sirve: ' + e.message); }
@@ -13460,6 +13470,51 @@ function updateConcertMode() {
   document.body.classList.toggle('concert-mode', wantsConcert);
 }
 
+/* ============ "Tocar con Cifra Club" dentro del Órgano ============ */
+let cifraPanelOpen = false;
+let cifraChordInfo = null;      // {rootPc, quality} del acorde que marca la letra ahora mismo
+let cifraTargetMidis = [];
+function cifraFrameWin() { const f = document.getElementById('cifraFrame'); return f ? f.contentWindow : null; }
+function toggleCifraPanel() { if (cifraPanelOpen) closeCifraPanel(); else openCifraPanel(); }
+function openCifraPanel() {
+  const wrap = document.getElementById('cifraPanelWrap'); if (!wrap) return;
+  if (!document.getElementById('cifraFrame')) {
+    const f = document.createElement('iframe');
+    f.id = 'cifraFrame'; f.title = 'Tocar con Cifra Club';
+    f.style.cssText = 'width:100%; height:100%; border:0; display:block; background:#0b0f14;';
+    f.src = 'acordes/index.html?embed=1';
+    wrap.appendChild(f);
+  }
+  wrap.style.display = 'block'; cifraPanelOpen = true;
+  const b = document.getElementById('cifraClubBtn'); if (b) { b.textContent = '⬅ Cerrar Cifra Club'; b.classList.add('on'); }
+  lastScaleHighlightKey = null; updateScaleHighlight();
+}
+function closeCifraPanel() {
+  const wrap = document.getElementById('cifraPanelWrap'); if (wrap) wrap.style.display = 'none';
+  cifraPanelOpen = false; cifraChordInfo = null; paintCifraTargets([]);
+  const b = document.getElementById('cifraClubBtn'); if (b) { b.textContent = '🎼 Tocar con Cifra Club'; b.classList.remove('on'); }
+  lastScaleHighlightKey = null; if (typeof updateScaleHighlight === 'function') updateScaleHighlight();
+}
+function paintCifraTargets(midis) {
+  document.querySelectorAll('.cifra-target').forEach(el => el.classList.remove('cifra-target'));
+  cifraTargetMidis = midis || [];
+  cifraTargetMidis.forEach(m => { const el = document.getElementById('k-' + m); if (el) el.classList.add('cifra-target'); });
+}
+// Cada nota que apretás (teclado Yamaha, mouse, compu) también se le avisa al panel, para que evalúe y para la tecla de salto.
+function forwardNoteToCifra(midi, on) {
+  if (!cifraPanelOpen) return;
+  const w = cifraFrameWin(); if (w) { try { w.postMessage({ src: 'pianohero', type: 'note', midi, on }, '*'); } catch (e) {} }
+}
+window.addEventListener('message', e => {
+  const d = e.data; if (!d || d.src !== 'acordes') return;
+  if (d.type === 'chord') {
+    cifraChordInfo = (d.root === null || d.root === undefined) ? null : { rootPc: d.root, quality: d.quality === 'menor' ? 'menor' : 'mayor' };
+    lastScaleHighlightKey = null; updateScaleHighlight();
+  } else if (d.type === 'target') {
+    paintCifraTargets(Array.isArray(d.midis) ? d.midis : []);
+  }
+});
+
 // "Órgano" (piloto): botones de variante de escala, arriba del teclado.
 let scaleIllumMode = 'off'; // 'off' | 'triada' | 'pentatonica' | 'completa'
 function setScaleIllumMode(mode, btnEl) {
@@ -13479,7 +13534,8 @@ function updateScaleHighlight() {
   if (scaleIllumMode !== 'off') {
     // En Órgano: el acorde "actual" es el último que disparaste con la mano izquierda — reacciona
     // en vivo mientras improvisás, no hace falta tener ninguna canción cargada ni sonando.
-    const chord = (currentTab === 'banda' && organLastChordInfo) ? organLastChordInfo
+    const chord = (cifraPanelOpen && cifraChordInfo) ? cifraChordInfo
+      : (currentTab === 'banda' && organLastChordInfo) ? organLastChordInfo
       : (isPlaying ? getCurrentChordAtPlayhead() : null);
     if (chord) {
       const intervals = SCALE_INTERVALS[chord.quality][scaleIllumMode];
@@ -14074,6 +14130,7 @@ function learnState() {
 function learnSaveState(st) { localStorage.setItem('pianoHero_learnCourse', JSON.stringify(st)); }
 
 function openLearnHub() {
+  if (cifraPanelOpen) closeCifraPanel();
   const st = learnState();
   const list = document.getElementById('learnHubList');
   list.innerHTML = LEARN_LESSONS.map((L, idx) => {
