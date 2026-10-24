@@ -13486,9 +13486,22 @@ function openCifraPanel() {
     wrap.appendChild(f);
   }
   wrap.style.display = 'block'; cifraPanelOpen = true;
+  adjustCifraPanelTop();
   const b = document.getElementById('cifraClubBtn'); if (b) { b.textContent = '⬅ Cerrar Cifra Club'; b.classList.add('on'); }
   lastScaleHighlightKey = null; updateScaleHighlight();
 }
+// El contador de créditos flotante (arriba al centro) tapaba los botones de arriba del panel (Pegar cifra, Pasar letra):
+// si está a la vista, el panel arranca justo debajo de él.
+function adjustCifraPanelTop() {
+  const wrap = document.getElementById('cifraPanelWrap'); if (!wrap || !cifraPanelOpen) return;
+  wrap.style.top = '0px';
+  const fl = document.getElementById('creditsFloat');
+  if (fl && getComputedStyle(fl).display !== 'none') {
+    const over = fl.getBoundingClientRect().bottom - wrap.getBoundingClientRect().top + 4;
+    if (over > 0) wrap.style.top = Math.ceil(over) + 'px';
+  }
+}
+window.addEventListener('resize', () => { if (cifraPanelOpen) adjustCifraPanelTop(); });
 function closeCifraPanel() {
   const wrap = document.getElementById('cifraPanelWrap'); if (wrap) wrap.style.display = 'none';
   cifraPanelOpen = false; cifraChordInfo = null; paintCifraTargets([]);
