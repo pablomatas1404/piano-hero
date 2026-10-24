@@ -36,18 +36,18 @@ h1{font-family:var(--font-chord);font-size:2rem;margin:0;line-height:1.1}
 .midi{display:flex;align-items:center;gap:8px;margin:8px 0;font-size:.95rem}
 .dot{width:11px;height:11px;border-radius:50%;background:var(--muted);flex:none}
 .dot.on{background:var(--ok)}
-.stage{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0 10px;border-bottom:1px solid var(--line)}
+.stage{position:sticky;top:0;z-index:5;background:var(--bg);padding:6px 0 8px;border-bottom:1px solid var(--line)}
 .now-next{display:grid;grid-template-columns:2fr 1fr;gap:10px}
-.now,.next{border-radius:12px;padding:8px 14px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.now,.next{border-radius:12px;padding:4px 12px;display:flex;flex-direction:column;justify-content:center;min-width:0}
 .now{background:var(--accent);color:var(--accent-ink)}
 .next{background:var(--panel);border:2px solid var(--next)}
 .lbl{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;font-weight:600;opacity:.85}
-.big{font-family:var(--font-chord);font-weight:700;line-height:1;font-size:clamp(2.2rem,9vw,3.8rem)}
-.mid{font-family:var(--font-chord);font-weight:700;line-height:1.05;font-size:clamp(1.4rem,5.5vw,2.2rem);color:var(--next)}
+.big{font-family:var(--font-chord);font-weight:700;line-height:1;font-size:clamp(1.6rem,5vw,2.4rem)}
+.mid{font-family:var(--font-chord);font-weight:700;line-height:1.05;font-size:clamp(1.1rem,3vw,1.5rem);color:var(--next)}
 .beats{display:flex;gap:6px;margin-top:8px}
 .beats i{flex:1;height:8px;border-radius:4px;background:var(--cell)}
 .beats i.on{background:var(--accent)}
-.kb{position:relative;display:flex;height:150px;margin-top:10px;user-select:none;touch-action:manipulation}
+.kb{position:relative;display:flex;height:104px;margin-top:6px;user-select:none;touch-action:manipulation}
 .w{flex:1;background:var(--wkey);border:1px solid #8b97a6;border-radius:0 0 6px 6px;position:relative;display:flex;align-items:flex-end;justify-content:center;
   padding-bottom:4px;font-size:.7rem;color:#4a5563;cursor:pointer}
 .w.tgt{box-shadow:inset 0 -10px 0 var(--accent);background:color-mix(in srgb,var(--accent) 35%,var(--wkey))}
@@ -82,7 +82,11 @@ textarea{width:100%;min-height:6rem;margin-top:6px;font:inherit;color:var(--ink)
 .seg{display:inline-flex;flex-direction:column;white-space:pre}
 .seg .ch{font-family:var(--font-chord);font-weight:700;font-size:1.05rem;color:var(--next);min-height:1.3em;padding-right:.7em;border-radius:4px}
 .seg .ch.hl{background:var(--accent);color:var(--accent-ink)}
-.seg .tx{white-space:pre-wrap}
+.seg .tx{white-space:pre-wrap;font-size:1.15rem}
+.tele{height:7.4rem;overflow-y:auto;margin-top:6px;padding:4px 10px;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.tele:empty{display:none}
+.seg .ch{cursor:pointer}
+.seg .ch.cur{background:var(--accent);color:var(--accent-ink)}
 .lyplain{margin:6px 0 2px;font-weight:600;color:var(--muted)}
 .note{color:var(--muted);font-size:.92rem;margin-top:18px} a{color:var(--next)}
 @media (max-width:520px){.now-next{grid-template-columns:3fr 2fr}.kb{height:120px}.c{font-size:1.5rem;min-width:3.4rem}}
@@ -107,9 +111,11 @@ textarea{width:100%;min-height:6rem;margin-top:6px;font:inherit;color:var(--ink)
   </div>
   <div class="beats" id="beats" aria-hidden="true"></div>
   <div class="teacher" id="teacher" hidden><b>PROFESOR</b><span id="teacherTxt"></span></div>
+  <div class="tele" id="cifraView" aria-live="off"></div>
   <div class="kb" id="kb" aria-label="Teclado virtual"></div>
   <div class="eval"><span class="badge" id="played">–</span><span class="hint" id="evalTxt">Elegí un acorde de abajo o apretá Empezar. Podés tocar el teclado real o hacer clic en el virtual.</span></div>
-  <div class="controls">
+</div>
+<div class="controls" style="margin-top:12px">
     <button class="go" id="lessonBtn" type="button">Lección guiada</button>
     <button id="goBtn" type="button" class="go" style="background:var(--cell);color:var(--ink)">Empezar</button>
     <label for="bpm">Tempo <input type="number" id="bpm" min="30" max="200" value="80"></label>
@@ -119,14 +125,17 @@ textarea{width:100%;min-height:6rem;margin-top:6px;font:inherit;color:var(--ink)
     <label for="wait"><input type="checkbox" id="wait"> Esperar a que toque el acorde</label>
     <label for="simple"><input type="checkbox" id="simple" checked> Acordes simples</label>
   </div>
-</div>
 
 <section class="part" id="cifraBox">
-  <h2>Letra con acordes <small>pegá la cifra y los acordes quedan en do, re, mi sobre cada parte de la letra</small></h2>
+  <h2>Letra con acordes <small>pegá la cifra: la letra aparece arriba, junto al piano, con los acordes en do, re, mi. Doble toque en la tecla de salto y pasa al acorde siguiente</small></h2>
   <details id="cifraDet"><summary>Pegar la cifra</summary>
     <textarea id="cifraTxt" placeholder="Copiá la cifra completa de acordesweb o Cifra Club (acordes arriba, letra abajo) y pegala acá" style="min-height:9rem"></textarea>
   </details>
-  <div id="cifraView"></div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:8px">
+    <button type="button" class="go" id="cifraGo">Cargar cifra</button>
+    <button type="button" id="cifraClear">Borrar</button>
+    <span class="hint" id="cifraStatus">Pegá la cifra en la caja y apretá "Cargar cifra".</span>
+  </div>
 </section>
 <div id="parts"></div>
 
@@ -301,6 +310,7 @@ const octName = m => NAMES[m%12] + (Math.floor(m/12)-1);
 function showSkip(){ $('skipName').textContent = learning ? 'tocá la tecla…' : octName(skipKey); }
 function nextStep(){
   if (lesson){ lesson.i++; if(lesson.i>=LESSON.length){ lessonStop(); tutor.say('¡Terminaste! Pasaste por todos los pasos.'); } else lessonShow(); return; }
+  if (cifEls().length){ if(cifIdx+1<cifEls().length) cifGo(cifIdx+1); else tutor.say('No hay más acordes en la cifra.'); return; }
   if (selIdx>=0 && selIdx+1<flat.length){ setTarget(flat[selIdx+1].chord); markOnly(selIdx+1); flat[selIdx+1].el.scrollIntoView({block:'nearest'}); }
   else tutor.say('No hay más acordes.');
 }
@@ -340,7 +350,7 @@ function chordEs(tok,simple){ const p=parseChordTok(tok); if(!p) return tok;
 function chordKey(tok){ const p=parseChordTok(tok); return p? p.root+(p.q==='m'||p.q==='min'?'m':'') : null; }
 function renderCifra(){
   const txt=$('cifraTxt').value, box=$('cifraView'); box.innerHTML='';
-  if(!txt.trim()) return;
+  if(!txt.trim()){ $('cifraStatus').textContent='La caja está vacía. Pegá la cifra y apretá "Cargar cifra".'; return; }
   const lines=txt.replace(/\r/g,'').split('\n'), simple=$('simple').checked;
   for(let i=0;i<lines.length;i++){
     const l=lines[i];
@@ -350,7 +360,7 @@ function renderCifra(){
       const row=document.createElement('div'); row.className='lyline';
       const text = useNext ? nxt : '';
       const seg=(chord,txt2)=>{ const s=document.createElement('span'); s.className='seg';
-        const c=document.createElement('span'); c.className='ch'; c.textContent=chord?chordEs(chord,simple):' '; if(chord){ const k=chordKey(chord); if(k!==null) c.dataset.k=k; }
+        const c=document.createElement('span'); c.className='ch'; c.textContent=chord?chordEs(chord,simple):' '; if(chord){ const k=chordKey(chord); if(k!==null){ c.dataset.k=k; c.dataset.tok=chord; c.addEventListener('click',()=>cifGoEl(c)); } }
         const t=document.createElement('span'); t.className='tx'; t.textContent=txt2||' '; s.append(c,t); row.appendChild(s); };
       if(useNext && cols[0].i>0) seg(null,text.slice(0,cols[0].i));
       cols.forEach((c,k)=>{ const end=k+1<cols.length?cols[k+1].i:undefined; seg(CH_OTHER.has(c.t)?null:c.t, useNext? text.slice(c.i,end):''); });
@@ -359,16 +369,24 @@ function renderCifra(){
     } else if(l.trim()){ const d=document.createElement('div'); d.className='lyplain'; d.textContent=l; box.appendChild(d); }
     else { const d=document.createElement('div'); d.style.height='.6rem'; box.appendChild(d); }
   }
-  markCifra();
+  cifIdx=-1; markCifra();
+  const n=cifEls().length; $('cifraStatus').textContent = n ? ('Listo: '+n+' acordes cargados. La letra está arriba, junto al piano. Doble toque en la tecla de salto para empezar.') : 'Pegaste texto, pero no encontré acordes. Copiá también las líneas de arriba, donde están los acordes (Em, Bm, Am…).';
 }
-function markCifra(){
-  const cur = lesson ? LESSON[lesson.i] : null; let key=null;
-  if(target){ key=chordKey(label(target)); }
-  document.querySelectorAll('#cifraView .ch').forEach(c=>c.classList.toggle('hl', key!==null && c.dataset.k!==undefined && +c.dataset.k.replace('m','')===+String(key).replace('m','') && c.dataset.k.endsWith('m')===String(key).endsWith('m')));
-}
+let cifIdx=-1;
+function cifEls(){ return [...document.querySelectorAll('#cifraView .ch[data-tok]')]; }
+function cifCode(tok){ const m=CH_RE.exec(tok); const minor=m[2]==='m'||m[2]==='min'; return m[1]+(minor?'m':'')+(!$('simple').checked && m[3]==='7'?'7':''); }
+function cifGoEl(el){ cifGo(cifEls().indexOf(el)); }
+function cifGo(i){ const els=cifEls(); if(i<0||i>=els.length) return; cifIdx=i;
+  const code=cifCode(els[i].dataset.tok); setTarget(code);
+  $('nowChord').textContent=show(code); const nx=els[i+1]; $('nextChord').textContent=nx?show(cifCode(nx.dataset.tok)):'Fin';
+  const tele=$('cifraView'), row=els[i].closest('.lyline'); if(row){ const r=row.getBoundingClientRect(), t=tele.getBoundingClientRect(); tele.scrollTop += (r.top-t.top) - tele.clientHeight/3; } }
+function markCifra(){ cifEls().forEach((c,i)=>c.classList.toggle('cur', i===cifIdx)); }
 $('cifraTxt').addEventListener('input',()=>{ store.set('acordes-cifra',$('cifraTxt').value); renderCifra(); });
 $('cifraTxt').value = store.get('acordes-cifra')||''; $('cifraDet').open = !$('cifraTxt').value;
 $('simple').addEventListener('change',()=>renderCifra());
+$('cifraGo').addEventListener('click',()=>{ store.set('acordes-cifra',$('cifraTxt').value); renderCifra(); if(cifEls().length){ $('cifraDet').open=false; window.scrollTo({top:0}); } });
+$('cifraClear').addEventListener('click',()=>{ $('cifraTxt').value=''; store.set('acordes-cifra',''); renderCifra(); $('cifraDet').open=true; });
+$('cifraTxt').addEventListener('paste',()=>setTimeout(()=>{ store.set('acordes-cifra',$('cifraTxt').value); renderCifra(); },60));
 
 /* ---- lección guiada: sola, sin depender de nadie (el profesor pone el texto, la página avanza al acertar) ---- */
 const LESSON=[
