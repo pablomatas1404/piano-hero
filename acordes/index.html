@@ -111,7 +111,7 @@ body.embed .kb, body.embed #fsBtn, body.embed .midi{display:none}
 <body>
 <div class="app">
   <div class="top">
-    <span class="brand">Lamento boliviano<small>Enanitos Verdes · Mi menor</small></span>
+    <span class="brand"><span id="brandTitle">Lamento boliviano</span><small id="brandSub">Enanitos Verdes · Mi menor</small></span>
     <span class="midi"><span class="dot" id="midiDot"></span><span id="midiTxt">Buscando teclado MIDI…</span></span>
     <button type="button" id="pasteBtn">Pegar cifra</button>
     <button type="button" class="go" id="playBtn">▶ Pasar letra</button>
@@ -123,6 +123,8 @@ body.embed .kb, body.embed #fsBtn, body.embed .midi{display:none}
       <summary>Opciones</summary>
       <div class="pop">
         <label for="simple"><input type="checkbox" id="simple" checked> Acordes simples (sin séptimas)</label>
+        <label>Cambios de acorde por renglón:
+          <select id="lvl"><option value="0">Todos (difícil)</option><option value="2">Hasta 2 (medio)</option><option value="1">1 solo (fácil)</option></select></label>
         <label>Tecla de salto: <b id="skipName">Do7</b> <button type="button" id="skipBtn" style="padding:4px 10px;font-size:.85rem">Cambiar</button></label>
         <p>Doble toque en la tecla de salto (la más aguda, Do7) pasa al acorde siguiente. Flechas arriba/abajo: renglón anterior/siguiente. Barra espaciadora: pausa. Doble clic en un acorde: corregirlo.</p>
         <p>Yamaha: armadura SP1, acordes 035. La pantalla del Yamaha usa letras: Em = Mi menor · Bm = Si menor · Am = La menor · B = Si mayor.</p>
@@ -155,6 +157,8 @@ body.embed .kb, body.embed #fsBtn, body.embed .midi{display:none}
     <div class="row">
       <button type="button" class="go" id="cifraGo">Cargar cifra</button>
       <button type="button" id="cifraClear">Borrar</button>
+      <input id="cifraTitle" placeholder="Nombre de la canción" style="min-width:12em" hidden>
+      <button type="button" id="cifraSave" hidden>Guardar en mi lista</button>
       <button type="button" id="pasteClose">Cerrar</button>
       <span class="hint" id="cifraStatus">Pegá la cifra y apretá "Cargar cifra".</span>
     </div>
@@ -279,8 +283,9 @@ window.tutor={
 let LINES=[], EVENTS=[], EDITS={}, kPos=0, curEv=-1, nShow=+(store.get('acordes-n')||1);
 function cleanText(t){ let s=t; for(const code of [8203,8204,8205,65279]) s=s.split(String.fromCharCode(code)).join(''); return s.split(String.fromCharCode(160)).join(' '); }
 function cifraHash(){ const t=$('cifraTxt').value; let x=7; for(let i=0;i<t.length;i++) x=(x*31+t.charCodeAt(i))%1000000007; return String(x); }
-function loadEdits(){ try{ return JSON.parse(store.get('acordes-edits-'+cifraHash())||'{}'); }catch(e){ return {}; } }
-function saveEdits(){ store.set('acordes-edits-'+cifraHash(),JSON.stringify(EDITS)); }
+function lvlVal(){ return +($('lvl').value||0); }
+function loadEdits(){ try{ return JSON.parse(store.get('acordes-edits-'+cifraHash()+'-'+lvlVal())||'{}'); }catch(e){ return {}; } }
+function saveEdits(){ store.set('acordes-edits-'+cifraHash()+'-'+lvlVal(),JSON.stringify(EDITS)); }
 
 /* texto -> LINES [{head, segs:[{tok, text, ev}]}] y EVENTS [{line, seg, tok}] */
 function parseCifra(raw){
@@ -293,7 +298,10 @@ function parseCifra(raw){
       const cols=[], re=/\S+/g; let m; while((m=re.exec(l))) cols.push({i:m.index,t:m[0]});
       const segs=[]; const text=useNext?nxt:'';
       if(useNext && cols[0].i>0) segs.push({tok:null,text:text.slice(0,cols[0].i)});
-      cols.forEach((c,k)=>{ const end=k+1<cols.length?cols[k+1].i:undefined; addSeg(segs, CH_OTHER.has(c.t)?null:c.t, useNext?text.slice(c.i,end):''); });
+      let kept=0; const lim=lvlVal();   /* nivel: máximo de cambios de acorde por renglón (0 = todos) */
+      cols.forEach((c,k)=>{ const end=k+1<cols.length?cols[k+1].i:undefined; let tk=CH_OTHER.has(c.t)?null:c.t;
+        if(tk && parseChordTok(toLetterTok(tk))){ if(lim && kept>=lim) tk=null; else kept++; }
+        addSeg(segs, tk, useNext?text.slice(c.i,end):''); });
       out.push({head,segs}); head=null; if(useNext) i++;
     } else if(l.trim().startsWith('[')){ head=l.trim().replace('[','').replace(']',''); }
     else if(l.trim()){ out.push({head,segs:[{tok:null,text:l.trim()}]}); head=null; }
@@ -423,6 +431,15 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('pastePanel')
 $('cifraGo').addEventListener('click',()=>{ store.set('acordes-cifra',$('cifraTxt').value); if(loadCifra()) togglePaste(false); });
 $('cifraClear').addEventListener('click',()=>{ $('cifraTxt').value=''; store.set('acordes-cifra',''); loadCifra(); });
 $('cifraTxt').addEventListener('paste',()=>setTimeout(()=>{ store.set('acordes-cifra',$('cifraTxt').value); },60));
+$('lvl').value=store.get('acordes-level')||'0';
+$('lvl').addEventListener('change',()=>{ store.set('acordes-level',$('lvl').value); const k=kPos; parseCifra($('cifraTxt').value); kPos=k; curEv=-2; renderSide(); lastShownLine=-1; refresh(); });
+if(EMBED){ $('brandTitle').textContent='Cifra Club'; $('brandSub').textContent=''; $('cifraTitle').hidden=false; $('cifraSave').hidden=false;
+  $('cifraSave').addEventListener('click',()=>{ const text=$('cifraTxt').value; if(!text.trim()){ $('cifraStatus').textContent='Pegá primero la cifra.'; return; }
+    toParent({type:'saveCifra',title:($('cifraTitle').value||'').trim()||'Sin nombre',text}); $('cifraStatus').textContent='Guardada en tu lista de Cifra Club (panel de la derecha).'; });
+  window.addEventListener('message',e=>{ const d=e.data; if(!d||d.src!=='pianohero'||d.type!=='loadCifra') return;
+    $('brandTitle').textContent=d.title||'Cifra'; $('brandSub').textContent=[d.artist,d.key].filter(Boolean).join(' · ');
+    $('cifraTxt').value=d.text||''; store.set('acordes-cifra',$('cifraTxt').value); setPlaying(false); togglePaste(false); loadCifra(); });
+  toParent({type:'ready'}); }
 $('simple').addEventListener('change',()=>{ store.set('acordes-simple',$('simple').checked?'1':'0'); const k=kPos; parseCifra($('cifraTxt').value); kPos=k; curEv=-2; renderSide(); lastShownLine=-1; refresh(); });
 $('fsBtn').addEventListener('click',()=>{
   if(document.fullscreenElement){ document.exitFullscreen(); }

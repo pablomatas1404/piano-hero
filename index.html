@@ -2046,6 +2046,10 @@
       <button class="tab-btn" id="tab-store" onclick="switchTab('store')">🛒 Tienda</button>
       <button class="tab-btn" id="tab-trash" onclick="switchTab('trash')" title="Lo que borraste no se pierde: queda acá para recuperarlo o borrarlo para siempre">🗑️ Papelera</button>
     </div>
+    <div id="organRightTabs" style="display:none; gap:6px; margin:0 0 8px;">
+      <button class="btn on" id="organTabAcomp" style="flex:1" onclick="setOrganRightMode('acomp')" title="La lista de siempre: Chan Chan, De Camino a la Vereda, acompañamientos">🎹 Acompañamientos</button>
+      <button class="btn" id="organTabCifra" style="flex:1" onclick="setOrganRightMode('cifra')" title="Canciones con letra y acordes para tocar con el teleprompter">🎼 Cifra Club</button>
+    </div>
     <div class="speed-row level-filter-row" id="levelFilterRow" style="display:flex; flex-wrap:wrap;">
       <!-- 🔎 Buscador (3/10/2026, a pedido de Pablo/Ernesto -- "como el de Google"): filtra mientras escribis, con las
            primeras letras de cualquier palabra del titulo o del autor, sin importar mayusculas ni tildes. Mientras
@@ -2086,6 +2090,7 @@
          solo aparece parado en el filtro 📄 Proyecto Partitura -- ver updateProyectoPartituraCosto(). -->
     <div id="proyectoPartituraCosto" style="display:none; margin:2px 0 12px; padding:10px 12px; border-radius:10px; background:var(--panel); border:1px solid var(--line); font-size:13px; line-height:1.5;"></div>
     <div class="song-list" id="songList"></div>
+    <div class="song-list" id="cifraSongList" style="display:none;"></div>
     <div id="backupBox" style="display:none; margin:0 0 10px; padding:8px; border:1px solid var(--line,#2a3550); border-radius:10px;">
       <div style="font-size:12px; margin-bottom:6px;">Copia de seguridad de <b>todo lo tuyo</b>: orden de canciones, borrados, papelera, estrellas y canciones importadas.</div>
       <div style="display:flex; gap:6px; flex-wrap:wrap;">
@@ -9265,6 +9270,7 @@ function switchTab(tab) {
   // programa aparte.
   const inOrgano = tab === 'banda';
   { const cb = document.getElementById('cifraClubBtn'); if (cb) cb.style.display = inOrgano ? '' : 'none'; }
+  applyOrganRightMode();
   if (!inOrgano && cifraPanelOpen) closeCifraPanel();
   document.getElementById('sideLeftDefault').style.display = inOrgano ? 'none' : '';
   document.getElementById('sideLeftOrgano').style.display = inOrgano ? '' : 'none';
@@ -13480,6 +13486,122 @@ function updateConcertMode() {
   document.body.classList.toggle('concert-mode', wantsConcert);
 }
 
+/* ============ Solapa "Cifra Club" del panel derecho de Órgano: lista de canciones con letra y acordes ============ */
+// Se escribe como "{C}Estrellita, {F}¿dónde estás?" y se convierte al mismo formato de texto que pega Cifra Club
+// (línea de acordes arriba, letra abajo), para que el teleprompter las trate igual que una cifra bajada de la web.
+function inlineToCifra(src) {
+  return src.split('\n').map(line => {
+    if (/^\[/.test(line.trim()) || !/\{[^}]+\}/.test(line)) return line;
+    let lyric = '', chords = '';
+    const re = /\{([^}]+)\}/g; let last = 0, m;
+    while ((m = re.exec(line))) {
+      lyric += line.slice(last, m.index); last = m.index + m[0].length;
+      while (chords.length < lyric.length) chords += ' ';
+      if (chords.length && !/ $/.test(chords)) chords += ' ';
+      chords += m[1];
+    }
+    lyric += line.slice(last);
+    return chords + '\n' + lyric;
+  }).join('\n');
+}
+const CIFRA_BUILTIN = [
+  { id: 'b-estrellita', title: 'Estrellita, ¿dónde estás?', artist: 'Tradicional', key: 'Do mayor', level: 'facil', src:
+`[Estrofa]
+{C}Estrellita, ¿dónde estás?
+{F}Me pregunto {C}quién serás.
+{C}En el cielo y en el mar
+{G7}un diamante de {C}verdad.
+{C}Estrellita, ¿dónde estás?
+{F}Me pregunto {C}quién serás.` },
+  { id: 'b-cumple', title: 'Cumpleaños feliz', artist: 'Tradicional', key: 'Do mayor', level: 'facil', src:
+`[Estrofa]
+{C}Cumpleaños feliz,
+{G7}cumpleaños feliz,
+{C}te deseamos {F}todos,
+{G7}cumpleaños {C}feliz.` },
+  { id: 'b-cucaracha', title: 'La cucaracha', artist: 'Tradicional', key: 'Do mayor', level: 'facil', src:
+`[Estribillo]
+{C}La cucaracha, la cucaracha,
+{G7}ya no puede {C}caminar,
+{F}porque le faltan, {C}porque no tiene
+{G7}las dos patitas de {C}atrás.` },
+  { id: 'b-nochedepaz', title: 'Noche de paz', artist: 'Tradicional', key: 'Do mayor', level: 'facil', src:
+`[Estrofa]
+{C}Noche de paz, noche de amor,
+{G7}todo duerme en {C}derredor,
+{F}entre los astros que {C}esparcen su luz,
+{F}bella anunciando al {C}niñito Jesús,
+{G7}brilla la estrella de {C}paz,
+{G7}brilla la estrella de {C}paz.` },
+  { id: 'b-arroz', title: 'Arroz con leche', artist: 'Tradicional', key: 'Do mayor', level: 'facil', src:
+`[Estrofa]
+{C}Arroz con leche, me quiero {G7}casar
+{C}con una señorita de San Nicolás
+{F}que sepa coser, {C}que sepa bordar,
+{G7}que sepa abrir la puerta {C}para ir a jugar.
+[Final]
+{C}Con esta sí, con esta no,
+{G7}con esta señorita me {C}caso yo.` },
+  { id: 'b-fraysantiago', title: 'Fray Santiago', artist: 'Tradicional', key: 'Do mayor', level: 'facil', src:
+`[Estrofa]
+{C}Fray Santiago, Fray Santiago,
+{C}¿duermes tú? ¿Duermes tú?
+{G7}Suenan las campanas, {C}suenan las campanas,
+{C}din, don, dan, din, don, dan.` },
+];
+CIFRA_BUILTIN.forEach(s => { s.text = inlineToCifra(s.src); });
+let organRightMode = 'acomp';
+function loadUserCifras() { try { return JSON.parse(localStorage.getItem('pianoHero_cifraSongs') || '[]'); } catch (e) { return []; } }
+function saveUserCifras(arr) { return lsSet('pianoHero_cifraSongs', JSON.stringify(arr)); }
+function allCifraSongs() { return loadUserCifras().sort((a, b) => (b.ts || 0) - (a.ts || 0)).concat(CIFRA_BUILTIN); }
+function setOrganRightMode(mode) { organRightMode = mode; applyOrganRightMode(); }
+function applyOrganRightMode() {
+  const inOrgano = currentTab === 'banda';
+  const tabs = document.getElementById('organRightTabs'); if (tabs) tabs.style.display = inOrgano ? 'flex' : 'none';
+  const cl = document.getElementById('cifraSongList'), sl = document.getElementById('songList'), lf = document.getElementById('levelFilterRow');
+  if (!inOrgano) { if (cl) cl.style.display = 'none'; return; }
+  const cifra = organRightMode === 'cifra';
+  if (sl) sl.style.display = cifra ? 'none' : 'block';
+  if (lf) lf.style.display = cifra ? 'none' : 'flex';
+  if (cl) cl.style.display = cifra ? 'block' : 'none';
+  const a = document.getElementById('organTabAcomp'), c = document.getElementById('organTabCifra');
+  if (a) a.classList.toggle('on', !cifra);
+  if (c) c.classList.toggle('on', cifra);
+  if (cifra) renderCifraSongList();
+}
+function escHtml(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+function renderCifraSongList() {
+  const box = document.getElementById('cifraSongList'); if (!box) return;
+  box.innerHTML = '';
+  const songs = allCifraSongs();
+  const hint = document.createElement('div');
+  hint.style.cssText = 'font-size:11px; color:var(--muted); margin:0 0 8px;';
+  hint.textContent = 'Doble clic en una canción: se abre en la pantalla del medio. Después ▶ Pasar letra.';
+  box.appendChild(hint);
+  songs.forEach((s, i) => {
+    const card = document.createElement('div');
+    card.className = 'song-card'; card.style.position = 'relative';
+    const lvl = s.level ? `<span class="level-pill" style="font-size:10px; font-weight:700; padding:2px 7px; border-radius:99px; color:#04120a; background:${LEVEL_COLOR[s.level] || 'var(--muted)'};">${LEVEL_LABEL[s.level] || s.level}</span>` : '';
+    const isUser = String(s.id).indexOf('u-') === 0;
+    card.innerHTML = `<div class="t" style="padding-left:2px;">${i + 1}. ${escHtml(s.title)}</div><div class="a" style="padding-left:2px;">${escHtml(s.artist || '')}${s.key ? ' · ' + escHtml(s.key) : ''} ${lvl}</div>
+      <div style="display:flex; gap:6px; margin-top:6px; padding-left:2px;"><button class="btn" style="font-size:11px; padding:5px 10px;" data-open>▶ Abrir</button>${isUser ? '<button class="btn" style="font-size:11px; padding:5px 10px; color:var(--bad);" data-del>✕ Borrar</button>' : ''}</div>`;
+    card.addEventListener('dblclick', () => openCifraSong(s));
+    card.querySelector('[data-open]').addEventListener('click', ev => { ev.stopPropagation(); openCifraSong(s); });
+    const del = card.querySelector('[data-del]');
+    if (del) del.addEventListener('click', ev => {
+      ev.stopPropagation();
+      showConfirmModal('¿Borrar "' + s.title + '" de tu lista de Cifra Club?', () => { saveUserCifras(loadUserCifras().filter(x => x.id !== s.id)); renderCifraSongList(); }, { title: '✕ ¿Borrar cifra?', okLabel: '✕ Borrar' });
+    });
+    box.appendChild(card);
+  });
+}
+let cifraFrameReady = false, cifraPendingLoad = null;
+function openCifraSong(s) {
+  const msg = { src: 'pianohero', type: 'loadCifra', title: s.title, artist: s.artist || '', key: s.key || '', text: s.text };
+  openCifraPanel();
+  if (cifraFrameReady) { const w = cifraFrameWin(); if (w) w.postMessage(msg, '*'); } else cifraPendingLoad = msg;
+}
+
 /* ============ "Tocar con Cifra Club" dentro del Órgano ============ */
 let cifraPanelOpen = false;
 let cifraChordInfo = null;      // {rootPc, quality} del acorde que marca la letra ahora mismo
@@ -13540,7 +13662,14 @@ function forwardNoteToCifra(midi, on) {
 }
 window.addEventListener('message', e => {
   const d = e.data; if (!d || d.src !== 'acordes') return;
-  if (d.type === 'chord') {
+  if (d.type === 'ready') {
+    cifraFrameReady = true;
+    if (cifraPendingLoad) { const w = cifraFrameWin(); if (w) w.postMessage(cifraPendingLoad, '*'); cifraPendingLoad = null; }
+  } else if (d.type === 'saveCifra') {
+    const arr = loadUserCifras();
+    arr.push({ id: 'u-' + Date.now(), title: String(d.title || 'Sin nombre').slice(0, 80), artist: 'Tu cifra', level: '', key: '', text: String(d.text || ''), ts: Date.now() });
+    if (saveUserCifras(arr)) { showBigToast('✅ Guardada en tu lista de Cifra Club'); if (organRightMode === 'cifra') renderCifraSongList(); }
+  } else if (d.type === 'chord') {
     cifraChordInfo = (d.root === null || d.root === undefined) ? null : { rootPc: d.root, quality: d.quality === 'menor' ? 'menor' : 'mayor' };
     lastScaleHighlightKey = null; updateScaleHighlight();
     cifraDriveAccompaniment();
