@@ -1828,6 +1828,7 @@
       </span>
       <span class="mini-toolbar-sep mini-toolbar-collapsible"></span>
       <span class="mini-toolbar-group mini-toolbar-collapsible" id="handsToggle" title="Elegí qué mano tocás vos — la otra la toca la máquina sola (salvo en Ambas manos)">
+        <button class="btn" id="btn-bgbricks" onclick="toggleBgBricks(this)" title="Muestra los ladrillos de lo que está de FONDO (los instrumentos que suenan solos) para mirarlos, sin tener que tocarlos. Por defecto están escondidos.">👁 Ver ladrillos del fondo</button>
         <button class="btn on" id="hands-one" onclick="setHandsMode('one', this)" title="Vos tocás la derecha, la máquina toca sola la izquierda">✋ Mano Derecha</button>
         <button class="btn" id="hands-left" onclick="setHandsMode('left', this)" title="Vos tocás la izquierda, la máquina toca sola la derecha — para desarrollar la mano floja sin que la otra la tape">🤚 Mano Izquierda</button>
         <button class="btn" id="hands-two" onclick="setHandsMode('two', this)" title="Tocás las dos manos vos">🙌 Ambas manos</button>
@@ -10266,6 +10267,19 @@ function toggleNoteNames(btnEl) {
   if (btnEl) btnEl.classList.toggle('on', showNoteNames);
 }
 
+// FIX (24/10/2026, Pablo: en "My Love" puso todo de Fondo y el bajo en Mano Izquierda, y la máquina tocó el bajo sola): el modo
+// por defecto es "Mano Derecha" (la izquierda la toca la máquina), así que una canción donde lo único tuyo es la mano izquierda
+// quedaba sin nada para tocar. Ahora, al cargarla, si no tiene mano derecha pasa sola a "Mano Izquierda" (y al revés).
+function autoPickHandsMode(s) {
+  const hasR = s.notes.some(n => n.hand === 'R'), hasL = s.notes.some(n => n.hand === 'L');
+  let m = null;
+  if (!hasR && hasL && handsMode !== 'left') m = 'left';
+  else if (hasR && !hasL && handsMode === 'left') m = 'one';
+  if (!m) return;
+  handsMode = m;
+  ['one', 'left', 'two'].forEach(k => { const b = document.getElementById('hands-' + k); if (b) b.classList.toggle('on', k === m); });
+  try { showBigToast(m === 'left' ? '🤚 Mano Izquierda: lo que te toca tocar es la mano izquierda' : '✋ Mano Derecha: lo que te toca tocar es la mano derecha'); } catch (e) {}
+}
 function loadSong(s, cardEl) {
   gameActiveIndex = -1; // cargar una canción "libre" cancela cualquier sesión de Modo Juego en curso
   enterPhoneGameMode(); // en celular: encabezado + botonera compactos + pantalla completa, de una sola vez (ver su comentario)
@@ -10274,6 +10288,7 @@ function loadSong(s, cardEl) {
   document.querySelectorAll('.song-card').forEach(c => c.classList.remove('active'));
   if (cardEl) cardEl.classList.add('active');
   activeSong = s;
+  autoPickHandsMode(s);
   document.getElementById('nowPlayingTitleText').textContent = s.title;
   document.getElementById('nowPlayingTitle').title = s.title;
   updateSongAttemptsBadge();
@@ -10398,6 +10413,11 @@ function toggleWaitMode(btnEl) {
 // tenés más floja, sin que la otra "tape" el ejercicio.
 // 'two' (Ambas manos) = tenés que tocar las dos vos.
 let handsMode = 'one';
+let showBgBricks = false; // ladrillos del fondo: escondidos por defecto; con el botón 👁 se ven (suenan solos igual)
+function toggleBgBricks(btnEl) {
+  showBgBricks = !showBgBricks;
+  if (btnEl) { btnEl.classList.toggle('on', showBgBricks); btnEl.textContent = showBgBricks ? '👁 Ocultar ladrillos del fondo' : '👁 Ver ladrillos del fondo'; }
+}
 function setHandsMode(mode, btnEl) {
   handsMode = mode;
   document.getElementById('hands-one').classList.toggle('on', mode === 'one');
@@ -12372,6 +12392,19 @@ function drawCascadaView(w, h, targetY, ts, waitingNote) {
   const startIdx = lowerBoundByTime(fallingNotes, playhead + Math.min(dtLo, dtHi));
   const endIdx = upperBoundByTime(fallingNotes, playhead + Math.max(dtLo, dtHi));
 
+  if (showBgBricks) { // ladrillos del fondo: solo para mirar (suenan solos), más apagados que los tuyos
+    for (let ni = startIdx; ni < endIdx; ni++) {
+      const n = fallingNotes[ni]; if (n.hand !== 'BG') continue;
+      const y = targetY - ((n.time - playhead) / LOOKAHEAD) * (h - 40), lenPx = Math.max(4, (n.duration / LOOKAHEAD) * (h - 40));
+      if (y < -60 || y > h + 60) continue;
+      const rect = keyRect(n.midi); if (!rect) continue;
+      const bw = rect.black ? rect.w : rect.w - 4, bx = rect.x + (rect.black ? 0 : 2);
+      ctx.globalAlpha = n.hit ? 0.16 : 0.4;
+      ctx.fillStyle = (n.track !== undefined && activeSong && activeSong.__rawTracks && activeSong.__rawTracks.length > 1) ? trackColor(n.track) : '#8fa3c7';
+      ctx.fillRect(bx, y - lenPx, bw, lenPx);
+      ctx.globalAlpha = 1;
+    }
+  }
   for (let ni = startIdx; ni < endIdx; ni++) {
     const n = fallingNotes[ni];
     if ((n.hand === 'BG' || n.hand === 'PERC')) continue; // suena sola, no hace falta mostrarla
