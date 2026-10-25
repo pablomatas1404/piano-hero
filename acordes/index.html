@@ -115,9 +115,12 @@ body.embed .kb, body.embed #fsBtn, body.embed .midi{display:none}
 /* editor de corchetes */
 .editor{flex:1;min-width:0;display:none;flex-direction:column;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;overflow:hidden}
 body.ed .editor{display:flex} body.ed .kpanel, body.ed .side{display:none} body.ed .kb{display:none}
+body.ed .top, body.ed .teacher, body.ed .eval{display:none}  /* al editar, la letra manda: el editor tiene sus propios botones */
+body.ed .app{gap:4px;padding:4px 0} .edlines{min-height:150px} .edbar button{padding:3px 7px;font-size:.8rem} .edbar{gap:4px} .edbar .sep{margin:0} body.ed .edhelp{font-size:.82rem}
 .edbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .edbar button{padding:6px 10px;font-size:.88rem} .edbar button:disabled{opacity:.4;cursor:default}
 .edbar .sep{width:1px;height:24px;background:var(--line);margin:0 2px}
+.edbar[hidden]{display:none}
 .edhelp{color:var(--muted);font-size:.92rem;min-height:1.3em}
 .edpick{background:var(--cell);border-radius:10px;padding:8px;display:grid;gap:6px}
 .edpick .pb{display:flex;flex-wrap:wrap;gap:6px} .edpick .prow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
@@ -186,18 +189,19 @@ body.ed .editor{display:flex} body.ed .kpanel, body.ed .side{display:none} body.
         <button type="button" class="go" id="edDone" title="Guarda todo y vuelve al teleprompter">✔ Listo</button>
         <button type="button" id="edUndo" title="Deshacer el último cambio">↶ Deshacer</button>
         <button type="button" id="edRedo" title="Rehacer lo que deshiciste">↷ Rehacer</button>
-        <button type="button" id="edOrig" title="Vuelve a los acordes tal como vinieron de la cifra (borra tus cambios)">↺ Cifra original</button>
+        <button type="button" id="edOrig" title="Vuelve a los acordes tal como vinieron de la cifra (borra tus cambios)">↺ Original</button>
         <span class="sep"></span>
-        <button type="button" id="edListen" title="Escucha de nuevo el acorde elegido (también con la barra espaciadora)">🔊 Escuchar</button>
         <button type="button" id="edLine" title="Toca uno tras otro los acordes del renglón, con la duración de cada corchete, para compararlo con tu voz">🎼 Renglón</button>
         <button type="button" id="edStanza" title="Lo mismo, pero de toda la estrofa">🎼 Estrofa</button>
         <button type="button" id="edStop" title="Corta el sonido">⏹ Parar</button>
-        <span class="sep"></span>
-        <button type="button" id="edChange" title="Elegir otro acorde para este corchete: los de la canción, otros, o el que estás tocando en el piano">✎ Cambiar acorde</button>
+      </div>
+      <div class="edbar edtools" id="edToolsRow" hidden>
+        <button type="button" id="edListen" title="Escucha de nuevo el acorde elegido (también con la barra espaciadora)">🔊 Escuchar</button>
+        <button type="button" id="edChange" title="Elegir otro acorde para este corchete: los de la canción, otros, o el que estás tocando en el piano">✎ Cambiar</button>
         <button type="button" id="edSplit" title="Parte el corchete en dos (con el mismo acorde) para agregar un cambio en el medio">✂ Partir</button>
-        <button type="button" id="edMerge" title="Une este corchete con el que sigue en uno solo (queda el acorde de este)">⇄ Unir con el siguiente</button>
-        <button type="button" id="edDel" title="Borra el acorde de este corchete (las palabras pasan al acorde anterior). También con la tecla Suprimir">🗑 Borrar acorde</button>
-        <button type="button" id="edAdd" title="Primero tocá una palabra que no tenga acorde; esto le pone un acorde nuevo desde ahí">＋ Agregar acorde</button>
+        <button type="button" id="edMerge" title="Une este corchete con el que sigue en uno solo (queda el acorde de este)">⇄ Unir</button>
+        <button type="button" id="edDel" title="Borra el acorde de este corchete (las palabras pasan al acorde anterior). También con la tecla Suprimir">🗑 Borrar</button>
+        <button type="button" id="edAdd" title="Primero tocá una palabra que no tenga acorde; esto le pone un acorde nuevo desde ahí">＋ Agregar</button>
         <span class="sep"></span>
         <span title="Mueve dónde EMPIEZA el corchete elegido, una palabra por vez (también Mayús + flechas del teclado)">Borde izq. <button type="button" id="edLL">◀</button><button type="button" id="edLR">▶</button></span>
         <span title="Mueve dónde TERMINA el corchete elegido, una palabra por vez (también las flechas del teclado)">Borde der. <button type="button" id="edRL">◀</button><button type="button" id="edRR">▶</button></span>
@@ -749,6 +753,7 @@ function edTools(){
   set('edListen',has); set('edChange',has); set('edSplit',has && (inst || (ml.segs[k+1]?ml.segs[k+1].w0:ml.words.length)-ml.segs[k].w0>=2));
   set('edMerge',has && (inst?k+1<ml.toks.length:k+1<ml.segs.length)); set('edDel',has);
   set('edAdd',!!ED.gap); set('edLL',has&&!inst); set('edLR',has&&!inst); set('edRL',has&&!inst&&k+1<ml.segs.length); set('edRR',has&&!inst&&k+1<ml.segs.length);
+  $('edToolsRow').hidden=!(ED.sel||ED.gap);
   $('edUndo').disabled=HI<=0; $('edRedo').disabled=HI>=HIST.length-1;
   $('edHelp').textContent = has ? 'Corchete elegido: '+codeOf(inst?ml.toks[k]:ml.segs[k].tok)+'. Estiralo con las flechas ◀ ▶ o arrastrando ⋮. Si no coincide con lo que cantás, "Cambiar acorde".'
     : ED.gap ? 'Elegiste una palabra sin acorde. Apretá "＋ Agregar acorde" para ponerle uno desde ahí.'
@@ -806,8 +811,8 @@ $('edAdd').addEventListener('click',()=>{ if(!ED.gap) return; const {li,w}=ED.ga
   if(!tok) tok=codes[0]||'C';
   let at=0; while(at<ml.segs.length && ml.segs[at].w0<w) at++; ml.segs.splice(at,0,{tok,w0:w}); ED.gap=null; ED.sel={li,k:at}; edCommit(); edOpenPick(); });
 $('edUndo').addEventListener('click',edUndo); $('edRedo').addEventListener('click',edRedo);
-$('edOrig').addEventListener('click',()=>{ if($('edOrig').dataset.arm!=='1'){ $('edOrig').dataset.arm='1'; $('edOrig').textContent='¿Seguro? Tocá otra vez'; setTimeout(()=>{ $('edOrig').dataset.arm=''; $('edOrig').textContent='↺ Cifra original'; },2500); return; }
-  $('edOrig').dataset.arm=''; $('edOrig').textContent='↺ Cifra original'; store.set(modelKey(),''); clearMarksAllLevels(); FORCE_LVL=0; MODEL=null; parseCifra(CIFRA_SRC); FORCE_LVL=null; MODEL=modelFromLines(); store.set(modelKey(),''); HIST=[JSON.stringify(MODEL)]; HI=0; ED.sel=null; ED.gap=null; edRender(); edTools(); });
+$('edOrig').addEventListener('click',()=>{ if($('edOrig').dataset.arm!=='1'){ $('edOrig').dataset.arm='1'; $('edOrig').textContent='¿Seguro? Tocá otra vez'; setTimeout(()=>{ $('edOrig').dataset.arm=''; $('edOrig').textContent='↺ Original'; },2500); return; }
+  $('edOrig').dataset.arm=''; $('edOrig').textContent='↺ Original'; store.set(modelKey(),''); clearMarksAllLevels(); FORCE_LVL=0; MODEL=null; parseCifra(CIFRA_SRC); FORCE_LVL=null; MODEL=modelFromLines(); store.set(modelKey(),''); HIST=[JSON.stringify(MODEL)]; HI=0; ED.sel=null; ED.gap=null; edRender(); edTools(); });
 
 /* ---- escuchar un renglón o una estrofa ---- */
 function edStop(){ ED.runId++; document.querySelectorAll('.cell.now').forEach(c=>c.classList.remove('now')); }

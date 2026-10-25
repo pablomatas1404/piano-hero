@@ -1540,7 +1540,7 @@
              hace falta, ahí ya se ve grande de sobra. -->
         <button class="btn zoom-1oct-btn" onclick="setZoom(7, this)" title="Las teclas más grandes posibles, una octava entera de ancho de pantalla">1 octava</button>
         <button class="btn" id="zoom-2oct" onclick="setZoom(14, this)">2 octavas</button>
-        <button class="btn" id="zoom-3oct" onclick="setZoom(21, this)">3 octavas</button>
+        <button class="btn on" id="zoom-3oct" onclick="setZoom(21, this)">3 octavas</button>
         <!-- Acceso directo a "Bolitas" (22/08/2026, a pedido de Pablo desde el iPad viejo, donde
              el botón de Configuración todavía no se puede tocar — para no depender de eso, un
              acceso directo acá mismo, en el hueco vacío que quedaba al lado de "3 octavas". Un
@@ -1548,7 +1548,7 @@
              neón si no eligió ninguno) — para el color a elección, con más opciones, sigue
              estando Configuración cuando se pueda usar. -->
         <button class="btn" id="quickBolitaBtn" onclick="toggleQuickBolita(this)" title="Cambia los ladrillos de Cascada por bolitas de color, directo, sin ir a Configuración">⚫ Modo Bolita</button>
-        <button class="btn on" id="zoom-full" onclick="setZoom(52, this)">Piano completo (88 teclas)</button>
+        <button class="btn" id="zoom-full" onclick="setZoom(52, this)">Piano completo (88 teclas)</button>
       </div>
 
       <!-- Diagnóstico de rendimiento (22/08/2026): junta datos solo durante 10s de una canción
@@ -6980,7 +6980,8 @@ window.addEventListener('keyup', e => {
 // CAMBIO (3/10/2026, Ernesto/Pablo: 'el piano por default tiene que ser el piano completo'): antes 14
 // (2 octavas); ahora arranca en 52 (las 88 teclas). El boton "on" (zoom-full) esta a juego en el HTML.
 // iPad Viejo mantiene su propio teclado chico (ivZoomOctaves), no cambia.
-let zoomWhiteKeys = 52;
+// CAMBIO (24/10/2026, Pablo: "que por default arranque en 3 octavas, no en piano completo, tengo que cambiarlo cada vez"): antes 52 (piano completo).
+let zoomWhiteKeys = 21;
 let lastWhiteWidth = 42;
 
 function setZoom(n, btnEl) {
