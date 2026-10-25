@@ -9634,6 +9634,7 @@ function renderSongList() {
       ${s.__rawTracks ? `<button class="btn" style="margin-top:6px; margin-left:16px; font-size:11px; padding:4px 8px;" data-reconfigure>🎛️ Reconfigurar pistas</button>` : ''}
       ${s.__rawTracks && s.__rawTracks.length > 1 ? `<button class="btn" style="margin-top:6px; margin-left:6px; font-size:11px; padding:4px 8px;" data-simplify title="Genera una versión simple para aprender: solo la melodía (mano derecha) y el bajo (mano izquierda), sacando toda la orquestación de arriba. Usá el botón Mano Derecha/Izquierda/Ambas de la izquierda para elegir con cuántas manos practicarla.">🎯 Modo Fácil</button>` : ''}
       ${(s.__isPablo || s.__isClaudio) ? `<button class="btn primary" style="margin-top:6px; margin-left:6px; font-size:11px; padding:4px 8px;" data-move title="${s.__isClaudio ? 'Si coincidís en que es fácil, decidí acá si va a Canciones o a Ejercicios -- después la vas acomodando a mano donde quieras' : 'Una vez que la probaste y le pusiste nivel y estrellitas, decidí si va a Canciones o a Ejercicios'}">➡️ Mover${s.__isClaudio ? ' (🧑‍💻)' : ''}</button>` : ''}
+      ${(s.handsSplit && s.type === 'song') ? `<button class="btn" style="margin-top:6px; margin-left:16px; font-size:11px; padding:4px 8px;" data-levels title="Arma la mano izquierda más simple de esta canción: Nivel 1 con UNA nota por acorde y Nivel 2 con el acorde de tres notas. La derecha queda igual y la original queda como Nivel 3. Se guardan solo en tu navegador, en 🙋 Pablo.">🎚️ Crear niveles</button>` : ''}
       ${s.__imported ? `<button class="btn" style="margin-top:6px; margin-left:6px; font-size:11px; padding:4px 8px;" data-copy-claude title="Copia los datos de esta grabación/importación para pegarlos en el chat con Claude">📋 Copiar para Claude</button>` : ''}`;
     // "Modo tarjetas" (24/08/2026 v2): mantener apretada la tarjeta abre la ventana modal
     // compartida de reordenar (#ivReorderOverlay, ver HTML) -- solo en iPad Viejo, en el resto de
@@ -9676,6 +9677,7 @@ function renderSongList() {
     };
     card.querySelector('.delete-x').onclick = (ev) => deleteSong(s, ev);
     card.querySelector('[data-fav]').onclick = (ev) => toggleFavorite(s.title, ev);
+    { const lvBtn = card.querySelector('[data-levels]'); if (lvBtn) lvBtn.onclick = (ev) => { ev.stopPropagation(); crearNiveles(s); }; }
     const priceUpBtn = card.querySelector('[data-price-up]');
     if (priceUpBtn) priceUpBtn.onclick = (ev) => nudgeSongPrice(s, 1, ev);
     const priceDownBtn = card.querySelector('[data-price-down]');
@@ -13576,6 +13578,72 @@ function updateConcertMode() {
   document.body.classList.toggle('concert-mode', wantsConcert);
 }
 
+/* ============ 🎚️ Crear niveles: arma la mano izquierda fácil (1 nota) y media (acorde) de una canción ============ */
+// A pedido de Pablo (24/10/2026): "en Online Pianist la mano izquierda es limpita, no caen 500.000 ladrillos". Parte de la mano
+// izquierda y la derecha que ya tiene la canción en el catálogo: detecta el acorde de cada compás aproximado y lo toca como
+// UNA nota (Nivel 1) o como un acorde de tres notas (Nivel 2). La derecha queda igual. La canción original queda como Nivel 3.
+// Las versiones nuevas se guardan SOLO en este navegador (como las canciones que importás), no en el código del programa.
+function deriveLeftHandLevels(song) {
+  const rd = n => ({ m: n.midi, t: n.time - 1.0, d: n.duration });
+  const L = song.notes.filter(n => n.hand === 'L').map(rd).sort((a, b) => a.t - b.t);
+  const R = song.notes.filter(n => n.hand === 'R').map(rd);
+  if (L.length < 8 || !R.length) return null;
+  const on = [...new Set(L.map(n => Math.round(n.t * 1000)))].sort((a, b) => a - b).map(x => x / 1000);
+  const gaps = []; for (let i = 1; i < on.length; i++) { const g = on[i] - on[i - 1]; if (g > 0.08 && g < 2) gaps.push(g); }
+  gaps.sort((a, b) => a - b);
+  const med = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 0.5;
+  const W = Math.max(0.8, Math.min(3.4, med * 4)); // un "compás" aproximado
+  const t0 = on[0], end = Math.max(...L.map(n => n.t + n.d), ...R.map(n => n.t + n.d));
+  const easy = [], medium = [];
+  for (let s = t0; s < end; s += W) {
+    const e = s + W, w = new Array(12).fill(0); let bass = null, tot = 0;
+    L.forEach(n => { const ov = Math.min(e, n.t + n.d) - Math.max(s, n.t); if (ov > 0) { w[n.m % 12] += ov; tot += ov; if (bass === null || n.m < bass) bass = n.m; } });
+    R.forEach(n => { const ov = Math.min(e, n.t + n.d) - Math.max(s, n.t); if (ov > 0) { w[n.m % 12] += 0.5 * ov; tot += 0.5 * ov; } });
+    if (bass === null || tot <= 0) continue;
+    w[bass % 12] *= 1.5;
+    let best = null;
+    for (let r = 0; r < 12; r++) for (const third of [4, 3]) {
+      const inC = w[r] + w[(r + third) % 12] + w[(r + 7) % 12];
+      const score = inC - 0.4 * (tot - inC) + (bass % 12 === r ? 0.3 * tot : 0);
+      if (!best || score > best.score) best = { score, r, third };
+    }
+    const dur = Math.max(0.35, W * 0.88);
+    let rootLow = best.r + 36; while (rootLow < 40) rootLow += 12; while (rootLow > 51) rootLow -= 12;      // una sola nota, grave
+    easy.push([rootLow, +s.toFixed(3), +dur.toFixed(3)]);
+    let rootMid = best.r + 48; while (rootMid < 45) rootMid += 12; while (rootMid > 55) rootMid -= 12;      // acorde de tres notas
+    [0, best.third, 7].forEach(iv => medium.push([rootMid + iv, +s.toFixed(3), +dur.toFixed(3)]));
+  }
+  return { easy, medium };
+}
+function crearNiveles(song) {
+  const lv = deriveLeftHandLevels(song);
+  if (!lv) { showBigToast('Esta canción no tiene la mano izquierda separada: no puedo armar niveles'); return false; }
+  const base = song.title.replace(/ — Nivel \d.*$/, '');
+  const rh = song.notes.filter(n => n.hand === 'R').map(n => [n.midi, +(n.time - 1.0).toFixed(3), +(n.duration / 0.92).toFixed(3)]);
+  const mk = (suffix, level, lh) => ({ title: `${base} — ${suffix}`, author: song.author, level, kind: 'song', rh, lh, bg: [], perc: [], isPablo: true });
+  const entries = [mk('Nivel 1 (fácil)', 'facil', lv.easy), mk('Nivel 2 (medio)', 'medio', lv.medium)];
+  let stored; try { stored = JSON.parse(localStorage.getItem('pianoHero_localImports') || '[]'); } catch (e) { stored = []; }
+  const added = [];
+  entries.forEach(imp => {
+    if (stored.some(x => x.title === imp.title) || SONGS.some(x => x.title === imp.title)) return;
+    stored.push(imp); added.push(imp);
+    const s = multiHandSong(imp.title, imp.author, imp.level, imp.rh, imp.lh, imp.bg, imp.perc);
+    s.type = 'song'; s.__imported = true; s.__isPablo = true;
+    SONGS.push(s); gameSongList.push(s);
+  });
+  if (!added.length) { showBigToast('Esa canción ya tiene sus niveles'); return false; }
+  if (!lsSet('pianoHero_localImports', JSON.stringify(stored))) return false;
+  try { // al frente de la lista (1, 2 y la original como 3), solo si ya tenés un orden propio guardado
+    if (customOrder.song && customOrder.song.length) {
+      const front = [entries[0].title, entries[1].title, song.title];
+      customOrder.song = front.concat(customOrder.song.filter(t => front.indexOf(t) < 0));
+      lsSet('pianoHero_customOrder', JSON.stringify(customOrder));
+    }
+  } catch (e) {}
+  rebuildGameLists(); if (typeof renderSongList === 'function') renderSongList();
+  showBigToast('🎚️ Listo: ' + base + ' — Nivel 1 (fácil) y Nivel 2 (medio), en 🙋 Pablo');
+  return true;
+}
 /* ============ Solapa "Cifra Club" del panel derecho de Órgano: lista de canciones con letra y acordes ============ */
 // Se escribe como "{C}Estrellita, {F}¿dónde estás?" y se convierte al mismo formato de texto que pega Cifra Club
 // (línea de acordes arriba, letra abajo), para que el teleprompter las trate igual que una cifra bajada de la web.
