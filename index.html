@@ -1640,6 +1640,14 @@
         </div>
         <div style="font-size:11px; opacity:.75; margin-top:4px;">Abajo = acompañamiento más suave. Lo que tocás vos no cambia.</div>
       </div>
+      <div style="margin-top:8px; padding:8px 10px; border:1px solid var(--line); border-radius:10px;">
+        <div style="font-size:12px; font-weight:700; margin-bottom:6px;" title="Cuántas teclas graves de tu teclado disparan el acompañamiento. El resto del teclado queda para tocar la melodía.">🎹 Teclas del acompañamiento</div>
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+          <button class="btn on" id="organZone1" onclick="setOrganZone(1)" title="Solo la octava más grave dispara el acompañamiento; todo lo demás es melodía">1 octava</button>
+          <button class="btn" id="organZone2" onclick="setOrganZone(2)" title="Las dos octavas más graves disparan el acompañamiento">2 octavas</button>
+          <button class="btn" onclick="organPanic()" style="margin-left:auto; color:var(--bad);" title="Corta YA cualquier acorde o ritmo que se haya quedado sonando (en la compu y en el Yamaha)">⏹ Parar sonido</button>
+        </div>
+      </div>
       <div class="zoom-bar" id="songEditorEntryRow" style="margin-top:8px;">
         <button class="btn" onclick="openSongEditor()" title="Armar una pista de acompañamiento a medida: elegís hasta 6 acordes, un estilo y una duración">🔧 Constructor</button>
         <button class="btn" onclick="openCifraChordHelper()" title="Pegás la letra y acordes de Cifra Club, y te digo qué acordes distintos aparecen — para que los anotes vos en el Constructor. Esto NO arma nada solo.">🎼 Ayuda de Cifra Club</button>
@@ -2961,7 +2969,18 @@ function getCurrentChordAtPlayhead() {
 // ============ "Órgano" (piloto): disparador de acompañamientos grabados ============
 // La zona de disparo es la misma que queda "libre" de iluminación de escala: del Do central para
 // abajo. De ahí para arriba seguís tocando el piano de siempre con la mano derecha.
-const ORGAN_TRIGGER_MAX_MIDI = 60;
+// FIX (24/10/2026, Pablo: "me fue comiendo todo el teclado y solo me quedó una octava para la melodía... quiero UNA octava para
+// acompañamiento y todo el resto para melodía"): antes eran todas las teclas debajo del Do central. Ahora por defecto es UNA octava
+// (las teclas más graves de un teclado de 61: Do2 a Si2, debajo del Do3); se puede pasar a 2 octavas desde el panel de Órgano.
+let organZoneOct = (localStorage.getItem('pianoHero_organZoneOct') === '2') ? 2 : 1;
+let ORGAN_TRIGGER_MAX_MIDI = organZoneOct === 2 ? 60 : 48;
+function setOrganZone(n) {
+  organZoneOct = n === 2 ? 2 : 1; ORGAN_TRIGGER_MAX_MIDI = organZoneOct === 2 ? 60 : 48;
+  try { localStorage.setItem('pianoHero_organZoneOct', String(organZoneOct)); } catch (e) {}
+  const a = document.getElementById('organZone1'), b = document.getElementById('organZone2');
+  if (a) a.classList.toggle('on', organZoneOct === 1); if (b) b.classList.toggle('on', organZoneOct === 2);
+}
+document.addEventListener('DOMContentLoaded', () => setOrganZone(organZoneOct));
 let organActiveStyle = null; // null | 'cumbia' | 'balada' | 'balada2' | 'salsa' | 'balada3'
 // Mapeo provisorio (motor primero, nombres después, tal cual pidió Pablo): el título es el de la
 // grabación real que ya hiciste — si algún día lo renombrás, actualizar acá.
@@ -3297,6 +3316,13 @@ function toggleOrganGenreExpand(cat) {
 // ACUMULABAN (sonaba todo junto, sin cortarse nunca hasta apagar el botón — parecía un loop que
 // no terminaba). Ahora cada tecla nueva CORTA lo que estuviera sonando y arranca de cero.
 let organPendingTimeouts = [];
+// Corta TODO lo del acompañamiento: temporizadores, loop, notas del Yamaha (apaga todas) y sonido de la compu.
+function organPanic() {
+  stopOrganPlayback();
+  try { if (midiOutputRef) { midiOutputRef.send([0xB0, 123, 0]); midiOutputRef.send([0xB0, 120, 0]); midiOutputRef.send([0xB9, 123, 0]); } } catch (e) {}
+  try { [violinSynth, celloSynth, piano, organSynth, guitarSynth, fluteSynth].forEach(v => { if (v && v.releaseAll) v.releaseAll(); }); } catch (e) {}
+  organStringsOn = false;
+}
 function stopOrganPlayback() {
   organPendingTimeouts.forEach(id => clearTimeout(id));
   organPendingTimeouts = [];
@@ -6834,7 +6860,7 @@ function setupMIDI() {
     midiAccessRef = access;
     bindAllMidiInputs(access);
     bindFirstMidiOutput(access);
-    access.onstatechange = () => { bindAllMidiInputs(access); bindFirstMidiOutput(access); };
+    access.onstatechange = () => { bindAllMidiInputs(access); bindFirstMidiOutput(access); try { stopOrganPlayback(); } catch (e) {} };
   }).catch(err => console.warn('MIDI no disponible', err));
 }
 function bindAllMidiInputs(access) {
@@ -13657,7 +13683,7 @@ window.addEventListener('resize', () => { if (cifraPanelOpen) adjustCifraPanelTo
 function closeCifraPanel() {
   const wrap = document.getElementById('cifraPanelWrap'); if (wrap) wrap.style.display = 'none';
   cifraPanelOpen = false; cifraChordInfo = null; cifraPlaying = false; paintCifraTargets([]);
-  if (organActiveStyle) stopOrganPlayback();
+  organPanic();
   const b = document.getElementById('cifraClubBtn'); if (b) { b.textContent = '🎼 Tocar con Cifra Club'; b.classList.remove('on'); }
   lastScaleHighlightKey = null; if (typeof updateScaleHighlight === 'function') updateScaleHighlight();
 }
@@ -13695,7 +13721,9 @@ window.addEventListener('message', e => {
     cifraDriveAccompaniment();
   } else if (d.type === 'play') {
     cifraPlaying = !!d.on;
-    if (!cifraPlaying) { if (organActiveStyle) stopOrganPlayback(); } else cifraDriveAccompaniment();
+    if (!cifraPlaying) organPanic(); else cifraDriveAccompaniment();
+  } else if (d.type === 'panic') {
+    organPanic();
   } else if (d.type === 'target') {
     paintCifraTargets(Array.isArray(d.midis) ? d.midis : []);
   }

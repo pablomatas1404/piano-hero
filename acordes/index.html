@@ -201,6 +201,7 @@ body.ed .app{gap:4px;padding:4px 0} .edlines{min-height:150px} .edbar button{pad
         <button type="button" id="edSplit" title="Parte el corchete en dos (con el mismo acorde) para agregar un cambio en el medio">✂ Partir</button>
         <button type="button" id="edMerge" title="Une este corchete con el que sigue en uno solo (queda el acorde de este)">⇄ Unir</button>
         <button type="button" id="edDel" title="Borra el acorde de este corchete (las palabras pasan al acorde anterior). También con la tecla Suprimir">🗑 Borrar</button>
+        <button type="button" id="edDown" title="Copia este acorde al renglón de abajo y lo deja elegido: sirve para repetir el mismo acorde en varios renglones, uno tras otro">⬇ Pasar abajo</button>
         <button type="button" id="edAdd" title="Primero tocá una palabra que no tenga acorde; esto le pone un acorde nuevo desde ahí">＋ Agregar</button>
         <span class="sep"></span>
         <span title="Mueve dónde EMPIEZA el corchete elegido, una palabra por vez (también Mayús + flechas del teclado)">Borde izq. <button type="button" id="edLL">◀</button><button type="button" id="edLR">▶</button></span>
@@ -591,7 +592,7 @@ $('cifraGo').addEventListener('click',()=>{ store.set('acordes-cifra',$('cifraTx
 $('cifraClear').addEventListener('click',()=>{ $('cifraTxt').value=''; store.set('acordes-cifra',''); loadCifra(); });
 $('cifraTxt').addEventListener('paste',()=>setTimeout(()=>{ store.set('acordes-cifra',$('cifraTxt').value); },60));
 $('lvl').value=store.get('acordes-level')||'0';
-$('lvl').addEventListener('change',()=>{ store.set('acordes-level',$('lvl').value); const k=kPos; parseCifra(CIFRA_SRC); loadMarks(); setPlaying(false); kPos=k; curEv=-2; renderSide(); lastShownLine=-1; refresh(); updateMarkUI(); });
+$('lvl').addEventListener('change',()=>{ if(typeof ED!=='undefined' && ED.open) edClose(); store.set('acordes-level',$('lvl').value); const k=kPos; parseCifra(CIFRA_SRC); loadMarks(); setPlaying(false); kPos=k; curEv=-2; renderSide(); lastShownLine=-1; refresh(); updateMarkUI(); });
 function setLvlBtns(){ document.querySelectorAll('#lvlGrp button').forEach(b=>b.classList.toggle('on', b.dataset.l===$('lvl').value)); }
 document.querySelectorAll('#lvlGrp button').forEach(b=>b.addEventListener('click',()=>{ $('lvl').value=b.dataset.l; $('lvl').dispatchEvent(new Event('change')); }));
 $('lvl').addEventListener('change',setLvlBtns); setLvlBtns();
@@ -645,24 +646,31 @@ else if(navigator.requestMIDIAccess){
    Renglón solo de acordes (intro): {head, inst:true, toks:[acordes]}. Se guarda por cifra y el teleprompter lo usa en vez de adivinar. */
 let MODEL=null, HIST=[], HI=-1;
 const ED={open:false, sel:null, gap:null, li:0, runId:0};
-function modelKey(){ return 'acordes-model-'+cifraHash(); }
-function loadModel(){ try{ const s=store.get(modelKey()); return s?JSON.parse(s):null; }catch(e){ return null; } }
+function curLevel(){ return +($('lvl').value||0); }
+function modelKey(){ return 'acordes-model-'+cifraHash()+'-'+curLevel(); }
+function loadModel(){ try{ let s=store.get(modelKey()); if(!s && curLevel()===0) s=store.get('acordes-model-'+cifraHash()); /* modelos guardados antes de separar por nivel */ return s?JSON.parse(s):null; }catch(e){ return null; } }
 function saveModel(m){ store.set(modelKey(),JSON.stringify(m)); }
-function clearMarksAllLevels(){ const h=cifraHash(); [0,1,2,3].forEach(l=>store.set('acordes-marks-'+h+'-'+l,'[]')); marks=[]; markT=0; tClock=0; }
+function clearMarksAllLevels(){ store.set(marksKey(),'[]'); marks=[]; markT=0; tClock=0; }
 function wordsOf(text){ const out=[]; const re=/\S+/g; let m; while((m=re.exec(text))) out.push({w:m[0],i:m.index}); return out; }
 function modelFromLines(){
+  let prevTok=null, firstTok=null; LINES.forEach(ln=>ln.segs.forEach(s=>{ if(s.tok && !firstTok) firstTok=s.tok; }));
+  const lv=FORCE_LVL===null?curLevel():FORCE_LVL;
   return LINES.map(ln=>{
     const text=ln.segs.map(s=>s.text).join('');
-    if(!text.trim()) return {head:ln.head, inst:true, toks:ln.segs.filter(s=>s.tok).map(s=>s.tok)};
+    if(!text.trim()){ const tk=ln.segs.filter(s=>s.tok).map(s=>s.tok); if(tk.length) prevTok=tk[tk.length-1]; return {head:ln.head, inst:true, toks:tk}; }
     const ws=wordsOf(text); const words=ws.map(x=>x.w); let off=0, prev=-1; const segs=[];
     ln.segs.forEach(s=>{
       if(s.tok){ let w=ws.findIndex(x=>x.i+x.w.length>off); if(w<0) w=ws.length-1; if(w<=prev) w=prev+1; if(w<words.length){ segs.push({tok:s.tok,w0:w}); prev=w; } }
       off+=s.text.length; });
+    /* que NINGUNA parte quede sin bloque: lo que no tenía acorde toma el anterior (o el primero de la canción); después se corrige */
+    if(!segs.length){ if(prevTok||firstTok) segs.push({tok:prevTok||firstTok,w0:0}); }
+    else if(segs[0].w0>0){ if(lv===0 && prevTok) segs.unshift({tok:prevTok,w0:0}); else segs[0].w0=0; }
+    if(segs.length) prevTok=segs[segs.length-1].tok;
     return {head:ln.head, words, segs};
   });
 }
 function buildFromModel(m){
-  const lim=lvlVal(), out=[], ev=[];
+  const lim=0, out=[], ev=[];
   m.forEach(ml=>{
     const segs=[]; let kept=0;
     const add=(tok,text)=>{ const seg={tok:null,text}; if(tok && parseChordTok(toLetterTok(tok)) && !(lim && kept>=lim)){ kept++; seg.tok=tok; seg.ev=ev.length; ev.push({tok}); } segs.push(seg); };
@@ -698,9 +706,9 @@ function edRedo(){ if(HI<HIST.length-1){ HI++; MODEL=JSON.parse(HIST[HI]); saveM
 
 /* ---- abrir / cerrar ---- */
 function edOpen(){
-  if(!LINES.length) return; setPlaying(false); closePicker();
+  if(!LINES.length) return; setPlaying(false); closePicker(); toParent({type:'panic'});
   const stored=loadModel();
-  if(stored) MODEL=stored; else { FORCE_LVL=0; parseCifra(CIFRA_SRC); FORCE_LVL=null; MODEL=modelFromLines(); }
+  if(stored) MODEL=stored; else { FORCE_LVL=curLevel(); parseCifra(CIFRA_SRC); MODEL=modelFromLines(); FORCE_LVL=null; saveModel(MODEL); }
   HIST=[JSON.stringify(MODEL)]; HI=0; ED.open=true; ED.sel=null; ED.gap=null; ED.li=0; document.body.classList.add('ed'); $('editor').hidden=false; edRender(); edTools();
 }
 function edClose(){
@@ -751,6 +759,7 @@ function edTools(){
   const ml=ED.sel?MODEL[ED.sel.li]:null; const has=!!ml; const inst=ml&&ml.inst; const k=ED.sel?ED.sel.k:0;
   const set=(id,on)=>{ $(id).disabled=!on; };
   set('edListen',has); set('edChange',has); set('edSplit',has && (inst || (ml.segs[k+1]?ml.segs[k+1].w0:ml.words.length)-ml.segs[k].w0>=2));
+  set('edDown',has && MODEL.slice(ED.sel.li+1).some(x=>!x.inst));
   set('edMerge',has && (inst?k+1<ml.toks.length:k+1<ml.segs.length)); set('edDel',has);
   set('edAdd',!!ED.gap); set('edLL',has&&!inst); set('edLR',has&&!inst); set('edRL',has&&!inst&&k+1<ml.segs.length); set('edRR',has&&!inst&&k+1<ml.segs.length);
   $('edToolsRow').hidden=!(ED.sel||ED.gap);
@@ -810,9 +819,13 @@ $('edAdd').addEventListener('click',()=>{ if(!ED.gap) return; const {li,w}=ED.ga
   const codes=edAllCodes(); let tok=null; for(let i=li;i>=0&&!tok;i--){ const m=MODEL[i]; if(m.inst){ tok=m.toks[m.toks.length-1]||null; } else if(m.segs.length) tok=m.segs[m.segs.length-1].tok; }
   if(!tok) tok=codes[0]||'C';
   let at=0; while(at<ml.segs.length && ml.segs[at].w0<w) at++; ml.segs.splice(at,0,{tok,w0:w}); ED.gap=null; ED.sel={li,k:at}; edCommit(); edOpenPick(); });
+$('edDown').addEventListener('click',()=>{ if(!ED.sel) return; const {li,k}=ED.sel; const ml=MODEL[li]; const tok=ml.inst?ml.toks[k]:ml.segs[k].tok;
+  let j=li+1; while(j<MODEL.length && MODEL[j].inst) j++; if(j>=MODEL.length) return; const nx=MODEL[j];
+  if(!nx.segs.length) nx.segs.push({tok,w0:0}); else nx.segs[0].tok=tok;
+  ED.sel={li:j,k:0}; ED.li=j; edCommit(); const el=document.querySelector('.cell.sel'); if(el) el.scrollIntoView({block:'nearest'}); previewTok(tok); });
 $('edUndo').addEventListener('click',edUndo); $('edRedo').addEventListener('click',edRedo);
 $('edOrig').addEventListener('click',()=>{ if($('edOrig').dataset.arm!=='1'){ $('edOrig').dataset.arm='1'; $('edOrig').textContent='¿Seguro? Tocá otra vez'; setTimeout(()=>{ $('edOrig').dataset.arm=''; $('edOrig').textContent='↺ Original'; },2500); return; }
-  $('edOrig').dataset.arm=''; $('edOrig').textContent='↺ Original'; store.set(modelKey(),''); clearMarksAllLevels(); FORCE_LVL=0; MODEL=null; parseCifra(CIFRA_SRC); FORCE_LVL=null; MODEL=modelFromLines(); store.set(modelKey(),''); HIST=[JSON.stringify(MODEL)]; HI=0; ED.sel=null; ED.gap=null; edRender(); edTools(); });
+  $('edOrig').dataset.arm=''; $('edOrig').textContent='↺ Original'; store.set(modelKey(),''); clearMarksAllLevels(); FORCE_LVL=curLevel(); MODEL=null; parseCifra(CIFRA_SRC); MODEL=modelFromLines(); FORCE_LVL=null; saveModel(MODEL); HIST=[JSON.stringify(MODEL)]; HI=0; ED.sel=null; ED.gap=null; edRender(); edTools(); });
 
 /* ---- escuchar un renglón o una estrofa ---- */
 function edStop(){ ED.runId++; document.querySelectorAll('.cell.now').forEach(c=>c.classList.remove('now')); }
