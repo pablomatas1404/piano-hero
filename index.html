@@ -14005,7 +14005,8 @@ function frameInner(ts) {
       // había llegado. Ahora se congela recién cuando la línea ya está pasando por encima de la
       // nota (0.04s de margen nada más, el mínimo para que no se escape por un cuadro de animación
       // de más) — tocás cuando ves la nota EN la línea, no antes.
-      if (critical && (critical.time - playhead) <= 0.04) { frozen = true; waitingNote = critical; }
+      // YOUR BAND: margen de error -- no frena la música hasta que la nota lleva 0.22s de atraso (ver yourband.js)
+      if (critical && (critical.time - playhead) <= 0.04 - ((activeSong && activeSong.__yb) ? 0.22 : 0)) { frozen = true; waitingNote = critical; }
     }
     isFrozenWaiting = frozen; // para el gesto de "doble clic con negras" (ver registerBlackKeyGesture)
     const prevPlayhead = playhead;

@@ -44,8 +44,8 @@
   .yb-op { background:#272340; border:2px solid transparent; border-radius:12px; padding:9px 16px; cursor:pointer; font-weight:600; }
   .yb-op.sel { border-color:#ffb454; }
   .yb-carga { width:min(360px,80vw); height:10px; background:#272340; border-radius:6px; overflow:hidden; } .yb-carga div { height:100%; width:0; background:#ffb454; transition:width .2s; }
-  #yb-flot { position:fixed; right:8px; bottom:8px; z-index:9990; display:none; background:rgba(18,16,28,.92); color:#f2efff; border:1px solid #3b3660; border-radius:14px; padding:8px 10px; gap:10px; align-items:center; flex-wrap:wrap; font-size:12px; max-width:min(96vw,640px); }
-  #yb-flot.on { display:flex; } #yb-flot label { display:flex; align-items:center; gap:5px; color:#cfc9ee; } #yb-flot input[type=range] { width:80px; } #yb-flot button { padding:6px 12px; font-size:12px; }
+  #yb-flot { position:relative; z-index:5; display:none; background:rgba(18,16,28,.92); color:#f2efff; border:1px solid #3b3660; border-radius:12px; padding:4px 8px; gap:4px 10px; align-items:center; flex-wrap:wrap; font-size:11px; max-width:340px; flex:0 1 340px; }
+  #yb-flot.on { display:flex; } #yb-flot label { display:flex; align-items:center; gap:5px; color:#cfc9ee; } #yb-flot input[type=range] { width:64px; } #yb-flot button { padding:4px 10px; font-size:11px; }
   `;
   document.head.appendChild(css);
 
@@ -74,7 +74,9 @@
     <label title="Si los ladrillos llegan antes que la música, subilo; si llegan después, bajalo">Sincro <input type="range" id="yb-f-sync" min="-500" max="500" step="10" value="0"><span id="yb-f-syncv">0 ms</span></label>
     <label>Banda <input type="range" id="yb-f-vol" min="0" max="100" value="80"></label>
     <label id="yb-f-guial"><input type="checkbox" id="yb-f-guia">Oír mi instrumento de la banda</label>`;
-  document.body.appendChild(flot);
+  // va en el encabezado, al lado de los créditos (abajo tapaba teclas del piano)
+  const colCred = document.querySelector('header .credits-col');
+  if (colCred) colCred.insertAdjacentElement('afterend', flot); else document.body.appendChild(flot);
 
   const $ = id => document.getElementById(id);
   const pantalla = id => { ov.classList.add('on'); ov.querySelectorAll('.yb-p').forEach(p => p.classList.toggle('on', p.id === id)); };
@@ -171,6 +173,8 @@
     ctxAudio();
     if (typeof audioReady !== 'undefined' && !audioReady) { try { await startAudio(); } catch (e) {} }
     const s = armarCancion();
+    // menos retardo del sonido que tocás: Tone programa cada nota 0.1 s adelante por defecto
+    try { if (window.Tone && Tone.context) Tone.context.lookAhead = 0.015; } catch (e) {}
     cerrar();
     setHandsMode(datos.rol === 'bajo' ? 'one' : 'two', null);
     loadSong(s);
