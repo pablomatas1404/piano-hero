@@ -12494,7 +12494,7 @@ function drawCascadaView(w, h, targetY, ts, waitingNote) {
     // oscuro/personalizado, o de fondo negro, quedaba invisible. Ahora lleva un borde oscuro +
     // relleno blanco (como un cartel), legible contra CUALQUIER color de ladrillo.
     if (bw >= 16) {
-      const labelY = Math.min(y - 6, y - lenPx + 14);
+      const labelY = y - 6; // YOUR BAND: siempre en la base del ladrillo (en los muy largos el nombre quedaba arriba, fuera de pantalla)
       const labelText = NOTE_NAMES[n.midi % 12].replace('#', '♯');
       if (isOldIOSDevice) {
         // Nombre de la nota en el iPad viejo (22/08/2026, a pedido de Pablo, para que el Modo
@@ -12529,9 +12529,10 @@ function drawCascadaView(w, h, targetY, ts, waitingNote) {
 
     if (showFingers && n.finger && !n.hit && !n.missed) {
       ctx.fillStyle = 'rgba(5,7,13,.75)';
-      ctx.beginPath(); ctx.arc(bx + bw / 2, y - lenPx - 10, 9, 0, Math.PI * 2); ctx.fill();
+      const fy = lenPx > 40 ? y - 26 : y - lenPx - 10; // en ladrillos largos el número también va en la base
+      ctx.beginPath(); ctx.arc(bx + bw / 2, fy, 9, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#fff'; ctx.font = '700 11px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(n.finger, bx + bw / 2, y - lenPx - 6);
+      ctx.fillText(n.finger, bx + bw / 2, fy + 4);
     }
 
     if (n === waitingNote) {
