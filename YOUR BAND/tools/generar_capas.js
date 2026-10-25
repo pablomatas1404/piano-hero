@@ -1,7 +1,13 @@
 // Arma las capas de juego (bajo / melodía / acordes) y sus 3 niveles a partir de las notas que saca Basic Pitch.
-// Uso: node generar_capas.js   ->  escribe ../canciones/quedate/capas.json
+// Uso: node generar_capas.js <carpeta con *_notas.json> <carpeta de salida> "<Titulo>" "<Estilo>" <duracion en segundos> <stems separados por coma>
+//   sin argumentos arma 'Quédate un poco más' como antes.
 const fs = require('fs'), path = require('path');
-const leer = f => JSON.parse(fs.readFileSync(path.join(__dirname, f), 'utf8'));
+const A = process.argv.slice(2);
+const DIR_NOTAS = A[0] ? path.resolve(A[0]) : __dirname;
+const DIR_SALIDA = A[1] ? path.resolve(A[1]) : path.join(__dirname, '../canciones/quedate');
+const TITULO = A[2] || 'Quédate un poco más', ESTILO = A[3] || 'Bolero', DURACION = A[4] ? +A[4] : 147.7;
+const STEMS = A[5] ? A[5].split(',') : ['voz', 'bateria', 'bajo', 'guitarra', 'teclado', 'percusion'];
+const leer = f => JSON.parse(fs.readFileSync(path.join(DIR_NOTAS, f), 'utf8'));
 const redondeo = x => Math.round(x * 1000) / 1000;
 
 function plegar(m, lo, hi) { while (m < lo) m += 12; while (m > hi) m -= 12; return m; }
@@ -92,11 +98,11 @@ const capas = {
     dificil: nivelAcordes(3, 0.2, 0.4)
   }
 };
-const dur = 147.7;
+const dur = DURACION;
 const salida = {
-  titulo: 'Quédate un poco más', estilo: 'Bolero', duracion: dur,
-  partes: [{ n: 'Intro', a: 0, b: 45 }, { n: 'Medio', a: 45, b: 98 }, { n: 'Final', a: 98, b: dur }],
-  stems: ['voz', 'bateria', 'bajo', 'guitarra', 'teclado', 'percusion'],
+  titulo: TITULO, estilo: ESTILO, duracion: dur,
+  partes: [{ n: 'Intro', a: 0, b: redondeo(dur * 0.3) }, { n: 'Medio', a: redondeo(dur * 0.3), b: redondeo(dur * 0.66) }, { n: 'Final', a: redondeo(dur * 0.66), b: dur }],
+  stems: STEMS,
   capas: {}
 };
 for (const k of Object.keys(capas)) {
@@ -106,4 +112,5 @@ for (const k of Object.keys(capas)) {
     console.log(k, nv, capas[k][nv].length);
   }
 }
-fs.writeFileSync(path.join(__dirname, '../canciones/quedate/capas.json'), JSON.stringify(salida));
+fs.mkdirSync(DIR_SALIDA, { recursive: true });
+fs.writeFileSync(path.join(DIR_SALIDA, 'capas.json'), JSON.stringify(salida));

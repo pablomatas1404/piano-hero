@@ -6,7 +6,7 @@
   const CARPETA = 'YOUR BAND/';
   const MISIONES = [
     { id: 'quedate', titulo: 'Quédate un poco más', estilo: 'Bolero', nivelMin: 1, carpeta: CARPETA + 'canciones/quedate/' },
-    { id: 'prox2', titulo: 'Próximamente', estilo: '', nivelMin: 1, proximamente: true },
+    { id: 'takeitslow', titulo: 'Take It Slow', estilo: 'Rock', nivelMin: 1, carpeta: CARPETA + 'canciones/take-it-slow/' },
     { id: 'prox3', titulo: 'Próximamente', estilo: '', nivelMin: 1, proximamente: true },
     { id: 'prox4', titulo: 'Próximamente', estilo: '', nivelMin: 1, proximamente: true },
     { id: 'prox5', titulo: 'Próximamente', estilo: '', nivelMin: 2, proximamente: true },
