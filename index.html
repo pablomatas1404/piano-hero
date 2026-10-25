@@ -1779,6 +1779,7 @@
            repaso antes de sumar dificultad. Siempre visible como Configuración/Micrófono, no
            escondido en el grupo colapsable. -->
       <button class="btn" onclick="openLearnHub()" title="Curso guiado de 8 lecciones: de tres notas con la mano derecha hasta tocar con las dos manos juntas">🎓 Aprender</button>
+      <button class="btn" id="stopSoundBtn" style="display:none; color:var(--bad); border-color:var(--bad);" onclick="organPanic()" title="Corta YA cualquier acorde o ritmo que se haya quedado sonando, en la compu y en el Yamaha">⏹ Parar sonido</button>
       <button class="btn" id="cifraClubBtn" style="display:none" onclick="toggleCifraPanel()" title="Pegás una cifra de Cifra Club y la pantalla negra te va mostrando la letra y los acordes que tenés que tocar, como un karaoke">🎼 Tocar con Cifra Club</button>
       <span class="mini-toolbar-sep"></span>
       <span class="mini-toolbar-group mini-toolbar-collapsible">
@@ -3319,13 +3320,14 @@ let organPendingTimeouts = [];
 // Corta TODO lo del acompañamiento: temporizadores, loop, notas del Yamaha (apaga todas) y sonido de la compu.
 function organPanic() {
   stopOrganPlayback();
-  try { if (midiOutputRef) { midiOutputRef.send([0xB0, 123, 0]); midiOutputRef.send([0xB0, 120, 0]); midiOutputRef.send([0xB9, 123, 0]); } } catch (e) {}
+  try { if (midiOutputRef) { for (let ch = 0; ch < 16; ch++) { midiOutputRef.send([0xB0 | ch, 64, 0]); midiOutputRef.send([0xB0 | ch, 123, 0]); midiOutputRef.send([0xB0 | ch, 120, 0]); } } } catch (e) {}
   try { [violinSynth, celloSynth, piano, organSynth, guitarSynth, fluteSynth].forEach(v => { if (v && v.releaseAll) v.releaseAll(); }); } catch (e) {}
   organStringsOn = false;
 }
 function stopOrganPlayback() {
   organPendingTimeouts.forEach(id => clearTimeout(id));
   organPendingTimeouts = [];
+  releaseAutoMidi();
   // las cuerdas quedan sonando largo: se sueltan (con su fundido) al cambiar de acorde o frenar
   if (organStringsOn) { organStringsOn = false; try { if (violinSynth && violinSynth.releaseAll) violinSynth.releaseAll(); if (celloSynth && celloSynth.releaseAll) celloSynth.releaseAll(); } catch (e) {} }
 }
@@ -6964,12 +6966,24 @@ function sendMidiNoteOff(midi) { if (midiOutputRef) midiOutputRef.send([0x80, mi
 // sigue la misma regla que el resto: si el sonido va al teclado, TODO lo musical va al teclado (la
 // voz que felicita al terminar es la única excepción posible — esa nunca puede salir por MIDI,
 // porque no es una nota, es audio de verdad, así que esa siempre sigue sonando en la compu).
+// FIX (24/10/2026, Pablo: "el teclado queda pegado, una triada sonando, lo tengo que apagar y prender"): las notas del acompañamiento
+// del Órgano (las que llevan "gain") se anotan acá. Antes, al cambiar de acorde las del acorde anterior seguían sonando hasta que
+// vencía su temporizador, y repetir la misma nota cortaba la nueva. Ahora cada nota nueva suelta la anterior igual, y stopOrganPlayback()
+// / organPanic() sueltan todas de inmediato.
+const autoMidiActive = new Map(); // nota -> temporizador del "soltar"
+function releaseAutoMidi() {
+  autoMidiActive.forEach((id, m) => { clearTimeout(id); try { if (midiOutputRef) midiOutputRef.send([0x80, m, 0]); } catch (e) {} });
+  autoMidiActive.clear();
+}
 function playAutoNote(midi, duration, isDrum, gain) {
   if (soundOutputMode === 'midi' && midiOutputRef) {
     const onByte = isDrum ? 0x99 : 0x90, offByte = isDrum ? 0x89 : 0x80; // canal 10 (percusión GM) para batería
+    const tracked = !isDrum && gain != null;
+    if (tracked && autoMidiActive.has(midi)) { clearTimeout(autoMidiActive.get(midi)); midiOutputRef.send([0x80, midi, 0]); autoMidiActive.delete(midi); }
     midiOutputRef.send([onByte, midi, gain == null ? 100 : Math.max(1, Math.round(100 * gain))]);
-    const ms = Math.max(30, (duration || 0.3) * 1000);
-    setTimeout(() => { if (midiOutputRef) midiOutputRef.send([offByte, midi, 0]); }, ms);
+    const ms = Math.min(12000, Math.max(30, (duration || 0.3) * 1000));
+    const id = setTimeout(() => { if (tracked) autoMidiActive.delete(midi); try { if (midiOutputRef) midiOutputRef.send([offByte, midi, 0]); } catch (e) {} }, ms);
+    if (tracked) autoMidiActive.set(midi, id);
   } else if (audioReady) {
     if (isDrum) triggerDrumSound(midi);
     else if (gain == null) activeVoice().triggerAttackRelease(midiToNoteName(midi), duration);
@@ -9314,7 +9328,7 @@ function switchTab(tab) {
   // irte de ahí, se apaga el estilo que estuviera sonando y las escalas, como si cerraras el
   // programa aparte.
   const inOrgano = tab === 'banda';
-  { const cb = document.getElementById('cifraClubBtn'); if (cb) cb.style.display = inOrgano ? '' : 'none'; }
+  { const cb = document.getElementById('cifraClubBtn'); if (cb) cb.style.display = inOrgano ? '' : 'none'; const sb = document.getElementById('stopSoundBtn'); if (sb) sb.style.display = inOrgano ? '' : 'none'; }
   applyOrganRightMode();
   if (!inOrgano && cifraPanelOpen) closeCifraPanel();
   document.getElementById('sideLeftDefault').style.display = inOrgano ? 'none' : '';

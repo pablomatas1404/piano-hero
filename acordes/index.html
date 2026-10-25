@@ -152,6 +152,7 @@ body.ed .app{gap:4px;padding:4px 0} .edlines{min-height:150px} .edbar button{pad
     <span class="grp" id="nLines"><span class="lab">Renglones</span><button type="button" data-n="1">1</button><button type="button" data-n="2">2</button><button type="button" data-n="3">3</button><button type="button" data-n="4">4</button></span>
     <button type="button" id="sideBtn">Cifra</button>
     <span class="grp" id="lvlGrp" title="Cuántos cambios de acorde se muestran por renglón"><span class="lab">Cambios</span><button type="button" data-l="1">1</button><button type="button" data-l="2">2</button><button type="button" data-l="3">3</button><button type="button" data-l="0">Todos</button></span>
+    <button type="button" id="panicBtn" hidden style="background:var(--bad);color:#fff" title="Corta YA cualquier acorde que se haya quedado sonando (en la compu y en el Yamaha)">⏹ Parar sonido</button>
     <button type="button" id="edBtn" hidden title="Abre el editor: ves cada acorde como un corchete sobre las palabras donde suena, lo estirás, lo escuchás y lo corregís">✏️ Editar acordes</button>
     <button type="button" id="introBtn" hidden title="Salta los acordes de la intro y empieza en la parte cantada">Saltar intro</button>
     <button type="button" id="remarkBtn" hidden title="Borra tus marcas de tiempo y vuelve a marcar con el doble toque">Volver a marcar</button>
@@ -596,7 +597,8 @@ $('lvl').addEventListener('change',()=>{ if(typeof ED!=='undefined' && ED.open) 
 function setLvlBtns(){ document.querySelectorAll('#lvlGrp button').forEach(b=>b.classList.toggle('on', b.dataset.l===$('lvl').value)); }
 document.querySelectorAll('#lvlGrp button').forEach(b=>b.addEventListener('click',()=>{ $('lvl').value=b.dataset.l; $('lvl').dispatchEvent(new Event('change')); }));
 $('lvl').addEventListener('change',setLvlBtns); setLvlBtns();
-if(EMBED){ $('brandTitle').textContent='Cifra Club'; $('brandSub').textContent=''; $('cifraTitle').hidden=false; $('saveTopBtn').hidden=false;
+if(EMBED){ $('panicBtn').hidden=false; $('panicBtn').addEventListener('click',()=>{ setPlaying(false); toParent({type:'panic'}); });
+  $('brandTitle').textContent='Cifra Club'; $('brandSub').textContent=''; $('cifraTitle').hidden=false; $('saveTopBtn').hidden=false;
   $('saveTopBtn').addEventListener('click',()=>{ if(!CIFRA_SRC.trim()){ tutor.say('Primero cargá una cifra.'); return; } $('saveName').value=$('brandTitle').textContent==='Cifra Club'?'':$('brandTitle').textContent; $('savePanel').hidden=false; $('saveName').focus(); });
   $('saveClose').addEventListener('click',()=>{ $('savePanel').hidden=true; });
   $('saveGo').addEventListener('click',()=>{ const nm=($('saveName').value||'').trim()||'Sin nombre'; toParent({type:'saveCifra',title:nm,text:CIFRA_SRC}); $('brandTitle').textContent=nm; $('savePanel').hidden=true; tutor.say('Guardada en tu lista de Cifra Club (panel de la derecha).'); }); $('cifraSave').hidden=false;
