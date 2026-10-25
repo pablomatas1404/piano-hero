@@ -6920,7 +6920,18 @@ function bindFirstMidiOutput(access) {
     // mudo por error se nota y se corrige al toque, mandarle notas silenciosas a un controlador sin
     // sonido propio pensando que algo anda mal es mucho más confuso).
     const prefs = loadSoundOutputPrefs();
-    soundOutputMode = prefs[chosen.name] || 'computer';
+    // FIX (24/10/2026, Pablo: "toco en el piano y se reproduce después en la computadora con delay, no sea cosa que queden los dos
+    // sonidos"): un teclado con sonido propio (Yamaha, etc.) ya suena solo al tocarlo; si además la compu lo repite, se oye doble y
+    // con retraso. Los teclados de marca con sonido propio arrancan en "Teclado MIDI". Una sola vez se corrige también el valor viejo
+    // "Computadora" que había quedado guardado (después se respeta lo que elijas con el botón).
+    const OWN_SOUND = /yamaha|digital keyboard|psr-|clavinova|casio|korg|roland|kawai/i.test(chosen.name || '');
+    let mode = prefs[chosen.name];
+    if (!mode || (OWN_SOUND && mode === 'computer' && localStorage.getItem('pianoHero_ownSoundMig') !== '1')) {
+      mode = OWN_SOUND ? 'midi' : 'computer';
+      prefs[chosen.name] = mode; saveSoundOutputPrefs(prefs);
+      if (OWN_SOUND) localStorage.setItem('pianoHero_ownSoundMig', '1');
+    }
+    soundOutputMode = mode;
     localStorage.setItem('pianoHero_soundOutput', soundOutputMode); // compat: el resto del código sigue leyendo esta clave
   } else if (soundOutputMode === 'midi') {
     soundOutputMode = 'computer';
