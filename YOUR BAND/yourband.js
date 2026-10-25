@@ -38,6 +38,8 @@
   .yb-p.on { display:flex; }
   .yb-p h1 { font-size:2.3rem; margin:0; letter-spacing:.04em; } .yb-p h2 { margin:0; font-size:1.45rem; }
   .yb-p p { margin:0; color:#a9a3c9; max-width:34em; line-height:1.5; font-size:1.05rem; }
+  #yb-nombre { background:#000 url('YOUR BAND/portada.webp') center top / cover no-repeat; justify-content:flex-end; padding-bottom:5vh; }
+  .yb-pie { background:rgba(10,8,18,.74); padding:16px 24px; border-radius:18px; display:flex; flex-direction:column; align-items:center; gap:12px; backdrop-filter:blur(3px); border:1px solid rgba(255,255,255,.12); }
   .yb-cartel { background:#1d1a2e; border:1px solid #3b3660; border-radius:18px; padding:26px 28px; max-width:34em; font-size:1.3rem; line-height:1.5; }
   .yb-p button, #yb-flot button { font:inherit; cursor:pointer; border:0; border-radius:14px; padding:11px 24px; background:#ffb454; color:#241a00; font-weight:700; font-size:1.02rem; }
   .yb-p button.sec, #yb-flot button.sec { background:#272340; color:#f2efff; font-weight:600; }
@@ -66,8 +68,8 @@
   // ---------- Pantallas ----------
   const ov = document.createElement('div'); ov.id = 'yb-ov';
   ov.innerHTML = `
-  <section class="yb-p" id="yb-nombre"><div class="yb-grande">🎸🥁🎹</div><h1>YOUR BAND</h1><p>Todo grupo necesita un nombre. ¿Cómo se va a llamar el tuyo?</p>
-    <input type="text" id="yb-in-nombre" value="Your Band" maxlength="30" autocomplete="off"><div class="yb-fila"><button class="sec" id="yb-b-cerrar1">Volver a Piano Hero</button><button id="yb-b-nombre">Siguiente</button></div></section>
+  <section class="yb-p" id="yb-nombre"><div class="yb-pie"><p>Todo grupo necesita un nombre. ¿Cómo se va a llamar el tuyo?</p>
+    <input type="text" id="yb-in-nombre" value="Your Band" maxlength="30" autocomplete="off"><div class="yb-fila"><button class="sec" id="yb-b-cerrar1">Volver a Piano Hero</button><button id="yb-b-nombre">Siguiente</button></div></div></section>
   <section class="yb-p" id="yb-historia"><div class="yb-cartel" id="yb-cartel"></div><button id="yb-b-hist">Siguiente</button></section>
   <section class="yb-p" id="yb-rol"><h2>¿Qué vas a tocar?</h2><div class="yb-fila">
     <div class="yb-tarj el" data-rol="bajo"><div class="yb-grande">🎸</div><h2>Bajo</h2><p class="yb-chico">La base de la banda. Notas graves, de a una.</p></div>
