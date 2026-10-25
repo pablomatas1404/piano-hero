@@ -155,6 +155,7 @@ body.ed .app{gap:4px;padding:4px 0} .edlines{min-height:150px} .edbar button{pad
     <button type="button" id="panicBtn" hidden style="background:var(--bad);color:#fff" title="Corta YA cualquier acorde que se haya quedado sonando (en la compu y en el Yamaha)">⏹ Parar sonido</button>
     <button type="button" id="edBtn" hidden title="Abre el editor: ves cada acorde como un corchete sobre las palabras donde suena, lo estirás, lo escuchás y lo corregís">✏️ Editar acordes</button>
     <button type="button" id="introBtn" hidden title="Salta los acordes de la intro y empieza en la parte cantada">Saltar intro</button>
+    <button type="button" id="markBtn" hidden title="OPCIONAL: ponés la canción real a sonar y hacés doble toque en el Do agudo cada vez que cambia el acorde; el programa anota los momentos. Si no lo usás, los acordes siguen tus bloques mientras corre la letra.">⏺ Marcar tiempos</button>
     <button type="button" id="remarkBtn" hidden title="Borra tus marcas de tiempo y vuelve a marcar con el doble toque">Volver a marcar</button>
     <button type="button" id="saveTopBtn" hidden title="Guarda esta cifra en tu lista de Cifra Club">💾 Guardar</button>
     <button type="button" id="lessonBtn">Lección guiada</button>
@@ -448,7 +449,7 @@ function refresh(){ // cada vez que cambia la posición
   const cur=Math.min(LINES.length-1,Math.floor(kPos));
   if(cur!==lastShownLine||nShow!==lastShownN){ renderBig(); markSide(); }
   const p=Math.max(0,Math.min(1,kPos-cur)); bigRefs.forEach((t,k)=>t.style.setProperty('--p',k===0?(p*100).toFixed(1)+'%':'0%'));
-  const e=(playing&&EVENTS.length&&!marksDone()&&marks.length>0)?marks.length-1:eventAt(kPos); /* marcando: el acorde lo manda tu doble toque, no la posición del texto */
+  const e=(playing&&EVENTS.length&&markMode&&!marksDone()&&marks.length>0)?marks.length-1:eventAt(kPos); /* marcando: el acorde lo manda tu doble toque, no la posición del texto */
   if(e!==curEv) setCurrentEvent(e);
 }
 function goLine(li){ kPos=Math.max(0,Math.min(LINES.length-1,li)); refresh(); }
@@ -459,16 +460,16 @@ function nextStep(){
     const ni=curEv+1;
     if(playing){
       if(marksDone()) tClock=marks[ni];                       /* ya hay marcas: el toque solo se resincroniza */
-      else if(ni===marks.length){ marks.push(markT); saveMarks(); if(marksDone()) tutor.say('¡Marcas completas! La próxima vez la letra sigue tus marcas.'); else updateMarkUI(); }
+      else if(markMode && ni===marks.length){ marks.push(markT); saveMarks(); if(marksDone()){ markMode=false; tutor.say('¡Marcas completas! La próxima vez la letra sigue tus marcas.'); } else updateMarkUI(); }
     }
     kPos=posOfEvent(ni); refresh(); updateMarkUI();
   } else tutor.say('No hay más acordes.');
 }
 
 /* ============ marcas de tiempo: doble toque en la tecla de salto cada vez que cambia el acorde ============ */
-let marks=[], markT=0, tClock=0;
+let marks=[], markT=0, tClock=0, markMode=false;
 function marksKey(){ return 'acordes-marks-'+cifraHash()+'-'+lvlVal(); }
-function loadMarks(){ try{ const a=JSON.parse(store.get(marksKey())||'[]'); marks=Array.isArray(a)?a.slice(0,EVENTS.length):[]; }catch(e){ marks=[]; } markT=0; tClock=0; }
+function loadMarks(){ markMode=false; try{ const a=JSON.parse(store.get(marksKey())||'[]'); marks=Array.isArray(a)?a.slice(0,EVENTS.length):[]; }catch(e){ marks=[]; } markT=0; tClock=0; }
 function saveMarks(){ store.set(marksKey(),JSON.stringify(marks)); }
 function marksDone(){ return EVENTS.length>0 && marks.length===EVENTS.length && marks.every(x=>typeof x==='number'); }
 function posAtTime(t){ /* posición del teleprompter para un tiempo de la canción; -1 si ya pasó la última marca */
@@ -483,18 +484,25 @@ function timeAtPos(p){
 }
 function updateMarkUI(){
   $('edBtn').hidden=!LINES.length;
-  $('markBanner').hidden=!(playing && EVENTS.length && !marksDone());
-  $('remarkBtn').hidden=!(marks.length>0);
+  $('markBanner').hidden=!(playing && EVENTS.length && markMode && !marksDone());
+  $('remarkBtn').hidden=true;
+  $('markBtn').hidden=!EVENTS.length; $('markBtn').classList.toggle('on',markMode);
+  $('markBtn').textContent=markMode?'⏹ Dejar de marcar':(marks.length&&marksDone()?'⏺ Marcar de nuevo':'⏺ Marcar tiempos');
   $('introBtn').hidden=!(LINES.length>1 && LINES[0].head && /intro/i.test(LINES[0].head));
   if(!EVENTS.length) return;
   if(marksDone()) { if(playing) tutor.say('Siguiendo tus marcas. Con ⏸ Pausa podés corregir un acorde (tocá el acorde grande).'); }
-  else if(playing) tutor.say('Marcando: doble toque en el Do agudo cada vez que cambia el acorde ('+marks.length+' de '+EVENTS.length+').');
+  else if(playing && markMode) tutor.say('Marcando: doble toque en el Do agudo cada vez que cambia el acorde ('+marks.length+' de '+EVENTS.length+').');
 }
+$('markBtn').addEventListener('click',()=>{
+  if(markMode){ markMode=false; setPlaying(false); updateMarkUI(); return; }
+  markMode=true; marks=[]; saveMarks(); markT=0; tClock=0; setPlaying(false); kPos=0; curEv=-2; lastShownLine=-1; refresh(); updateMarkUI();
+  tutor.say('Apretá ▶ Pasar letra y hacé doble toque en el Do agudo cada vez que cambie el acorde.');
+});
 $('remarkBtn').addEventListener('click',()=>{ marks=[]; saveMarks(); markT=0; tClock=0; setPlaying(false); kPos=0; curEv=-2; lastShownLine=-1; refresh(); $('teacher').hidden=true; updateMarkUI(); });
 $('introBtn').addEventListener('click',()=>{
   const li=LINES.findIndex((ln,i)=>i>0 && ln.head && !/intro/i.test(ln.head)); if(li<0) return;
   const ei=EVENTS.findIndex(e=>e.line>=li); if(ei<0) return;
-  if(marksDone()){ tClock=marks[ei]; } else if(playing){ for(let i=marks.length;i<=ei;i++) marks[i]=markT; saveMarks(); }
+  if(marksDone()){ tClock=marks[ei]; } else if(playing && markMode){ for(let i=marks.length;i<=ei;i++) marks[i]=markT; saveMarks(); }
   kPos=posOfEvent(ei); refresh(); updateMarkUI();
 });
 
@@ -552,9 +560,9 @@ function setSpeed(v){ lpm=Math.max(3,Math.min(60,v)); store.set('acordes-lpm',St
 function setPlaying(p){
   if(p && EVENTS.length){ closePicker();
     if(marksDone()) tClock=timeAtPos(kPos);
-    else if(marks.length===0 && curEv<=0){ marks=[0]; markT=0; saveMarks(); } }
+    else if(markMode && marks.length===0 && curEv<=0){ marks=[0]; markT=0; saveMarks(); } }
   playing=p; lastT=0; toParent({type:'play',on:p});
-  if(!p && EVENTS.length && marks.length>0 && !marksDone()){ kPos=posOfEvent(marks.length-1); curEv=-2; refresh(); }  /* al pausar a mitad de marcado, el texto vuelve al acorde marcado */
+  if(!p && EVENTS.length && markMode && marks.length>0 && !marksDone()){ kPos=posOfEvent(marks.length-1); curEv=-2; refresh(); }  /* al pausar a mitad de marcado, el texto vuelve al acorde marcado */
   $('nowChord').classList.toggle('canedit',!p && EVENTS.length>0);
   updateMarkUI(); $('playBtn').textContent=p?'⏸ Pausa':'▶ Pasar letra'; $('playBtn').className=p?'stop':'go'; }
 function frame(t){
@@ -564,7 +572,7 @@ function frame(t){
     if(EVENTS.length && marksDone()){            /* sigue tus marcas: la velocidad es un multiplicador */
       tClock+=rdt*lpm/12; const p=posAtTime(tClock);
       if(p<0){ kPos=Math.max(kPos,posOfEvent(EVENTS.length-1)); kPos+=dt*lpm/60; } else kPos=p;
-    } else if(EVENTS.length){                    /* marcando: el texto corre, pero el acorde espera tu doble toque */
+    } else if(EVENTS.length && markMode && marks.length>0){   /* marcando: el texto corre, pero el acorde espera tu doble toque */
       markT+=rdt; kPos+=dt*lpm/60;
     } else kPos+=dt*lpm/60;
     if(kPos>=end){ kPos=end; setPlaying(false); } refresh(); }

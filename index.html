@@ -1643,8 +1643,8 @@
       <div style="margin-top:8px; padding:8px 10px; border:1px solid var(--line); border-radius:10px;">
         <div style="font-size:12px; font-weight:700; margin-bottom:6px;" title="Con qué sonido suena el acompañamiento. Cuerdas = violines y cellos que se quedan sonando parejos, sin apagarse como el piano.">🎻 Sonido del acompañamiento</div>
         <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
-          <button class="btn" id="organVoicePiano" onclick="setOrganVoice('piano')" title="El acompañamiento suena como piano (como lo grabaste o lo trae el estilo)">🎹 Piano</button>
-          <button class="btn on" id="organVoiceStrings" onclick="setOrganVoice('cuerdas')" title="Violines y cellos sostenidos: no se apagan mientras dura el acorde. Suenan por la computadora; tu melodía sigue en el Yamaha">🎻 Cuerdas</button>
+          <button class="btn" id="organVoicePiano" onclick="setOrganVoice('piano', true)" title="El acompañamiento suena como piano (como lo grabaste o lo trae el estilo)">🎹 Piano</button>
+          <button class="btn on" id="organVoiceStrings" onclick="setOrganVoice('cuerdas', true)" title="Violines y cellos sostenidos: no se apagan mientras dura el acorde. Suenan por la computadora; tu melodía sigue en el Yamaha">🎻 Cuerdas</button>
         </div>
         <div style="font-size:12px; font-weight:700; margin-bottom:6px;" title="Cuántas teclas graves de tu teclado disparan el acompañamiento. El resto del teclado queda para tocar la melodía.">🎹 Teclas del acompañamiento</div>
         <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
@@ -3355,11 +3355,15 @@ let organLoopOn = true;
 let organAccGain = 1;
 // Sonido del acompañamiento: 'cuerdas' (violín + cello sostenidos, por la compu) o 'piano' (como suena el estilo, por la compu o el Yamaha).
 let organVoice = (localStorage.getItem('pianoHero_organVoice') === 'piano') ? 'piano' : 'cuerdas';
-function setOrganVoice(v) {
+function previewOrganVoice() { // un acorde de muestra, para escuchar la diferencia al elegir
+  [48, 55, 64, 67].forEach(m => { if (organVoice === 'cuerdas') playStringsNote(m, 1.8, organAccGain); else playAutoNote(m, 1.2, false, organAccGain); });
+}
+function setOrganVoice(v, preview) {
   organVoice = v === 'piano' ? 'piano' : 'cuerdas'; try { localStorage.setItem('pianoHero_organVoice', organVoice); } catch (e) {}
   const a = document.getElementById('organVoicePiano'), b = document.getElementById('organVoiceStrings');
   if (a) a.classList.toggle('on', organVoice === 'piano'); if (b) b.classList.toggle('on', organVoice === 'cuerdas');
   organPanic();
+  if (preview) previewOrganVoice();
 }
 document.addEventListener('DOMContentLoaded', () => setOrganVoice(organVoice));
 try { const g = parseFloat(localStorage.getItem('pianoHero_organAccGain')); if (g >= 0.2 && g <= 1) organAccGain = g; } catch (e) {} // un valor viejo menor a 20% (casi mudo) se descarta: vuelve a 100%
