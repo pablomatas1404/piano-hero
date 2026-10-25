@@ -58,7 +58,6 @@
   .yb-carga { width:min(360px,80vw); height:10px; background:#272340; border-radius:6px; overflow:hidden; } .yb-carga div { height:100%; width:0; background:#ffb454; transition:width .2s; }
   #yb-flot { position:relative; z-index:5; display:none; }
   #yb-flot.on { display:block; }
-  #yb-flot.fijo { position:fixed; top:8px; right:8px; z-index:9990; }
   #yb-flot > button { padding:5px 12px; font-size:12px; white-space:nowrap; }
   #yb-pop { position:fixed; z-index:99980; display:none; background:#1d1a2e; color:#f2efff; border:1px solid #3b3660; border-radius:14px; padding:12px 14px; gap:10px; flex-direction:column; font-size:13px; width:min(92vw,330px); box-shadow:0 8px 30px rgba(0,0,0,.5); }
   #yb-pop.on { display:flex; } #yb-pop label { display:flex; align-items:center; gap:8px; color:#cfc9ee; justify-content:space-between; } #yb-pop input[type=range] { width:150px; }
@@ -275,8 +274,7 @@
     try {
       const S = activeSong && activeSong.__yb;
       flot.classList.toggle('on', !!S); btn2.style.display = S ? '' : 'none';
-      // si el encabezado está escondido (pantalla completa / celular), el botón pasa a flotar arriba a la derecha
-      if (S && colCred) { const hVis = colCred.offsetWidth > 0; if (hVis && flot.parentElement !== colCred.parentElement) { colCred.insertAdjacentElement('afterend', flot); flot.classList.remove('fijo'); } else if (!hVis && flot.parentElement !== document.body) { document.body.appendChild(flot); flot.classList.add('fijo'); } }
+      // el botón BANDA del encabezado se ve solo si el encabezado está visible; si no, queda el de la botonera del teclado (junto a Modo Espera)
       if (!S && tocoInstr) { try { currentInstrument = guardadoInstr; } catch (e) {} tocoInstr = false; }
       if (S) {
         const querida = S.modo === 'tocar' && isPlaying && !inCountdown && !isFrozenWaiting;
