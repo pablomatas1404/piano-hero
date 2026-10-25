@@ -7,7 +7,7 @@
   const MISIONES = [
     { id: 'quedate', titulo: 'Quédate un poco más', estilo: 'Bolero', nivelMin: 1, carpeta: CARPETA + 'canciones/quedate/' },
     { id: 'takeitslow', titulo: 'Take It Slow', estilo: 'Rock', nivelMin: 1, carpeta: CARPETA + 'canciones/take-it-slow/' },
-    { id: 'prox3', titulo: 'Próximamente', estilo: '', nivelMin: 1, proximamente: true },
+    { id: 'takeme', titulo: 'Take Me Down This Road', estilo: 'Pop', nivelMin: 1, carpeta: CARPETA + 'canciones/take-me-down-this-road/' },
     { id: 'prox4', titulo: 'Próximamente', estilo: '', nivelMin: 1, proximamente: true },
     { id: 'prox5', titulo: 'Próximamente', estilo: '', nivelMin: 2, proximamente: true },
     { id: 'prox6', titulo: 'Próximamente', estilo: '', nivelMin: 3, proximamente: true }
