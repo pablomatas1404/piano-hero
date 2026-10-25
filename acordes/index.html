@@ -253,8 +253,8 @@ const store = { get(k){try{return localStorage.getItem(k)}catch(e){return null}}
 const NAMES = ['Do','Do#','Re','Re#','Mi','Fa','Fa#','Sol','Sol#','La','La#','Si'];
 const ROOTS = {C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11};
 const TYPES = [ ['',[0,4,7]], ['m',[0,3,7]], ['7',[0,4,7,10]], ['m7',[0,3,7,10]] ];
-const CH_RE=/^([A-G][#b]?)(maj7|maj|min|m|M|dim|aug|sus2|sus4|sus)?(\d{1,2})?(\/[A-G][#b]?)?$/;
-const CH_OTHER=new Set(['|','-','x2','(x2)','x3','(x3)','N.C.','%']);
+const CH_RE=/^([A-G][#b]?)(maj7|maj|min|m|M|dim|aug|sus2|sus4|sus)?(\d{1,2})?([M+\-])?(\([^)]*\))?(\/[A-G][#b]?)?$/;
+const CH_OTHER=new Set(['|','-','x2','(x2)','x3','(x3)','N.C.','%','(',')','2x','(2x)','3x','(3x)']);
 const ES_ROOTS=[['sol','G'],['do','C'],['re','D'],['mi','E'],['fa','F'],['la','A'],['si','B']];
 /* acordes escritos en do, re, mi (Sol, Lam, Sim7, Re#m, Do/Sol...) -> letras, para poder leerlos igual */
 function toLetterTok(t){
@@ -267,7 +267,7 @@ function toLetterTok(t){
     const cand=n[1]+rest+bass; if(CH_RE.test(cand)) return cand; } }
   return t;
 }
-function parseChordTok(t){ t=toLetterTok(t); const m=CH_RE.exec(t); if(!m) return null; return {root:ROOTS[m[1]],q:m[2]||'',n:m[3]||'',bass:m[4]?ROOTS[m[4].slice(1)]:null}; }
+function parseChordTok(t){ t=toLetterTok(t); const m=CH_RE.exec(t); if(!m) return null; return {root:ROOTS[m[1]],q:m[2]||'',n:m[3]||'',bass:m[6]?ROOTS[m[6].slice(1)]:null}; }
 function isChordLine(l){ const toks=l.trim().split(/\s+/).filter(Boolean); if(!toks.length) return false; let c=0; for(const t of toks){ if(parseChordTok(t)) c++; else if(!CH_OTHER.has(t)) return false; } return c>0; }
 /* código interno de un acorde (letras) listo para tocar: 'Em', 'B', 'D7'... ; con "acordes simples" se quitan séptimas y raros */
 function chordCode(tok){ const m=CH_RE.exec(toLetterTok(tok)); if(!m) return null; const minor=m[2]==='m'||m[2]==='min'; const simple=$('simple').checked;
@@ -538,7 +538,8 @@ $('nowChord').addEventListener('dblclick',()=>{ if(curEv<0) return; const c=docu
 
 /* ============ cargar la cifra ============ */
 function loadCifra(){
-  const raw=$('cifraTxt').value; CIFRA_SRC=raw; parseCifra(raw); loadMarks(); updateMarkUI(); kPos=0; curEv=-2; lastShownLine=-1;
+  const raw=$('cifraTxt').value; CIFRA_SRC=raw;
+  { const L=store.get('acordes-lastlvl-'+cifraHash()); if(L!==null && L!=='' && $('lvl').value!==L){ $('lvl').value=L; store.set('acordes-level',L); if(typeof setLvlBtns==='function') setLvlBtns(); } } parseCifra(raw); loadMarks(); updateMarkUI(); kPos=0; curEv=-2; lastShownLine=-1;
   renderSide(); renderBig(); refresh();
   const n=EVENTS.length;
   $('cifraStatus').textContent = n ? ('Listo: '+n+' acordes en '+LINES.length+' renglones. Apretá "Pasar letra" para que corra, o doble toque en la tecla de salto.') : (raw.trim()?'Pegaste texto, pero no encontré acordes. Copiá también las líneas donde están los acordes (Em, Bm, Am…).':'La caja está vacía. Pegá la cifra y apretá "Cargar cifra".');
@@ -593,7 +594,7 @@ $('cifraGo').addEventListener('click',()=>{ store.set('acordes-cifra',$('cifraTx
 $('cifraClear').addEventListener('click',()=>{ $('cifraTxt').value=''; store.set('acordes-cifra',''); loadCifra(); });
 $('cifraTxt').addEventListener('paste',()=>setTimeout(()=>{ store.set('acordes-cifra',$('cifraTxt').value); },60));
 $('lvl').value=store.get('acordes-level')||'0';
-$('lvl').addEventListener('change',()=>{ if(typeof ED!=='undefined' && ED.open) edClose(); store.set('acordes-level',$('lvl').value); const k=kPos; parseCifra(CIFRA_SRC); loadMarks(); setPlaying(false); kPos=k; curEv=-2; renderSide(); lastShownLine=-1; refresh(); updateMarkUI(); });
+$('lvl').addEventListener('change',()=>{ if(typeof ED!=='undefined' && ED.open) edClose(); store.set('acordes-level',$('lvl').value); if(CIFRA_SRC && loadModel()) store.set('acordes-lastlvl-'+cifraHash(),$('lvl').value); const k=kPos; parseCifra(CIFRA_SRC); loadMarks(); setPlaying(false); kPos=k; curEv=-2; renderSide(); lastShownLine=-1; refresh(); updateMarkUI(); });
 function setLvlBtns(){ document.querySelectorAll('#lvlGrp button').forEach(b=>b.classList.toggle('on', b.dataset.l===$('lvl').value)); }
 document.querySelectorAll('#lvlGrp button').forEach(b=>b.addEventListener('click',()=>{ $('lvl').value=b.dataset.l; $('lvl').dispatchEvent(new Event('change')); }));
 $('lvl').addEventListener('change',setLvlBtns); setLvlBtns();
@@ -650,7 +651,21 @@ let MODEL=null, HIST=[], HI=-1;
 const ED={open:false, sel:null, gap:null, li:0, runId:0};
 function curLevel(){ return +($('lvl').value||0); }
 function modelKey(){ return 'acordes-model-'+cifraHash()+'-'+curLevel(); }
-function loadModel(){ try{ let s=store.get(modelKey()); if(!s && curLevel()===0) s=store.get('acordes-model-'+cifraHash()); /* modelos guardados antes de separar por nivel */ return s?JSON.parse(s):null; }catch(e){ return null; } }
+function fillModel(m){
+  let prevTok=null, firstTok=null;
+  m.forEach(ml=>{ if(ml.inst){ if(!firstTok&&ml.toks.length) firstTok=ml.toks[0]; } else ml.segs.forEach(s=>{ if(!firstTok) firstTok=s.tok; }); });
+  m.forEach((ml,i)=>{
+    if(ml.inst){ if(ml.toks.length) prevTok=ml.toks[ml.toks.length-1]; return; }
+    if(!ml.segs.length && ml.words.length && ml.words.every(w=>CH_OTHER.has(w)||parseChordTok(toLetterTok(w)))){
+      const tk=ml.words.filter(w=>!CH_OTHER.has(w)); if(tk.length){ m[i]={head:ml.head,inst:true,toks:tk}; prevTok=tk[tk.length-1]; return; }
+    }
+    if(!ml.segs.length){ if(prevTok||firstTok) ml.segs.push({tok:prevTok||firstTok,w0:0}); }
+    else if(ml.segs[0].w0>0){ if(prevTok) ml.segs.unshift({tok:prevTok,w0:0}); else ml.segs[0].w0=0; }
+    if(ml.segs.length) prevTok=ml.segs[ml.segs.length-1].tok;
+  });
+  return m;
+}
+function loadModel(){ try{ let s=store.get(modelKey()); if(!s && curLevel()===0) s=store.get('acordes-model-'+cifraHash()); /* modelos guardados antes de separar por nivel */ return s?fillModel(JSON.parse(s)):null; }catch(e){ return null; } }
 function saveModel(m){ store.set(modelKey(),JSON.stringify(m)); }
 function clearMarksAllLevels(){ store.set(marksKey(),'[]'); marks=[]; markT=0; tClock=0; }
 function wordsOf(text){ const out=[]; const re=/\S+/g; let m; while((m=re.exec(text))) out.push({w:m[0],i:m.index}); return out; }
@@ -702,7 +717,7 @@ function previewTok(tok){ const c=tok?chordCode(tok):null; if(c) playChord(c,1.5
 
 /* ---- historial ---- */
 function edPush(){ HIST=HIST.slice(0,HI+1); HIST.push(JSON.stringify(MODEL)); if(HIST.length>120) HIST.shift(); HI=HIST.length-1; }
-function edCommit(){ saveModel(MODEL); clearMarksAllLevels(); edPush(); edRender(); edTools(); }
+function edCommit(){ saveModel(MODEL); store.set('acordes-lastlvl-'+cifraHash(),String(curLevel())); clearMarksAllLevels(); edPush(); edRender(); edTools(); }
 function edUndo(){ if(HI>0){ HI--; MODEL=JSON.parse(HIST[HI]); saveModel(MODEL); clearMarksAllLevels(); ED.sel=null; ED.gap=null; edRender(); edTools(); } }
 function edRedo(){ if(HI<HIST.length-1){ HI++; MODEL=JSON.parse(HIST[HI]); saveModel(MODEL); clearMarksAllLevels(); ED.sel=null; ED.gap=null; edRender(); edTools(); } }
 
