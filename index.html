@@ -1641,6 +1641,11 @@
         <div style="font-size:11px; opacity:.75; margin-top:4px;">Abajo = acompañamiento más suave. Lo que tocás vos no cambia.</div>
       </div>
       <div style="margin-top:8px; padding:8px 10px; border:1px solid var(--line); border-radius:10px;">
+        <div style="font-size:12px; font-weight:700; margin-bottom:6px;" title="Con qué sonido suena el acompañamiento. Cuerdas = violines y cellos que se quedan sonando parejos, sin apagarse como el piano.">🎻 Sonido del acompañamiento</div>
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+          <button class="btn" id="organVoicePiano" onclick="setOrganVoice('piano')" title="El acompañamiento suena como piano (como lo grabaste o lo trae el estilo)">🎹 Piano</button>
+          <button class="btn on" id="organVoiceStrings" onclick="setOrganVoice('cuerdas')" title="Violines y cellos sostenidos: no se apagan mientras dura el acorde. Suenan por la computadora; tu melodía sigue en el Yamaha">🎻 Cuerdas</button>
+        </div>
         <div style="font-size:12px; font-weight:700; margin-bottom:6px;" title="Cuántas teclas graves de tu teclado disparan el acompañamiento. El resto del teclado queda para tocar la melodía.">🎹 Teclas del acompañamiento</div>
         <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
           <button class="btn on" id="organZone1" onclick="setOrganZone(1)" title="Solo la octava más grave dispara el acompañamiento; todo lo demás es melodía">1 octava</button>
@@ -3348,6 +3353,15 @@ let organLoopOn = true;
 // "Volumen del acompañamiento" (24/10/2026, Pablo: "el acompañamiento del modo órgano estaba muy fuerte comparado
 // con la melodía"): escala SOLO lo que dispara el Órgano (triggerAccompanimentPattern), nunca lo que tocás vos.
 let organAccGain = 1;
+// Sonido del acompañamiento: 'cuerdas' (violín + cello sostenidos, por la compu) o 'piano' (como suena el estilo, por la compu o el Yamaha).
+let organVoice = (localStorage.getItem('pianoHero_organVoice') === 'piano') ? 'piano' : 'cuerdas';
+function setOrganVoice(v) {
+  organVoice = v === 'piano' ? 'piano' : 'cuerdas'; try { localStorage.setItem('pianoHero_organVoice', organVoice); } catch (e) {}
+  const a = document.getElementById('organVoicePiano'), b = document.getElementById('organVoiceStrings');
+  if (a) a.classList.toggle('on', organVoice === 'piano'); if (b) b.classList.toggle('on', organVoice === 'cuerdas');
+  organPanic();
+}
+document.addEventListener('DOMContentLoaded', () => setOrganVoice(organVoice));
 try { const g = parseFloat(localStorage.getItem('pianoHero_organAccGain')); if (g >= 0.2 && g <= 1) organAccGain = g; } catch (e) {} // un valor viejo menor a 20% (casi mudo) se descarta: vuelve a 100%
 function setOrganAccVol(pct) {
   organAccGain = Math.max(0.2, Math.min(1, (parseFloat(pct) || 100) / 100)); // nunca menos de 20%: así no se "apaga" el acompañamiento sin querer
@@ -3424,8 +3438,10 @@ function organPatternFor(styleKey) {
 // Cuerdas = cello para lo grave + violín para lo agudo (ya están cargados, no hace falta comprarlos para este uso).
 let organStringsOn = false;
 function playStringsNote(midi, duration, gain) {
-  if (soundOutputMode === 'midi' && midiOutputRef) { playAutoNote(midi, duration, false, gain); return; }
-  if (!audioReady) return;
+  // FIX (24/10/2026, Pablo: "ese piano seco que toca cada rato... quiero un string que no se apague"): antes, con el sonido
+  // yendo al Yamaha, las cuerdas se mandaban como notas de piano. Ahora siempre salen del violín y el cello de la compu
+  // (la melodía sigue sonando en el Yamaha; el acompañamiento no se duplica porque no se le manda nada al Yamaha).
+  if (!audioReady) { playAutoNote(midi, duration, false, gain); return; }
   organStringsOn = true;
   const v = midi < 60 ? celloSynth : violinSynth;
   if (v) v.triggerAttackRelease(midiToNoteName(midi), duration, undefined, gain);
@@ -3454,7 +3470,7 @@ function triggerAccompanimentPattern(triggerMidi, wantQuality) {
   pattern.notes.forEach(n => {
     const outMidi = n.midi + semitones + thirdShift(n);
     const id = setTimeout(() => {
-      if (pattern.voice === 'strings') playStringsNote(outMidi, n.duration / rate, organAccGain);
+      if (pattern.voice === 'strings' || organVoice === 'cuerdas') playStringsNote(outMidi, organVoice === 'cuerdas' ? Math.max(n.duration / rate, 1.2) : n.duration / rate, organAccGain);
       else playAutoNote(outMidi, n.duration / rate, false, organAccGain);
       registerRecordedNoteEvent(outMidi, n.duration / rate);
     }, (n.time / rate) * 1000);
