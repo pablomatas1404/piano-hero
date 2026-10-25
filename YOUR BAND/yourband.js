@@ -14,8 +14,16 @@
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil']];
   const LS = 'yourband_v1';
-  let datos = { banda: 'Your Band', rol: null, estrellas: {}, sync: 0, vistaHistoria: false };
+  let datos = { banda: 'Your Band', rol: null, estrellas: {}, sync: 0, vistaHistoria: false, instr: { bajo: 'bajo', teclado: 'piano' } };
   try { const g = JSON.parse(localStorage.getItem(LS) || 'null'); if (g) Object.assign(datos, g); } catch (e) {}
+  if (!datos.instr) datos.instr = { bajo: 'bajo', teclado: 'piano' };
+  const CAPAS = [['bajo', '🎸 Bajo'], ['melodia', '🎤 Melodía'], ['acordes', '🎹 Acordes']];
+  const capasDe = rol => rol === 'bajo' ? { bajo: 1, melodia: 0, acordes: 0 } : { bajo: 0, melodia: 1, acordes: 1 };
+  if (!datos.capas) datos.capas = capasDe(datos.rol);
+  // nombre corto de la combinación elegida (para guardar estrellas y el instrumento)
+  const claveCapas = () => { const c = datos.capas; if (c.bajo && !c.melodia && !c.acordes) return 'bajo'; if (!c.bajo && c.melodia && c.acordes) return 'teclado'; return CAPAS.filter(([k]) => c[k]).map(([k]) => k).join('+'); };
+  const nombreCapas = () => CAPAS.filter(([k]) => datos.capas[k]).map(([, n]) => n).join(' + ');
+  const INSTRS = [['bajo', '🎸 Bajo'], ['piano', '🎹 Piano'], ['organo', '🎛️ Órgano'], ['guitarra', '🪕 Guitarra']];
   const guardar = () => { try { localStorage.setItem(LS, JSON.stringify(datos)); } catch (e) {} };
   const totalEstrellas = () => Object.values(datos.estrellas).reduce((a, b) => a + b, 0);
   const nivelJugador = () => 1 + Math.floor(totalEstrellas() / 4);
@@ -44,8 +52,14 @@
   .yb-op { background:#272340; border:2px solid transparent; border-radius:12px; padding:9px 16px; cursor:pointer; font-weight:600; }
   .yb-op.sel { border-color:#ffb454; }
   .yb-carga { width:min(360px,80vw); height:10px; background:#272340; border-radius:6px; overflow:hidden; } .yb-carga div { height:100%; width:0; background:#ffb454; transition:width .2s; }
-  #yb-flot { position:relative; z-index:5; display:none; background:rgba(18,16,28,.92); color:#f2efff; border:1px solid #3b3660; border-radius:12px; padding:4px 8px; gap:4px 10px; align-items:center; flex-wrap:wrap; font-size:11px; max-width:340px; flex:0 1 340px; }
-  #yb-flot.on { display:flex; } #yb-flot label { display:flex; align-items:center; gap:5px; color:#cfc9ee; } #yb-flot input[type=range] { width:64px; } #yb-flot button { padding:4px 10px; font-size:11px; }
+  #yb-flot { position:relative; z-index:5; display:none; }
+  #yb-flot.on { display:block; }
+  #yb-flot.fijo { position:fixed; top:8px; right:8px; z-index:9990; }
+  #yb-flot > button { padding:5px 12px; font-size:12px; white-space:nowrap; }
+  #yb-pop { position:fixed; z-index:99980; display:none; background:#1d1a2e; color:#f2efff; border:1px solid #3b3660; border-radius:14px; padding:12px 14px; gap:10px; flex-direction:column; font-size:13px; width:min(92vw,330px); box-shadow:0 8px 30px rgba(0,0,0,.5); }
+  #yb-pop.on { display:flex; } #yb-pop label { display:flex; align-items:center; gap:8px; color:#cfc9ee; justify-content:space-between; } #yb-pop input[type=range] { width:150px; }
+  #yb-pop .yb-ops .yb-op { padding:6px 12px; font-size:12px; }
+  #yb-pop button { font:inherit; cursor:pointer; border:0; border-radius:12px; padding:8px 14px; background:#272340; color:#f2efff; font-weight:600; }
   `;
   document.head.appendChild(css);
 
@@ -61,22 +75,28 @@
   <section class="yb-p" id="yb-menu"><h2 id="yb-menu-t"></h2><div class="yb-chico" id="yb-menu-n"></div><div class="yb-misiones" id="yb-lista"></div>
     <div class="yb-fila"><button class="sec" id="yb-b-rol">Cambiar instrumento</button><button class="sec" id="yb-b-nom">Cambiar nombre</button><button class="sec" id="yb-b-cerrar2">Volver a Piano Hero</button></div></section>
   <section class="yb-p" id="yb-prep"><h2 id="yb-prep-t"></h2><div class="yb-chico" id="yb-prep-s"></div>
+    <div><div class="yb-chico">Qué tocar (podés sumar más de una)</div><div class="yb-ops" id="yb-op-capas"></div></div>
     <div><div class="yb-chico">Dificultad</div><div class="yb-ops" id="yb-op-nivel"></div></div>
     <div><div class="yb-chico">Parte</div><div class="yb-ops" id="yb-op-parte"></div></div>
     <div><div class="yb-chico">Cómo</div><div class="yb-ops" id="yb-op-modo"></div></div>
+    <div><div class="yb-chico">Sonido de lo que tocás</div><div class="yb-ops" id="yb-op-instr"></div></div>
     <p class="yb-chico">Adentro tenés el Modo Espera, el tempo, las vistas y los colores de siempre.</p>
     <div class="yb-carga" id="yb-carga-w"><div id="yb-carga-b"></div></div><div class="yb-chico" id="yb-carga-t">Cargando la banda…</div>
     <div class="yb-fila"><button class="sec" id="yb-b-pv">Volver</button><button id="yb-b-tocar" disabled>¡A tocar!</button></div></section>`;
   document.body.appendChild(ov);
 
   const flot = document.createElement('div'); flot.id = 'yb-flot';
-  flot.innerHTML = `<button class="sec" id="yb-f-menu">🎸 Misiones</button>
-    <label title="Si los ladrillos llegan antes que la música, subilo; si llegan después, bajalo">Sincro <input type="range" id="yb-f-sync" min="-500" max="500" step="10" value="0"><span id="yb-f-syncv">0 ms</span></label>
-    <label>Banda <input type="range" id="yb-f-vol" min="0" max="100" value="80"></label>
-    <label id="yb-f-guial"><input type="checkbox" id="yb-f-guia">Oír mi instrumento de la banda</label>`;
+  flot.innerHTML = '<button class="sec" id="yb-f-abrir" title="Instrumento, sincronización y volumen de la banda">🎸 BANDA ▾</button>';
   // va en el encabezado, al lado de los créditos (abajo tapaba teclas del piano)
   const colCred = document.querySelector('header .credits-col');
   if (colCred) colCred.insertAdjacentElement('afterend', flot); else document.body.appendChild(flot);
+  const pop = document.createElement('div'); pop.id = 'yb-pop';
+  pop.innerHTML = `<button id="yb-f-menu">🎸 Volver a las misiones</button>
+    <div><div class="yb-chico" style="margin-bottom:4px">Sonido de lo que tocás</div><div class="yb-ops" id="yb-f-instr"></div></div>
+    <label title="Si los ladrillos llegan antes que la música, subilo; si llegan después, bajalo">Sincro <input type="range" id="yb-f-sync" min="-500" max="500" step="10" value="0"><span id="yb-f-syncv">0 ms</span></label>
+    <label>Volumen banda <input type="range" id="yb-f-vol" min="0" max="100" value="80"></label>
+    <label id="yb-f-guial"><span>Oír mi instrumento de la banda</span><input type="checkbox" id="yb-f-guia"></label>`;
+  document.body.appendChild(pop);
 
   const $ = id => document.getElementById(id);
   const pantalla = id => { ov.classList.add('on'); ov.querySelectorAll('.yb-p').forEach(p => p.classList.toggle('on', p.id === id)); };
@@ -93,20 +113,20 @@
   let hi = 0;
   function historia(i) { hi = i; $('yb-cartel').innerHTML = HIST()[i]; pantalla('yb-historia'); }
   $('yb-b-hist').onclick = () => { if (hi < HIST().length - 1) historia(hi + 1); else { datos.vistaHistoria = true; guardar(); pantalla('yb-rol'); } };
-  ov.querySelectorAll('[data-rol]').forEach(t => t.onclick = () => { datos.rol = t.dataset.rol; guardar(); menu(); });
+  ov.querySelectorAll('[data-rol]').forEach(t => t.onclick = () => { datos.rol = t.dataset.rol; datos.capas = capasDe(datos.rol); guardar(); menu(); });
   $('yb-b-rol').onclick = () => pantalla('yb-rol');
   $('yb-b-nom').onclick = () => { $('yb-in-nombre').value = datos.banda; pantalla('yb-nombre'); };
 
   const claveEst = (m, rol, nv) => m + '|' + rol + '|' + nv;
   function menu() {
-    $('yb-menu-t').textContent = datos.banda + ' · ' + (datos.rol === 'bajo' ? '🎸 Bajo' : '🎹 Teclado');
+    $('yb-menu-t').textContent = datos.banda + ' · ' + nombreCapas();
     $('yb-menu-n').innerHTML = `Nivel ${nivelJugador()} · <span class="yb-est">★</span> ${totalEstrellas()}`;
     const c = $('yb-lista'); c.innerHTML = '';
     MISIONES.forEach(m => {
       const bloq = m.nivelMin > nivelJugador(), d = document.createElement('div');
       d.className = 'yb-tarj ' + (m.proximamente || bloq ? 'ap' : 'el');
       let est = '';
-      if (!m.proximamente && !bloq) est = NIVELES.map(([k, n]) => `${n}: <span class="yb-est">${'★'.repeat(datos.estrellas[claveEst(m.id, datos.rol, k)] || 0) || '–'}</span>`).join('<br>');
+      if (!m.proximamente && !bloq) est = NIVELES.map(([k, n]) => `${n}: <span class="yb-est">${'★'.repeat(datos.estrellas[claveEst(m.id, claveCapas(), k)] || 0) || '–'}</span>`).join('<br>');
       d.innerHTML = `<div class="yb-grande">${m.proximamente ? '🔒' : '🎵'}</div><h2>${esc(m.titulo)}</h2><div class="yb-chico">${esc(m.estilo)}</div>` +
         (bloq ? `<div class="yb-chico">Se abre en el nivel ${m.nivelMin}</div>` : '') + (m.proximamente && !bloq ? `<div class="yb-chico">Todavía no está lista</div>` : '') +
         (est ? `<div class="yb-chico" style="margin-top:8px">${est}</div>` : '');
@@ -137,7 +157,24 @@
     cont.innerHTML = '';
     lista.forEach(([k, n]) => { const b = document.createElement('div'); b.className = 'yb-op' + (String(k) === String(actual) ? ' sel' : ''); b.textContent = n; b.onclick = () => cb(k); cont.appendChild(b); });
   }
+  function aplicarInstr() {
+    const id = (datos.instr && datos.instr[claveCapas()]) || (claveCapas() === 'bajo' ? 'bajo' : 'piano');
+    try { if (typeof currentInstrument !== 'undefined') { if (!tocoInstr) { guardadoInstr = currentInstrument; tocoInstr = true; } currentInstrument = id; } } catch (e) {}
+  }
+  function dibujarInstr() {
+    const id = (datos.instr && datos.instr[claveCapas()]) || (claveCapas() === 'bajo' ? 'bajo' : 'piano');
+    [$('yb-f-instr'), $('yb-op-instr')].forEach(c => { if (c) ops(c, INSTRS, id, k => { datos.instr[claveCapas()] = k; guardar(); aplicarInstr(); dibujarInstr(); }); });
+  }
+  let tocoInstr = false, guardadoInstr = 'piano';
+  function dibujarCapas() {
+    const c = $('yb-op-capas'); c.innerHTML = '';
+    CAPAS.forEach(([k, n]) => { const b = document.createElement('div'); b.className = 'yb-op' + (datos.capas[k] ? ' sel' : ''); b.textContent = n;
+      b.onclick = () => { const otras = CAPAS.filter(([q]) => q !== k && datos.capas[q]).length; if (datos.capas[k] && !otras) return; datos.capas[k] = datos.capas[k] ? 0 : 1; guardar(); $('yb-prep-s').textContent = sel.m.estilo + ' · ' + nombreCapas(); dibujarOps(); };
+      c.appendChild(b); });
+  }
   function dibujarOps() {
+    dibujarCapas();
+    dibujarInstr();
     ops($('yb-op-nivel'), NIVELES, sel.nv, k => { sel.nv = k; dibujarOps(); });
     const partes = [['all', 'Canción completa']]; if (sel.d) sel.d.capas.partes.forEach((p, i) => partes.push([i, p.n]));
     ops($('yb-op-parte'), partes, sel.parte, k => { sel.parte = k; dibujarOps(); });
@@ -145,7 +182,7 @@
   }
   async function prep(m) {
     sel.m = m; sel.d = cache[m.id] || null; pantalla('yb-prep');
-    $('yb-prep-t').textContent = m.titulo; $('yb-prep-s').textContent = m.estilo + ' · ' + (datos.rol === 'bajo' ? 'Bajo' : 'Teclado');
+    $('yb-prep-t').textContent = m.titulo; $('yb-prep-s').textContent = m.estilo + ' · ' + nombreCapas();
     dibujarOps(); $('yb-b-tocar').disabled = true; $('yb-carga-w').style.display = ''; $('yb-carga-t').textContent = 'Cargando la banda…'; $('yb-carga-b').style.width = '0';
     try {
       sel.d = await cargar(m, p => { $('yb-carga-b').style.width = Math.round(p * 100) + '%'; });
@@ -161,12 +198,17 @@
     let a = 0, b = c.duracion;
     if (sel.parte !== 'all') { const p = c.partes[sel.parte]; a = p.a; b = p.b; }
     const tr = lista => lista.filter(n => n[0] >= a - 0.01 && n[0] < b).map(n => [n[2], n[0] - a, n[1]]);
-    let rh, lh;
-    if (datos.rol === 'bajo') { rh = tr(c.capas.bajo[nv]); lh = []; }
-    else { rh = tr(c.capas.melodia[nv]); lh = tr(c.capas.acordes[nv]); }
-    const s = multiHandSong(sel.m.titulo + ' (' + (datos.rol === 'bajo' ? 'Bajo' : 'Teclado') + ')', 'YOUR BAND', nv, rh, lh, [], [], { bpm: 70, timeSig: { num: 4, den: 4 } });
+    const cp = datos.capas, solo = !cp.melodia && !cp.acordes; // solo bajo: va en la mano derecha; con otras capas, el bajo va a la izquierda
+    let rh = [], lh = [];
+    if (cp.bajo) (solo ? rh : lh).push(...tr(c.capas.bajo[nv]));
+    if (cp.melodia) rh.push(...tr(c.capas.melodia[nv]));
+    if (cp.acordes) lh.push(...tr(c.capas.acordes[nv]));
+    rh.sort((p, q) => p[1] - q[1]); lh.sort((p, q) => p[1] - q[1]);
+    const mute = [];
+    if (cp.bajo) mute.push('bajo'); if (cp.acordes) mute.push('guitarra'); if (cp.melodia || cp.acordes) mute.push('teclado');
+    const s = multiHandSong(sel.m.titulo + ' (' + nombreCapas() + ')', 'YOUR BAND', nv, rh, lh, [], [], { bpm: 70, timeSig: { num: 4, den: 4 } });
     s.duration = Math.max(s.duration, (b - a) + 1.5);
-    s.__yb = { a, modo: sel.modo, rol: datos.rol, nv, mision: sel.m.id, parte: sel.parte, datos: sel.d };
+    s.__yb = { a, modo: sel.modo, rol: claveCapas(), mute, tieneR: rh.length > 0, tieneL: lh.length > 0, nv, mision: sel.m.id, parte: sel.parte, datos: sel.d };
     return s;
   }
   async function empezar() {
@@ -175,8 +217,9 @@
     const s = armarCancion();
     // menos retardo del sonido que tocás: Tone programa cada nota 0.1 s adelante por defecto
     try { if (window.Tone && Tone.context) Tone.context.lookAhead = 0.015; } catch (e) {}
-    cerrar();
-    setHandsMode(datos.rol === 'bajo' ? 'one' : 'two', null);
+    cerrar(); pop.classList.remove('on');
+    aplicarInstr();
+    setHandsMode(s.__yb.tieneR && s.__yb.tieneL ? 'two' : s.__yb.tieneL ? 'left' : 'one', null);
     loadSong(s);
     flot.classList.add('on');
     $('yb-f-guial').style.display = s.__yb.modo === 'tocar' ? '' : 'none';
@@ -184,7 +227,8 @@
     finVisto = false;
     startPlayWithCountdown();
   }
-  $('yb-f-menu').onclick = () => { try { pauseSong(); } catch (e) {} pararBanda(); if (datos.rol) menu(); else historia(0); };
+  $('yb-f-abrir').onclick = () => { pop.style.top = ($('yb-f-abrir').getBoundingClientRect().bottom + 4) + 'px'; pop.style.right = '8px'; pop.classList.toggle('on'); };
+  $('yb-f-menu').onclick = () => { pop.classList.remove('on'); try { pauseSong(); } catch (e) {} pararBanda(); if (datos.rol) menu(); else historia(0); };
   $('yb-f-sync').value = datos.sync; $('yb-f-syncv').textContent = datos.sync + ' ms';
   $('yb-f-sync').oninput = () => { datos.sync = +$('yb-f-sync').value; $('yb-f-syncv').textContent = datos.sync + ' ms'; guardar(); };
   $('yb-f-vol').oninput = () => { if (volNodo) volNodo.gain.value = $('yb-f-vol').value / 100; };
@@ -201,7 +245,7 @@
     const ya = ac.currentTime + 0.05, espera = p < 0 ? (-p) / (speed || 1) : 0;
     S.datos.capas.stems.forEach(st => {
       const src = ac.createBufferSource(); src.buffer = S.datos.buffers[st]; src.playbackRate.value = speed || 1;
-      const g = ac.createGain(); const mio = (st === (S.rol === 'bajo' ? 'bajo' : 'teclado'));
+      const g = ac.createGain(); const mio = S.mute.indexOf(st) >= 0;
       g.gain.value = mio ? ($('yb-f-guia').checked ? 0.4 : 0) : 1;
       src.connect(g); g.connect(volNodo); src._g = g; src._mio = mio;
       try { src.start(ya + espera, Math.max(0, p)); } catch (e) {}
@@ -214,7 +258,10 @@
   function bucle() {
     try {
       const S = activeSong && activeSong.__yb;
-      flot.classList.toggle('on', !!S && !ov.classList.contains('on'));
+      flot.classList.toggle('on', !!S);
+      // si el encabezado está escondido (pantalla completa / celular), el botón pasa a flotar arriba a la derecha
+      if (S && colCred) { const hVis = colCred.offsetWidth > 0; if (hVis && flot.parentElement !== colCred.parentElement) { colCred.insertAdjacentElement('afterend', flot); flot.classList.remove('fijo'); } else if (!hVis && flot.parentElement !== document.body) { document.body.appendChild(flot); flot.classList.add('fijo'); } }
+      if (!S && tocoInstr) { try { currentInstrument = guardadoInstr; } catch (e) {} tocoInstr = false; }
       if (S) {
         const querida = S.modo === 'tocar' && isPlaying && !inCountdown && !isFrozenWaiting;
         if (querida) {
@@ -237,13 +284,31 @@
     let est = pct >= 0.9 ? 3 : pct >= 0.75 ? 2 : pct >= 0.5 ? 1 : 0;
     if (waitMode) est = Math.min(est, 1); // con Modo Espera siempre se llega al final: 1 estrella; las otras se ganan sin esperar
     if (S.parte === 'all' && S.modo === 'tocar') {
-      const k = claveEst(S.mision, S.rol, S.nv);
+      const k = claveEst(S.mision, S.rol, S.nv); // S.rol = combinación de capas
       if ((datos.estrellas[k] || 0) < est) { datos.estrellas[k] = est; guardar(); }
     }
     try { showBigToast('🎸 ' + '★'.repeat(est) + '☆'.repeat(3 - est) + (waitMode && pct >= 0.75 ? '  (sin Modo Espera se ganan las 3)' : '')); } catch (e) {}
   }
   requestAnimationFrame(bucle);
   window.__ybEstado = () => ({ corriendo, fuentes: fuentes.length, ctx: AC && AC.state, pos: AC ? +(iniPos + (AC.currentTime - iniCtx) * (speed || 1)).toFixed(2) : null });
+
+  // ---------- Sonido de bajo (Piano Hero no traía uno) ----------
+  let bajoSynth = null;
+  function voz() {
+    if (bajoSynth) return bajoSynth;
+    try {
+      bajoSynth = new Tone.PolySynth(Tone.MonoSynth, {
+        oscillator: { type: 'sawtooth' },
+        filter: { type: 'lowpass', rolloff: -24, Q: 2 },
+        envelope: { attack: 0.008, decay: 0.3, sustain: 0.75, release: 0.25 },
+        filterEnvelope: { attack: 0.008, decay: 0.25, sustain: 0.25, release: 0.3, baseFrequency: 110, octaves: 2.6 },
+        volume: -4
+      }).toDestination();
+      bajoSynth.maxPolyphony = 6;
+    } catch (e) { bajoSynth = null; }
+    return bajoSynth;
+  }
+  try { if (typeof INSTRUMENT_VOICES !== 'undefined') INSTRUMENT_VOICES.bajo = () => voz(); } catch (e) {}
 
   // ---------- Entrada ----------
   window.ybAbrir = function () { try { pauseSong(); } catch (e) {} if (datos.vistaHistoria && datos.rol) menu(); else if (datos.vistaHistoria) pantalla('yb-rol'); else { $('yb-in-nombre').value = datos.banda; pantalla('yb-nombre'); } };
