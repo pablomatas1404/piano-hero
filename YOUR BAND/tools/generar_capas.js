@@ -12,6 +12,13 @@ const STEMS = A[5] ? A[5].split(',') : ['voz', 'bateria', 'bajo', 'guitarra', 't
 const leer = f => JSON.parse(fs.readFileSync(path.join(DIR_NOTAS, f), 'utf8'));
 const redondeo = x => Math.round(x * 1000) / 1000;
 
+// Cuantización: si se pide (opción 'cuantizar'), los comienzos de las notas se acomodan a la grilla del ritmo
+// real de la canción (ritmo.json, sale de la batería con tools/ritmo.js). Con 'tresillo' la grilla es de a tercios de pulso (blues/shuffle).
+let RITMO = null; try { RITMO = leer('ritmo.json'); } catch (e) { RITMO = null; }
+const CUANTIZAR = A.includes('cuantizar') && !!RITMO;
+const DIVR = A.includes('tresillo') ? 3 : 2;
+function snapT(t) { if (!CUANTIZAR) return t; const p = RITMO.beat / DIVR; return RITMO.fase + Math.round((t - RITMO.fase) / p) * p; }
+const cuant = lista => lista.map(n => Object.assign({}, n, { startTimeSeconds: snapT(n.startTimeSeconds) }));
 // Descarta notas fantasma: Basic Pitch a veces inventa notas donde la pista está en silencio (ej. la voz antes de cantar).
 let RMS = {};
 for (const p of ['bajo', 'voz', 'guitarra']) { try { RMS[p] = leer(p + '_rms.json'); } catch (e) { RMS[p] = null; } }
@@ -49,14 +56,14 @@ function ralear(notas, durMin, sepMin) {
 }
 
 // ---------- BAJO ----------
-const bajoCrudo = leer('bajo_notas.json')
+const bajoCrudo = cuant(leer('bajo_notas.json'))
   
   .filter(n => n.durationSeconds >= 0.1 && n.amplitude >= 0.3 && viva('bajo', n.startTimeSeconds, n.durationSeconds))
   .map(n => ({ t: n.startTimeSeconds, d: n.durationSeconds, m: plegar(n.pitchMidi, 36, 59), h: 'B' }));
 const bajo = fusionar(bajoCrudo);
 
 // ---------- MELODÍA (voz) : una sola nota a la vez ----------
-const vozCrudo = leer('voz_notas.json')
+const vozCrudo = cuant(leer('voz_notas.json'))
   .filter(n => n.pitchMidi >= 52 && n.durationSeconds >= 0.12 && n.amplitude >= 0.3 && viva('voz', n.startTimeSeconds, n.durationSeconds))
   .sort((a, b) => a.startTimeSeconds - b.startTimeSeconds);
 const vozMono = [];
@@ -70,7 +77,7 @@ for (let i = 0; i < vozMono.length - 1; i++) vozMono[i].d = Math.min(vozMono[i].
 const voz = fusionar(vozMono.filter(n => n.d > 0.05));
 
 // ---------- ACORDES (guitarra) : se agrupan las notas que arrancan juntas ----------
-const guiCrudo = leer('guitarra_notas.json')
+const guiCrudo = cuant(leer('guitarra_notas.json'))
   .filter(n => n.durationSeconds >= 0.15 && n.amplitude >= 0.3 && viva('guitarra', n.startTimeSeconds, n.durationSeconds))
   .sort((a, b) => a.startTimeSeconds - b.startTimeSeconds);
 const acordes = [];

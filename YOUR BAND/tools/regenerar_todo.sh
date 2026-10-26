@@ -8,4 +8,4 @@ node tools/generar_capas.js "fuentes/bailá-conmigo" canciones/baila-conmigo "Ba
 node tools/generar_capas.js fuentes/mueve-el-cuerpo canciones/mueve-el-cuerpo "Mueve el Cuerpo" "Merengue" 129.6 "voz,coros,bateria,bajo,guitarra,teclado,percusion,sintetizador,otros,metales" desplazado
 node tools/generar_capas.js fuentes/mi-blues canciones/mi-blues "Mi Blues, Mi Blues" "Blues" 236.4 "voz,coros,bateria,bajo,guitarra,teclado,percusion" denso
 node tools/generar_capas.js fuentes/la-noche-es-nuestra canciones/la-noche-es-nuestra "La Noche es Nuestra" "Cumbia" 162 "voz,coros,metales,bateria,bajo,guitarra,teclado,percusion,cuerdas,sintetizador,otros"
-node tools/generar_capas.js fuentes/soy-yo canciones/soy-yo "Soy Yo" "Rock" 136 "voz,coros,maderas,bateria,bajo,guitarra,teclado,percusion,sintetizador,otros,metales" denso
+node tools/generar_capas.js fuentes/soy-yo canciones/soy-yo "Soy Yo" "Rock" 136 "voz,coros,maderas,bateria,bajo,guitarra,teclado,percusion,sintetizador,otros,metales" cuantizar
