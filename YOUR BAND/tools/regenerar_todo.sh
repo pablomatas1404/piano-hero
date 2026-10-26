@@ -5,3 +5,4 @@ node tools/generar_capas.js tools canciones/quedate "Quédate un poco más" "Bol
 node tools/generar_capas.js fuentes/take-it-slow canciones/take-it-slow "Take It Slow" "Rock" 150.0 "voz,coros,bateria,bajo,guitarra,teclado,percusion,cuerdas" desplazado
 node tools/generar_capas.js fuentes/take-me-down-this-road canciones/take-me-down-this-road "Take Me Down This Road" "Pop" 143.3 "voz,coros,bateria,bajo,guitarra,percusion,metales"
 node tools/generar_capas.js "fuentes/bailá-conmigo" canciones/baila-conmigo "Bailá Conmigo" "Latino" 169.0 "voz,coros,metales,bateria,bajo,guitarra,teclado,percusion,cuerdas,sintetizador,otros" denso
+node tools/generar_capas.js fuentes/mueve-el-cuerpo canciones/mueve-el-cuerpo "Mueve el Cuerpo" "Merengue" 129.6 "voz,coros,bateria,bajo,guitarra,teclado,percusion,sintetizador,otros,metales" denso

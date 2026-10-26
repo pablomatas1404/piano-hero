@@ -9,7 +9,7 @@
     { id: 'takeitslow', titulo: 'Take It Slow', estilo: 'Rock', nivelMin: 1, carpeta: CARPETA + 'canciones/take-it-slow/' },
     { id: 'takeme', titulo: 'Take Me Down This Road', estilo: 'Pop', nivelMin: 1, carpeta: CARPETA + 'canciones/take-me-down-this-road/' },
     { id: 'baila', titulo: 'Bailá Conmigo', estilo: 'Latino', nivelMin: 1, carpeta: CARPETA + 'canciones/baila-conmigo/' },
-    { id: 'prox5', titulo: 'Próximamente', estilo: '', nivelMin: 2, proximamente: true },
+    { id: 'mueve', titulo: 'Mueve el Cuerpo', estilo: 'Merengue', nivelMin: 1, carpeta: CARPETA + 'canciones/mueve-el-cuerpo/' },
     { id: 'prox6', titulo: 'Próximamente', estilo: '', nivelMin: 3, proximamente: true }
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
