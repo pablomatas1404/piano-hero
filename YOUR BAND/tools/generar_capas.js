@@ -173,11 +173,19 @@ const capas = {
     profesional: separar(nivelAcordes(3, 0.2, 0.4))
   }
 };
+// Fin real de la música: cuando la mezcla cae por debajo del 25% de su volumen normal (el "fade out" ya no se oye).
+// Las notas que Basic Pitch inventa en esa cola quedan afuera, así no caen ladrillos con la canción ya terminada.
+let FIN = DURACION;
+try {
+  const r = leer('mezcla_rms.json'); const o = r.slice().sort((a, b) => a - b); const umbral = 0.25 * o[Math.floor(o.length * 0.9)];
+  for (let i = r.length - 1; i >= 0; i--) { if (r[i] >= umbral) { FIN = Math.min(DURACION, (i + 1) / 10 + 0.3); break; } }
+} catch (e) { FIN = DURACION; }
+for (const k of Object.keys(capas)) for (const nv of Object.keys(capas[k])) capas[k][nv] = capas[k][nv].filter(n => n.t <= FIN).map(n => Object.assign({}, n, { d: Math.min(n.d, Math.max(0.15, FIN + 0.3 - n.t)) }));
 const dur = DURACION;
 const salida = {
   titulo: TITULO, estilo: ESTILO, duracion: dur,
   partes: [{ n: 'Intro', a: 0, b: redondeo(dur * 0.3) }, { n: 'Medio', a: redondeo(dur * 0.3), b: redondeo(dur * 0.66) }, { n: 'Final', a: redondeo(dur * 0.66), b: dur }],
-  stems: STEMS,
+  stems: STEMS, fin: redondeo(FIN),
   capas: {}
 };
 for (const k of Object.keys(capas)) {

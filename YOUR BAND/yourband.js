@@ -228,8 +228,9 @@
   // ---------- Armar la canción con el motor de Piano Hero ----------
   function armarCancion() {
     const c = sel.d.capas, nv = sel.nv;
-    let a = 0, b = c.duracion;
-    if (sel.parte !== 'all') { const p = c.partes[sel.parte]; a = p.a; b = p.b; }
+    const fin = Math.min(c.duracion, c.fin || c.duracion); // donde termina de verdad la música (sin la cola de silencio)
+    let a = 0, b = fin;
+    if (sel.parte !== 'all') { const p = c.partes[sel.parte]; a = p.a; b = Math.min(p.b, fin); }
     const tr = lista => lista.filter(n => n[0] >= a - 0.01 && n[0] < b).map(n => [n[2], n[0] - a, n[1]]);
     const cp = datos.capas, solo = !cp.melodia && !cp.acordes; // solo bajo: va en la mano derecha; con otras capas, el bajo va a la izquierda
     let rh = [], lh = [];
@@ -244,7 +245,7 @@
     const mute = [];
     if (cp.bajo) mute.push('bajo'); if (cp.acordes) mute.push('guitarra'); if (cp.melodia || cp.acordes) mute.push('teclado');
     const s = multiHandSong(sel.m.titulo + ' (' + nombreCapas() + ')', 'YOUR BAND', nv, rh, lh, [], [], { bpm: 70, timeSig: { num: 4, den: 4 } });
-    s.duration = Math.max(s.duration, (b - a) + 1.5);
+    s.duration = Math.max(s.duration, (b - a) + 1.2);
     s.__yb = { a, modo: sel.modo, rol: claveCapas(), mute, tieneR: rh.length > 0, tieneL: lh.length > 0, nv, mision: sel.m.id, parte: sel.parte, datos: sel.d };
     return s;
   }
