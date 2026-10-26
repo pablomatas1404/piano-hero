@@ -50,6 +50,6 @@ const sh = path.join(__dirname, 'regenerar_todo.sh');
 fs.appendFileSync(sh, `node tools/generar_capas.js ${fuente} canciones/${id} "${titulo}" "${estilo}" ${duracion} "${stems.join(',')}"${opcion ? ' ' + opcion : ''}\n`);
 // subir la versión del script para evitar caché viejo
 const idx = path.join(raiz, '..', 'index.html'); let h = fs.readFileSync(idx, 'utf8');
-h = h.replace(/yourband.js?v=[0-9a-z]+/, 'yourband.js?v=' + new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 12));
+h = h.replace(/yourband\.js\?v=[0-9a-z]+/, 'yourband.js?v=' + new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 12));
 fs.writeFileSync(idx, h);
 console.log('Listo:', id, duracion + ' s,', stems.length + ' pistas. Falta probar y publicar.');
