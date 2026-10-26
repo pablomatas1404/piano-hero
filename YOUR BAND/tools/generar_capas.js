@@ -102,6 +102,21 @@ function acordeANotas(a, cuantas) {
   for (const m of ms) { if (!cls.has(m % 12) && elegidas.length < cuantas) { cls.add(m % 12); elegidas.push(m); } }
   return elegidas.map(m => ({ t: a.t, d: Math.max(0.3, Math.min(a.d, 2)), m, h: 'L' }));
 }
+// Mano izquierda liviana: una sola tecla (la base grave del acorde) y solo cuando CAMBIA el acorde,
+// con un mínimo de respiro entre una y otra. Si el acorde no cambia, se repite recién pasados 'refresco' segundos.
+function nivelRaiz(sepMin, refresco) {
+  const out = []; let ultT = -99, ultPc = -1;
+  for (const a of acordes) {
+    const ms = [...new Set(a.ms)].sort((x, y) => x - y); const raiz = ms[0];
+    const cambio = raiz % 12 !== ultPc;
+    if (a.t - ultT < sepMin) continue;
+    if (!cambio && a.t - ultT < refresco) continue;
+    ultT = a.t; ultPc = raiz % 12; out.push({ t: a.t, d: Math.max(0.5, Math.min(a.d, 2.5)), m: raiz, h: 'L' });
+  }
+  const sig = out.map(n => n.t);
+  out.forEach((n, i) => { if (sig[i + 1] !== undefined) n.d = Math.max(0.3, Math.min(n.d, sig[i + 1] - n.t - 0.1)); });
+  return out;
+}
 function nivelAcordes(cuantas, durMin, sepMin) {
   const out = []; let ult = -9;
   for (const a of acordes) {
@@ -151,9 +166,9 @@ const capas = {
   },
   acordes: {
     // acordes: Fácil de a UNA nota, Medio de a DOS, Difícil y Profesional de a tres (pedido de Pablo)
-    facil: separar(nivelAcordes(1, 0.5, 2.0)), // un solo golpe cada ~2 segundos: bien liviano
+    facil: separar(nivelRaiz(2.6, 6)), // la base del acorde, solo cuando cambia, con respiro
     medio: separar(nivelAcordes(2, 0.3, 0.7)),
-    muyfacil: separar(nivelAcordes(1, 0.6, 3.2)),
+    muyfacil: separar(nivelRaiz(4.5, 9)),
     dificil: separar(nivelAcordes(3, 0.25, 0.5)),
     profesional: separar(nivelAcordes(3, 0.2, 0.4))
   }
