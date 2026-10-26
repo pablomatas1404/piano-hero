@@ -12,6 +12,18 @@ const STEMS = A[5] ? A[5].split(',') : ['voz', 'bateria', 'bajo', 'guitarra', 't
 const leer = f => JSON.parse(fs.readFileSync(path.join(DIR_NOTAS, f), 'utf8'));
 const redondeo = x => Math.round(x * 1000) / 1000;
 
+// Descarta notas fantasma: Basic Pitch a veces inventa notas donde la pista está en silencio (ej. la voz antes de cantar).
+let RMS = {};
+for (const p of ['bajo', 'voz', 'guitarra']) { try { RMS[p] = leer(p + '_rms.json'); } catch (e) { RMS[p] = null; } }
+// el umbral es relativo a lo fuerte que suena cada pista (6% del nivel alto), así una guitarra suave no se descarta
+const UMBRAL = {};
+for (const p of ['bajo', 'voz', 'guitarra']) { const r = RMS[p]; if (!r) { UMBRAL[p] = 0; continue; } const o = r.slice().sort((a, b) => a - b); UMBRAL[p] = Math.max(0.002, 0.06 * o[Math.floor(o.length * 0.9)]); }
+function viva(pista, t, d) {
+  const r = RMS[pista]; if (!r) return true;
+  const a = Math.floor(t * 10), b = Math.max(a, Math.floor((t + Math.min(d, 0.4)) * 10)); let sum = 0, c = 0;
+  for (let i = a; i <= b && i < r.length; i++) { sum += r[i]; c++; }
+  return c > 0 && sum / c >= UMBRAL[pista];
+}
 function plegar(m, lo, hi) { while (m < lo) m += 12; while (m > hi) m -= 12; return m; }
 
 // Junta repeticiones pegadas de la misma nota.
@@ -38,13 +50,14 @@ function ralear(notas, durMin, sepMin) {
 
 // ---------- BAJO ----------
 const bajoCrudo = leer('bajo_notas.json')
-  .filter(n => n.durationSeconds >= 0.1 && n.amplitude >= 0.3)
+  
+  .filter(n => n.durationSeconds >= 0.1 && n.amplitude >= 0.3 && viva('bajo', n.startTimeSeconds, n.durationSeconds))
   .map(n => ({ t: n.startTimeSeconds, d: n.durationSeconds, m: plegar(n.pitchMidi, 36, 59), h: 'B' }));
 const bajo = fusionar(bajoCrudo);
 
 // ---------- MELODÍA (voz) : una sola nota a la vez ----------
 const vozCrudo = leer('voz_notas.json')
-  .filter(n => n.pitchMidi >= 52 && n.durationSeconds >= 0.12 && n.amplitude >= 0.3)
+  .filter(n => n.pitchMidi >= 52 && n.durationSeconds >= 0.12 && n.amplitude >= 0.3 && viva('voz', n.startTimeSeconds, n.durationSeconds))
   .sort((a, b) => a.startTimeSeconds - b.startTimeSeconds);
 const vozMono = [];
 for (const n of vozCrudo) {
@@ -58,7 +71,7 @@ const voz = fusionar(vozMono.filter(n => n.d > 0.05));
 
 // ---------- ACORDES (guitarra) : se agrupan las notas que arrancan juntas ----------
 const guiCrudo = leer('guitarra_notas.json')
-  .filter(n => n.durationSeconds >= 0.15 && n.amplitude >= 0.3)
+  .filter(n => n.durationSeconds >= 0.15 && n.amplitude >= 0.3 && viva('guitarra', n.startTimeSeconds, n.durationSeconds))
   .sort((a, b) => a.startTimeSeconds - b.startTimeSeconds);
 const acordes = [];
 for (const n of guiCrudo) {
@@ -106,18 +119,21 @@ const capas = {
   bajo: {
     facil: separar(DESPLAZADO ? ralear(bajo, 0.3, 0.45) : DENSO ? ralear(bajo, 0.4, 0.8) : ralear(bajo, 0.5, 1.2)),
     medio: separar(DESPLAZADO ? ralear(bajo, 0.26, 0.38) : ralear(bajo, 0.3, 0.45)),
+    muyfacil: separar(ralear(bajo, 0.5, 1.2)),
     dificil: separar(ralear(bajo, 0.22, 0.33)),
     profesional: separar(bajo)
   },
   melodia: {
     facil: separar(DESPLAZADO ? ralear(voz, 0.28, 0.4) : DENSO ? ralear(voz, 0.38, 0.8) : ralear(voz, 0.45, 1.0)),
     medio: separar(DESPLAZADO ? ralear(voz, 0.24, 0.34) : ralear(voz, 0.28, 0.4)),
+    muyfacil: separar(ralear(voz, 0.45, 1.0)),
     dificil: separar(ralear(voz, 0.2, 0.3)),
     profesional: separar(voz)
   },
   acordes: {
     facil: separar(DESPLAZADO ? nivelAcordes(3, 0.35, 0.9) : DENSO ? nivelAcordes(1, 0.35, 1.1) : nivelAcordes(1, 0.4, 1.6)),
     medio: separar(DESPLAZADO ? nivelAcordes(3, 0.3, 0.7) : nivelAcordes(3, 0.35, 0.9)),
+    muyfacil: separar(nivelAcordes(1, 0.4, 1.6)),
     dificil: separar(nivelAcordes(3, 0.25, 0.5)),
     profesional: separar(nivelAcordes(3, 0.2, 0.4))
   }

@@ -13,6 +13,8 @@
     { id: 'prox6', titulo: 'Próximamente', estilo: '', nivelMin: 3, proximamente: true }
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (todas las notas)']];
+  // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
+  const nivelesVis = () => (datos.muyfacil ? [['muyfacil', '🐣 Muy fácil (práctica)']].concat(NIVELES) : NIVELES);
   const LS = 'yourband_v1';
   let datos = { banda: 'Your Band', rol: null, estrellas: {}, sync: 0, vistaHistoria: false, instr: { bajo: 'bajo', teclado: 'piano' } };
   try { const g = JSON.parse(localStorage.getItem(LS) || 'null'); if (g) Object.assign(datos, g); } catch (e) {}
@@ -134,7 +136,7 @@
       const bloq = m.nivelMin > nivelJugador(), d = document.createElement('div');
       d.className = 'yb-tarj ' + (m.proximamente || bloq ? 'ap' : 'el');
       let est = '';
-      if (!m.proximamente && !bloq) est = NIVELES.map(([k, n]) => `${n}: <span class="yb-est">${'★'.repeat(datos.estrellas[claveEst(m.id, claveCapas(), k)] || 0) || '–'}</span>`).join('<br>');
+      if (!m.proximamente && !bloq) est = nivelesVis().map(([k, n]) => `${n}: <span class="yb-est">${'★'.repeat(datos.estrellas[claveEst(m.id, claveCapas(), k)] || 0) || '–'}</span>`).join('<br>');
       d.innerHTML = `<div class="yb-grande">${m.proximamente ? '🔒' : '🎵'}</div><h2>${esc(m.titulo)}</h2><div class="yb-chico">${esc(m.estilo)}</div>` +
         (bloq ? `<div class="yb-chico">Se abre en el nivel ${m.nivelMin}</div>` : '') + (m.proximamente && !bloq ? `<div class="yb-chico">Todavía no está lista</div>` : '') +
         (est ? `<div class="yb-chico" style="margin-top:8px">${est}</div>` : '');
@@ -188,7 +190,7 @@
   function dibujarOps() {
     dibujarCapas();
     dibujarInstr();
-    ops($('yb-op-nivel'), NIVELES, sel.nv, k => { sel.nv = k; dibujarOps(); });
+    ops($('yb-op-nivel'), nivelesVis(), sel.nv, k => { sel.nv = k; dibujarOps(); });
     const partes = [['all', 'Canción completa']]; if (sel.d) sel.d.capas.partes.forEach((p, i) => partes.push([i, p.n]));
     ops($('yb-op-parte'), partes, sel.parte, k => { sel.parte = k; dibujarOps(); });
     ops($('yb-op-modo'), [['tocar', 'Tocar con la banda'], ['practica', 'Practicar sin música']], sel.modo, k => { sel.modo = k; dibujarOps(); });
@@ -213,9 +215,9 @@
     const tr = lista => lista.filter(n => n[0] >= a - 0.01 && n[0] < b).map(n => [n[2], n[0] - a, n[1]]);
     const cp = datos.capas, solo = !cp.melodia && !cp.acordes; // solo bajo: va en la mano derecha; con otras capas, el bajo va a la izquierda
     let rh = [], lh = [];
-    if (cp.bajo) (solo ? rh : lh).push(...tr(c.capas.bajo[nv]));
-    if (cp.melodia) rh.push(...tr(c.capas.melodia[nv]));
-    if (cp.acordes) lh.push(...tr(c.capas.acordes[nv]));
+    if (cp.bajo) (solo ? rh : lh).push(...tr(c.capas.bajo[nv] || c.capas.bajo.facil));
+    if (cp.melodia) rh.push(...tr(c.capas.melodia[nv] || c.capas.melodia.facil));
+    if (cp.acordes) lh.push(...tr(c.capas.acordes[nv] || c.capas.acordes.facil));
     rh.sort((p, q) => p[1] - q[1]); lh.sort((p, q) => p[1] - q[1]);
     const mute = [];
     if (cp.bajo) mute.push('bajo'); if (cp.acordes) mute.push('guitarra'); if (cp.melodia || cp.acordes) mute.push('teclado');
@@ -337,9 +339,10 @@
     list.appendChild(cab);
     chips(cab, CAPAS, k => !!datos.capas[k], k => { const otras = CAPAS.filter(([q]) => q !== k && datos.capas[q]).length; if (datos.capas[k] && !otras) return; datos.capas[k] = datos.capas[k] ? 0 : 1; guardar(); renderMiLista(); });
     const t1 = document.createElement('div'); t1.textContent = 'Dificultad'; t1.style.marginBottom = '4px'; cab.appendChild(t1);
-    chips(cab, NIVELES, k => sel.nv === k, k => { sel.nv = k; renderMiLista(); });
+    chips(cab, nivelesVis(), k => sel.nv === k, k => { sel.nv = k; renderMiLista(); });
     const t2 = document.createElement('div'); t2.textContent = 'Cómo'; t2.style.marginBottom = '4px'; cab.appendChild(t2);
     chips(cab, [['tocar', 'Con la banda'], ['practica', 'Sin música']], k => sel.modo === k, k => { sel.modo = k; renderMiLista(); });
+    if (!datos.muyfacil) { const q = document.createElement('div'); q.style.cssText = 'margin:2px 0 8px'; const bq = document.createElement('button'); bq.className = 'btn'; bq.style.cssText = 'font-size:11px;padding:5px 8px'; bq.textContent = '🐣 ¿Te cuesta el Fácil? Pedí una versión más fácil'; bq.onclick = () => { datos.muyfacil = true; sel.nv = 'muyfacil'; guardar(); renderMiLista(); }; q.appendChild(bq); cab.appendChild(q); }
     const fila = document.createElement('div'); fila.style.cssText = 'display:flex;gap:6px;margin:4px 0 6px';
     [['🎸 Misiones y estrellas', () => { try { pauseSong(); } catch (e) {} menu(); }], ['🖼️ Portada y nombre', () => window.ybAbrir()]].forEach(([t, f]) => { const b = document.createElement('button'); b.className = 'btn'; b.style.cssText = 'font-size:11px;padding:5px 8px'; b.textContent = t; b.onclick = f; fila.appendChild(b); });
     cab.appendChild(fila);
