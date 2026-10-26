@@ -12,7 +12,7 @@
     { id: 'prox5', titulo: 'Próximamente', estilo: '', nivelMin: 2, proximamente: true },
     { id: 'prox6', titulo: 'Próximamente', estilo: '', nivelMin: 3, proximamente: true }
   ];
-  const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil']];
+  const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (todas las notas)']];
   const LS = 'yourband_v1';
   let datos = { banda: 'Your Band', rol: null, estrellas: {}, sync: 0, vistaHistoria: false, instr: { bajo: 'bajo', teclado: 'piano' } };
   try { const g = JSON.parse(localStorage.getItem(LS) || 'null'); if (g) Object.assign(datos, g); } catch (e) {}

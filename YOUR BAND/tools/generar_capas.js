@@ -81,21 +81,43 @@ function nivelAcordes(cuantas, durMin, sepMin) {
 }
 function nivelFacil(notas) { return notas; }
 
+// Que no queden ladrillos pegados o encimados: si una nota se repite (misma tecla), la anterior se acorta
+// para dejar un huequito, así se cuentan los golpes a simple vista.
+function separar(notas, hueco = 0.07) {
+  const por = {};
+  const copia = notas.map(n => ({ ...n }));
+  copia.slice().sort((a, b) => a.t - b.t).forEach(n => { (por[n.m] = por[n.m] || []).push(n); });
+  for (const m in por) {
+    const l = por[m];
+    for (let i = 0; i < l.length - 1; i++) l[i].d = Math.max(0.06, Math.min(l[i].d, l[i + 1].t - l[i].t - hueco));
+  }
+  return copia.sort((a, b) => a.t - b.t);
+}
+// Difícil "suave": sin notas muy cortitas ni repeticiones apuradas de la misma tecla.
+function suavizar(notas) {
+  const base = notas.filter(n => n.d >= 0.16).sort((a, b) => a.t - b.t);
+  const ult = {}; const out = [];
+  for (const n of base) { if (ult[n.m] !== undefined && n.t - ult[n.m] < 0.3) continue; ult[n.m] = n.t; out.push(n); }
+  return separar(out);
+}
 const capas = {
   bajo: {
-    facil: ralear(bajo, 0.5, 1.2),
-    medio: ralear(bajo, 0.3, 0.45),
-    dificil: bajo
+    facil: separar(ralear(bajo, 0.5, 1.2)),
+    medio: separar(ralear(bajo, 0.3, 0.45)),
+    dificil: suavizar(bajo),
+    profesional: separar(bajo)
   },
   melodia: {
-    facil: ralear(voz, 0.45, 1.0),
-    medio: ralear(voz, 0.28, 0.4),
-    dificil: voz
+    facil: separar(ralear(voz, 0.45, 1.0)),
+    medio: separar(ralear(voz, 0.28, 0.4)),
+    dificil: suavizar(voz),
+    profesional: separar(voz)
   },
   acordes: {
-    facil: nivelAcordes(1, 0.4, 1.6),
-    medio: nivelAcordes(3, 0.35, 0.9),
-    dificil: nivelAcordes(3, 0.2, 0.4)
+    facil: separar(nivelAcordes(1, 0.4, 1.6)),
+    medio: separar(nivelAcordes(3, 0.35, 0.9)),
+    dificil: suavizar(nivelAcordes(3, 0.3, 0.6)),
+    profesional: separar(nivelAcordes(3, 0.2, 0.4))
   }
 };
 const dur = DURACION;
