@@ -151,9 +151,9 @@ const capas = {
   },
   acordes: {
     // acordes: Fácil de a UNA nota, Medio de a DOS, Difícil y Profesional de a tres (pedido de Pablo)
-    facil: separar(nivelAcordes(1, 0.35, 0.9)),
+    facil: separar(nivelAcordes(1, 0.5, 2.0)), // un solo golpe cada ~2 segundos: bien liviano
     medio: separar(nivelAcordes(2, 0.3, 0.7)),
-    muyfacil: separar(nivelAcordes(1, 0.4, 1.6)),
+    muyfacil: separar(nivelAcordes(1, 0.6, 3.2)),
     dificil: separar(nivelAcordes(3, 0.25, 0.5)),
     profesional: separar(nivelAcordes(3, 0.2, 0.4))
   }
