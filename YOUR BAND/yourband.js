@@ -10,7 +10,7 @@
     { id: 'takeme', titulo: 'Take Me Down This Road', estilo: 'Pop', nivelMin: 1, carpeta: CARPETA + 'canciones/take-me-down-this-road/' },
     { id: 'baila', titulo: 'Bailá Conmigo', estilo: 'Latino', nivelMin: 1, carpeta: CARPETA + 'canciones/baila-conmigo/' },
     { id: 'mueve', titulo: 'Mueve el Cuerpo', estilo: 'Merengue', nivelMin: 1, carpeta: CARPETA + 'canciones/mueve-el-cuerpo/' },
-    { id: 'prox6', titulo: 'Próximamente', estilo: '', nivelMin: 3, proximamente: true }
+    { id: 'mi-blues', titulo: 'Mi Blues, Mi Blues', estilo: 'Blues', nivelMin: 1, carpeta: CARPETA + 'canciones/mi-blues/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
