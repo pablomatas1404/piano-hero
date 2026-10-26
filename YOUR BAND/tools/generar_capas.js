@@ -6,6 +6,7 @@ const A = process.argv.slice(2);
 const DIR_NOTAS = A[0] ? path.resolve(A[0]) : __dirname;
 const DIR_SALIDA = A[1] ? path.resolve(A[1]) : path.join(__dirname, '../canciones/quedate');
 const TITULO = A[2] || 'Quédate un poco más', ESTILO = A[3] || 'Bolero', DURACION = A[4] ? +A[4] : 147.7;
+const DENSO = A[6] === 'denso'; // fácil con más notas (para canciones donde el fácil queda muy vacío)
 const STEMS = A[5] ? A[5].split(',') : ['voz', 'bateria', 'bajo', 'guitarra', 'teclado', 'percusion'];
 const leer = f => JSON.parse(fs.readFileSync(path.join(DIR_NOTAS, f), 'utf8'));
 const redondeo = x => Math.round(x * 1000) / 1000;
@@ -102,21 +103,21 @@ function suavizar(notas) {
 }
 const capas = {
   bajo: {
-    facil: separar(ralear(bajo, 0.5, 1.2)),
+    facil: separar(DENSO ? ralear(bajo, 0.4, 0.8) : ralear(bajo, 0.5, 1.2)),
     medio: separar(ralear(bajo, 0.3, 0.45)),
-    dificil: suavizar(bajo),
+    dificil: separar(ralear(bajo, 0.22, 0.33)),
     profesional: separar(bajo)
   },
   melodia: {
-    facil: separar(ralear(voz, 0.45, 1.0)),
+    facil: separar(DENSO ? ralear(voz, 0.38, 0.8) : ralear(voz, 0.45, 1.0)),
     medio: separar(ralear(voz, 0.28, 0.4)),
-    dificil: suavizar(voz),
+    dificil: separar(ralear(voz, 0.2, 0.3)),
     profesional: separar(voz)
   },
   acordes: {
-    facil: separar(nivelAcordes(1, 0.4, 1.6)),
+    facil: separar(DENSO ? nivelAcordes(1, 0.35, 1.1) : nivelAcordes(1, 0.4, 1.6)),
     medio: separar(nivelAcordes(3, 0.35, 0.9)),
-    dificil: suavizar(nivelAcordes(3, 0.3, 0.6)),
+    dificil: separar(nivelAcordes(3, 0.25, 0.5)),
     profesional: separar(nivelAcordes(3, 0.2, 0.4))
   }
 };
