@@ -186,7 +186,7 @@
     } catch (e) {}
   }
   function dibujarOct() { const o = $('yb-f-oct'); if (o) o.style.display = (currentInstrument === 'bajo') ? 'flex' : 'none'; }
-  function moverOct(d) { datos.bajoOct = Math.max(-36, Math.min(12, (datos.bajoOct == null ? 0 : datos.bajoOct) + d)); guardar(); try { showBigToast('Bajo: ' + (datos.bajoOct / 12) + ' octavas respecto de la tecla'); } catch (e) {} }
+  function moverOct(d) { datos.bajoOct2 = Math.max(-36, Math.min(12, (datos.bajoOct2 == null ? -12 : datos.bajoOct2) + d)); datos.bajoOct = datos.bajoOct2; guardar(); try { showBigToast('Bajo: ' + (datos.bajoOct2 / 12) + ' octavas respecto de la tecla'); } catch (e) {} }
   function dibujarInstr() {
     dibujarOct();
     let id = (datos.instr && datos.instr[claveCapas()]) || (claveCapas() === 'bajo' ? 'bajo' : 'piano');
@@ -247,6 +247,7 @@
     try { if (window.Tone && Tone.context) Tone.context.lookAhead = 0.015; } catch (e) {}
     cerrar(); pop.classList.remove('on');
     aplicarInstr();
+    try { bajoSampler(); } catch (e) {}
     setHandsMode(s.__yb.tieneR && s.__yb.tieneL ? 'two' : s.__yb.tieneL ? 'left' : 'one', null);
     loadSong(s);
     flot.classList.add('on');
@@ -323,13 +324,27 @@
 
   // ---------- Bajo = la guitarra de Piano Hero, más grave ----------
   // Se pide la misma nota pero 'oct' octavas más abajo (o arriba), así la guitarra suena como un bajo.
+  // Un sampler de guitarra aparte, pasado por un filtro que le saca los agudos "de cuerda" y le deja el cuerpo grave:
+  // suena más a bajo y menos a guitarra. Hasta que carga, se usa la guitarra común de Piano Hero.
+  let bajoSamp = null;
+  function bajoSampler() {
+    if (bajoSamp) return bajoSamp;
+    try {
+      const filtro = new Tone.Filter({ frequency: 520, type: 'lowpass', rolloff: -24, Q: 0.7 });
+      const ganancia = new Tone.Gain(2.4);
+      bajoSamp = new Tone.Sampler({ urls: { C3: 'C3.mp3', E3: 'E3.mp3', G3: 'G3.mp3', C4: 'C4.mp3' }, baseUrl: 'https://nbrosowsky.github.io/tonejs-instruments/samples/guitar-acoustic/', release: 0.35 }).chain(filtro, ganancia, Tone.Destination);
+    } catch (e) { bajoSamp = null; }
+    return bajoSamp;
+  }
   function bajoGuitarra() {
-    const mover = name => { try { return Tone.Frequency(name).transpose((datos.bajoOct == null ? 0 : datos.bajoOct)).toNote(); } catch (e) { return name; } };
+    const oct = () => (datos.bajoOct2 == null ? -12 : datos.bajoOct2);
+    const mover = name => { try { return Tone.Frequency(name).transpose(oct()).toNote(); } catch (e) { return name; } };
+    const voz = () => { const b = bajoSampler(); return (b && b.loaded) ? b : guitarSynth; };
     return {
-      triggerAttack(name, ...r) { if (guitarSynth) guitarSynth.triggerAttack(mover(name), ...r); },
-      triggerRelease(name, ...r) { if (guitarSynth) guitarSynth.triggerRelease(mover(name), ...r); },
-      triggerAttackRelease(name, ...r) { if (guitarSynth) guitarSynth.triggerAttackRelease(mover(name), ...r); },
-      releaseAll() { if (guitarSynth) guitarSynth.releaseAll(); }
+      triggerAttack(name, ...r) { const v = voz(); if (v) v.triggerAttack(mover(name), ...r); },
+      triggerRelease(name, ...r) { const v = voz(); if (v) v.triggerRelease(mover(name), ...r); if (guitarSynth && v !== guitarSynth) { try { guitarSynth.triggerRelease(mover(name), ...r); } catch (e) {} } },
+      triggerAttackRelease(name, ...r) { const v = voz(); if (v) v.triggerAttackRelease(mover(name), ...r); },
+      releaseAll() { if (bajoSamp) bajoSamp.releaseAll(); if (guitarSynth) guitarSynth.releaseAll(); }
     };
   }
   const vozBajo = bajoGuitarra();
