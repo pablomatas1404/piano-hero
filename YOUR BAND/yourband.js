@@ -235,7 +235,11 @@
     let rh = [], lh = [];
     if (cp.bajo) (solo ? rh : lh).push(...tr(c.capas.bajo[nv] || c.capas.bajo.facil));
     if (cp.melodia) rh.push(...tr(c.capas.melodia[nv] || c.capas.melodia.facil));
-    if (cp.acordes) lh.push(...tr(c.capas.acordes[nv] || c.capas.acordes.facil));
+    if (cp.acordes) {
+      // con las dos manos a la vez, la izquierda va un escalón más liviana (Fácil -> Muy fácil, Medio -> Fácil)
+      const aliviar = cp.melodia && { facil: 'muyfacil', medio: 'facil' }[nv];
+      lh.push(...tr(c.capas.acordes[aliviar || nv] || c.capas.acordes[nv] || c.capas.acordes.facil));
+    }
     rh.sort((p, q) => p[1] - q[1]); lh.sort((p, q) => p[1] - q[1]);
     const mute = [];
     if (cp.bajo) mute.push('bajo'); if (cp.acordes) mute.push('guitarra'); if (cp.melodia || cp.acordes) mute.push('teclado');
