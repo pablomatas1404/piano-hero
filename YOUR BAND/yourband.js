@@ -12,7 +12,7 @@
     { id: 'prox5', titulo: 'Próximamente', estilo: '', nivelMin: 2, proximamente: true },
     { id: 'prox6', titulo: 'Próximamente', estilo: '', nivelMin: 3, proximamente: true }
   ];
-  const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (todas las notas)']];
+  const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
   const nivelesVis = () => (datos.muyfacil ? [['muyfacil', '🐣 Muy fácil (práctica)']].concat(NIVELES) : NIVELES);
   const LS = 'yourband_v1';
