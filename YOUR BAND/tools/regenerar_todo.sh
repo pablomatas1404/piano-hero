@@ -7,3 +7,4 @@ node tools/generar_capas.js fuentes/take-me-down-this-road canciones/take-me-dow
 node tools/generar_capas.js "fuentes/bailá-conmigo" canciones/baila-conmigo "Bailá Conmigo" "Latino" 169.0 "voz,coros,metales,bateria,bajo,guitarra,teclado,percusion,cuerdas,sintetizador,otros" denso
 node tools/generar_capas.js fuentes/mueve-el-cuerpo canciones/mueve-el-cuerpo "Mueve el Cuerpo" "Merengue" 129.6 "voz,coros,bateria,bajo,guitarra,teclado,percusion,sintetizador,otros,metales" desplazado
 node tools/generar_capas.js fuentes/mi-blues canciones/mi-blues "Mi Blues, Mi Blues" "Blues" 236.4 "voz,coros,bateria,bajo,guitarra,teclado,percusion" denso
+node tools/generar_capas.js fuentes/la-noche-es-nuestra canciones/la-noche-es-nuestra "La Noche es Nuestra" "Cumbia" 162 "voz,coros,metales,bateria,bajo,guitarra,teclado,percusion,cuerdas,sintetizador,otros"

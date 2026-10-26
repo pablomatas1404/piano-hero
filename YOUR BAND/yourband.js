@@ -11,6 +11,7 @@
     { id: 'baila', titulo: 'Bailá Conmigo', estilo: 'Latino', nivelMin: 1, carpeta: CARPETA + 'canciones/baila-conmigo/' },
     { id: 'mueve', titulo: 'Mueve el Cuerpo', estilo: 'Merengue', nivelMin: 1, carpeta: CARPETA + 'canciones/mueve-el-cuerpo/' },
     { id: 'mi-blues', titulo: 'Mi Blues, Mi Blues', estilo: 'Blues', nivelMin: 1, carpeta: CARPETA + 'canciones/mi-blues/' },
+    { id: 'la-noche-es-nuestra', titulo: 'La Noche es Nuestra', estilo: 'Cumbia', nivelMin: 1, carpeta: CARPETA + 'canciones/la-noche-es-nuestra/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
