@@ -55,12 +55,19 @@ function ralear(notas, durMin, sepMin) {
   return out;
 }
 
+// Racimos: si caen 3 o más notas en 0.25 s (ladrillos y letras encimados), quedan solo las 2 más largas.
+function aclarar(notas, ventana = 0.25, maximo = 2) {
+  const ord = notas.slice().sort((a, b) => a.t - b.t), out = []; let racimo = [];
+  const cerrar = () => { if (racimo.length <= maximo) out.push(...racimo); else out.push(...racimo.slice().sort((a, b) => b.d - a.d).slice(0, maximo)); racimo = []; };
+  for (const n of ord) { if (racimo.length && n.t - racimo[0].t >= ventana) cerrar(); racimo.push(n); }
+  cerrar(); return out.sort((a, b) => a.t - b.t);
+}
 // ---------- BAJO ----------
 const bajoCrudo = cuant(leer('bajo_notas.json'))
   
   .filter(n => n.durationSeconds >= 0.1 && n.amplitude >= 0.3 && viva('bajo', n.startTimeSeconds, n.durationSeconds))
   .map(n => ({ t: n.startTimeSeconds, d: n.durationSeconds, m: plegar(n.pitchMidi, 36, 59), h: 'B' }));
-const bajo = fusionar(bajoCrudo);
+const bajo = aclarar(fusionar(bajoCrudo));
 
 // ---------- MELODÍA (voz) : una sola nota a la vez ----------
 const vozCrudo = cuant(leer('voz_notas.json'))
@@ -74,7 +81,7 @@ for (const n of vozCrudo) {
 }
 // que no se pisen
 for (let i = 0; i < vozMono.length - 1; i++) vozMono[i].d = Math.min(vozMono[i].d, vozMono[i + 1].t - vozMono[i].t - 0.02);
-const voz = fusionar(vozMono.filter(n => n.d > 0.05));
+const voz = aclarar(fusionar(vozMono.filter(n => n.d > 0.05)));
 
 // ---------- ACORDES (guitarra) : se agrupan las notas que arrancan juntas ----------
 const guiCrudo = cuant(leer('guitarra_notas.json'))
@@ -99,6 +106,9 @@ function nivelAcordes(cuantas, durMin, sepMin) {
     if (a.d < durMin || a.t - ult < sepMin) continue;
     ult = a.t; out.push(...acordeANotas(a, cuantas));
   }
+  // cada acorde se corta antes de que empiece el siguiente, así no se acumulan notas encimadas
+  const tiempos = [...new Set(out.map(n => n.t))].sort((a, b) => a - b);
+  for (const n of out) { const i = tiempos.indexOf(n.t); const sig = tiempos[i + 1]; if (sig !== undefined) n.d = Math.max(0.15, Math.min(n.d, sig - n.t - 0.06)); }
   return out;
 }
 function nivelFacil(notas) { return notas; }
