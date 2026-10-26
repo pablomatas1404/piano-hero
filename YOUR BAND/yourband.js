@@ -98,7 +98,7 @@
   const btn2 = document.createElement('button'); btn2.className = 'btn'; btn2.id = 'yb-f-abrir2'; btn2.textContent = '🎸 BANDA ▾'; btn2.style.display = 'none';
   if (btnWait) btnWait.insertAdjacentElement('beforebegin', btn2);
   const pop = document.createElement('div'); pop.id = 'yb-pop';
-  pop.innerHTML = `<button id="yb-f-menu">🎸 Volver a las misiones</button>
+  pop.innerHTML = `<button id="yb-f-menu">🎸 Misiones y estrellas</button>
     <div><div class="yb-chico" style="margin-bottom:4px">Sonido de lo que tocás</div><div class="yb-ops" id="yb-f-instr"></div></div>
     <div class="yb-ops" id="yb-f-oct" style="display:none"><div class="yb-op" id="yb-f-grave">⬇ Bajo más grave</div><div class="yb-op" id="yb-f-agudo">⬆ Bajo más agudo</div></div>
     <label title="Si los ladrillos llegan antes que la música, subilo; si llegan después, bajalo">Sincro <input type="range" id="yb-f-sync" min="-500" max="500" step="10" value="0"><span id="yb-f-syncv">0 ms</span></label>
@@ -111,7 +111,7 @@
   function cerrar() { ov.classList.remove('on'); }
 
   $('yb-in-nombre').value = datos.banda;
-  $('yb-b-nombre').onclick = () => { datos.banda = $('yb-in-nombre').value.trim() || 'Your Band'; guardar(); if (datos.vistaHistoria) { if (datos.rol) menu(); else pantalla('yb-rol'); } else historia(0); };
+  $('yb-b-nombre').onclick = () => { datos.banda = $('yb-in-nombre').value.trim() || 'Your Band'; guardar(); if (datos.vistaHistoria) { if (datos.rol) { cerrar(); renderMiLista(); } else pantalla('yb-rol'); } else historia(0); };
   $('yb-in-nombre').addEventListener('keydown', e => { if (e.key === 'Enter') $('yb-b-nombre').click(); });
   $('yb-b-cerrar1').onclick = cerrar; $('yb-b-cerrar2').onclick = cerrar;
   const HIST = () => [
@@ -121,7 +121,7 @@
   let hi = 0;
   function historia(i) { hi = i; $('yb-cartel').innerHTML = HIST()[i]; pantalla('yb-historia'); }
   $('yb-b-hist').onclick = () => { if (hi < HIST().length - 1) historia(hi + 1); else { datos.vistaHistoria = true; guardar(); pantalla('yb-rol'); } };
-  ov.querySelectorAll('[data-rol]').forEach(t => t.onclick = () => { datos.rol = t.dataset.rol; datos.capas = capasDe(datos.rol); guardar(); menu(); });
+  ov.querySelectorAll('[data-rol]').forEach(t => t.onclick = () => { datos.rol = t.dataset.rol; datos.capas = capasDe(datos.rol); guardar(); cerrar(); renderMiLista(); });
   $('yb-b-rol').onclick = () => pantalla('yb-rol');
   $('yb-b-nom').onclick = () => { $('yb-in-nombre').value = datos.banda; pantalla('yb-nombre'); };
 
@@ -171,7 +171,7 @@
     try { if (typeof currentInstrument !== 'undefined') { if (!tocoInstr) { guardadoInstr = currentInstrument; tocoInstr = true; } currentInstrument = id; } } catch (e) {}
   }
   function dibujarOct() { const o = $('yb-f-oct'); if (o) o.style.display = (currentInstrument === 'bajo') ? 'flex' : 'none'; }
-  function moverOct(d) { datos.bajoOct = Math.max(-36, Math.min(12, (datos.bajoOct == null ? -12 : datos.bajoOct) + d)); guardar(); try { showBigToast('Bajo: ' + (datos.bajoOct / 12) + ' octavas respecto de la tecla'); } catch (e) {} }
+  function moverOct(d) { datos.bajoOct = Math.max(-36, Math.min(12, (datos.bajoOct == null ? 0 : datos.bajoOct) + d)); guardar(); try { showBigToast('Bajo: ' + (datos.bajoOct / 12) + ' octavas respecto de la tecla'); } catch (e) {} }
   function dibujarInstr() {
     dibujarOct();
     let id = (datos.instr && datos.instr[claveCapas()]) || (claveCapas() === 'bajo' ? 'bajo' : 'piano');
@@ -309,7 +309,7 @@
   // ---------- Bajo = la guitarra de Piano Hero, más grave ----------
   // Se pide la misma nota pero 'oct' octavas más abajo (o arriba), así la guitarra suena como un bajo.
   function bajoGuitarra() {
-    const mover = name => { try { return Tone.Frequency(name).transpose((datos.bajoOct == null ? -12 : datos.bajoOct)).toNote(); } catch (e) { return name; } };
+    const mover = name => { try { return Tone.Frequency(name).transpose((datos.bajoOct == null ? 0 : datos.bajoOct)).toNote(); } catch (e) { return name; } };
     return {
       triggerAttack(name, ...r) { if (guitarSynth) guitarSynth.triggerAttack(mover(name), ...r); },
       triggerRelease(name, ...r) { if (guitarSynth) guitarSynth.triggerRelease(mover(name), ...r); },
@@ -320,7 +320,67 @@
   const vozBajo = bajoGuitarra();
   try { if (typeof INSTRUMENT_VOICES !== 'undefined') INSTRUMENT_VOICES.bajo = () => vozBajo; } catch (e) {}
 
+  // ---------- La lista de canciones de YOUR BAND, en el panel derecho de Piano Hero ----------
+  let enPanel = false;
+  const tabBtn = document.getElementById('tab-yourband');
+  function fmtDur(s) { return Math.floor(s / 60) + ':' + String(Math.round(s % 60)).padStart(2, '0'); }
+  function chips(cont, lista, esSel, cb) {
+    const d = document.createElement('div'); d.className = 'yb-ops'; d.style.cssText = 'justify-content:flex-start;margin-bottom:6px';
+    lista.forEach(([k, n]) => { const b = document.createElement('div'); b.className = 'yb-op' + (esSel(k) ? ' sel' : ''); b.textContent = n; b.style.cssText = 'padding:5px 10px;font-size:11px'; b.onclick = () => cb(k); d.appendChild(b); });
+    cont.appendChild(d);
+  }
+  function renderMiLista() {
+    const list = document.getElementById('songList'); if (!list) return;
+    list.innerHTML = '';
+    const cab = document.createElement('div'); cab.style.cssText = 'padding:4px 2px 8px;font-size:12px;color:var(--muted)';
+    cab.innerHTML = '<div style="margin-bottom:8px"><b style="color:var(--text)">🎸 ' + esc(datos.banda) + '</b> · nivel ' + nivelJugador() + ' · <span class="yb-est">★</span> ' + totalEstrellas() + '</div><div style="margin-bottom:4px">Qué tocar</div>';
+    list.appendChild(cab);
+    chips(cab, CAPAS, k => !!datos.capas[k], k => { const otras = CAPAS.filter(([q]) => q !== k && datos.capas[q]).length; if (datos.capas[k] && !otras) return; datos.capas[k] = datos.capas[k] ? 0 : 1; guardar(); renderMiLista(); });
+    const t1 = document.createElement('div'); t1.textContent = 'Dificultad'; t1.style.marginBottom = '4px'; cab.appendChild(t1);
+    chips(cab, NIVELES, k => sel.nv === k, k => { sel.nv = k; renderMiLista(); });
+    const t2 = document.createElement('div'); t2.textContent = 'Cómo'; t2.style.marginBottom = '4px'; cab.appendChild(t2);
+    chips(cab, [['tocar', 'Con la banda'], ['practica', 'Sin música']], k => sel.modo === k, k => { sel.modo = k; renderMiLista(); });
+    const fila = document.createElement('div'); fila.style.cssText = 'display:flex;gap:6px;margin:4px 0 6px';
+    [['🎸 Misiones y estrellas', () => { try { pauseSong(); } catch (e) {} menu(); }], ['🖼️ Portada y nombre', () => window.ybAbrir()]].forEach(([t, f]) => { const b = document.createElement('button'); b.className = 'btn'; b.style.cssText = 'font-size:11px;padding:5px 8px'; b.textContent = t; b.onclick = f; fila.appendChild(b); });
+    cab.appendChild(fila);
+    const aviso = document.createElement('div'); aviso.style.cssText = 'font-size:11px;color:var(--muted);margin:2px 2px 8px'; aviso.textContent = 'Doble clic en una canción para tocarla.'; list.appendChild(aviso);
+    MISIONES.filter(m => !m.proximamente).forEach(m => {
+      const bloq = m.nivelMin > nivelJugador();
+      const card = document.createElement('div'); card.className = 'song-card' + (bloq ? ' locked' : ''); card.dataset.title = m.titulo;
+      const est = datos.estrellas[claveEst(m.id, claveCapas(), sel.nv)] || 0;
+      const dur = cache[m.id] ? fmtDur(cache[m.id].capas.duracion) : '';
+      card.innerHTML = '<div class="t">🎵 ' + esc(m.titulo) + '</div><div class="a" style="display:flex;justify-content:space-between"><span>' + esc(m.estilo) + (dur ? ' · ' + dur : '') + (bloq ? ' · se abre en el nivel ' + m.nivelMin : '') + '</span><span class="yb-est">' + ('★'.repeat(est) + '☆'.repeat(3 - est)) + '</span></div>';
+      if (!bloq) {
+        card.onclick = () => { list.querySelectorAll('.song-card').forEach(c => c.classList.remove('active')); card.classList.add('active'); };
+        card.ondblclick = () => tocarMision(m, card);
+      }
+      list.appendChild(card);
+    });
+  }
+  async function tocarMision(m, card) {
+    sel.m = m; sel.parte = 'all'; const a = card.querySelector('.a span');
+    try {
+      ctxAudio();
+      sel.d = await cargar(m, p => { if (a) a.textContent = 'Cargando la banda… ' + Math.round(p * 100) + '%'; });
+      await empezar();
+    } catch (e) { if (a) a.textContent = 'No pude cargar: ' + e.message; }
+  }
+  function entrarPanel() {
+    enPanel = true;
+    document.querySelectorAll('.tabs-row .tab-btn, #mainTabsRow .tab-btn').forEach(b => b.classList.remove('active'));
+    if (tabBtn) tabBtn.classList.add('active');
+    ['levelFilterRow', 'sideImportBlock', 'bulkDeleteMultipistaBtn', 'bulkPromoteFacilBtn'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+    renderMiLista();
+  }
+  const _switchTab = window.switchTab, _renderSongList = window.renderSongList;
+  window.switchTab = function (tab) {
+    enPanel = false; if (tabBtn) tabBtn.classList.remove('active');
+    if (tab === 'yourband') { _switchTab('songs'); entrarPanel(); window.ybAbrir(); return; }
+    return _switchTab(tab);
+  };
+  window.renderSongList = function () { if (enPanel) return renderMiLista(); return _renderSongList.apply(this, arguments); };
+
   // ---------- Entrada ----------
   window.ybAbrir = function () { try { pauseSong(); } catch (e) {} pop.classList.remove('on'); $('yb-in-nombre').value = datos.banda; pantalla('yb-nombre'); };
-  if (location.hash === '#yourband') setTimeout(window.ybAbrir, 300);
+  if (location.hash === '#yourband') setTimeout(() => window.switchTab('yourband'), 300);
 })();
