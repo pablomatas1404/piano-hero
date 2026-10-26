@@ -97,6 +97,8 @@ for (const n of guiCrudo) {
 function acordeANotas(a, cuantas) {
   const ms = [...new Set(a.ms)].sort((x, y) => x - y);
   const cls = new Set(); const elegidas = [];
+  // de a dos: la nota más grave (la base del acorde) y la más aguda; de a tres: las tres más graves distintas
+  if (cuantas === 2) { const unicas = ms.filter((m, i) => ms.findIndex(q => q % 12 === m % 12) === i); const e = unicas.length > 1 ? [unicas[0], unicas[unicas.length - 1]] : unicas; return e.map(m => ({ t: a.t, d: Math.max(0.3, Math.min(a.d, 2)), m, h: 'L' })); }
   for (const m of ms) { if (!cls.has(m % 12) && elegidas.length < cuantas) { cls.add(m % 12); elegidas.push(m); } }
   return elegidas.map(m => ({ t: a.t, d: Math.max(0.3, Math.min(a.d, 2)), m, h: 'L' }));
 }
@@ -148,8 +150,9 @@ const capas = {
     profesional: separar(voz)
   },
   acordes: {
-    facil: separar(DESPLAZADO ? nivelAcordes(3, 0.35, 0.9) : DENSO ? nivelAcordes(1, 0.35, 1.1) : nivelAcordes(1, 0.4, 1.6)),
-    medio: separar(DESPLAZADO ? nivelAcordes(3, 0.3, 0.7) : nivelAcordes(3, 0.35, 0.9)),
+    // acordes: Fácil de a UNA nota, Medio de a DOS, Difícil y Profesional de a tres (pedido de Pablo)
+    facil: separar(nivelAcordes(1, 0.35, 0.9)),
+    medio: separar(nivelAcordes(2, 0.3, 0.7)),
     muyfacil: separar(nivelAcordes(1, 0.4, 1.6)),
     dificil: separar(nivelAcordes(3, 0.25, 0.5)),
     profesional: separar(nivelAcordes(3, 0.2, 0.4))
