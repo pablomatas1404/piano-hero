@@ -25,7 +25,9 @@
   // nombre corto de la combinación elegida (para guardar estrellas y el instrumento)
   const claveCapas = () => { const c = datos.capas; if (c.bajo && !c.melodia && !c.acordes) return 'bajo'; if (!c.bajo && c.melodia && c.acordes) return 'teclado'; return CAPAS.filter(([k]) => c[k]).map(([k]) => k).join('+'); };
   const nombreCapas = () => CAPAS.filter(([k]) => datos.capas[k]).map(([, n]) => n).join(' + ');
-  const INSTRS_BASE = [['piano', '🎹 Piano'], ['organo', '🎛️ Órgano'], ['guitarra', '🪕 Guitarra']];
+  const INSTRS_BASE = [['piano', '🎹 Piano'], ['organo', '🎛️ Órgano'], ['guitarra', '🪕 Guitarra'], ['guitarraE', '🎸 Guitarra eléctrica']];
+  // Si el sonido va por el Yamaha (Sonido: Teclado MIDI), se le pide el instrumento con un cambio de programa (General MIDI, canal 1)
+  const PROGRAMA_YAMAHA = { bajo: 33, piano: 0, organo: 18, guitarra: 25, guitarraE: 27 };
   // el bajo (guitarra más grave) solo cuando tocás SOLO el bajo
   const instrsDisp = () => claveCapas() === 'bajo' ? [['bajo', '🎸 Bajo (guitarra grave)']].concat(INSTRS_BASE) : INSTRS_BASE;
   const guardar = () => { try { localStorage.setItem(LS, JSON.stringify(datos)); } catch (e) {} };
@@ -171,6 +173,15 @@
     let id = (datos.instr && datos.instr[claveCapas()]) || (claveCapas() === 'bajo' ? 'bajo' : 'piano');
     if (id === 'bajo' && claveCapas() !== 'bajo') id = 'piano';
     try { if (typeof currentInstrument !== 'undefined') { if (!tocoInstr) { guardadoInstr = currentInstrument; tocoInstr = true; } currentInstrument = id; } } catch (e) {}
+    pedirAlYamaha(id);
+  }
+  function pedirAlYamaha(id) {
+    try {
+      if (typeof soundOutputMode !== 'undefined' && soundOutputMode === 'midi' && typeof midiOutputRef !== 'undefined' && midiOutputRef && PROGRAMA_YAMAHA[id] !== undefined) {
+        midiOutputRef.send([0xC0, PROGRAMA_YAMAHA[id]]);
+        showBigToast('🎹 Le pedí al teclado el sonido: ' + (instrsDisp().concat([['bajo', 'Bajo']]).find(x => x[0] === id) || [0, id])[1]);
+      }
+    } catch (e) {}
   }
   function dibujarOct() { const o = $('yb-f-oct'); if (o) o.style.display = (currentInstrument === 'bajo') ? 'flex' : 'none'; }
   function moverOct(d) { datos.bajoOct = Math.max(-36, Math.min(12, (datos.bajoOct == null ? 0 : datos.bajoOct) + d)); guardar(); try { showBigToast('Bajo: ' + (datos.bajoOct / 12) + ' octavas respecto de la tecla'); } catch (e) {} }
@@ -242,7 +253,7 @@
     finVisto = false;
     startPlayWithCountdown();
   }
-  const abrirPop = ev => { dibujarOct(); const b = ev.currentTarget.getBoundingClientRect(); pop.style.top = (b.bottom + 4) + 'px'; pop.style.right = '8px'; pop.classList.toggle('on'); };
+  const abrirPop = ev => { dibujarInstr(); const b = ev.currentTarget.getBoundingClientRect(); pop.style.top = (b.bottom + 4) + 'px'; pop.style.right = '8px'; pop.classList.toggle('on'); };
   $('yb-f-abrir').onclick = abrirPop; btn2.onclick = abrirPop;
   $('yb-f-grave').onclick = () => moverOct(-12); $('yb-f-agudo').onclick = () => moverOct(12);
   $('yb-f-menu').onclick = () => { pop.classList.remove('on'); try { pauseSong(); } catch (e) {} pararBanda(); if (datos.rol) menu(); else historia(0); };
@@ -277,7 +288,7 @@
       const S = activeSong && activeSong.__yb;
       flot.classList.toggle('on', !!S); btn2.style.display = S ? '' : 'none';
       // el botón BANDA del encabezado se ve solo si el encabezado está visible; si no, queda el de la botonera del teclado (junto a Modo Espera)
-      if (!S && tocoInstr) { try { currentInstrument = guardadoInstr; } catch (e) {} tocoInstr = false; }
+      if (!S && tocoInstr) { try { currentInstrument = guardadoInstr; if (soundOutputMode === 'midi' && midiOutputRef) midiOutputRef.send([0xC0, 0]); } catch (e) {} tocoInstr = false; }
       if (S) {
         const querida = S.modo === 'tocar' && isPlaying && !inCountdown && !isFrozenWaiting;
         if (querida) {
@@ -321,6 +332,9 @@
   }
   const vozBajo = bajoGuitarra();
   try { if (typeof INSTRUMENT_VOICES !== 'undefined') INSTRUMENT_VOICES.bajo = () => vozBajo; } catch (e) {}
+  // guitarra eléctrica: en la compu usa la guitarra de Piano Hero; en el Yamaha, la guitarra eléctrica del teclado
+  const vozGuitE = { triggerAttack(...a) { if (guitarSynth) guitarSynth.triggerAttack(...a); }, triggerRelease(...a) { if (guitarSynth) guitarSynth.triggerRelease(...a); }, triggerAttackRelease(...a) { if (guitarSynth) guitarSynth.triggerAttackRelease(...a); }, releaseAll() { if (guitarSynth) guitarSynth.releaseAll(); } };
+  try { if (typeof INSTRUMENT_VOICES !== 'undefined') INSTRUMENT_VOICES.guitarraE = () => vozGuitE; } catch (e) {}
 
   // ---------- La lista de canciones de YOUR BAND, en el panel derecho de Piano Hero ----------
   let enPanel = false;
