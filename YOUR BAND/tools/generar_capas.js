@@ -6,7 +6,7 @@ const A = process.argv.slice(2);
 const DIR_NOTAS = A[0] ? path.resolve(A[0]) : __dirname;
 const DIR_SALIDA = A[1] ? path.resolve(A[1]) : path.join(__dirname, '../canciones/quedate');
 const TITULO = A[2] || 'Quédate un poco más', ESTILO = A[3] || 'Bolero', DURACION = A[4] ? +A[4] : 147.7;
-const DESPLAZADO = A[6] === 'desplazado'; // el medio de antes pasa a fácil, y el medio nuevo queda entre ese y el difícil
+const DESPLAZADO = true; // siempre: el nivel Medio de antes pasa a Fácil y el Medio nuevo queda entre ese y el Difícil (pedido de Pablo para todas las canciones) // el medio de antes pasa a fácil, y el medio nuevo queda entre ese y el difícil
 const DENSO = A[6] === 'denso'; // fácil con más notas (para canciones donde el fácil queda muy vacío)
 const STEMS = A[5] ? A[5].split(',') : ['voz', 'bateria', 'bajo', 'guitarra', 'teclado', 'percusion'];
 const leer = f => JSON.parse(fs.readFileSync(path.join(DIR_NOTAS, f), 'utf8'));
@@ -153,4 +153,5 @@ for (const k of Object.keys(capas)) {
   }
 }
 fs.mkdirSync(DIR_SALIDA, { recursive: true });
+try { const previo = JSON.parse(fs.readFileSync(path.join(DIR_SALIDA, 'capas.json'), 'utf8')); if (previo.ganancia) salida.ganancia = previo.ganancia; } catch (e) {} // conserva la ganancia medida
 fs.writeFileSync(path.join(DIR_SALIDA, 'capas.json'), JSON.stringify(salida));

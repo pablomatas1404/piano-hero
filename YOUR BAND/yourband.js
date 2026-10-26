@@ -27,11 +27,11 @@
   // nombre corto de la combinación elegida (para guardar estrellas y el instrumento)
   const claveCapas = () => { const c = datos.capas; if (c.bajo && !c.melodia && !c.acordes) return 'bajo'; if (!c.bajo && c.melodia && c.acordes) return 'teclado'; return CAPAS.filter(([k]) => c[k]).map(([k]) => k).join('+'); };
   const nombreCapas = () => CAPAS.filter(([k]) => datos.capas[k]).map(([, n]) => n).join(' + ');
-  const INSTRS_BASE = [['piano', '🎹 Piano'], ['organo', '🎛️ Órgano'], ['guitarra', '🪕 Guitarra'], ['guitarraE', '🎸 Guitarra eléctrica']];
+  const INSTRS_BASE = [['piano', '🎹 Piano'], ['organo', '🎛️ Órgano'], ['guitarra', '🪕 Guitarra'], ['guitarraE', '🎸 Guitarra eléctrica'], ['violin', '🎻 Violín'], ['cello', '🎻 Cello'], ['flauta', '🪈 Flauta'], ['sax', '🎷 Saxo'], ['trompeta', '🎺 Trompeta'], ['vibrafono', '🔔 Vibráfono']];
   // Si el sonido va por el Yamaha (Sonido: Teclado MIDI), se le pide el instrumento con un cambio de programa (General MIDI, canal 1)
-  const PROGRAMA_YAMAHA = { bajo: 33, piano: 0, organo: 18, guitarra: 25, guitarraE: 27 };
+  const PROGRAMA_YAMAHA = { bajo: 33, piano: 0, organo: 18, guitarra: 25, guitarraE: 27, violin: 40, cello: 42, flauta: 73, sax: 65, trompeta: 56, vibrafono: 11 };
   // el bajo (guitarra más grave) solo cuando tocás SOLO el bajo
-  const instrsDisp = () => claveCapas() === 'bajo' ? [['bajo', '🎸 Bajo (guitarra grave)']].concat(INSTRS_BASE) : INSTRS_BASE;
+  const instrsDisp = () => claveCapas() === 'bajo' ? [['bajo', '🎸 Bajo (piano grave)']].concat(INSTRS_BASE) : INSTRS_BASE;
   const guardar = () => { try { localStorage.setItem(LS, JSON.stringify(datos)); } catch (e) {} };
   const totalEstrellas = () => Object.values(datos.estrellas).reduce((a, b) => a + b, 0);
   const nivelJugador = () => 1 + Math.floor(totalEstrellas() / 4);
@@ -103,12 +103,16 @@
   const btnWait = document.getElementById('btn-wait');
   const btn2 = document.createElement('button'); btn2.className = 'btn'; btn2.id = 'yb-f-abrir2'; btn2.textContent = '🎸 BANDA ▾'; btn2.style.display = 'none';
   if (btnWait) btnWait.insertAdjacentElement('beforebegin', btn2);
+  // dos controles de volumen al lado de "Aprender": la banda y lo que tocás vos
+  const btnAprender = [...document.querySelectorAll('button')].find(b => /Aprender/.test(b.textContent) && b.getAttribute('onclick') === 'openLearnHub()');
+  const vols = document.createElement('span'); vols.id = 'yb-vols'; vols.style.cssText = 'display:none;align-items:center;gap:8px;margin-left:8px;font-size:11px;color:var(--muted)';
+  vols.innerHTML = '<label title="Volumen de la banda de fondo" style="display:flex;align-items:center;gap:4px">🥁 Banda <input type="range" id="yb-t-banda" min="0" max="100" value="80" style="width:70px"></label><label title="Volumen de lo que tocás vos" style="display:flex;align-items:center;gap:4px">🎹 Yo <input type="range" id="yb-t-yo" min="0" max="100" value="80" style="width:70px"></label>';
+  if (btnAprender) btnAprender.insertAdjacentElement('afterend', vols); else if (btnWait) btnWait.insertAdjacentElement('beforebegin', vols);
   const pop = document.createElement('div'); pop.id = 'yb-pop';
   pop.innerHTML = `<button id="yb-f-menu">🎸 Misiones y estrellas</button>
     <div><div class="yb-chico" style="margin-bottom:4px">Sonido de lo que tocás</div><div class="yb-ops" id="yb-f-instr"></div></div>
     <div class="yb-ops" id="yb-f-oct" style="display:none"><div class="yb-op" id="yb-f-grave">⬇ Bajo más grave</div><div class="yb-op" id="yb-f-agudo">⬆ Bajo más agudo</div></div>
     <label title="Si los ladrillos llegan antes que la música, subilo; si llegan después, bajalo">Sincro <input type="range" id="yb-f-sync" min="-500" max="500" step="10" value="0"><span id="yb-f-syncv">0 ms</span></label>
-    <label>Volumen banda <input type="range" id="yb-f-vol" min="0" max="100" value="80"></label>
     <label id="yb-f-guial"><span>Oír mi instrumento de la banda</span><input type="checkbox" id="yb-f-guia"></label>`;
   document.body.appendChild(pop);
 
@@ -186,7 +190,8 @@
     } catch (e) {}
   }
   function dibujarOct() { const o = $('yb-f-oct'); if (o) o.style.display = (currentInstrument === 'bajo') ? 'flex' : 'none'; }
-  function moverOct(d) { datos.bajoOct2 = Math.max(-36, Math.min(12, (datos.bajoOct2 == null ? -12 : datos.bajoOct2) + d)); datos.bajoOct = datos.bajoOct2; guardar(); try { showBigToast('Bajo: ' + (datos.bajoOct2 / 12) + ' octavas respecto de la tecla'); } catch (e) {} }
+  function moverOct(d) { datos.bajoOct3 = Math.max(-36, Math.min(12, (datos.bajoOct3 == null ? -12 : datos.bajoOct3) + d)); datos.bajoOct2 = datos.bajoOct3; guardar(); try { showBigToast('Bajo: ' + (datos.bajoOct3 / 12) + ' octavas respecto de la tecla'); } catch (e) {} }
+  function idInstr() { let id = (datos.instr && datos.instr[claveCapas()]) || (claveCapas() === 'bajo' ? 'bajo' : 'piano'); if (id === 'bajo' && claveCapas() !== 'bajo') id = 'piano'; return id; }
   function dibujarInstr() {
     dibujarOct();
     let id = (datos.instr && datos.instr[claveCapas()]) || (claveCapas() === 'bajo' ? 'bajo' : 'piano');
@@ -246,8 +251,7 @@
     // menos retardo del sonido que tocás: Tone programa cada nota 0.1 s adelante por defecto
     try { if (window.Tone && Tone.context) Tone.context.lookAhead = 0.015; } catch (e) {}
     cerrar(); pop.classList.remove('on');
-    aplicarInstr();
-    try { bajoSampler(); } catch (e) {}
+    aplicarInstr(); aplicarVolYo();
     setHandsMode(s.__yb.tieneR && s.__yb.tieneL ? 'two' : s.__yb.tieneL ? 'left' : 'one', null);
     loadSong(s);
     flot.classList.add('on');
@@ -262,7 +266,10 @@
   $('yb-f-menu').onclick = () => { pop.classList.remove('on'); try { pauseSong(); } catch (e) {} pararBanda(); if (datos.rol) menu(); else historia(0); };
   $('yb-f-sync').value = datos.sync; $('yb-f-syncv').textContent = datos.sync + ' ms';
   $('yb-f-sync').oninput = () => { datos.sync = +$('yb-f-sync').value; $('yb-f-syncv').textContent = datos.sync + ' ms'; guardar(); };
-  $('yb-f-vol').oninput = () => { if (volNodo) volNodo.gain.value = $('yb-f-vol').value / 100; };
+  const factorBanda = () => ((activeSong && activeSong.__yb && activeSong.__yb.datos.capas.ganancia) || 1);
+  const aplicarVolBanda = () => { if (volNodo) volNodo.gain.value = $('yb-t-banda').value / 100 * factorBanda(); };
+  const aplicarVolYo = () => { try { const g = $('yb-t-yo').value / 80; Tone.Destination.volume.value = g <= 0 ? -80 : 20 * Math.log10(g); } catch (e) {} };
+  $('yb-t-banda').oninput = aplicarVolBanda; $('yb-t-yo').oninput = aplicarVolYo;
 
   // ---------- La banda de fondo, pegada al reloj de Piano Hero ----------
   let volNodo = null, fuentes = [], corriendo = false, iniCtx = 0, iniPos = 0, finVisto = false;
@@ -271,8 +278,12 @@
     pararBanda();
     const S = activeSong.__yb, ac = ctxAudio(), dur = S.datos.capas.duracion;
     if (p >= dur) return;
-    if (!volNodo) { volNodo = ac.createGain(); volNodo.connect(ac.destination); }
-    volNodo.gain.value = $('yb-f-vol').value / 100;
+    if (!volNodo) {
+      // un limitador suave después del volumen, para que la suma de las pistas no sature
+      const lim = ac.createDynamicsCompressor(); lim.threshold.value = -8; lim.knee.value = 6; lim.ratio.value = 12; lim.attack.value = 0.003; lim.release.value = 0.15;
+      volNodo = ac.createGain(); volNodo.connect(lim); lim.connect(ac.destination);
+    }
+    aplicarVolBanda();
     const ya = ac.currentTime + 0.05, espera = p < 0 ? (-p) / (speed || 1) : 0;
     S.datos.capas.stems.forEach(st => {
       const src = ac.createBufferSource(); src.buffer = S.datos.buffers[st]; src.playbackRate.value = speed || 1;
@@ -289,7 +300,7 @@
   function bucle() {
     try {
       const S = activeSong && activeSong.__yb;
-      flot.classList.toggle('on', !!S); btn2.style.display = S ? '' : 'none';
+      flot.classList.toggle('on', !!S); btn2.style.display = S ? '' : 'none'; vols.style.display = S ? 'inline-flex' : 'none';
       // el botón BANDA del encabezado se ve solo si el encabezado está visible; si no, queda el de la botonera del teclado (junto a Modo Espera)
       if (!S && tocoInstr) { try { currentInstrument = guardadoInstr; if (soundOutputMode === 'midi' && midiOutputRef) midiOutputRef.send([0xC0, 0]); } catch (e) {} tocoInstr = false; }
       if (S) {
@@ -324,27 +335,17 @@
 
   // ---------- Bajo = la guitarra de Piano Hero, más grave ----------
   // Se pide la misma nota pero 'oct' octavas más abajo (o arriba), así la guitarra suena como un bajo.
-  // Un sampler de guitarra aparte, pasado por un filtro que le saca los agudos "de cuerda" y le deja el cuerpo grave:
-  // suena más a bajo y menos a guitarra. Hasta que carga, se usa la guitarra común de Piano Hero.
-  let bajoSamp = null;
-  function bajoSampler() {
-    if (bajoSamp) return bajoSamp;
-    try {
-      const filtro = new Tone.Filter({ frequency: 520, type: 'lowpass', rolloff: -24, Q: 0.7 });
-      const ganancia = new Tone.Gain(2.4);
-      bajoSamp = new Tone.Sampler({ urls: { C3: 'C3.mp3', E3: 'E3.mp3', G3: 'G3.mp3', C4: 'C4.mp3' }, baseUrl: 'https://nbrosowsky.github.io/tonejs-instruments/samples/guitar-acoustic/', release: 0.35 }).chain(filtro, ganancia, Tone.Destination);
-    } catch (e) { bajoSamp = null; }
-    return bajoSamp;
-  }
+  // Bajo = el piano de Piano Hero, en las octavas graves, sin ningún efecto (suena como bajo y no satura).
+  // Pide la misma nota 'oct' octavas más abajo (por defecto 12 semitonos = una octava).
   function bajoGuitarra() {
-    const oct = () => (datos.bajoOct2 == null ? -12 : datos.bajoOct2);
+    const oct = () => (datos.bajoOct3 == null ? -12 : datos.bajoOct3);
     const mover = name => { try { return Tone.Frequency(name).transpose(oct()).toNote(); } catch (e) { return name; } };
-    const voz = () => { const b = bajoSampler(); return (b && b.loaded) ? b : guitarSynth; };
+    const v = () => (typeof piano !== 'undefined' ? piano : null);
     return {
-      triggerAttack(name, ...r) { const v = voz(); if (v) v.triggerAttack(mover(name), ...r); },
-      triggerRelease(name, ...r) { const v = voz(); if (v) v.triggerRelease(mover(name), ...r); if (guitarSynth && v !== guitarSynth) { try { guitarSynth.triggerRelease(mover(name), ...r); } catch (e) {} } },
-      triggerAttackRelease(name, ...r) { const v = voz(); if (v) v.triggerAttackRelease(mover(name), ...r); },
-      releaseAll() { if (bajoSamp) bajoSamp.releaseAll(); if (guitarSynth) guitarSynth.releaseAll(); }
+      triggerAttack(name, ...r) { const p = v(); if (p) p.triggerAttack(mover(name), ...r); },
+      triggerRelease(name, ...r) { const p = v(); if (p) p.triggerRelease(mover(name), ...r); },
+      triggerAttackRelease(name, ...r) { const p = v(); if (p) p.triggerAttackRelease(mover(name), ...r); },
+      releaseAll() { const p = v(); if (p && p.releaseAll) p.releaseAll(); }
     };
   }
   const vozBajo = bajoGuitarra();
@@ -371,6 +372,8 @@
     chips(cab, CAPAS, k => !!datos.capas[k], k => { const otras = CAPAS.filter(([q]) => q !== k && datos.capas[q]).length; if (datos.capas[k] && !otras) return; datos.capas[k] = datos.capas[k] ? 0 : 1; guardar(); renderMiLista(); });
     const t1 = document.createElement('div'); t1.textContent = 'Dificultad'; t1.style.marginBottom = '4px'; cab.appendChild(t1);
     chips(cab, nivelesVis(), k => sel.nv === k, k => { sel.nv = k; renderMiLista(); });
+    const t3 = document.createElement('div'); t3.textContent = 'Sonido de lo que tocás (el del bajo viene elegido; podés cambiarlo)'; t3.style.marginBottom = '4px'; cab.appendChild(t3);
+    chips(cab, instrsDisp(), k => idInstr() === k, k => { datos.instr[claveCapas()] = k; guardar(); if (activeSong && activeSong.__yb) aplicarInstr(); renderMiLista(); });
     const t2 = document.createElement('div'); t2.textContent = 'Cómo'; t2.style.marginBottom = '4px'; cab.appendChild(t2);
     chips(cab, [['tocar', 'Con la banda'], ['practica', 'Sin música']], k => sel.modo === k, k => { sel.modo = k; renderMiLista(); });
     if (!datos.muyfacil) { const q = document.createElement('div'); q.style.cssText = 'margin:2px 0 8px'; const bq = document.createElement('button'); bq.className = 'btn'; bq.style.cssText = 'font-size:11px;padding:5px 8px'; bq.textContent = '🐣 ¿Te cuesta el Fácil? Pedí una versión más fácil'; bq.onclick = () => { datos.muyfacil = true; sel.nv = 'muyfacil'; guardar(); renderMiLista(); }; q.appendChild(bq); cab.appendChild(q); }
