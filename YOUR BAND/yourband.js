@@ -16,6 +16,7 @@
     { id: 'somos-fuego', titulo: 'Somos Fuego', estilo: 'Rock pesado', nivelMin: 1, carpeta: CARPETA + 'canciones/somos-fuego/' },
     { id: 'somos-fuego-adam', titulo: 'Somos Fuego (feat. Adam)', estilo: 'Rock pesado, dúo', nivelMin: 1, carpeta: CARPETA + 'canciones/somos-fuego-adam/' },
     { id: 'volve-a-mi-lado', titulo: 'Volvé a mi lado', estilo: 'Balada rock', nivelMin: 1, carpeta: CARPETA + 'canciones/volve-a-mi-lado/' },
+    { id: 'nadie-nos-baja', titulo: 'Nadie Nos Baja', estilo: 'Pop con rap', nivelMin: 1, carpeta: CARPETA + 'canciones/nadie-nos-baja/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
