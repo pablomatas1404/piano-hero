@@ -33,6 +33,27 @@
   // nombre corto de la combinación elegida (para guardar estrellas y el instrumento)
   const claveCapas = () => { const c = datos.capas; if (c.bajo && !c.melodia && !c.acordes) return 'bajo'; if (!c.bajo && c.melodia && c.acordes) return 'teclado'; return CAPAS.filter(([k]) => c[k]).map(([k]) => k).join('+'); };
   const nombreCapas = () => CAPAS.filter(([k]) => datos.capas[k]).map(([, n]) => n).join(' + ');
+  // Cartel de aviso: al sumar una segunda capa (por ejemplo bajo + acordes) se pide confirmación, porque las dos
+  // van juntas a la misma mano o a las dos manos y se vuelve mucho más difícil.
+  function textoAviso(c) {
+    const b = c.bajo, m = c.melodia, a = c.acordes;
+    if (b && a && !m) return 'Estás por usar <b>BAJO y ACORDES</b> a la vez. Los dos se tocan con la <b>mano izquierda</b>, así que van a caer las notas de los dos juntas y se vuelve <b>mucho más difícil</b>.';
+    if (b && m && !a) return 'Estás por usar <b>BAJO y MELODÍA</b> a la vez: el bajo con la mano izquierda y la melodía con la derecha. Vas a tocar con <b>las dos manos</b>.';
+    if (m && a && !b) return 'Estás por usar <b>MELODÍA y ACORDES</b> a la vez: la melodía con la mano derecha y los acordes con la izquierda. Vas a tocar con <b>las dos manos</b>.';
+    return 'Estás por usar <b>BAJO, MELODÍA y ACORDES</b> a la vez. Es lo más difícil de todo: <b>las dos manos</b> y muchas notas juntas.';
+  }
+  function alternarCapa(k, despues) {
+    const ya = !!datos.capas[k], otras = CAPAS.filter(([q]) => q !== k && datos.capas[q]).length;
+    if (ya) { if (!otras) return; datos.capas[k] = 0; guardar(); despues(); return; } // apagar una capa: sin aviso
+    if (!otras) { datos.capas[k] = 1; guardar(); despues(); return; }
+    const prueba = Object.assign({}, datos.capas, { [k]: 1 });
+    const fondo = document.createElement('div');
+    fondo.style.cssText = 'position:fixed;inset:0;z-index:99995;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:20px';
+    fondo.innerHTML = '<div style="background:#1d1a2e;color:#f2efff;border:2px solid #ffb454;border-radius:18px;padding:22px 24px;max-width:420px;font-family:system-ui,sans-serif;line-height:1.5"><div style="font-size:1.1rem;margin-bottom:14px">⚠️ ' + textoAviso(prueba) + '</div><div style="color:#a9a3c9;margin-bottom:16px">¿Estás de acuerdo?</div><div style="display:flex;gap:10px;justify-content:flex-end"><button id="yb-av-no" style="font:inherit;cursor:pointer;border:0;border-radius:12px;padding:10px 18px;background:#272340;color:#f2efff;font-weight:600">No, dejar como estaba</button><button id="yb-av-si" style="font:inherit;cursor:pointer;border:0;border-radius:12px;padding:10px 18px;background:#ffb454;color:#241a00;font-weight:700">Sí, quiero las dos</button></div></div>';
+    document.body.appendChild(fondo);
+    fondo.querySelector('#yb-av-no').onclick = () => fondo.remove();
+    fondo.querySelector('#yb-av-si').onclick = () => { fondo.remove(); datos.capas[k] = 1; guardar(); despues(); };
+  }
   const INSTRS_BASE = [['piano', '🎹 Piano'], ['organo', '🎛️ Órgano'], ['guitarra', '🪕 Guitarra'], ['guitarraE', '🎸 Guitarra eléctrica'], ['violin', '🎻 Violín'], ['cello', '🎻 Cello'], ['flauta', '🪈 Flauta'], ['sax', '🎷 Saxo'], ['trompeta', '🎺 Trompeta'], ['vibrafono', '🔔 Vibráfono']];
   // Si el sonido va por el Yamaha (Sonido: Teclado MIDI), se le pide el instrumento con un cambio de programa (General MIDI, canal 1)
   const PROGRAMA_YAMAHA = { bajo: 33, piano: 0, organo: 18, guitarra: 25, guitarraE: 27, violin: 40, cello: 42, flauta: 73, sax: 65, trompeta: 56, vibrafono: 11 };
@@ -208,7 +229,7 @@
   function dibujarCapas() {
     const c = $('yb-op-capas'); c.innerHTML = '';
     CAPAS.forEach(([k, n]) => { const b = document.createElement('div'); b.className = 'yb-op' + (datos.capas[k] ? ' sel' : ''); b.textContent = n;
-      b.onclick = () => { const otras = CAPAS.filter(([q]) => q !== k && datos.capas[q]).length; if (datos.capas[k] && !otras) return; datos.capas[k] = datos.capas[k] ? 0 : 1; guardar(); $('yb-prep-s').textContent = sel.m.estilo + ' · ' + nombreCapas(); dibujarOps(); };
+      b.onclick = () => alternarCapa(k, () => { $('yb-prep-s').textContent = sel.m.estilo + ' · ' + nombreCapas(); dibujarOps(); });
       c.appendChild(b); });
   }
   function dibujarOps() {
@@ -380,7 +401,7 @@
     const cab = document.createElement('div'); cab.style.cssText = 'padding:4px 2px 8px;font-size:12px;color:var(--muted)';
     cab.innerHTML = '<div style="margin-bottom:8px"><b style="color:var(--text)">🎸 ' + esc(datos.banda) + '</b> · nivel ' + nivelJugador() + ' · <span class="yb-est">★</span> ' + totalEstrellas() + '</div><div style="margin-bottom:4px">Qué tocar</div>';
     list.appendChild(cab);
-    chips(cab, CAPAS, k => !!datos.capas[k], k => { const otras = CAPAS.filter(([q]) => q !== k && datos.capas[q]).length; if (datos.capas[k] && !otras) return; datos.capas[k] = datos.capas[k] ? 0 : 1; guardar(); renderMiLista(); });
+    chips(cab, CAPAS, k => !!datos.capas[k], k => alternarCapa(k, () => renderMiLista()));
     const t1 = document.createElement('div'); t1.textContent = 'Dificultad'; t1.style.marginBottom = '4px'; cab.appendChild(t1);
     chips(cab, nivelesVis(), k => sel.nv === k, k => { sel.nv = k; renderMiLista(); });
     const t3 = document.createElement('div'); t3.textContent = 'Sonido de lo que tocás (el del bajo viene elegido; podés cambiarlo)'; t3.style.marginBottom = '4px'; cab.appendChild(t3);
