@@ -358,14 +358,27 @@
   $('yb-f-guia').onchange = () => fuentes.forEach(s => { if (s._mio) s._g.gain.value = $('yb-f-guia').checked ? 0.4 : 0; });
 
   // Teclado más alto mientras tocás YOUR BAND (unos 3 cm más): con pocas octavas en pantalla las teclas quedaban chicas.
-  let tecladoCrecido = false;
+  let tecladoCrecido = false, altoObjetivo = 0;
+  // cuánto crece (px): bastante, porque en la tablet sobra pantalla
+  const EXTRA_TECLADO = () => (tactil ? 230 : 150);
   function crecerTeclado(si) {
     const kr = document.getElementById('normalKeysRegion'); if (!kr) return;
-    if (si && !tecladoCrecido) { kr.style.removeProperty('height'); const base = parseFloat(getComputedStyle(kr).height) || 164; kr.style.setProperty('height', (base + (tactil ? 150 : 113)) + 'px', 'important'); tecladoCrecido = true; }
-    else if (!si && tecladoCrecido) { kr.style.removeProperty('height'); tecladoCrecido = false; }
+    if (si && !tecladoCrecido) {
+      kr.style.removeProperty('height'); kr.style.removeProperty('min-height');
+      const base = parseFloat(getComputedStyle(kr).height) || 164;
+      altoObjetivo = base + EXTRA_TECLADO();
+      kr.style.setProperty('height', altoObjetivo + 'px', 'important'); kr.style.setProperty('min-height', altoObjetivo + 'px', 'important');
+      tecladoCrecido = true;
+    } else if (!si && tecladoCrecido) { kr.style.removeProperty('height'); kr.style.removeProperty('min-height'); tecladoCrecido = false; }
+    else if (si && tecladoCrecido && Math.abs(parseFloat(getComputedStyle(kr).height) - altoObjetivo) > 8) { // algo lo achicó: se vuelve a pedir
+      kr.style.setProperty('height', altoObjetivo + 'px', 'important'); kr.style.setProperty('min-height', altoObjetivo + 'px', 'important');
+    }
   }
-  window.addEventListener('resize', () => { if (tecladoCrecido) { tecladoCrecido = false; crecerTeclado(true); } });
-  window.addEventListener('orientationchange', () => setTimeout(() => { if (tecladoCrecido) { tecladoCrecido = false; crecerTeclado(true); } }, 400));
+  const reCrecer = () => { if (tecladoCrecido) { tecladoCrecido = false; crecerTeclado(true); } };
+  window.addEventListener('resize', reCrecer);
+  window.addEventListener('orientationchange', () => setTimeout(reCrecer, 400));
+  // por las dudas, se revisa cada segundo mientras hay una canción de YOUR BAND (no depende del dibujo de pantalla)
+  setInterval(() => { try { crecerTeclado(!!(activeSong && activeSong.__yb)); } catch (e) {} }, 1000);
   function bucle() {
     try {
       const S = activeSong && activeSong.__yb;
