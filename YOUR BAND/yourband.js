@@ -184,7 +184,9 @@
   // ---------- Carga de la banda (las pistas) ----------
   let AC = null;
   const cache = {};
-  function ctxAudio() { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); return AC; }
+  // Celular (pantalla chica): el audio se procesa a 24 kHz (la mitad de trabajo y de memoria que a 48 kHz) y la banda se re-sincroniza con más paciencia.
+  const celu = (() => { try { return window.matchMedia("(pointer: coarse)").matches && Math.min(screen.width, screen.height) < 600; } catch (e) { return false; } })();
+  function ctxAudio() { if (!AC) { try { AC = celu ? new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 }) : new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = new (window.AudioContext || window.webkitAudioContext)(); } } if (AC.state === 'suspended') AC.resume(); return AC; }
   // Memoria (tablet): cada canción decodificada ocupa cientos de MB. Se guarda UNA sola a la vez: al cargar otra,
   // se corta la que suena y se suelta la anterior. En pantallas táctiles las pistas se guardan en mono (la mitad de memoria).
   function liberarOtras(idActual) {
@@ -386,6 +388,7 @@
   window.addEventListener('orientationchange', () => setTimeout(reCrecer, 400));
   // por las dudas, se revisa cada segundo mientras hay una canción de YOUR BAND (no depende del dibujo de pantalla)
   setInterval(() => { try { crecerTeclado(!!(activeSong && activeSong.__yb)); } catch (e) {} }, 1000);
+  let ultResync = 0;
   function bucle() {
     try {
       const S = activeSong && activeSong.__yb;
@@ -400,7 +403,7 @@
           if (!corriendo) arrancarBanda(p);
           else {
             const real = iniPos + (AC.currentTime - iniCtx) * (speed || 1);
-            if (Math.abs(real - p) > 0.15) arrancarBanda(p);
+            if (Math.abs(real - p) > (celu ? 0.4 : 0.15) && (!celu || performance.now() - ultResync > 2000)) { ultResync = performance.now(); arrancarBanda(p); }
           }
         } else if (corriendo) pararBanda();
         // fin de la canción
