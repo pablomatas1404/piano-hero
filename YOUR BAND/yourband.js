@@ -538,6 +538,8 @@
     document.querySelectorAll('.tabs-row .tab-btn, #mainTabsRow .tab-btn').forEach(b => b.classList.remove('active'));
     if (tabBtn) tabBtn.classList.add('active');
     ['levelFilterRow', 'sideImportBlock', 'bulkDeleteMultipistaBtn', 'bulkPromoteFacilBtn'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+    // el "Rendimiento" (Aciertos / Errores) de Piano Hero ocupaba lugar arriba de las canciones: se esconde mientras estás en YOUR BAND
+    { const sc0 = document.getElementById('sidePanelContent'); const h = sc0 && sc0.querySelector('h2'); const g = sc0 && sc0.querySelector('.stat-grid'); if (h) h.style.display = 'none'; if (g) g.style.display = 'none'; }
     renderMiLista();
   }
   // (el panel solo desborda para arriba y abajo: se le oculta el desborde de costado al contenedor que scrollea)
@@ -552,6 +554,7 @@
   window.switchTab = function (tab) {
     const estabaEnPanel = enPanel;
     enPanel = false; if (tabBtn) tabBtn.classList.remove('active');
+    { const sc0 = document.getElementById('sidePanelContent'); const h = sc0 && sc0.querySelector('h2'); const g = sc0 && sc0.querySelector('.stat-grid'); if (h) h.style.display = ''; if (g) g.style.display = ''; }
     { const sc = document.getElementById('sidePanelContent'); if (sc) { sc.style.overscrollBehavior = ''; sc.style.touchAction = ''; sc.style.overflowX = ''; }
       const sp = document.getElementById('sidePanel'); if (sp) { sp.style.touchAction = ''; sp.style.overflowX = ''; }
       const sl = document.getElementById('songList'); if (sl) { sl.style.overflowX = ''; sl.style.maxWidth = ''; } }
