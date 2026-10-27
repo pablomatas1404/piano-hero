@@ -185,13 +185,31 @@
   let AC = null;
   const cache = {};
   function ctxAudio() { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); return AC; }
+  // Memoria (tablet): cada canción decodificada ocupa cientos de MB. Se guarda UNA sola a la vez: al cargar otra,
+  // se corta la que suena y se suelta la anterior. En pantallas táctiles las pistas se guardan en mono (la mitad de memoria).
+  function liberarOtras(idActual) {
+    try { if (activeSong && activeSong.__yb && activeSong.__yb.mision !== idActual) { try { pauseSong(); } catch (e) {} pararBanda(); } } catch (e) {}
+    for (const k of Object.keys(cache)) {
+      if (k === idActual) continue;
+      const o = cache[k]; if (o && o.buffers) { for (const s in o.buffers) o.buffers[s] = null; o.buffers = {}; }
+      delete cache[k];
+    }
+  }
+  const tactil = (() => { try { return window.matchMedia('(pointer: coarse)').matches; } catch (e) { return false; } })();
+  function aMono(buf) {
+    if (!tactil || buf.numberOfChannels < 2) return buf;
+    const m = ctxAudio().createBuffer(1, buf.length, buf.sampleRate), a = buf.getChannelData(0), b = buf.getChannelData(1), o = m.getChannelData(0);
+    for (let i = 0; i < o.length; i++) o[i] = (a[i] + b[i]) * 0.5;
+    return m;
+  }
   async function cargar(m, prog) {
     if (cache[m.id]) return cache[m.id];
+    liberarOtras(m.id);
     const capas = await (await fetch(m.carpeta + 'capas.json')).json();
     const buffers = {}; let n = 0;
     await Promise.all(capas.stems.map(async s => {
       const ab = await (await fetch(m.carpeta + s + '.mp3')).arrayBuffer();
-      buffers[s] = await new Promise((ok, no) => ctxAudio().decodeAudioData(ab, ok, no));
+      buffers[s] = aMono(await new Promise((ok, no) => ctxAudio().decodeAudioData(ab, ok, no)));
       prog(++n / capas.stems.length);
     }));
     return (cache[m.id] = { capas, buffers });
