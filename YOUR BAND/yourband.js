@@ -491,16 +491,30 @@
   }
   function entrarPanel() {
     enPanel = true;
-    const sc = document.getElementById('sidePanelContent'); if (sc) { sc.style.overscrollBehavior = 'contain'; sc.style.touchAction = 'pan-y'; }
+    const sc = document.getElementById('sidePanelContent'); if (sc) { sc.style.overscrollBehavior = 'contain'; sc.style.touchAction = 'pan-y'; sc.style.overflowX = 'hidden'; }
+    const sp = document.getElementById('sidePanel'); if (sp) { sp.style.touchAction = 'pan-y'; sp.style.overflowX = 'hidden'; }
+    const sl = document.getElementById('songList'); if (sl) { sl.style.overflowX = 'hidden'; sl.style.maxWidth = '100%'; }
     document.querySelectorAll('.tabs-row .tab-btn, #mainTabsRow .tab-btn').forEach(b => b.classList.remove('active'));
     if (tabBtn) tabBtn.classList.add('active');
     ['levelFilterRow', 'sideImportBlock', 'bulkDeleteMultipistaBtn', 'bulkPromoteFacilBtn'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
     renderMiLista();
   }
+  // el panel de la derecha solo sube y baja: si el dedo se mueve más para los costados que para arriba/abajo, se frena el gesto
+  (function () {
+    const sp = document.getElementById('sidePanel'); if (!sp) return;
+    let x0 = 0, y0 = 0;
+    sp.addEventListener('touchstart', e => { if (e.touches.length === 1) { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; } }, { passive: true });
+    sp.addEventListener('touchmove', e => {
+      if (!enPanel || e.touches.length !== 1) return;
+      if (Math.abs(e.touches[0].clientX - x0) > Math.abs(e.touches[0].clientY - y0)) e.preventDefault();
+    }, { passive: false });
+  })();
   const _switchTab = window.switchTab, _renderSongList = window.renderSongList;
   window.switchTab = function (tab) {
     enPanel = false; if (tabBtn) tabBtn.classList.remove('active');
-    { const sc = document.getElementById('sidePanelContent'); if (sc) { sc.style.overscrollBehavior = ''; sc.style.touchAction = ''; } }
+    { const sc = document.getElementById('sidePanelContent'); if (sc) { sc.style.overscrollBehavior = ''; sc.style.touchAction = ''; sc.style.overflowX = ''; }
+      const sp = document.getElementById('sidePanel'); if (sp) { sp.style.touchAction = ''; sp.style.overflowX = ''; }
+      const sl = document.getElementById('songList'); if (sl) { sl.style.overflowX = ''; sl.style.maxWidth = ''; } }
     if (tab === 'yourband') { _switchTab('songs'); entrarPanel(); window.ybAbrir(); return; }
     return _switchTab(tab);
   };
