@@ -300,7 +300,17 @@
   $('yb-f-sync').oninput = () => { datos.sync = +$('yb-f-sync').value; $('yb-f-syncv').textContent = datos.sync + ' ms'; guardar(); };
   const factorBanda = () => ((activeSong && activeSong.__yb && activeSong.__yb.datos.capas.ganancia) || 1);
   const aplicarVolBanda = () => { if (volNodo) volNodo.gain.value = $('yb-t-banda').value / 100 * factorBanda(); };
-  const aplicarVolYo = () => { try { const g = $('yb-t-yo').value / 80; Tone.Destination.volume.value = g <= 0 ? -80 : 20 * Math.log10(g); } catch (e) {} };
+  // Volumen de lo que tocás: se le suma/resta a cada instrumento de Piano Hero (guarda el volumen original de cada uno)
+  let ultVolYo = null, ultPianoYo = null;
+  const aplicarVolYo = () => {
+    try {
+      const g = $('yb-t-yo').value / 80, db = g <= 0 ? -60 : 20 * Math.log10(g);
+      [piano, saxSynth, trumpetSynth, vibraphoneSynth, organSynth, guitarSynth, violinSynth, fluteSynth, celloSynth].forEach(o => {
+        if (o && o.volume && typeof o.volume.value === 'number') { if (o.__ybBase === undefined) o.__ybBase = o.volume.value; o.volume.value = o.__ybBase + db; }
+      });
+      ultVolYo = $('yb-t-yo').value; ultPianoYo = piano;
+    } catch (e) {}
+  };
   $('yb-t-banda').oninput = aplicarVolBanda; $('yb-t-yo').oninput = aplicarVolYo;
 
   // ---------- La banda de fondo, pegada al reloj de Piano Hero ----------
@@ -336,6 +346,7 @@
       // el botón BANDA del encabezado se ve solo si el encabezado está visible; si no, queda el de la botonera del teclado (junto a Modo Espera)
       if (!S && tocoInstr) { try { currentInstrument = guardadoInstr; if (soundOutputMode === 'midi' && midiOutputRef) midiOutputRef.send([0xC0, 0]); } catch (e) {} tocoInstr = false; }
       if (S) {
+        if ($('yb-t-yo').value !== ultVolYo || piano !== ultPianoYo) aplicarVolYo(); // reaplica si cambió el slider o se cargó el piano real
         const querida = S.modo === 'tocar' && isPlaying && !inCountdown && !isFrozenWaiting;
         if (querida) {
           const p = playhead - 1.0 - datos.sync / 1000 + S.a;
@@ -395,24 +406,42 @@
     lista.forEach(([k, n]) => { const b = document.createElement('div'); b.className = 'yb-op' + (esSel(k) ? ' sel' : ''); b.textContent = n; b.style.cssText = 'padding:5px 10px;font-size:11px'; b.onclick = () => cb(k); d.appendChild(b); });
     cont.appendChild(d);
   }
+  let opcionesAbiertas = false;
   function renderMiLista() {
     const list = document.getElementById('songList'); if (!list) return;
     list.innerHTML = '';
-    const cab = document.createElement('div'); cab.style.cssText = 'padding:4px 2px 8px;font-size:12px;color:var(--muted)';
-    cab.innerHTML = '<div style="margin-bottom:8px"><b style="color:var(--text)">🎸 ' + esc(datos.banda) + '</b> · nivel ' + nivelJugador() + ' · <span class="yb-est">★</span> ' + totalEstrellas() + '</div><div style="margin-bottom:4px">Qué tocar</div>';
+    // Cabecera FIJA (sticky): resumen + botones siempre a la vista; las opciones se abren y cierran. Las canciones scrollean debajo.
+    const cab = document.createElement('div');
+    cab.style.cssText = 'position:sticky;top:0;z-index:5;background:var(--panel);padding:6px 2px 8px;margin:0 -2px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)';
+    const nivTxt = (nivelesVis().find(x => x[0] === sel.nv) || [0, sel.nv])[1];
+    const instrTxt = (instrsDisp().concat([['bajo', 'Bajo']]).find(x => x[0] === idInstr()) || [0, idInstr()])[1];
+    cab.innerHTML = '<div style="margin-bottom:4px"><b style="color:var(--text)">🎸 ' + esc(datos.banda) + '</b> · nivel ' + nivelJugador() + ' · <span class="yb-est">★</span> ' + totalEstrellas() + '</div>' +
+      '<div style="margin-bottom:6px;color:var(--text)">' + esc(nombreCapas()) + ' · ' + esc(nivTxt) + ' · ' + (sel.modo === 'tocar' ? 'con la banda' : 'sin música') + '<br><span style="color:var(--muted)">Sonido: ' + esc(instrTxt) + '</span></div>';
     list.appendChild(cab);
-    chips(cab, CAPAS, k => !!datos.capas[k], k => alternarCapa(k, () => renderMiLista()));
-    const t1 = document.createElement('div'); t1.textContent = 'Dificultad'; t1.style.marginBottom = '4px'; cab.appendChild(t1);
-    chips(cab, nivelesVis(), k => sel.nv === k, k => { sel.nv = k; renderMiLista(); });
-    const t3 = document.createElement('div'); t3.textContent = 'Sonido de lo que tocás (el del bajo viene elegido; podés cambiarlo)'; t3.style.marginBottom = '4px'; cab.appendChild(t3);
-    chips(cab, instrsDisp(), k => idInstr() === k, k => { datos.instr[claveCapas()] = k; guardar(); if (activeSong && activeSong.__yb) aplicarInstr(); renderMiLista(); });
-    const t2 = document.createElement('div'); t2.textContent = 'Cómo'; t2.style.marginBottom = '4px'; cab.appendChild(t2);
-    chips(cab, [['tocar', 'Con la banda'], ['practica', 'Sin música']], k => sel.modo === k, k => { sel.modo = k; renderMiLista(); });
-    if (!datos.muyfacil) { const q = document.createElement('div'); q.style.cssText = 'margin:2px 0 8px'; const bq = document.createElement('button'); bq.className = 'btn'; bq.style.cssText = 'font-size:11px;padding:5px 8px'; bq.textContent = '🐣 ¿Te cuesta el Fácil? Pedí una versión más fácil'; bq.onclick = () => { datos.muyfacil = true; sel.nv = 'muyfacil'; guardar(); renderMiLista(); }; q.appendChild(bq); cab.appendChild(q); }
-    const fila = document.createElement('div'); fila.style.cssText = 'display:flex;gap:6px;margin:4px 0 6px';
-    [['🎸 Misiones y estrellas', () => { try { pauseSong(); } catch (e) {} menu(); }], ['🖼️ Portada y nombre', () => window.ybAbrir()]].forEach(([t, f]) => { const b = document.createElement('button'); b.className = 'btn'; b.style.cssText = 'font-size:11px;padding:5px 8px'; b.textContent = t; b.onclick = f; fila.appendChild(b); });
-    cab.appendChild(fila);
-    const aviso = document.createElement('div'); aviso.style.cssText = 'font-size:11px;color:var(--muted);margin:2px 2px 8px'; aviso.textContent = 'Doble clic en una canción para tocarla.'; list.appendChild(aviso);
+    const barra = document.createElement('div'); barra.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
+    const mini = (t, f) => { const b = document.createElement('button'); b.className = 'btn'; b.style.cssText = 'font-size:11px;padding:6px 9px'; b.textContent = t; b.onclick = f; barra.appendChild(b); return b; };
+    mini(opcionesAbiertas ? '⚙ Opciones ▴' : '⚙ Opciones ▾', () => { opcionesAbiertas = !opcionesAbiertas; renderMiLista(); });
+    // el bajo se puede bajar o subir una octava: botones siempre a la vista cuando el sonido es el bajo
+    if (idInstr() === 'bajo') { mini('⬇ Bajo más grave', () => moverOct(-12)); mini('⬆ Bajo más agudo', () => moverOct(12)); }
+    cab.appendChild(barra);
+    if (opcionesAbiertas) {
+      const op = document.createElement('div'); op.style.cssText = 'margin-top:8px;max-height:48vh;overflow-y:auto;-webkit-overflow-scrolling:touch';
+      cab.appendChild(op);
+      const lbl = t => { const d = document.createElement('div'); d.textContent = t; d.style.margin = '4px 0'; op.appendChild(d); };
+      lbl('Qué tocar');
+      chips(op, CAPAS, k => !!datos.capas[k], k => alternarCapa(k, () => renderMiLista()));
+      lbl('Dificultad');
+      chips(op, nivelesVis(), k => sel.nv === k, k => { sel.nv = k; renderMiLista(); });
+      lbl('Sonido de lo que tocás (el del bajo viene elegido; podés cambiarlo)');
+      chips(op, instrsDisp(), k => idInstr() === k, k => { datos.instr[claveCapas()] = k; guardar(); if (activeSong && activeSong.__yb) aplicarInstr(); renderMiLista(); });
+      lbl('Cómo');
+      chips(op, [['tocar', 'Con la banda'], ['practica', 'Sin música']], k => sel.modo === k, k => { sel.modo = k; renderMiLista(); });
+      if (!datos.muyfacil) { const q = document.createElement('div'); q.style.cssText = 'margin:6px 0'; const bq = document.createElement('button'); bq.className = 'btn'; bq.style.cssText = 'font-size:11px;padding:5px 8px'; bq.textContent = '🐣 ¿Te cuesta el Fácil? Pedí una versión más fácil'; bq.onclick = () => { datos.muyfacil = true; sel.nv = 'muyfacil'; guardar(); renderMiLista(); }; q.appendChild(bq); op.appendChild(q); }
+      const fila = document.createElement('div'); fila.style.cssText = 'display:flex;gap:6px;margin:6px 0 2px';
+      [['🎸 Misiones y estrellas', () => { try { pauseSong(); } catch (e) {} menu(); }], ['🖼️ Portada y nombre', () => window.ybAbrir()]].forEach(([t, f]) => { const b = document.createElement('button'); b.className = 'btn'; b.style.cssText = 'font-size:11px;padding:5px 8px'; b.textContent = t; b.onclick = f; fila.appendChild(b); });
+      op.appendChild(fila);
+    }
+    const aviso = document.createElement('div'); aviso.style.cssText = 'font-size:11px;color:var(--muted);margin:2px 2px 8px'; aviso.textContent = 'Doble clic (o doble toque) en una canción para tocarla.'; list.appendChild(aviso);
     MISIONES.filter(m => !m.proximamente).forEach(m => {
       const bloq = m.nivelMin > nivelJugador();
       const card = document.createElement('div'); card.className = 'song-card' + (bloq ? ' locked' : ''); card.dataset.title = m.titulo;
