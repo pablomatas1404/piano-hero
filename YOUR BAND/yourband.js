@@ -472,33 +472,42 @@
     cab.appendChild(barra);
     const pest = document.createElement('div'); pest.style.cssText = 'display:flex;gap:6px;margin-top:8px';
     [['canciones', '🎵 Canciones'], ['opciones', '⚙ Opciones']].forEach(([k, t]) => {
-      const b = document.createElement('button'); b.className = 'btn' + (vistaPanel === k ? ' on' : ''); b.textContent = t;
-      b.style.cssText = 'flex:1;touch-action:manipulation;font-weight:700;' + (tactil ? 'font-size:15px;padding:12px 8px' : 'font-size:12px;padding:8px');
-      if (vistaPanel === k) b.style.borderColor = '#ffb454';
+      const b = document.createElement('button'); b.className = 'btn'; b.textContent = t;
+      const sel_ = vistaPanel === k;
+      b.style.cssText = 'flex:1;touch-action:manipulation;font-weight:800;border-radius:12px;border:2px solid #ffb454;' + (sel_ ? 'background:#ffb454;color:#241a00;' : 'background:#272340;color:#f2efff;') + (tactil ? 'font-size:18px;padding:14px 8px' : 'font-size:13px;padding:9px');
       b.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); setTimeout(() => { vistaPanel = k; renderMiLista(); }, 0); };
       pest.appendChild(b);
     });
-    cab.appendChild(pest);
-    if (vistaPanel === 'opciones') {
+    // (sin pestañas: opciones y canciones van juntas en una sola lista que se desliza, como al principio)
+    // volúmenes siempre a la vista, arriba del panel
+    { const vp = document.createElement('div'); vp.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;color:var(--text);font-size:' + (tactil ? '15px' : '12px');
+      const mk = (txt, idTool, idLocal) => { const l = document.createElement('label'); l.style.cssText = 'display:flex;align-items:center;gap:6px;flex:1;min-width:140px'; l.textContent = txt;
+        const r = document.createElement('input'); r.type = 'range'; r.min = 0; r.max = 100; r.id = idLocal; r.style.cssText = 'flex:1;min-width:70px'; const t = document.getElementById(idTool); r.value = t ? t.value : 80;
+        r.oninput = () => { if (t) { t.value = r.value; t.dispatchEvent(new Event('input')); } }; l.appendChild(r); vp.appendChild(l); };
+      mk('🥁 Banda', 'yb-t-banda', 'yb-p-banda'); mk('🎹 Yo', 'yb-t-yo', 'yb-p-yo'); cab.appendChild(vp); }
+    if (true) {
       const op = document.createElement('div'); op.style.cssText = 'margin-top:4px;padding:0 2px;font-size:' + (tactil ? '14px' : '12px') + ';color:var(--muted)';
       list.appendChild(op);
+      const volverArriba_ = null; const volverArriba = document.createElement('button'); volverArriba.className = 'btn'; volverArriba.textContent = '🎵 VER LAS CANCIONES';
+      volverArriba.style.cssText = 'width:100%;margin:6px 0 10px;touch-action:manipulation;font-weight:800;border-radius:12px;background:#ffb454;color:#241a00;border:0;' + (tactil ? 'font-size:18px;padding:15px' : 'font-size:13px;padding:10px');
+      volverArriba.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); setTimeout(() => { vistaPanel = 'canciones'; renderMiLista(); }, 0); };
+      // (sin botón de volver: ya no hay pestañas)
       const lbl = t => { const d = document.createElement('div'); d.textContent = t; d.style.margin = '4px 0'; op.appendChild(d); };
       lbl('Qué tocar');
       chips(op, CAPAS, k => !!datos.capas[k], k => alternarCapa(k, () => renderMiLista()));
       lbl('Dificultad');
       chips(op, nivelesVis(), k => sel.nv === k, k => { sel.nv = k; renderMiLista(); });
       lbl('Sonido de lo que tocás (el del bajo viene elegido; podés cambiarlo)');
-      chips(op, instrsDisp(), k => idInstr() === k, k => { datos.instr[claveCapas()] = k; guardar(); if (activeSong && activeSong.__yb) aplicarInstr(); renderMiLista(); });
+      { const s = document.createElement('select'); s.style.cssText = 'width:100%;margin-bottom:8px;border-radius:12px;border:2px solid #3b3660;background:#1d1a2e;color:#f2efff;font-family:inherit;touch-action:manipulation;' + (tactil ? 'font-size:17px;padding:12px' : 'font-size:13px;padding:8px');
+        instrsDisp().forEach(([k, n]) => { const o = document.createElement('option'); o.value = k; o.textContent = n; if (k === idInstr()) o.selected = true; s.appendChild(o); });
+        s.onchange = () => { datos.instr[claveCapas()] = s.value; guardar(); if (activeSong && activeSong.__yb) aplicarInstr(); renderMiLista(); };
+        op.appendChild(s); }
       lbl('Cómo');
       chips(op, [['tocar', 'Con la banda'], ['practica', 'Sin música']], k => sel.modo === k, k => { sel.modo = k; renderMiLista(); });
       if (!datos.muyfacil) { const q = document.createElement('div'); q.style.cssText = 'margin:6px 0'; const bq = document.createElement('button'); bq.className = 'btn'; bq.style.cssText = 'font-size:11px;padding:5px 8px'; bq.textContent = '🐣 ¿Te cuesta el Fácil? Pedí una versión más fácil'; bq.onclick = () => { datos.muyfacil = true; sel.nv = 'muyfacil'; guardar(); renderMiLista(); }; q.appendChild(bq); op.appendChild(q); }
       const fila = document.createElement('div'); fila.style.cssText = 'display:flex;gap:6px;margin:6px 0 2px';
       [['🎸 Misiones y estrellas', () => { try { pauseSong(); } catch (e) {} menu(); }], ['🖼️ Portada y nombre', () => window.ybAbrir()]].forEach(([t, f]) => { const b = document.createElement('button'); b.className = 'btn'; b.style.cssText = 'font-size:11px;padding:5px 8px'; b.textContent = t; b.onclick = f; fila.appendChild(b); });
       op.appendChild(fila);
-      const listo = document.createElement('button'); listo.className = 'btn'; listo.textContent = '✔ Listo, ver las canciones'; listo.style.cssText = 'width:100%;margin:10px 0;touch-action:manipulation;font-weight:700;' + (tactil ? 'font-size:15px;padding:13px' : 'font-size:12px;padding:9px');
-      listo.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); setTimeout(() => { vistaPanel = 'canciones'; renderMiLista(); }, 0); };
-      op.appendChild(listo);
-      return;
     }
     const aviso = document.createElement('div'); aviso.style.cssText = 'font-size:11px;color:var(--muted);margin:2px 2px 8px'; aviso.textContent = 'Doble clic (o doble toque) en una canción para tocarla.'; list.appendChild(aviso);
     MISIONES.filter(m => !m.proximamente).forEach(m => {
@@ -524,25 +533,14 @@
   }
   function entrarPanel() {
     enPanel = true;
-    const sc = document.getElementById('sidePanelContent'); if (sc) { sc.style.overscrollBehavior = 'contain'; sc.style.touchAction = 'pan-y'; sc.style.overflowX = 'hidden'; }
+    const sc = document.getElementById('sidePanelContent'); if (sc) { sc.style.overflowX = 'hidden'; }
     const sl = document.getElementById('songList'); if (sl) sl.style.maxWidth = '100%'; // (no se toca el overflow del panel: dejaría de deslizar)
     document.querySelectorAll('.tabs-row .tab-btn, #mainTabsRow .tab-btn').forEach(b => b.classList.remove('active'));
     if (tabBtn) tabBtn.classList.add('active');
     ['levelFilterRow', 'sideImportBlock', 'bulkDeleteMultipistaBtn', 'bulkPromoteFacilBtn'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
     renderMiLista();
   }
-  // el panel de la derecha solo sube y baja: si el dedo se mueve más para los costados que para arriba/abajo, se frena el gesto
-  (function () {
-    const sp = document.getElementById('sidePanel'); if (!sp) return;
-    let x0 = 0, y0 = 0;
-    sp.addEventListener('touchstart', e => { if (e.touches.length === 1) { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; } }, { passive: true });
-    sp.addEventListener('touchmove', e => {
-      if (!enPanel || e.touches.length !== 1) return;
-      if (Math.abs(e.touches[0].clientX - x0) > Math.abs(e.touches[0].clientY - y0)) e.preventDefault();
-    }, { passive: false });
-  })();
-  // El botón redondo ☰ ("Mostrar encabezado") de Piano Hero, además de mostrar el encabezado, destapa los controles de arriba del teclado.
-  // Mientras tocás una canción de YOUR BAND, eso no corresponde: si estaban ocultos, se vuelven a ocultar.
+  // (el panel solo desborda para arriba y abajo: se le oculta el desborde de costado al contenedor que scrollea)
   const _toggleHeader = window.toggleHeaderCollapse;
   if (typeof _toggleHeader === 'function') window.toggleHeaderCollapse = function () {
     const estabanOcultos = (typeof miniToolbarCollapsed !== 'undefined') && miniToolbarCollapsed;
