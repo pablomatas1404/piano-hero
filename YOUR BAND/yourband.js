@@ -13,6 +13,8 @@
     { id: 'mi-blues', titulo: 'Mi Blues, Mi Blues', estilo: 'Blues', nivelMin: 1, carpeta: CARPETA + 'canciones/mi-blues/' },
     { id: 'la-noche-es-nuestra', titulo: 'La Noche es Nuestra', estilo: 'Cumbia', nivelMin: 1, carpeta: CARPETA + 'canciones/la-noche-es-nuestra/' },
     { id: 'soy-yo', titulo: 'Soy Yo', estilo: 'Rock', nivelMin: 1, carpeta: CARPETA + 'canciones/soy-yo/' },
+    { id: 'somos-fuego', titulo: 'Somos Fuego', estilo: 'Rock pesado', nivelMin: 1, carpeta: CARPETA + 'canciones/somos-fuego/' },
+    { id: 'somos-fuego-adam', titulo: 'Somos Fuego (feat. Adam)', estilo: 'Rock pesado, dúo', nivelMin: 1, carpeta: CARPETA + 'canciones/somos-fuego-adam/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)

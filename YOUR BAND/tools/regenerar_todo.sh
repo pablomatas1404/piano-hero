@@ -9,3 +9,5 @@ node tools/generar_capas.js fuentes/mueve-el-cuerpo canciones/mueve-el-cuerpo "M
 node tools/generar_capas.js fuentes/mi-blues canciones/mi-blues "Mi Blues, Mi Blues" "Blues" 236.4 "voz,coros,bateria,bajo,guitarra,teclado,percusion" denso
 node tools/generar_capas.js fuentes/la-noche-es-nuestra canciones/la-noche-es-nuestra "La Noche es Nuestra" "Cumbia" 162 "voz,coros,metales,bateria,bajo,guitarra,teclado,percusion,cuerdas,sintetizador,otros"
 node tools/generar_capas.js fuentes/soy-yo canciones/soy-yo "Soy Yo" "Rock" 136 "voz,coros,maderas,bateria,bajo,guitarra,teclado,percusion,sintetizador,otros,metales" cuantizar
+node tools/generar_capas.js fuentes/somos-fuego canciones/somos-fuego "Somos Fuego" "Rock pesado" 150 "voz,coros,bateria,bajo,guitarra,sintetizador,otros"
+node tools/generar_capas.js fuentes/somos-fuego-adam canciones/somos-fuego-adam "Somos Fuego (feat. Adam)" "Rock pesado, dúo" 154 "voz,coros,bateria,bajo,guitarra,teclado,percusion,sintetizador,otros"

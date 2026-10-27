@@ -9,3 +9,12 @@
 - Salida de sonido por el Yamaha/mixer; versión de baja latencia (Godot) a futuro.
 - Reintentar la canción pop con voz de mujer (Take Me Down This Road salió rock/pop con otra voz).
 - Canción de salsa tranquila con la misma voz de la chica (Persona de Suno).
+
+## Para la próxima sesión (anotado 2026-10-26, noche)
+- Probar y afinar según el reporte de Pablo: acordes Fácil (ahora solo la base grave al cambiar el acorde), Teclado con las dos manos, final de cada canción (sin cola de silencio), sliders Banda/Yo.
+- Cuantizar al ritmo otras canciones si Pablo lo pide (herramienta lista: `tools/ritmo.js` + opción `cuantizar`; ya está en Soy Yo).
+- Salida de sonido por el Yamaha / mixer (el Yamaha no sirve de salida de audio por USB, solo MIDI; ver si aparece como dispositivo de sonido en Windows).
+- Volver a la presentación: sumar un hombre barbudo a la portada.
+- Salsa tranquila con la misma voz de la chica (Persona de Suno) y la canción pop con voz de mujer que salió rock.
+- Capa Metales, remix/modo show, subir a Spotify, versión de baja latencia (Godot) si el retardo sigue.
+- Dar forma "profesional" a YOUR BAND: pulir pantallas, sonidos, portada, tutorial.
