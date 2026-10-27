@@ -360,7 +360,7 @@
   // Teclado más alto mientras tocás YOUR BAND (unos 3 cm más): con pocas octavas en pantalla las teclas quedaban chicas.
   let tecladoCrecido = false, altoObjetivo = 0;
   // cuánto crece (px): bastante, porque en la tablet sobra pantalla
-  const EXTRA_TECLADO = () => (tactil ? 230 : 150);
+  const EXTRA_TECLADO = () => (tactil ? 130 : 150);
   function crecerTeclado(si) {
     const kr = document.getElementById('normalKeysRegion'); if (!kr) return;
     if (si && !tecladoCrecido) {
