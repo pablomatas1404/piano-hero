@@ -366,11 +366,18 @@
     if (si && !tecladoCrecido) {
       kr.style.removeProperty('height'); kr.style.removeProperty('min-height');
       const base = parseFloat(getComputedStyle(kr).height) || 164;
-      altoObjetivo = base + EXTRA_TECLADO();
+      // sin pantalla completa hay menos alto: el teclado solo puede crecer hasta la mitad del espacio que comparte con la cascada
+      let tope = Infinity;
+      try {
+        const p = kr.parentElement, cv = document.getElementById('cascade') || document.querySelector('canvas'); let otros = 0;
+        for (const ch of p.children) { if (ch === kr || (cv && ch.contains(cv))) continue; const cs = getComputedStyle(ch); if (cs.display === 'none' || cs.position === 'absolute' || cs.position === 'fixed') continue; otros += ch.getBoundingClientRect().height; }
+        const disponible = p.clientHeight - otros; if (disponible > 200) tope = Math.floor(disponible * 0.5);
+      } catch (e) {}
+      altoObjetivo = Math.max(base, Math.min(base + EXTRA_TECLADO(), tope));
       kr.style.setProperty('height', altoObjetivo + 'px', 'important'); kr.style.setProperty('min-height', altoObjetivo + 'px', 'important');
       tecladoCrecido = true;
     } else if (!si && tecladoCrecido) { kr.style.removeProperty('height'); kr.style.removeProperty('min-height'); tecladoCrecido = false; }
-    else if (si && tecladoCrecido && Math.abs(parseFloat(getComputedStyle(kr).height) - altoObjetivo) > 8) { // algo lo achicó: se vuelve a pedir
+    else if (si && tecladoCrecido && Math.abs(kr.getBoundingClientRect().height - altoObjetivo) > 8) { // algo lo achicó: se vuelve a pedir
       kr.style.setProperty('height', altoObjetivo + 'px', 'important'); kr.style.setProperty('min-height', altoObjetivo + 'px', 'important');
     }
   }
@@ -446,7 +453,7 @@
     lista.forEach(([k, n]) => { const b = document.createElement('div'); b.className = 'yb-op' + (esSel(k) ? ' sel' : ''); b.textContent = n; b.style.cssText = (tactil ? 'padding:9px 13px;font-size:14px' : 'padding:5px 10px;font-size:11px') + ';touch-action:manipulation'; b.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); setTimeout(() => cb(k), 0); }; d.appendChild(b); });
     cont.appendChild(d);
   }
-  let opcionesAbiertas = true; // Pablo prefiere verlas siempre abiertas
+  let vistaPanel = 'canciones'; // el panel tiene dos vistas: las canciones o las opciones (una por vez, así no hay que scrollear)
   function renderMiLista() {
     const list = document.getElementById('songList'); if (!list) return;
     list.innerHTML = '';
@@ -463,9 +470,18 @@
     // el bajo se puede bajar o subir una octava: botones siempre a la vista cuando el sonido es el bajo
     if (idInstr() === 'bajo') { mini('⬇ Bajo más grave', () => moverOct(-12)); mini('⬆ Bajo más agudo', () => moverOct(12)); }
     cab.appendChild(barra);
-    if (opcionesAbiertas) {
-      const op = document.createElement('div'); op.style.cssText = 'margin-top:8px';
-      cab.appendChild(op);
+    const pest = document.createElement('div'); pest.style.cssText = 'display:flex;gap:6px;margin-top:8px';
+    [['canciones', '🎵 Canciones'], ['opciones', '⚙ Opciones']].forEach(([k, t]) => {
+      const b = document.createElement('button'); b.className = 'btn' + (vistaPanel === k ? ' on' : ''); b.textContent = t;
+      b.style.cssText = 'flex:1;touch-action:manipulation;font-weight:700;' + (tactil ? 'font-size:15px;padding:12px 8px' : 'font-size:12px;padding:8px');
+      if (vistaPanel === k) b.style.borderColor = '#ffb454';
+      b.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); setTimeout(() => { vistaPanel = k; renderMiLista(); }, 0); };
+      pest.appendChild(b);
+    });
+    cab.appendChild(pest);
+    if (vistaPanel === 'opciones') {
+      const op = document.createElement('div'); op.style.cssText = 'margin-top:4px;padding:0 2px;font-size:' + (tactil ? '14px' : '12px') + ';color:var(--muted)';
+      list.appendChild(op);
       const lbl = t => { const d = document.createElement('div'); d.textContent = t; d.style.margin = '4px 0'; op.appendChild(d); };
       lbl('Qué tocar');
       chips(op, CAPAS, k => !!datos.capas[k], k => alternarCapa(k, () => renderMiLista()));
@@ -479,6 +495,10 @@
       const fila = document.createElement('div'); fila.style.cssText = 'display:flex;gap:6px;margin:6px 0 2px';
       [['🎸 Misiones y estrellas', () => { try { pauseSong(); } catch (e) {} menu(); }], ['🖼️ Portada y nombre', () => window.ybAbrir()]].forEach(([t, f]) => { const b = document.createElement('button'); b.className = 'btn'; b.style.cssText = 'font-size:11px;padding:5px 8px'; b.textContent = t; b.onclick = f; fila.appendChild(b); });
       op.appendChild(fila);
+      const listo = document.createElement('button'); listo.className = 'btn'; listo.textContent = '✔ Listo, ver las canciones'; listo.style.cssText = 'width:100%;margin:10px 0;touch-action:manipulation;font-weight:700;' + (tactil ? 'font-size:15px;padding:13px' : 'font-size:12px;padding:9px');
+      listo.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); setTimeout(() => { vistaPanel = 'canciones'; renderMiLista(); }, 0); };
+      op.appendChild(listo);
+      return;
     }
     const aviso = document.createElement('div'); aviso.style.cssText = 'font-size:11px;color:var(--muted);margin:2px 2px 8px'; aviso.textContent = 'Doble clic (o doble toque) en una canción para tocarla.'; list.appendChild(aviso);
     MISIONES.filter(m => !m.proximamente).forEach(m => {
@@ -505,8 +525,7 @@
   function entrarPanel() {
     enPanel = true;
     const sc = document.getElementById('sidePanelContent'); if (sc) { sc.style.overscrollBehavior = 'contain'; sc.style.touchAction = 'pan-y'; sc.style.overflowX = 'hidden'; }
-    const sp = document.getElementById('sidePanel'); if (sp) { sp.style.touchAction = 'pan-y'; sp.style.overflowX = 'hidden'; }
-    const sl = document.getElementById('songList'); if (sl) { sl.style.overflowX = 'hidden'; sl.style.maxWidth = '100%'; }
+    const sl = document.getElementById('songList'); if (sl) sl.style.maxWidth = '100%'; // (no se toca el overflow del panel: dejaría de deslizar)
     document.querySelectorAll('.tabs-row .tab-btn, #mainTabsRow .tab-btn').forEach(b => b.classList.remove('active'));
     if (tabBtn) tabBtn.classList.add('active');
     ['levelFilterRow', 'sideImportBlock', 'bulkDeleteMultipistaBtn', 'bulkPromoteFacilBtn'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
@@ -533,11 +552,12 @@
   };
   const _switchTab = window.switchTab, _renderSongList = window.renderSongList;
   window.switchTab = function (tab) {
+    const estabaEnPanel = enPanel;
     enPanel = false; if (tabBtn) tabBtn.classList.remove('active');
     { const sc = document.getElementById('sidePanelContent'); if (sc) { sc.style.overscrollBehavior = ''; sc.style.touchAction = ''; sc.style.overflowX = ''; }
       const sp = document.getElementById('sidePanel'); if (sp) { sp.style.touchAction = ''; sp.style.overflowX = ''; }
       const sl = document.getElementById('songList'); if (sl) { sl.style.overflowX = ''; sl.style.maxWidth = ''; } }
-    if (tab === 'yourband') { _switchTab('songs'); entrarPanel(); window.ybAbrir(); return; }
+    if (tab === 'yourband') { const yaAdentro = estabaEnPanel; _switchTab('songs'); entrarPanel(); if (!yaAdentro) window.ybAbrir(); return; }
     return _switchTab(tab);
   };
   window.renderSongList = function () { if (enPanel) return renderMiLista(); return _renderSongList.apply(this, arguments); };
