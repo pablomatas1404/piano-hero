@@ -14007,7 +14007,7 @@ function frameInner(ts) {
       // nota (0.04s de margen nada más, el mínimo para que no se escape por un cuadro de animación
       // de más) — tocás cuando ves la nota EN la línea, no antes.
       // YOUR BAND: margen de error -- no frena la música hasta que la nota lleva 0.22s de atraso (ver yourband.js)
-      if (critical && (critical.time - playhead) <= 0.04 - ((activeSong && activeSong.__yb) ? 0.22 : 0)) { frozen = true; waitingNote = critical; }
+      if (critical && (critical.time - playhead) <= 0.04 - ((activeSong && activeSong.__yb) ? 0.45 : 0)) { frozen = true; waitingNote = critical; }
     }
     isFrozenWaiting = frozen; // para el gesto de "doble clic con negras" (ver registerBlackKeyGesture)
     const prevPlayhead = playhead;
@@ -14104,7 +14104,7 @@ function frameInner(ts) {
     for (let __mi = __missIdxStart; __mi < __missIdxEnd; __mi++) {
       const n = fallingNotes[__mi];
       const dtToHit = n.time - playhead;
-      if (!previewMode && !n.hit && !n.missed && dtToHit < -0.3) { n.missed = true; scoreMisses++; document.getElementById('missCount').textContent = scoreMisses; document.getElementById('headerMissCount').textContent = scoreMisses; if (isPlayerNote(n)) { registerComboBreak(); playErrorBuzz(); } }
+      if (!previewMode && !n.hit && !n.missed && dtToHit < -((activeSong && activeSong.__yb) ? 0.65 : 0.3)) { n.missed = true; scoreMisses++; document.getElementById('missCount').textContent = scoreMisses; document.getElementById('headerMissCount').textContent = scoreMisses; if (isPlayerNote(n)) { registerComboBreak(); playErrorBuzz(); } }
       if (!n.hit && !n.missed && isPlayerNote(n) && dtToHit >= -0.05 && dtToHit <= GLOW_LOOKAHEAD) {
         newGlow.add(n.midi);
         if (!newGlowFirstTime.has(n.midi) || n.time < newGlowFirstTime.get(n.midi)) newGlowFirstTime.set(n.midi, n.time);
@@ -15077,6 +15077,6 @@ requestAnimationFrame(frame);
 })();
 </script>
 <script>/* yb-autoactualizar: si esta pagina quedo guardada vieja en la tablet, se recarga sola con la version nueva */document.addEventListener("DOMContentLoaded",function(){try{var s=[].slice.call(document.scripts).filter(function(x){return /yourband\.js\?v=/.test(x.src)})[0];if(!s)return;var mine=(s.src.match(/v=([0-9a-z]+)/)||[])[1];fetch("YOUR BAND/version.txt?x="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){t=t.trim();if(t&&t!==mine&&!sessionStorage.getItem("yb_rec_"+t)){sessionStorage.setItem("yb_rec_"+t,"1");location.replace(location.pathname+"?v="+t);}}).catch(function(){});}catch(e){}});</script>
-<script src="YOUR BAND/yourband.js?v=20261027001905"></script>
+<script src="YOUR BAND/yourband.js?v=20261027010542"></script>
 </body>
 </html>
