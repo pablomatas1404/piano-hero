@@ -173,6 +173,13 @@ const capas = {
     profesional: separar(nivelAcordes(3, 0.2, 0.4))
   }
 };
+// Opción 'tranqui': para una canción donde el Fácil sale pesado, el Fácil pasa a ser lo que antes era "Muy fácil"
+// y el "Muy fácil" nuevo queda todavía más espaciado.
+if (A.includes('tranqui')) {
+  capas.bajo.facil = capas.bajo.muyfacil; capas.bajo.muyfacil = separar(ralear(bajo, 0.7, 2.0));
+  capas.melodia.facil = capas.melodia.muyfacil; capas.melodia.muyfacil = separar(ralear(voz, 0.6, 1.6));
+  capas.acordes.facil = capas.acordes.muyfacil; capas.acordes.muyfacil = separar(nivelRaiz(6, 12));
+}
 // Fin real de la música: cuando la mezcla cae por debajo del 25% de su volumen normal (el "fade out" ya no se oye).
 // Las notas que Basic Pitch inventa en esa cola quedan afuera, así no caen ladrillos con la canción ya terminada.
 let FIN = DURACION;
