@@ -522,6 +522,15 @@
       if (Math.abs(e.touches[0].clientX - x0) > Math.abs(e.touches[0].clientY - y0)) e.preventDefault();
     }, { passive: false });
   })();
+  // El botón redondo ☰ ("Mostrar encabezado") de Piano Hero, además de mostrar el encabezado, destapa los controles de arriba del teclado.
+  // Mientras tocás una canción de YOUR BAND, eso no corresponde: si estaban ocultos, se vuelven a ocultar.
+  const _toggleHeader = window.toggleHeaderCollapse;
+  if (typeof _toggleHeader === 'function') window.toggleHeaderCollapse = function () {
+    const estabanOcultos = (typeof miniToolbarCollapsed !== 'undefined') && miniToolbarCollapsed;
+    const r = _toggleHeader.apply(this, arguments);
+    try { if (activeSong && activeSong.__yb && estabanOcultos && !miniToolbarCollapsed) toggleMiniToolbarCollapse(document.getElementById('miniToolbarCollapseBtn')); } catch (e) {}
+    return r;
+  };
   const _switchTab = window.switchTab, _renderSongList = window.renderSongList;
   window.switchTab = function (tab) {
     enPanel = false; if (tabBtn) tabBtn.classList.remove('active');
