@@ -430,29 +430,28 @@
   function fmtDur(s) { return Math.floor(s / 60) + ':' + String(Math.round(s % 60)).padStart(2, '0'); }
   function chips(cont, lista, esSel, cb) {
     const d = document.createElement('div'); d.className = 'yb-ops'; d.style.cssText = 'justify-content:flex-start;margin-bottom:6px';
-    lista.forEach(([k, n]) => { const b = document.createElement('div'); b.className = 'yb-op' + (esSel(k) ? ' sel' : ''); b.textContent = n; b.style.cssText = 'padding:5px 10px;font-size:11px;touch-action:manipulation'; b.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); setTimeout(() => cb(k), 0); }; d.appendChild(b); });
+    lista.forEach(([k, n]) => { const b = document.createElement('div'); b.className = 'yb-op' + (esSel(k) ? ' sel' : ''); b.textContent = n; b.style.cssText = (tactil ? 'padding:9px 13px;font-size:14px' : 'padding:5px 10px;font-size:11px') + ';touch-action:manipulation'; b.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); setTimeout(() => cb(k), 0); }; d.appendChild(b); });
     cont.appendChild(d);
   }
-  let opcionesAbiertas = false;
+  let opcionesAbiertas = true; // Pablo prefiere verlas siempre abiertas
   function renderMiLista() {
     const list = document.getElementById('songList'); if (!list) return;
     list.innerHTML = '';
     // Cabecera FIJA (sticky): resumen + botones siempre a la vista; las opciones se abren y cierran. Las canciones scrollean debajo.
     const cab = document.createElement('div');
-    cab.style.cssText = 'position:sticky;top:0;z-index:5;background:var(--panel);padding:6px 2px 8px;margin:0 -2px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)';
+    cab.style.cssText = 'padding:4px 2px 8px;font-size:' + (tactil ? '14px' : '12px') + ';color:var(--muted)';
     const nivTxt = (nivelesVis().find(x => x[0] === sel.nv) || [0, sel.nv])[1];
     const instrTxt = (instrsDisp().concat([['bajo', 'Bajo']]).find(x => x[0] === idInstr()) || [0, idInstr()])[1];
     cab.innerHTML = '<div style="margin-bottom:4px"><b style="color:var(--text)">🎸 ' + esc(datos.banda) + '</b> · nivel ' + nivelJugador() + ' · <span class="yb-est">★</span> ' + totalEstrellas() + '</div>' +
       '<div style="margin-bottom:6px;color:var(--text)">' + esc(nombreCapas()) + ' · ' + esc(nivTxt) + ' · ' + (sel.modo === 'tocar' ? 'con la banda' : 'sin música') + '<br><span style="color:var(--muted)">Sonido: ' + esc(instrTxt) + '</span></div>';
     list.appendChild(cab);
     const barra = document.createElement('div'); barra.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
-    const mini = (t, f) => { const b = document.createElement('button'); b.className = 'btn'; b.style.cssText = 'font-size:11px;padding:6px 9px;touch-action:manipulation'; b.textContent = t; b.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); setTimeout(f, 0); }; barra.appendChild(b); return b; };
-    mini(opcionesAbiertas ? '⚙ Opciones ▴' : '⚙ Opciones ▾', () => { opcionesAbiertas = !opcionesAbiertas; renderMiLista(); });
+    const mini = (t, f) => { const b = document.createElement('button'); b.className = 'btn'; b.style.cssText = (tactil ? 'font-size:14px;padding:10px 13px' : 'font-size:11px;padding:6px 9px') + ';touch-action:manipulation'; b.textContent = t; b.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); setTimeout(f, 0); }; barra.appendChild(b); return b; };
     // el bajo se puede bajar o subir una octava: botones siempre a la vista cuando el sonido es el bajo
     if (idInstr() === 'bajo') { mini('⬇ Bajo más grave', () => moverOct(-12)); mini('⬆ Bajo más agudo', () => moverOct(12)); }
     cab.appendChild(barra);
     if (opcionesAbiertas) {
-      const op = document.createElement('div'); op.style.cssText = 'margin-top:8px;max-height:48vh;overflow-y:auto;-webkit-overflow-scrolling:touch';
+      const op = document.createElement('div'); op.style.cssText = 'margin-top:8px';
       cab.appendChild(op);
       const lbl = t => { const d = document.createElement('div'); d.textContent = t; d.style.margin = '4px 0'; op.appendChild(d); };
       lbl('Qué tocar');
@@ -492,6 +491,7 @@
   }
   function entrarPanel() {
     enPanel = true;
+    const sc = document.getElementById('sidePanelContent'); if (sc) { sc.style.overscrollBehavior = 'contain'; sc.style.touchAction = 'pan-y'; }
     document.querySelectorAll('.tabs-row .tab-btn, #mainTabsRow .tab-btn').forEach(b => b.classList.remove('active'));
     if (tabBtn) tabBtn.classList.add('active');
     ['levelFilterRow', 'sideImportBlock', 'bulkDeleteMultipistaBtn', 'bulkPromoteFacilBtn'].forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
@@ -500,6 +500,7 @@
   const _switchTab = window.switchTab, _renderSongList = window.renderSongList;
   window.switchTab = function (tab) {
     enPanel = false; if (tabBtn) tabBtn.classList.remove('active');
+    { const sc = document.getElementById('sidePanelContent'); if (sc) { sc.style.overscrollBehavior = ''; sc.style.touchAction = ''; } }
     if (tab === 'yourband') { _switchTab('songs'); entrarPanel(); window.ybAbrir(); return; }
     return _switchTab(tab);
   };
