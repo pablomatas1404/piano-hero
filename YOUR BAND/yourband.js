@@ -357,10 +357,19 @@
   }
   $('yb-f-guia').onchange = () => fuentes.forEach(s => { if (s._mio) s._g.gain.value = $('yb-f-guia').checked ? 0.4 : 0; });
 
+  // Teclado más alto mientras tocás YOUR BAND (unos 3 cm más): con pocas octavas en pantalla las teclas quedaban chicas.
+  let tecladoCrecido = false;
+  function crecerTeclado(si) {
+    const kr = document.getElementById('normalKeysRegion'); if (!kr) return;
+    if (si && !tecladoCrecido) { kr.style.removeProperty('height'); const base = parseFloat(getComputedStyle(kr).height) || 164; kr.style.setProperty('height', (base + (tactil ? 150 : 113)) + 'px', 'important'); tecladoCrecido = true; }
+    else if (!si && tecladoCrecido) { kr.style.removeProperty('height'); tecladoCrecido = false; }
+  }
+  window.addEventListener('resize', () => { if (tecladoCrecido) { tecladoCrecido = false; crecerTeclado(true); } });
+  window.addEventListener('orientationchange', () => setTimeout(() => { if (tecladoCrecido) { tecladoCrecido = false; crecerTeclado(true); } }, 400));
   function bucle() {
     try {
       const S = activeSong && activeSong.__yb;
-      flot.classList.toggle('on', !!S); btn2.style.display = S ? '' : 'none'; vols.style.display = S ? 'inline-flex' : 'none';
+      crecerTeclado(!!S); flot.classList.toggle('on', !!S); btn2.style.display = S ? '' : 'none'; vols.style.display = S ? 'inline-flex' : 'none';
       // el botón BANDA del encabezado se ve solo si el encabezado está visible; si no, queda el de la botonera del teclado (junto a Modo Espera)
       if (!S && tocoInstr) { try { currentInstrument = guardadoInstr; if (soundOutputMode === 'midi' && midiOutputRef) midiOutputRef.send([0xC0, 0]); } catch (e) {} tocoInstr = false; }
       if (S) {
@@ -421,7 +430,7 @@
   function fmtDur(s) { return Math.floor(s / 60) + ':' + String(Math.round(s % 60)).padStart(2, '0'); }
   function chips(cont, lista, esSel, cb) {
     const d = document.createElement('div'); d.className = 'yb-ops'; d.style.cssText = 'justify-content:flex-start;margin-bottom:6px';
-    lista.forEach(([k, n]) => { const b = document.createElement('div'); b.className = 'yb-op' + (esSel(k) ? ' sel' : ''); b.textContent = n; b.style.cssText = 'padding:5px 10px;font-size:11px'; b.onclick = () => cb(k); d.appendChild(b); });
+    lista.forEach(([k, n]) => { const b = document.createElement('div'); b.className = 'yb-op' + (esSel(k) ? ' sel' : ''); b.textContent = n; b.style.cssText = 'padding:5px 10px;font-size:11px;touch-action:manipulation'; b.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); setTimeout(() => cb(k), 0); }; d.appendChild(b); });
     cont.appendChild(d);
   }
   let opcionesAbiertas = false;
@@ -437,7 +446,7 @@
       '<div style="margin-bottom:6px;color:var(--text)">' + esc(nombreCapas()) + ' · ' + esc(nivTxt) + ' · ' + (sel.modo === 'tocar' ? 'con la banda' : 'sin música') + '<br><span style="color:var(--muted)">Sonido: ' + esc(instrTxt) + '</span></div>';
     list.appendChild(cab);
     const barra = document.createElement('div'); barra.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
-    const mini = (t, f) => { const b = document.createElement('button'); b.className = 'btn'; b.style.cssText = 'font-size:11px;padding:6px 9px'; b.textContent = t; b.onclick = f; barra.appendChild(b); return b; };
+    const mini = (t, f) => { const b = document.createElement('button'); b.className = 'btn'; b.style.cssText = 'font-size:11px;padding:6px 9px;touch-action:manipulation'; b.textContent = t; b.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); setTimeout(f, 0); }; barra.appendChild(b); return b; };
     mini(opcionesAbiertas ? '⚙ Opciones ▴' : '⚙ Opciones ▾', () => { opcionesAbiertas = !opcionesAbiertas; renderMiLista(); });
     // el bajo se puede bajar o subir una octava: botones siempre a la vista cuando el sonido es el bajo
     if (idInstr() === 'bajo') { mini('⬇ Bajo más grave', () => moverOct(-12)); mini('⬆ Bajo más agudo', () => moverOct(12)); }
