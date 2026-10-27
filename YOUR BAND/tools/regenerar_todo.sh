@@ -14,3 +14,4 @@ node tools/generar_capas.js fuentes/somos-fuego-adam canciones/somos-fuego-adam 
 node tools/generar_capas.js fuentes/volve-a-mi-lado canciones/volve-a-mi-lado "Volvé a mi lado" "Balada rock" 200 "voz,bateria,bajo,guitarra,teclado,percusion,cuerdas,sintetizador" tranqui
 node tools/generar_capas.js fuentes/nadie-nos-baja canciones/nadie-nos-baja "Nadie Nos Baja" "Pop con rap" 89.2 "voz,coros,bateria,bajo,guitarra,teclado,percusion,cuerdas,sintetizador"
 node tools/generar_capas.js fuentes/mi-buenos-aires canciones/mi-buenos-aires "Mi Buenos Aires" "Tango" 201.8 "voz,coros,bajo,guitarra,teclado,cuerdas,sintetizador,metales,maderas"
+node tools/generar_capas.js fuentes/quedate-conmigo canciones/quedate-conmigo "Quédate conmigo" "Balada lenta" 232 "voz,coros,bateria,bajo,guitarra,teclado,percusion,sintetizador"
