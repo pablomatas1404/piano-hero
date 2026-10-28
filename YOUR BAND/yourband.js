@@ -138,7 +138,7 @@
   // dos controles de volumen al lado de "Aprender": la banda y lo que tocás vos
   const btnAprender = [...document.querySelectorAll('button')].find(b => /Aprender/.test(b.textContent) && b.getAttribute('onclick') === 'openLearnHub()');
   const vols = document.createElement('span'); vols.id = 'yb-vols'; vols.style.cssText = 'display:none;align-items:center;gap:8px;margin-left:8px;font-size:11px;color:var(--muted)';
-  vols.innerHTML = '<label title="Volumen de la banda de fondo" style="display:flex;align-items:center;gap:4px">🥁 Banda <input type="range" id="yb-t-banda" min="0" max="100" value="80" style="width:70px"></label><label title="Volumen de lo que tocás vos" style="display:flex;align-items:center;gap:4px">🎹 Yo <input type="range" id="yb-t-yo" min="0" max="100" value="80" style="width:70px"></label><label title="Cuánto más arriba caen los ladrillos (se corrige por canción)" style="display:flex;align-items:center;gap:4px">🧱 Ladrillos <input type="range" id="yb-t-lad" min="0" max="60" value="20" style="width:70px"> <span id="yb-t-lad-v" style="min-width:30px">0.20</span></label>';
+  vols.innerHTML = '<label title="Volumen de la banda de fondo" style="display:flex;align-items:center;gap:4px">🥁 Banda <input type="range" id="yb-t-banda" min="0" max="100" value="80" style="width:70px"></label><label title="Volumen de lo que tocás vos" style="display:flex;align-items:center;gap:4px">🎹 Yo <input type="range" id="yb-t-yo" min="0" max="100" value="80" style="width:70px"></label><label title="Cuánto más arriba caen los ladrillos (se corrige por canción)" style="display:flex;align-items:center;gap:4px">🧱 Ladrillos <input type="range" id="yb-t-lad" min="-100" max="250" value="20" style="width:70px"> <span id="yb-t-lad-v" style="min-width:30px">0.20</span></label>';
   if (btnAprender) btnAprender.insertAdjacentElement('afterend', vols); else if (btnWait) btnWait.insertAdjacentElement('beforebegin', vols);
   const pop = document.createElement('div'); pop.id = 'yb-pop';
   pop.innerHTML = `<button id="yb-f-menu">🎸 Misiones y estrellas</button>
@@ -494,10 +494,10 @@
     // (sin pestañas: opciones y canciones van juntas en una sola lista que se desliza, como al principio)
     // volúmenes siempre a la vista, arriba del panel
     { const vp = document.createElement('div'); vp.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;color:var(--text);font-size:' + (tactil ? '15px' : '12px');
-      const mk = (txt, idTool, idLocal, mx) => { const l = document.createElement('label'); l.style.cssText = 'display:flex;align-items:center;gap:6px;flex:1;min-width:140px'; l.textContent = txt;
-        const r = document.createElement('input'); r.type = 'range'; r.min = 0; r.max = mx || 100; r.id = idLocal; r.style.cssText = 'flex:1;min-width:70px'; const t = document.getElementById(idTool); r.value = t ? t.value : 80;
+      const mk = (txt, idTool, idLocal, mx, mn) => { const l = document.createElement('label'); l.style.cssText = 'display:flex;align-items:center;gap:6px;flex:1;min-width:140px'; l.textContent = txt;
+        const r = document.createElement('input'); r.type = 'range'; r.min = mn != null ? mn : 0; r.max = mx || 100; r.id = idLocal; r.style.cssText = 'flex:1;min-width:70px'; const t = document.getElementById(idTool); r.value = t ? t.value : 80;
         r.oninput = () => { if (t) { t.value = r.value; t.dispatchEvent(new Event('input')); } }; l.appendChild(r); vp.appendChild(l); };
-      mk('🥁 Banda', 'yb-t-banda', 'yb-p-banda'); mk('🎹 Yo', 'yb-t-yo', 'yb-p-yo'); mk('🧱 Ladrillos', 'yb-t-lad', 'yb-p-lad', 60); cab.appendChild(vp); }
+      mk('🥁 Banda', 'yb-t-banda', 'yb-p-banda'); mk('🎹 Yo', 'yb-t-yo', 'yb-p-yo'); mk('🧱 Ladrillos', 'yb-t-lad', 'yb-p-lad', 250, -100); cab.appendChild(vp); }
     if (true) {
       const op = document.createElement('div'); op.style.cssText = 'margin-top:4px;padding:0 2px;font-size:' + (tactil ? '14px' : '12px') + ';color:var(--muted)';
       list.appendChild(op);

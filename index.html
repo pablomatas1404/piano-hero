@@ -12155,7 +12155,7 @@ function registerHit(midi) {
   // importa ahí es reconocer el acorde, no en qué zona exacta del teclado cayó escrito.
   const octaveFree = activeSong.__isChordExercise;
   const pc = (m) => ((m % 12) + 12) % 12;
-  const target = fallingNotes.find(n => (octaveFree ? pc(n.midi) === pc(midi) : n.midi === midi) && !n.hit && !n.missed && isPlayerNote(n) && Math.abs(n.time - playhead) < tolerance);
+  const target = fallingNotes.find(n => (octaveFree ? pc(n.midi) === pc(midi) : n.midi === midi) && !n.hit && !n.missed && isPlayerNote(n) && Math.abs(n.time + ((activeSong.__yb && window.__ybAtraso != null) ? window.__ybAtraso : 0) - playhead) < tolerance);
   if (target) {
     target.hit = true; scoreHits++; document.getElementById('hitCount').textContent = scoreHits; document.getElementById('headerHitCount').textContent = scoreHits;
     registerComboHit();
@@ -14106,7 +14106,7 @@ function frameInner(ts) {
     for (let __mi = __missIdxStart; __mi < __missIdxEnd; __mi++) {
       const n = fallingNotes[__mi];
       const dtToHit = n.time - playhead;
-      if (!previewMode && !n.hit && !n.missed && dtToHit < -((activeSong && activeSong.__yb) ? 0.65 : 0.3)) { n.missed = true; scoreMisses++; document.getElementById('missCount').textContent = scoreMisses; document.getElementById('headerMissCount').textContent = scoreMisses; if (isPlayerNote(n)) { registerComboBreak(); playErrorBuzz(); } }
+      if (!previewMode && !n.hit && !n.missed && dtToHit < -((activeSong && activeSong.__yb) ? 0.65 + Math.max(0, window.__ybAtraso || 0) : 0.3)) { n.missed = true; scoreMisses++; document.getElementById('missCount').textContent = scoreMisses; document.getElementById('headerMissCount').textContent = scoreMisses; if (isPlayerNote(n)) { registerComboBreak(); playErrorBuzz(); } }
       if (!n.hit && !n.missed && isPlayerNote(n) && dtToHit >= -0.05 && dtToHit <= GLOW_LOOKAHEAD) {
         newGlow.add(n.midi);
         if (!newGlowFirstTime.has(n.midi) || n.time < newGlowFirstTime.get(n.midi)) newGlowFirstTime.set(n.midi, n.time);
@@ -15079,6 +15079,6 @@ requestAnimationFrame(frame);
 })();
 </script>
 <script>/* yb-autoactualizar: si esta pagina quedo guardada vieja en la tablet, se recarga sola con la version nueva */document.addEventListener("DOMContentLoaded",function(){try{var s=[].slice.call(document.scripts).filter(function(x){return /yourband\.js\?v=/.test(x.src)})[0];if(!s)return;var mine=(s.src.match(/v=([0-9a-z]+)/)||[])[1];fetch("YOUR BAND/version.txt?x="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){t=t.trim();if(t&&t!==mine&&!sessionStorage.getItem("yb_rec_"+t)){sessionStorage.setItem("yb_rec_"+t,"1");location.replace(location.pathname+"?v="+t);}}).catch(function(){});}catch(e){}});</script>
-<script src="YOUR BAND/yourband.js?v=20261028013323"></script>
+<script src="YOUR BAND/yourband.js?v=20261028020132"></script>
 </body>
 </html>
