@@ -18,3 +18,5 @@ node tools/generar_capas.js fuentes/quedate-conmigo canciones/quedate-conmigo "Q
 node tools/generar_capas.js fuentes/feel-the-groove canciones/feel-the-groove "Feel the Groove" "Groove (con Moises)" 252.7 "coros,bajo,bateria,guitarra,leadguitar,voz,otros"
 node tools/generar_capas.js fuentes/cumbia-del-barrio canciones/cumbia-del-barrio "Cumbia del Barrio" "Cumbia argentina" 143.2 "voz,coros,metales,bateria,bajo,guitarra,teclado,percusion,cuerdas,sintetizador,otros"
 node tools/generar_capas.js fuentes/vamos-despacio canciones/vamos-despacio "Vamos Despacio" "Reggae" 160.8 "voz,coros,bateria,bajo,guitarra,teclado,percusion,sintetizador,otros,metales"
+node tools/generar_capas.js fuentes/ruta-del-sur canciones/ruta-del-sur "Ruta del Sur" "Rock tipo Creedence" 184.8 "voz,coros,bateria,bajo,guitarra,percusion,sintetizador,otros"
+node tools/generar_capas.js fuentes/un-dia-asi canciones/un-dia-asi "Un Día Así" "Bossa nova" 131.5 "voz,coros,bateria,bajo,guitarra,teclado,percusion,metales"
