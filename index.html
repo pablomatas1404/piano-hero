@@ -12388,7 +12388,7 @@ function drawCascadaView(w, h, targetY, ts, waitingNote) {
   // de y por nota se deja igual más abajo, como red de seguridad — pero ahora corre sobre decenas de
   // notas por cuadro, no sobre miles.
   // YOUR BAND: los ladrillos se dibujan un poco más arriba (llegan al teclado 0.2 s después de la nota), así siguen a la vista cuando llega el dedo
-  const ybAtraso = (activeSong && activeSong.__yb) ? 0.2 : 0;
+  const ybAtraso = (activeSong && activeSong.__yb) ? (window.__ybAtraso != null ? window.__ybAtraso : 0.2) : 0;
   const denom = (h - 40) || 1;
   const dtLo = (targetY - (h + 60)) * LOOKAHEAD / denom;
   const dtHi = (targetY + 60) * LOOKAHEAD / denom;
@@ -14009,7 +14009,7 @@ function frameInner(ts) {
       // nota (0.04s de margen nada más, el mínimo para que no se escape por un cuadro de animación
       // de más) — tocás cuando ves la nota EN la línea, no antes.
       // YOUR BAND: margen de error -- no frena la música hasta que la nota lleva 0.22s de atraso (ver yourband.js)
-      if (critical && (critical.time - playhead) <= 0.04 - ((activeSong && activeSong.__yb) ? 0.2 : 0)) { frozen = true; waitingNote = critical; }
+      if (critical && (critical.time - playhead) <= 0.04 - ((activeSong && activeSong.__yb) ? (window.__ybAtraso != null ? window.__ybAtraso : 0.2) : 0)) { frozen = true; waitingNote = critical; }
     }
     isFrozenWaiting = frozen; // para el gesto de "doble clic con negras" (ver registerBlackKeyGesture)
     const prevPlayhead = playhead;
@@ -15079,6 +15079,6 @@ requestAnimationFrame(frame);
 })();
 </script>
 <script>/* yb-autoactualizar: si esta pagina quedo guardada vieja en la tablet, se recarga sola con la version nueva */document.addEventListener("DOMContentLoaded",function(){try{var s=[].slice.call(document.scripts).filter(function(x){return /yourband\.js\?v=/.test(x.src)})[0];if(!s)return;var mine=(s.src.match(/v=([0-9a-z]+)/)||[])[1];fetch("YOUR BAND/version.txt?x="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){t=t.trim();if(t&&t!==mine&&!sessionStorage.getItem("yb_rec_"+t)){sessionStorage.setItem("yb_rec_"+t,"1");location.replace(location.pathname+"?v="+t);}}).catch(function(){});}catch(e){}});</script>
-<script src="YOUR BAND/yourband.js?v=20261028002643"></script>
+<script src="YOUR BAND/yourband.js?v=20261028003219"></script>
 </body>
 </html>
