@@ -20,6 +20,7 @@
     { id: 'mi-buenos-aires', titulo: 'Mi Buenos Aires', estilo: 'Tango', nivelMin: 1, carpeta: CARPETA + 'canciones/mi-buenos-aires/' },
     { id: 'quedate-conmigo', titulo: 'Quédate conmigo', estilo: 'Balada lenta', nivelMin: 1, carpeta: CARPETA + 'canciones/quedate-conmigo/' },
     { id: 'feel-the-groove', titulo: 'Feel the Groove', estilo: 'Groove (con Moises)', nivelMin: 1, carpeta: CARPETA + 'canciones/feel-the-groove/' },
+    { id: 'cumbia-del-barrio', titulo: 'Cumbia del Barrio', estilo: 'Cumbia argentina', nivelMin: 1, carpeta: CARPETA + 'canciones/cumbia-del-barrio/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)

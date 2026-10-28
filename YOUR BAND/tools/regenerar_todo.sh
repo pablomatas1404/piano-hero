@@ -16,3 +16,4 @@ node tools/generar_capas.js fuentes/nadie-nos-baja canciones/nadie-nos-baja "Nad
 node tools/generar_capas.js fuentes/mi-buenos-aires canciones/mi-buenos-aires "Mi Buenos Aires" "Tango" 201.8 "voz,coros,bajo,guitarra,teclado,cuerdas,sintetizador,metales,maderas"
 node tools/generar_capas.js fuentes/quedate-conmigo canciones/quedate-conmigo "Quédate conmigo" "Balada lenta" 232 "voz,coros,bateria,bajo,guitarra,teclado,percusion,sintetizador"
 node tools/generar_capas.js fuentes/feel-the-groove canciones/feel-the-groove "Feel the Groove" "Groove (con Moises)" 252.7 "coros,bajo,bateria,guitarra,leadguitar,voz,otros"
+node tools/generar_capas.js fuentes/cumbia-del-barrio canciones/cumbia-del-barrio "Cumbia del Barrio" "Cumbia argentina" 143.2 "voz,coros,metales,bateria,bajo,guitarra,teclado,percusion,cuerdas,sintetizador,otros"
