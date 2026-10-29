@@ -27,6 +27,7 @@
     { id: 'neon-summer-night', titulo: 'Neon Summer Night', estilo: 'Pop años 80 (en inglés)', nivelMin: 1, carpeta: CARPETA + 'canciones/neon-summer-night/' },
     { id: 'cover-nos-siguen-pegando', titulo: 'Nos Siguen Pegando Abajo (cover)', estilo: 'Charly García · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-nos-siguen-pegando/' },
     { id: 'cover-sobredosis-de-soda', titulo: 'Sobredosis de Soda (cover)', estilo: 'Soda Stereo · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-sobredosis-de-soda/' },
+    { id: 'cover-el-rito', titulo: 'El Rito (cover)', estilo: 'Soda Stereo · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-el-rito/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
