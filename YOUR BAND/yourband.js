@@ -417,6 +417,8 @@
         if (ultMisionLad !== S.mision) { ultMisionLad = S.mision; const v = Math.round((datos.ladr && datos.ladr[S.mision] != null ? datos.ladr[S.mision] : 0.2) * 100); $('yb-t-lad').value = v; window.__ybAtraso = v / 100; verLad(v);
           // la velocidad (tempo) se recuerda en este aparato: cada canción arranca con la que dejaste
           if (datos.velocidad != null && datos.velocidad !== speed) { speed = datos.velocidad; try { updateSpeedReadout(); } catch (e) {} }
+          // el teclado arranca en 2 octavas al entrar a una canción (después lo podés cambiar)
+          try { if (zoomWhiteKeys !== 14) setZoom(14, document.getElementById('zoom-2oct')); } catch (e) {}
           ultSpeed = speed; }
         else if (speed !== ultSpeed) { ultSpeed = speed; datos.velocidad = speed; guardar(); }
         if ($('yb-t-yo').value !== ultVolYo || piano !== ultPianoYo) aplicarVolYo(); // reaplica si cambió el slider o se cargó el piano real
