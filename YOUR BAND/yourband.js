@@ -24,6 +24,7 @@
     { id: 'vamos-despacio', titulo: 'Vamos Despacio', estilo: 'Reggae', nivelMin: 1, carpeta: CARPETA + 'canciones/vamos-despacio/' },
     { id: 'ruta-del-sur', titulo: 'Ruta del Sur', estilo: 'Rock tipo Creedence', nivelMin: 1, carpeta: CARPETA + 'canciones/ruta-del-sur/' },
     { id: 'un-dia-asi', titulo: 'Un Día Así', estilo: 'Bossa nova', nivelMin: 1, carpeta: CARPETA + 'canciones/un-dia-asi/' },
+    { id: 'neon-summer-night', titulo: 'Neon Summer Night', estilo: 'Pop años 80 (en inglés)', nivelMin: 1, carpeta: CARPETA + 'canciones/neon-summer-night/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)

@@ -20,3 +20,4 @@ node tools/generar_capas.js fuentes/cumbia-del-barrio canciones/cumbia-del-barri
 node tools/generar_capas.js fuentes/vamos-despacio canciones/vamos-despacio "Vamos Despacio" "Reggae" 160.8 "voz,coros,bateria,bajo,guitarra,teclado,percusion,sintetizador,otros,metales"
 node tools/generar_capas.js fuentes/ruta-del-sur canciones/ruta-del-sur "Ruta del Sur" "Rock tipo Creedence" 184.8 "voz,coros,bateria,bajo,guitarra,percusion,sintetizador,otros"
 node tools/generar_capas.js fuentes/un-dia-asi canciones/un-dia-asi "Un Día Así" "Bossa nova" 131.5 "voz,coros,bateria,bajo,guitarra,teclado,percusion,metales"
+node tools/generar_capas.js fuentes/neon-summer-night canciones/neon-summer-night "Neon Summer Night" "Pop años 80 (en inglés)" 198.4 "voz,coros,metales,bateria,bajo,guitarra,teclado,percusion,cuerdas,sintetizador,otros"
