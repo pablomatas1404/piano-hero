@@ -340,7 +340,11 @@
   window.__ybAtraso = 0.2; let ultMisionLad = null;
   const verLad = v => { const e = $('yb-t-lad-v'); if (e) e.textContent = (v / 100).toFixed(2); const p = $('yb-p-lad'); if (p) p.value = v; };
   $('yb-t-lad').oninput = () => { const v = +$('yb-t-lad').value; window.__ybAtraso = v / 100; verLad(v); const S = activeSong && activeSong.__yb; if (S) { datos.ladr = datos.ladr || {}; datos.ladr[S.mision] = v / 100; guardar(); } };
-  $('yb-t-banda').oninput = aplicarVolBanda; $('yb-t-yo').oninput = aplicarVolYo;
+  // los volúmenes Banda y Yo se recuerdan en este aparato: arrancan como los dejaste la última vez
+  if (datos.volBanda != null) $('yb-t-banda').value = datos.volBanda;
+  if (datos.volYo != null) $('yb-t-yo').value = datos.volYo;
+  $('yb-t-banda').oninput = () => { aplicarVolBanda(); datos.volBanda = +$('yb-t-banda').value; guardar(); };
+  $('yb-t-yo').oninput = () => { aplicarVolYo(); datos.volYo = +$('yb-t-yo').value; guardar(); };
 
   // ---------- La banda de fondo, pegada al reloj de Piano Hero ----------
   let volNodo = null, fuentes = [], corriendo = false, iniCtx = 0, iniPos = 0, finVisto = false;
