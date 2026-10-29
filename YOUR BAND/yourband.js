@@ -401,15 +401,20 @@
   window.addEventListener('orientationchange', () => setTimeout(reCrecer, 400));
   // por las dudas, se revisa cada segundo mientras hay una canción de YOUR BAND (no depende del dibujo de pantalla)
   setInterval(() => { try { crecerTeclado(!!(activeSong && activeSong.__yb)); } catch (e) {} }, 1000);
-  let ultResync = 0;
+  let ultResync = 0, ultSpeed = null;
   function bucle() {
     try {
       const S = activeSong && activeSong.__yb;
+      if (!S) ultMisionLad = null; // al salir de una canción, la próxima vuelve a cargar tus valores
       crecerTeclado(!!S); flot.classList.toggle('on', !!S); btn2.style.display = S ? '' : 'none'; vols.style.display = S ? 'inline-flex' : 'none';
       // el botón BANDA del encabezado se ve solo si el encabezado está visible; si no, queda el de la botonera del teclado (junto a Modo Espera)
       if (!S && tocoInstr) { try { currentInstrument = guardadoInstr; if (soundOutputMode === 'midi' && midiOutputRef) midiOutputRef.send([0xC0, 0]); } catch (e) {} tocoInstr = false; }
       if (S) {
-        if (ultMisionLad !== S.mision) { ultMisionLad = S.mision; const v = Math.round((datos.ladr && datos.ladr[S.mision] != null ? datos.ladr[S.mision] : 0.2) * 100); $('yb-t-lad').value = v; window.__ybAtraso = v / 100; verLad(v); }
+        if (ultMisionLad !== S.mision) { ultMisionLad = S.mision; const v = Math.round((datos.ladr && datos.ladr[S.mision] != null ? datos.ladr[S.mision] : 0.2) * 100); $('yb-t-lad').value = v; window.__ybAtraso = v / 100; verLad(v);
+          // la velocidad (tempo) se recuerda en este aparato: cada canción arranca con la que dejaste
+          if (datos.velocidad != null && datos.velocidad !== speed) { speed = datos.velocidad; try { updateSpeedReadout(); } catch (e) {} }
+          ultSpeed = speed; }
+        else if (speed !== ultSpeed) { ultSpeed = speed; datos.velocidad = speed; guardar(); }
         if ($('yb-t-yo').value !== ultVolYo || piano !== ultPianoYo) aplicarVolYo(); // reaplica si cambió el slider o se cargó el piano real
         const querida = S.modo === 'tocar' && isPlaying && !inCountdown && !isFrozenWaiting;
         if (querida) {
