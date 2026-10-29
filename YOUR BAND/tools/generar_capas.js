@@ -173,6 +173,11 @@ const capas = {
     profesional: separar(nivelAcordes(3, 0.2, 0.4))
   }
 };
+// Opción 'rapido': canción muy movida; los umbrales en segundos dejaban el bajo y la melodía muy ralos, así que se achican.
+if (A.includes('rapido')) {
+  capas.bajo.facil = separar(ralear(bajo, 0.2, 0.4)); capas.bajo.medio = separar(ralear(bajo, 0.12, 0.2)); capas.bajo.dificil = separar(ralear(bajo, 0.07, 0.1));
+  capas.melodia.facil = separar(ralear(voz, 0.22, 0.34)); capas.melodia.medio = separar(ralear(voz, 0.16, 0.24)); capas.melodia.dificil = separar(ralear(voz, 0.11, 0.16));
+}
 // Opción 'tranqui': para una canción donde el Fácil sale pesado, el Fácil pasa a ser lo que antes era "Muy fácil"
 // y el "Muy fácil" nuevo queda todavía más espaciado.
 if (A.includes('tranqui')) {
