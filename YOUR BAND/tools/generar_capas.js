@@ -161,7 +161,7 @@ const capas = {
     facil: separar(DESPLAZADO ? ralear(voz, 0.28, 0.4) : DENSO ? ralear(voz, 0.38, 0.8) : ralear(voz, 0.45, 1.0)),
     medio: separar(DESPLAZADO ? ralear(voz, 0.24, 0.34) : ralear(voz, 0.28, 0.4)),
     muyfacil: separar(ralear(voz, 0.45, 1.0)),
-    dificil: separar(ralear(voz, 0.2, 0.3)),
+    dificil: separar(ralear(voz, 0.14, 0.2)),
     profesional: separar(voz)
   },
   acordes: {
