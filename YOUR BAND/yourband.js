@@ -25,6 +25,7 @@
     { id: 'ruta-del-sur', titulo: 'Ruta del Sur', estilo: 'Rock tipo Creedence', nivelMin: 1, carpeta: CARPETA + 'canciones/ruta-del-sur/' },
     { id: 'un-dia-asi', titulo: 'Un Día Así', estilo: 'Bossa nova', nivelMin: 1, carpeta: CARPETA + 'canciones/un-dia-asi/' },
     { id: 'neon-summer-night', titulo: 'Neon Summer Night', estilo: 'Pop años 80 (en inglés)', nivelMin: 1, carpeta: CARPETA + 'canciones/neon-summer-night/' },
+    { id: 'cover-nos-siguen-pegando', titulo: 'Nos Siguen Pegando Abajo (cover)', estilo: 'Charly García · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-nos-siguen-pegando/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)

@@ -21,3 +21,4 @@ node tools/generar_capas.js fuentes/vamos-despacio canciones/vamos-despacio "Vam
 node tools/generar_capas.js fuentes/ruta-del-sur canciones/ruta-del-sur "Ruta del Sur" "Rock tipo Creedence" 184.8 "voz,coros,bateria,bajo,guitarra,percusion,sintetizador,otros"
 node tools/generar_capas.js fuentes/un-dia-asi canciones/un-dia-asi "Un Día Así" "Bossa nova" 131.5 "voz,coros,bateria,bajo,guitarra,teclado,percusion,metales"
 node tools/generar_capas.js fuentes/neon-summer-night canciones/neon-summer-night "Neon Summer Night" "Pop años 80 (en inglés)" 198.4 "voz,coros,metales,bateria,bajo,guitarra,teclado,percusion,cuerdas,sintetizador,otros"
+node tools/generar_capas.js fuentes/cover-nos-siguen-pegando canciones/cover-nos-siguen-pegando "Nos Siguen Pegando Abajo (cover)" "Charly García · cover para practicar" 196.9 "bajo,bateria,guitarra,voz,otros,piano"
