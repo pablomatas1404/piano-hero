@@ -40,3 +40,4 @@ node tools/generar_capas.js fuentes/cover-more-than-a-woman canciones/cover-more
 node tools/generar_capas.js fuentes/cover-have-you-ever-seen-the-rain canciones/cover-have-you-ever-seen-the-rain "Have You Ever Seen The Rain (cover)" "Creedence · cover para practicar" 190.5 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-lotta-love canciones/cover-lotta-love "Lotta Love (cover)" "Nicolette Larson · cover para practicar" 207.1 "bajo,bateria,guitarra,voz,otros,wind"
 node tools/generar_capas.js fuentes/cover-die-with-a-smile canciones/cover-die-with-a-smile "Die With A Smile (cover)" "Bruno Mars y Lady Gaga · cover para practicar" 242.5 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-hard-to-say-im-sorry canciones/cover-hard-to-say-im-sorry "Hard To Say I'm Sorry (cover)" "Chicago · cover para practicar" 238.2 "bajo,bateria,guitarra,voz,otros,piano"
