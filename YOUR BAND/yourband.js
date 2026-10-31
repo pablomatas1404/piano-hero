@@ -486,6 +486,8 @@
       tocarMision(sig, document.createElement('div'));
     } catch (e) {}
   }, true);
+  // cuadradito 'cuántas notas me faltaron para la perfecta' (mejor resultado en ese nivel, sin Modo Espera)
+  function pintarFalta(c, f) { c.textContent = f == null ? '–' : (f === 0 ? '✓' : f); c.style.color = f === 0 ? '#ffd140' : '#cfd3e6'; c.title = f == null ? 'Todavía no la tocaste sin Modo Espera' : (f === 0 ? '¡Perfecta!' : 'Te faltaron ' + f + ' notas para la perfecta (tu mejor intento)'); }
   function terminar(S) {
     const mias = fallingNotes.filter(n => isPlayerNote(n)), hechas = mias.filter(n => n.hit).length;
     const pct = mias.length ? hechas / mias.length : 0;
@@ -494,6 +496,7 @@
     if (S.parte === 'all' && S.modo === 'tocar') {
       const k = claveEst(S.mision, S.rol, S.nv); // S.rol = combinación de capas
       if ((datos.estrellas[k] || 0) < est) { datos.estrellas[k] = est; guardar(); }
+      if (!waitMode) { const f = mias.length - hechas; datos.fallas = datos.fallas || {}; if (datos.fallas[k] == null || f < datos.fallas[k]) { datos.fallas[k] = f; guardar(); } try { const c = document.querySelector('.yb-falta[data-k="' + k + '"]'); if (c) pintarFalta(c, f); } catch (e) {} }
     }
     try { showBigToast('🎸 ' + '★'.repeat(est) + '☆'.repeat(3 - est) + (waitMode && pct >= 0.75 ? '  (sin Modo Espera se ganan las 3)' : '')); } catch (e) {}
   }
@@ -596,8 +599,11 @@
       // puntaje propio de Pablo: 5 estrellas apagadas que se encienden al tocarlas (tocar la misma de nuevo la apaga); queda como registro de qué temas andan bien
       { const fila = document.createElement('div'); fila.className = 'rating-stars'; fila.style.cssText = 'margin-top:4px;display:flex;flex-wrap:nowrap;max-width:100%;overflow:hidden;font-size:' + (tactil ? '24px' : '18px') + ';line-height:1';
         // mismas 5 estrellas y mismo guardado que Piano Hero (userRatings, por título)
-        const dib = () => { fila.innerHTML = starsHtml((userRatings[m.titulo]) || 0, '#ffd140'); Array.from(fila.children).forEach((e, i) => { e.style.cssText += ';cursor:pointer;touch-action:manipulation;padding:2px 5px'; e.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); userRatings[m.titulo] = (userRatings[m.titulo] === i + 1) ? 0 : i + 1; saveUserRatings(); dib(); }; e.ondblclick = ev => { ev.stopPropagation(); ev.preventDefault(); }; }); };
-        dib(); card.appendChild(fila); }
+        const est = document.createElement('span'); est.style.cssText = 'display:flex;flex-wrap:nowrap'; fila.appendChild(est);
+        const dib = () => { est.innerHTML = starsHtml((userRatings[m.titulo]) || 0, '#ffd140'); Array.from(est.children).forEach((e, i) => { e.style.cssText += ';cursor:pointer;touch-action:manipulation;padding:2px 5px'; e.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); userRatings[m.titulo] = (userRatings[m.titulo] === i + 1) ? 0 : i + 1; saveUserRatings(); dib(); }; e.ondblclick = ev => { ev.stopPropagation(); ev.preventDefault(); }; }); };
+        dib();
+        const caja = document.createElement('span'); caja.className = 'yb-falta'; caja.dataset.k = claveEst(m.id, claveCapas(), sel.nv); caja.style.cssText = 'margin-left:8px;align-self:center;min-width:' + (tactil ? '26px' : '20px') + ';padding:1px 4px;border:1px solid #3a4258;border-radius:5px;text-align:center;font-size:' + (tactil ? '14px' : '11px') + ';font-weight:700;line-height:1.3;background:#171a27';
+        pintarFalta(caja, datos.fallas ? datos.fallas[caja.dataset.k] : null); fila.appendChild(caja); card.appendChild(fila); }
       // cruz para sacar de la lista las canciones que no sirven (no borra nada; se pueden volver a poner abajo de todo)
       { const x = document.createElement('button'); x.textContent = '✕'; x.title = 'Sacar de la lista'; x.style.cssText = 'position:absolute;top:4px;right:4px;border:0;border-radius:8px;background:rgba(255,93,122,.25);color:#ff8fa3;font-weight:800;touch-action:manipulation;' + (tactil ? 'font-size:18px;padding:6px 12px' : 'font-size:12px;padding:2px 8px');
         x.onclick = x.ondblclick = ev => { ev.stopPropagation(); ev.preventDefault(); if (ev.type === 'click' && confirm('¿Sacar ' + m.titulo + ' de la lista? (No se borra: la podés volver a poner abajo de todo.)')) { datos.ocultas = datos.ocultas || {}; datos.ocultas[m.id] = true; guardar(); renderMiLista(); } };
