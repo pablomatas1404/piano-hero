@@ -27,6 +27,7 @@
     { id: 'neon-summer-night', titulo: 'Neon Summer Night', estilo: 'Pop años 80 (en inglés)', nivelMin: 1, carpeta: CARPETA + 'canciones/neon-summer-night/' },
     { id: 'cover-nos-siguen-pegando', titulo: 'Nos Siguen Pegando Abajo (cover)', estilo: 'Charly García · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-nos-siguen-pegando/' },
     { id: 'cover-el-rito', titulo: 'El Rito (cover)', estilo: 'Soda Stereo · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-el-rito/' },
+    { id: 'cover-the-logical-song', titulo: 'The Logical Song (cover)', estilo: 'Supertramp · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-the-logical-song/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
