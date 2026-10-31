@@ -451,6 +451,22 @@
     } catch (e) {}
     requestAnimationFrame(bucle);
   }
+  // Al terminar la canción: doble toque en una tecla negra pasa a la siguiente de la lista (sin usar el mouse)
+  let ultNegra = 0;
+  document.addEventListener('pointerdown', ev => {
+    try {
+      const k = ev.target && ev.target.closest && ev.target.closest('.bkey'); if (!k) return;
+      const S = activeSong && activeSong.__yb; if (!S || !finVisto || isPlaying || inCountdown) return;
+      const ahora = performance.now(); if (ahora - ultNegra > 450) { ultNegra = ahora; return; }
+      ultNegra = 0;
+      const vis = MISIONES.filter(m => !m.proximamente && !(datos.ocultas && datos.ocultas[m.id]) && m.nivelMin <= nivelJugador());
+      const i = vis.findIndex(m => m.id === S.mision), sig = vis[i + 1];
+      if (!sig) { try { showBigToast('🎸 Era la última de la lista'); } catch (e) {} return; }
+      try { showBigToast('⏭ Siguiente: ' + sig.titulo); } catch (e) {}
+      sel.nv = S.nv || sel.nv;
+      tocarMision(sig, document.createElement('div'));
+    } catch (e) {}
+  }, true);
   function terminar(S) {
     const mias = fallingNotes.filter(n => isPlayerNote(n)), hechas = mias.filter(n => n.hit).length;
     const pct = mias.length ? hechas / mias.length : 0;
