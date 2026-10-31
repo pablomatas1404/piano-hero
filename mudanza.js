@@ -30,7 +30,7 @@
     });
     listo(function () {
       var c = cartel('Para traer tu progreso de la página anterior (estrellas, ajustes, canciones sacadas): <button id="ph-traer" style="margin-left:8px;padding:6px 14px;border:0;border-radius:8px;font:700 15px system-ui;background:#ffe27a;color:#222">Traer mi progreso</button> <button id="ph-no" style="margin-left:6px;padding:6px 10px;border:0;border-radius:8px;font:600 14px system-ui;background:rgba(255,255,255,.25);color:#fff">Empezar de cero</button>');
-      document.getElementById('ph-traer').onclick = function () { window.open(VIEJO + '/?exportar=1', 'ph_mudanza', 'width=520,height=360'); };
+      document.getElementById('ph-traer').onclick = function () { window.open(VIEJO + '/piano-hero/?exportar=1', 'ph_mudanza', 'width=520,height=360'); };
       document.getElementById('ph-no').onclick = function () { ls.setItem('ph_mudanza_hecha', '1'); c.parentNode.removeChild(c); };
     });
   }
