@@ -578,7 +578,12 @@
       const card = document.createElement('div'); card.className = 'song-card' + (bloq ? ' locked' : ''); card.dataset.title = m.titulo;
       const est = datos.estrellas[claveEst(m.id, claveCapas(), sel.nv)] || 0;
       const dur = cache[m.id] ? fmtDur(cache[m.id].capas.duracion) : '';
-      card.innerHTML = '<div class="t">🎵 ' + esc(m.titulo) + '</div><div class="a" style="display:flex;justify-content:space-between"><span>' + esc(m.estilo) + (dur ? ' · ' + dur : '') + (bloq ? ' · se abre en el nivel ' + m.nivelMin : '') + '</span><span class="yb-est">' + ('★'.repeat(est) + '☆'.repeat(3 - est)) + '</span></div>';
+      card.innerHTML = '<div class="t">🎵 ' + esc(m.titulo) + '</div><div class="a" style="display:flex;justify-content:space-between"><span>' + esc(m.estilo) + (dur ? ' · ' + dur : '') + (bloq ? ' · se abre en el nivel ' + m.nivelMin : '') + '</span></div>';
+      // puntaje propio de Pablo: 5 estrellas apagadas que se encienden al tocarlas (tocar la misma de nuevo la apaga); queda como registro de qué temas andan bien
+      { const fila = document.createElement('div'); fila.style.cssText = 'margin-top:4px;display:flex;gap:2px;'; const pt = () => (datos.puntaje && datos.puntaje[m.id]) || 0;
+        const dib = () => { fila.innerHTML = ''; for (let s = 1; s <= 5; s++) { const e = document.createElement('span'); e.textContent = s <= pt() ? '★' : '☆'; e.style.cssText = 'cursor:pointer;touch-action:manipulation;line-height:1;padding:2px 4px;color:' + (s <= pt() ? '#ffb454' : '#6b6786') + ';font-size:' + (tactil ? '22px' : '16px');
+            e.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); datos.puntaje = datos.puntaje || {}; datos.puntaje[m.id] = (pt() === s) ? 0 : s; guardar(); dib(); }; e.ondblclick = ev => { ev.stopPropagation(); ev.preventDefault(); }; fila.appendChild(e); } };
+        dib(); card.appendChild(fila); }
       // cruz para sacar de la lista las canciones que no sirven (no borra nada; se pueden volver a poner abajo de todo)
       { const x = document.createElement('button'); x.textContent = '✕'; x.title = 'Sacar de la lista'; x.style.cssText = 'position:absolute;top:4px;right:4px;border:0;border-radius:8px;background:rgba(255,93,122,.25);color:#ff8fa3;font-weight:800;touch-action:manipulation;' + (tactil ? 'font-size:18px;padding:6px 12px' : 'font-size:12px;padding:2px 8px');
         x.onclick = x.ondblclick = ev => { ev.stopPropagation(); ev.preventDefault(); if (ev.type === 'click' && confirm('¿Sacar ' + m.titulo + ' de la lista? (No se borra: la podés volver a poner abajo de todo.)')) { datos.ocultas = datos.ocultas || {}; datos.ocultas[m.id] = true; guardar(); renderMiLista(); } };
