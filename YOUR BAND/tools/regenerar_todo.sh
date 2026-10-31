@@ -41,3 +41,5 @@ node tools/generar_capas.js fuentes/cover-have-you-ever-seen-the-rain canciones/
 node tools/generar_capas.js fuentes/cover-lotta-love canciones/cover-lotta-love "Lotta Love (cover)" "Nicolette Larson · cover para practicar" 207.1 "bajo,bateria,guitarra,voz,otros,wind"
 node tools/generar_capas.js fuentes/cover-die-with-a-smile canciones/cover-die-with-a-smile "Die With A Smile (cover)" "Bruno Mars y Lady Gaga · cover para practicar" 242.5 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-hard-to-say-im-sorry canciones/cover-hard-to-say-im-sorry "Hard To Say I'm Sorry (cover)" "Chicago · cover para practicar" 238.2 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-another-day-in-paradise canciones/cover-another-day-in-paradise "Another Day In Paradise (cover)" "Phil Collins · cover para practicar" 280.5 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-lady-in-red canciones/cover-lady-in-red "Lady in Red (cover)" "Chris de Burgh · cover para practicar" 248.7 "bajo,bateria,guitarra,voz,otros,piano"

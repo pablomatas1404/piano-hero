@@ -45,6 +45,8 @@
     { id: 'cover-lotta-love', titulo: 'Lotta Love (cover)', estilo: 'Nicolette Larson · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-lotta-love/' },
     { id: 'cover-die-with-a-smile', titulo: 'Die With A Smile (cover)', estilo: 'Bruno Mars y Lady Gaga · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-die-with-a-smile/' },
     { id: 'cover-hard-to-say-im-sorry', titulo: 'Hard To Say I\'m Sorry (cover)', estilo: 'Chicago · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-hard-to-say-im-sorry/' },
+    { id: 'cover-another-day-in-paradise', titulo: 'Another Day In Paradise (cover)', estilo: 'Phil Collins · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-another-day-in-paradise/' },
+    { id: 'cover-lady-in-red', titulo: 'Lady in Red (cover)', estilo: 'Chris de Burgh · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-lady-in-red/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
