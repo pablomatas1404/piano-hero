@@ -56,3 +56,4 @@ node tools/generar_capas.js fuentes/cover-what-about-love canciones/cover-what-a
 node tools/generar_capas.js fuentes/cover-whats-love-got-to-do-with-it canciones/cover-whats-love-got-to-do-with-it "What's Love Got To Do With It (cover)" "Tina Turner · cover para practicar" 232.5 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-who-can-it-be-now canciones/cover-who-can-it-be-now "Who Can It Be Now (cover)" "Men At Work · cover para practicar" 213 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-take-the-long-way-home canciones/cover-take-the-long-way-home "Take The Long Way Home (cover)" "Supertramp · cover para practicar" 264.8 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-breakfast-in-america canciones/cover-breakfast-in-america "Breakfast in America" "Supertramp · Roger Hodgson · para practicar" 224.1 "bajo,bateria,guitarra,voz,otros,piano"

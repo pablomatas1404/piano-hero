@@ -60,6 +60,7 @@
     { id: 'cover-whats-love-got-to-do-with-it', titulo: 'What\'s Love Got To Do With It (cover)', estilo: 'Tina Turner · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-whats-love-got-to-do-with-it/' },
     { id: 'cover-who-can-it-be-now', titulo: 'Who Can It Be Now (cover)', estilo: 'Men At Work · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-who-can-it-be-now/' },
     { id: 'cover-take-the-long-way-home', titulo: 'Take The Long Way Home (cover)', estilo: 'Supertramp · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-take-the-long-way-home/' },
+    { id: 'cover-breakfast-in-america', titulo: 'Breakfast in America', estilo: 'Supertramp · Roger Hodgson · para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-breakfast-in-america/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
