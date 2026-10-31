@@ -34,6 +34,8 @@
     { id: 'cover-love-will-lead-you-back', titulo: 'Love Will Lead You Back (cover)', estilo: 'Taylor Dayne · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-love-will-lead-you-back/' },
     { id: 'cover-take-on-me', titulo: 'Take On Me (cover)', estilo: 'A-ha · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-take-on-me/' },
     { id: 'cover-night-fever', titulo: 'Night Fever (cover)', estilo: 'Bee Gees · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-night-fever/' },
+    { id: 'cover-how-deep-is-your-love', titulo: 'How Deep Is Your Love (cover)', estilo: 'Bee Gees · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-how-deep-is-your-love/' },
+    { id: 'cover-le-freak', titulo: 'Le Freak (cover)', estilo: 'Chic · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-le-freak/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
@@ -544,18 +546,28 @@
       op.appendChild(fila);
     }
     const aviso = document.createElement('div'); aviso.style.cssText = 'font-size:11px;color:var(--muted);margin:2px 2px 8px'; aviso.textContent = 'Doble clic (o doble toque) en una canción para tocarla.'; list.appendChild(aviso);
-    MISIONES.filter(m => !m.proximamente).forEach(m => {
+    MISIONES.filter(m => !m.proximamente && !(datos.ocultas && datos.ocultas[m.id])).forEach(m => {
       const bloq = m.nivelMin > nivelJugador();
       const card = document.createElement('div'); card.className = 'song-card' + (bloq ? ' locked' : ''); card.dataset.title = m.titulo;
       const est = datos.estrellas[claveEst(m.id, claveCapas(), sel.nv)] || 0;
       const dur = cache[m.id] ? fmtDur(cache[m.id].capas.duracion) : '';
       card.innerHTML = '<div class="t">🎵 ' + esc(m.titulo) + '</div><div class="a" style="display:flex;justify-content:space-between"><span>' + esc(m.estilo) + (dur ? ' · ' + dur : '') + (bloq ? ' · se abre en el nivel ' + m.nivelMin : '') + '</span><span class="yb-est">' + ('★'.repeat(est) + '☆'.repeat(3 - est)) + '</span></div>';
+      // cruz para sacar de la lista las canciones que no sirven (no borra nada; se pueden volver a poner abajo de todo)
+      { const x = document.createElement('button'); x.textContent = '✕'; x.title = 'Sacar de la lista'; x.style.cssText = 'position:absolute;top:4px;right:4px;border:0;border-radius:8px;background:rgba(255,93,122,.25);color:#ff8fa3;font-weight:800;touch-action:manipulation;' + (tactil ? 'font-size:18px;padding:6px 12px' : 'font-size:12px;padding:2px 8px');
+        x.onclick = x.ondblclick = ev => { ev.stopPropagation(); ev.preventDefault(); if (ev.type === 'click' && confirm('¿Sacar ' + m.titulo + ' de la lista? (No se borra: la podés volver a poner abajo de todo.)')) { datos.ocultas = datos.ocultas || {}; datos.ocultas[m.id] = true; guardar(); renderMiLista(); } };
+        card.style.position = 'relative'; card.appendChild(x); }
       if (!bloq) {
         card.onclick = () => { list.querySelectorAll('.song-card').forEach(c => c.classList.remove('active')); card.classList.add('active'); };
         card.ondblclick = () => tocarMision(m, card);
       }
       list.appendChild(card);
     });
+    // las que sacaste: se pueden volver a poner
+    { const ids = Object.keys(datos.ocultas || {}).filter(k => datos.ocultas[k] && MISIONES.some(m => m.id === k));
+      if (ids.length) { const r = document.createElement('div'); r.style.cssText = 'margin:14px 2px;font-size:' + (tactil ? '14px' : '12px') + ';color:var(--muted)';
+        r.innerHTML = '<div style="margin-bottom:6px">Sacadas (' + ids.length + '):</div>';
+        ids.forEach(k => { const m = MISIONES.find(x => x.id === k); const b = document.createElement('button'); b.className = 'btn'; b.style.cssText = 'display:block;width:100%;margin:3px 0;text-align:left;touch-action:manipulation;' + (tactil ? 'font-size:14px;padding:10px' : 'font-size:11px;padding:5px 8px'); b.textContent = '↩ Volver a poner: ' + m.titulo; b.onclick = ev => { ev.stopPropagation(); delete datos.ocultas[k]; guardar(); renderMiLista(); }; r.appendChild(b); });
+        list.appendChild(r); } }
   }
   async function tocarMision(m, card) {
     sel.m = m; sel.parte = 'all'; const a = card.querySelector('.a span');

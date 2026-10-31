@@ -30,3 +30,5 @@ node tools/generar_capas.js fuentes/cover-sweetest-taboo canciones/cover-sweetes
 node tools/generar_capas.js fuentes/cover-love-will-lead-you-back canciones/cover-love-will-lead-you-back "Love Will Lead You Back (cover)" "Taylor Dayne · cover para practicar" 281.6 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-take-on-me canciones/cover-take-on-me "Take On Me (cover)" "A-ha · cover para practicar" 224.4 "bajo,bateria,guitarra,voz,otros,piano" rapido
 node tools/generar_capas.js fuentes/cover-night-fever canciones/cover-night-fever "Night Fever (cover)" "Bee Gees · cover para practicar" 211.2 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-how-deep-is-your-love canciones/cover-how-deep-is-your-love "How Deep Is Your Love (cover)" "Bee Gees · cover para practicar" 254.6 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-le-freak canciones/cover-le-freak "Le Freak (cover)" "Chic · cover para practicar" 197.1 "bajo,bateria,guitarra,voz,otros,piano" rapido
