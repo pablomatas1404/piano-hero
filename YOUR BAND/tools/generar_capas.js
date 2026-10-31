@@ -67,6 +67,8 @@ const bajoCrudo = cuant(leer('bajo_notas.json'))
   
   .filter(n => n.durationSeconds >= 0.1 && n.amplitude >= 0.3 && viva('bajo', n.startTimeSeconds, n.durationSeconds))
   .map(n => ({ t: n.startTimeSeconds, d: n.durationSeconds, m: plegar(n.pitchMidi, 36, 59), h: 'B' }));
+// ajuste por canción (fuentes/<tema>/bajo_subir.json): las notas de esas clases (0=do,1=do#...) que caigan bajo 'debajoDe' suben una octava, para que el bajo quede junto
+try { const aj = leer('bajo_subir.json'); for (const n of bajoCrudo) if (aj.clases.includes(n.m % 12) && n.m < aj.debajoDe) n.m += 12; } catch (e) {}
 const bajo = aclarar(fusionar(bajoCrudo));
 
 // ---------- MELODÍA (voz) : una sola nota a la vez ----------
