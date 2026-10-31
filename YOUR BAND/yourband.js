@@ -31,6 +31,7 @@
     { id: 'cover-smooth-operator', titulo: 'Smooth Operator (cover)', estilo: 'Sade · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-smooth-operator/' },
     { id: 'cover-endless-love', titulo: 'Endless Love (cover)', estilo: 'Diana Ross y Lionel Richie · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-endless-love/' },
     { id: 'cover-sweetest-taboo', titulo: 'Sweetest Taboo (cover)', estilo: 'Sade · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-sweetest-taboo/' },
+    { id: 'cover-love-will-lead-you-back', titulo: 'Love Will Lead You Back (cover)', estilo: 'Taylor Dayne · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-love-will-lead-you-back/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)

@@ -27,3 +27,4 @@ node tools/generar_capas.js fuentes/cover-the-logical-song canciones/cover-the-l
 node tools/generar_capas.js fuentes/cover-smooth-operator canciones/cover-smooth-operator "Smooth Operator (cover)" "Sade · cover para practicar" 262.9 "bajo,bateria,guitarra,teclado,voz,otros"
 node tools/generar_capas.js fuentes/cover-endless-love canciones/cover-endless-love "Endless Love (cover)" "Diana Ross y Lionel Richie · cover para practicar" 244.6 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-sweetest-taboo canciones/cover-sweetest-taboo "Sweetest Taboo (cover)" "Sade · cover para practicar" 264.8 "bajo,bateria,guitarra,voz,otros,wind"
+node tools/generar_capas.js fuentes/cover-love-will-lead-you-back canciones/cover-love-will-lead-you-back "Love Will Lead You Back (cover)" "Taylor Dayne · cover para practicar" 281.6 "bajo,bateria,guitarra,voz,otros,piano"
