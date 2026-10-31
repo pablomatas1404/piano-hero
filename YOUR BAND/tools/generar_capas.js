@@ -149,6 +149,10 @@ function suavizar(notas) {
   for (const n of base) { if (ult[n.m] !== undefined && n.t - ult[n.m] < 0.3) continue; ult[n.m] = n.t; out.push(n); }
   return separar(out);
 }
+// Tonalidad de la voz (la escala mayor que más notas largas acumula) y limpieza del Difícil: las notas cortas que quedan fuera
+// de la escala son casi siempre vibratos o deslizadas mal detectadas y se escuchan desafinadas, así que ahí no entran.
+const ESCALA = (() => { const w = Array(12).fill(0); for (const n of voz) w[((n.m % 12) + 12) % 12] += n.d; let mejor = 0, mp = -1; for (let r = 0; r < 12; r++) { const p = [0, 2, 4, 5, 7, 9, 11].reduce((s, i) => s + w[(r + i) % 12], 0); if (p > mp) { mp = p; mejor = r; } } return new Set([0, 2, 4, 5, 7, 9, 11].map(i => (mejor + i) % 12)); })();
+const sinDesafinadas = l => l.filter(n => ESCALA.has(((n.m % 12) + 12) % 12) || n.d >= 0.3);
 const capas = {
   bajo: {
     facil: separar(DESPLAZADO ? ralear(bajo, 0.3, 0.45) : DENSO ? ralear(bajo, 0.4, 0.8) : ralear(bajo, 0.5, 1.2)),
@@ -161,7 +165,7 @@ const capas = {
     facil: separar(DESPLAZADO ? ralear(voz, 0.28, 0.4) : DENSO ? ralear(voz, 0.38, 0.8) : ralear(voz, 0.45, 1.0)),
     medio: separar(DESPLAZADO ? ralear(voz, 0.24, 0.34) : ralear(voz, 0.28, 0.4)),
     muyfacil: separar(ralear(voz, 0.45, 1.0)),
-    dificil: separar(ralear(voz, 0.14, 0.2)),
+    dificil: separar(ralear(sinDesafinadas(voz), 0.18, 0.2)),
     profesional: separar(voz)
   },
   acordes: {
@@ -176,7 +180,7 @@ const capas = {
 // Opción 'rapido': canción muy movida; los umbrales en segundos dejaban el bajo y la melodía muy ralos, así que se achican.
 if (A.includes('rapido')) {
   capas.bajo.facil = separar(ralear(bajo, 0.2, 0.4)); capas.bajo.medio = separar(ralear(bajo, 0.12, 0.2)); capas.bajo.dificil = separar(ralear(bajo, 0.07, 0.1));
-  capas.melodia.facil = separar(ralear(voz, 0.22, 0.34)); capas.melodia.medio = separar(ralear(voz, 0.16, 0.24)); capas.melodia.dificil = separar(ralear(voz, 0.11, 0.16));
+  capas.melodia.facil = separar(ralear(voz, 0.22, 0.34)); capas.melodia.medio = separar(ralear(voz, 0.16, 0.24)); capas.melodia.dificil = separar(ralear(sinDesafinadas(voz), 0.14, 0.16));
 }
 // Opción 'tranqui': para una canción donde el Fácil sale pesado, el Fácil pasa a ser lo que antes era "Muy fácil"
 // y el "Muy fácil" nuevo queda todavía más espaciado.
