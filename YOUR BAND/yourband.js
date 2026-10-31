@@ -39,6 +39,9 @@
     { id: 'cover-something-about-you', titulo: 'Something About You (cover)', estilo: 'Level 42 · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-something-about-you/' },
     { id: 'cover-too-much-heaven', titulo: 'Too Much Heaven (cover)', estilo: 'Bee Gees · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-too-much-heaven/' },
     { id: 'cover-baker-street', titulo: 'Baker Street (cover)', estilo: 'Gerry Rafferty · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-baker-street/' },
+    { id: 'cover-guilty', titulo: 'Guilty (cover)', estilo: 'Barbra Streisand y Barry Gibb · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-guilty/' },
+    { id: 'cover-more-than-a-woman', titulo: 'More Than a Woman (cover)', estilo: 'Bee Gees · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-more-than-a-woman/' },
+    { id: 'cover-have-you-ever-seen-the-rain', titulo: 'Have You Ever Seen The Rain (cover)', estilo: 'Creedence · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-have-you-ever-seen-the-rain/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)

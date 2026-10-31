@@ -35,3 +35,6 @@ node tools/generar_capas.js fuentes/cover-le-freak canciones/cover-le-freak "Le 
 node tools/generar_capas.js fuentes/cover-something-about-you canciones/cover-something-about-you "Something About You (cover)" "Level 42 · cover para practicar" 270.6 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-too-much-heaven canciones/cover-too-much-heaven "Too Much Heaven (cover)" "Bee Gees · cover para practicar" 298 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-baker-street canciones/cover-baker-street "Baker Street (cover)" "Gerry Rafferty · cover para practicar" 310.8 "bajo,bateria,guitarra,voz,otros,wind"
+node tools/generar_capas.js fuentes/cover-guilty canciones/cover-guilty "Guilty (cover)" "Barbra Streisand y Barry Gibb · cover para practicar" 278.5 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-more-than-a-woman canciones/cover-more-than-a-woman "More Than a Woman (cover)" "Bee Gees · cover para practicar" 213.6 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-have-you-ever-seen-the-rain canciones/cover-have-you-ever-seen-the-rain "Have You Ever Seen The Rain (cover)" "Creedence · cover para practicar" 190.5 "bajo,bateria,guitarra,voz,otros,piano"
