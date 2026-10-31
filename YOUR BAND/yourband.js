@@ -235,7 +235,7 @@
   async function cargar(m, prog) {
     if (cache[m.id]) return cache[m.id];
     liberarOtras(m.id);
-    const capas = await (await fetch(m.carpeta + 'capas.json')).json();
+    const capas = await (await fetch(m.carpeta + 'capas.json', { cache: 'no-cache' })).json();
     const buffers = {}; let n = 0;
     await Promise.all(capas.stems.map(async s => {
       const ab = await (await fetch(m.carpeta + s + '.mp3')).arrayBuffer();
