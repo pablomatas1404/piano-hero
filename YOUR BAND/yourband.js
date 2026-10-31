@@ -47,6 +47,18 @@
     { id: 'cover-hard-to-say-im-sorry', titulo: 'Hard To Say I\'m Sorry (cover)', estilo: 'Chicago · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-hard-to-say-im-sorry/' },
     { id: 'cover-another-day-in-paradise', titulo: 'Another Day In Paradise (cover)', estilo: 'Phil Collins · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-another-day-in-paradise/' },
     { id: 'cover-lady-in-red', titulo: 'Lady in Red (cover)', estilo: 'Chris de Burgh · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-lady-in-red/' },
+    { id: 'cover-africa', titulo: 'Africa (cover)', estilo: 'Toto · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-africa/' },
+    { id: 'cover-drive', titulo: 'Drive (cover)', estilo: 'The Cars · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-drive/' },
+    { id: 'cover-every-breath-you-take', titulo: 'Every Breath You Take (cover)', estilo: 'The Police · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-every-breath-you-take/' },
+    { id: 'cover-hold-me', titulo: 'Hold Me (cover)', estilo: 'Fleetwood Mac · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-hold-me/' },
+    { id: 'cover-i-dont-want-to-live-without-you', titulo: 'I Don\'t Want To Live Without You (cover)', estilo: 'Foreigner · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-i-dont-want-to-live-without-you/' },
+    { id: 'cover-man-in-the-mirror', titulo: 'Man In The Mirror (cover)', estilo: 'Michael Jackson · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-man-in-the-mirror/' },
+    { id: 'cover-more-than-words', titulo: 'More Than Words (cover)', estilo: 'Extreme · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-more-than-words/' },
+    { id: 'cover-ring-my-bell', titulo: 'Ring My Bell (cover)', estilo: 'Anita Ward · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-ring-my-bell/' },
+    { id: 'cover-slave-to-love', titulo: 'Slave To Love (cover)', estilo: 'Bryan Ferry · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-slave-to-love/' },
+    { id: 'cover-what-about-love', titulo: 'What About Love (cover)', estilo: 'Heart · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-what-about-love/' },
+    { id: 'cover-whats-love-got-to-do-with-it', titulo: 'What\'s Love Got To Do With It (cover)', estilo: 'Tina Turner · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-whats-love-got-to-do-with-it/' },
+    { id: 'cover-who-can-it-be-now', titulo: 'Who Can It Be Now (cover)', estilo: 'Men At Work · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-who-can-it-be-now/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
