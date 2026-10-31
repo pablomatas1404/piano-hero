@@ -42,6 +42,8 @@
     { id: 'cover-guilty', titulo: 'Guilty (cover)', estilo: 'Barbra Streisand y Barry Gibb · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-guilty/' },
     { id: 'cover-more-than-a-woman', titulo: 'More Than a Woman (cover)', estilo: 'Bee Gees · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-more-than-a-woman/' },
     { id: 'cover-have-you-ever-seen-the-rain', titulo: 'Have You Ever Seen The Rain (cover)', estilo: 'Creedence · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-have-you-ever-seen-the-rain/' },
+    { id: 'cover-lotta-love', titulo: 'Lotta Love (cover)', estilo: 'Nicolette Larson · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-lotta-love/' },
+    { id: 'cover-die-with-a-smile', titulo: 'Die With A Smile (cover)', estilo: 'Bruno Mars y Lady Gaga · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-die-with-a-smile/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)

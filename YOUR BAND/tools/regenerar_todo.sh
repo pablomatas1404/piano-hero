@@ -38,3 +38,5 @@ node tools/generar_capas.js fuentes/cover-baker-street canciones/cover-baker-str
 node tools/generar_capas.js fuentes/cover-guilty canciones/cover-guilty "Guilty (cover)" "Barbra Streisand y Barry Gibb · cover para practicar" 278.5 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-more-than-a-woman canciones/cover-more-than-a-woman "More Than a Woman (cover)" "Bee Gees · cover para practicar" 213.6 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-have-you-ever-seen-the-rain canciones/cover-have-you-ever-seen-the-rain "Have You Ever Seen The Rain (cover)" "Creedence · cover para practicar" 190.5 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-lotta-love canciones/cover-lotta-love "Lotta Love (cover)" "Nicolette Larson · cover para practicar" 207.1 "bajo,bateria,guitarra,voz,otros,wind"
+node tools/generar_capas.js fuentes/cover-die-with-a-smile canciones/cover-die-with-a-smile "Die With A Smile (cover)" "Bruno Mars y Lady Gaga · cover para practicar" 242.5 "bajo,bateria,guitarra,voz,otros,piano"
