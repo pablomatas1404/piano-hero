@@ -24,3 +24,5 @@ node tools/generar_capas.js fuentes/neon-summer-night canciones/neon-summer-nigh
 node tools/generar_capas.js fuentes/cover-nos-siguen-pegando canciones/cover-nos-siguen-pegando "Nos Siguen Pegando Abajo (cover)" "Charly García · cover para practicar" 196.9 "bajo,bateria,guitarra,voz,otros,piano" rapido
 node tools/generar_capas.js fuentes/cover-el-rito canciones/cover-el-rito "El Rito (cover)" "Soda Stereo · cover para practicar" 387.6 "bajo,bateria,guitarra,teclado,voz,otros"
 node tools/generar_capas.js fuentes/cover-the-logical-song canciones/cover-the-logical-song "The Logical Song (cover)" "Supertramp · cover para practicar" 233.2 "bajo,bateria,guitarra,teclado,voz,otros"
+node tools/generar_capas.js fuentes/cover-smooth-operator canciones/cover-smooth-operator "Smooth Operator (cover)" "Sade · cover para practicar" 262.9 "bajo,bateria,guitarra,teclado,voz,otros"
+node tools/generar_capas.js fuentes/cover-endless-love canciones/cover-endless-love "Endless Love (cover)" "Diana Ross y Lionel Richie · cover para practicar" 244.6 "bajo,bateria,guitarra,voz,otros,piano"
