@@ -37,6 +37,8 @@
     { id: 'cover-how-deep-is-your-love', titulo: 'How Deep Is Your Love (cover)', estilo: 'Bee Gees · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-how-deep-is-your-love/' },
     { id: 'cover-le-freak', titulo: 'Le Freak (cover)', estilo: 'Chic · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-le-freak/' },
     { id: 'cover-something-about-you', titulo: 'Something About You (cover)', estilo: 'Level 42 · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-something-about-you/' },
+    { id: 'cover-too-much-heaven', titulo: 'Too Much Heaven (cover)', estilo: 'Bee Gees · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-too-much-heaven/' },
+    { id: 'cover-baker-street', titulo: 'Baker Street (cover)', estilo: 'Gerry Rafferty · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-baker-street/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)

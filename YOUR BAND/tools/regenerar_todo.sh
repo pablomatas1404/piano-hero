@@ -33,3 +33,5 @@ node tools/generar_capas.js fuentes/cover-night-fever canciones/cover-night-feve
 node tools/generar_capas.js fuentes/cover-how-deep-is-your-love canciones/cover-how-deep-is-your-love "How Deep Is Your Love (cover)" "Bee Gees · cover para practicar" 254.6 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-le-freak canciones/cover-le-freak "Le Freak (cover)" "Chic · cover para practicar" 197.1 "bajo,bateria,guitarra,voz,otros,piano" rapido
 node tools/generar_capas.js fuentes/cover-something-about-you canciones/cover-something-about-you "Something About You (cover)" "Level 42 · cover para practicar" 270.6 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-too-much-heaven canciones/cover-too-much-heaven "Too Much Heaven (cover)" "Bee Gees · cover para practicar" 298 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-baker-street canciones/cover-baker-street "Baker Street (cover)" "Gerry Rafferty · cover para practicar" 310.8 "bajo,bateria,guitarra,voz,otros,wind"
