@@ -11,9 +11,10 @@
   }
   function listo(f) { if (document.body) f(); else document.addEventListener('DOMContentLoaded', f); }
   if (o === VIEJO) {
-    if (/[?&]exportar=1/.test(location.search) && window.opener) {
+    var quien = window.opener || (window.parent !== window ? window.parent : null);
+    if (/[?&]exportar=1/.test(location.search) && quien) {
       var dump = {}; for (var i = 0; i < ls.length; i++) { var k = ls.key(i); dump[k] = ls.getItem(k); }
-      try { window.opener.postMessage({ ph: 'progreso', datos: dump }, NUEVO); } catch (e) {}
+      try { quien.postMessage({ ph: 'progreso', datos: dump }, NUEVO); } catch (e) {}
       listo(function () { cartel('Listo, copiando tu progreso... ya podés cerrar esta ventana.'); });
       setTimeout(function () { try { window.close(); } catch (e) {} }, 1500);
       return;
