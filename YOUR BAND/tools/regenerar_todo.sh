@@ -60,3 +60,7 @@ node tools/generar_capas.js fuentes/cover-breakfast-in-america canciones/cover-b
 node tools/generar_capas.js fuentes/cover-long-train-running canciones/cover-long-train-running "Long Train Running (cover)" "The Doobie Brothers · cover para practicar" 277.6 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-is-this-love canciones/cover-is-this-love "Is This Love (cover)" "Whitesnake · cover para practicar" 281 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-money-for-nothing canciones/cover-money-for-nothing "Money For Nothing (cover)" "Dire Straits · cover para practicar" 327 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-rosanna canciones/cover-rosanna "Rosanna (cover)" "Toto · cover para practicar" 340.3 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-i-have-nothing canciones/cover-i-have-nothing "I Have Nothing (cover)" "Whitney Houston · cover para practicar" 388.3 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-every-little-thing-she-does-is-magic canciones/cover-every-little-thing-she-does-is-magic "Every Little Thing She Does Is Magic (cover)" "The Police · cover para practicar" 243.4 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-your-love canciones/cover-your-love "Your Love (cover)" "The Outfield · cover para practicar" 223.8 "bajo,bateria,guitarra,voz,otros,piano"

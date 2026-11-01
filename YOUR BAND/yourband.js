@@ -64,6 +64,10 @@
     { id: 'cover-long-train-running', titulo: 'Long Train Running (cover)', estilo: 'The Doobie Brothers · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-long-train-running/' },
     { id: 'cover-is-this-love', titulo: 'Is This Love (cover)', estilo: 'Whitesnake · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-is-this-love/' },
     { id: 'cover-money-for-nothing', titulo: 'Money For Nothing (cover)', estilo: 'Dire Straits · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-money-for-nothing/' },
+    { id: 'cover-rosanna', titulo: 'Rosanna (cover)', estilo: 'Toto · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-rosanna/' },
+    { id: 'cover-i-have-nothing', titulo: 'I Have Nothing (cover)', estilo: 'Whitney Houston · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-i-have-nothing/' },
+    { id: 'cover-every-little-thing-she-does-is-magic', titulo: 'Every Little Thing She Does Is Magic (cover)', estilo: 'The Police · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-every-little-thing-she-does-is-magic/' },
+    { id: 'cover-your-love', titulo: 'Your Love (cover)', estilo: 'The Outfield · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-your-love/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
