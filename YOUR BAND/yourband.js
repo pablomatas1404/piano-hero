@@ -358,11 +358,12 @@
     if (cp.bajo) mute.push('bajo'); if (cp.acordes) mute.push('guitarra'); if (cp.melodia || cp.acordes) mute.push('teclado');
     const s = multiHandSong(sel.m.titulo + ' (' + nombreCapas() + ')', 'YOUR BAND', nv, rh, lh, [], [], { bpm: 70, timeSig: { num: 4, den: 4 } });
     s.duration = Math.max(s.duration, (b - a) + 1.2);
+    s.__etiqueta = sel.m.titulo.replace(/ \(cover\)$/, '') + ' · ' + sel.m.estilo.replace(/ · cover para practicar$/, '');
     s.__yb = { a, modo: sel.modo, rol: claveCapas(), mute, tieneR: rh.length > 0, tieneL: lh.length > 0, nv, mision: sel.m.id, parte: sel.parte, datos: sel.d };
     return s;
   }
   async function empezar() {
-    ctxAudio();
+    ctxAudio(); marcarHoy(sel.m.id);
     if (typeof audioReady !== 'undefined' && !audioReady) { try { await startAudio(); } catch (e) {} }
     const s = armarCancion();
     // menos retardo del sonido que tocás: Tone programa cada nota 0.1 s adelante por defecto
@@ -685,6 +686,26 @@
   window.renderSongList = function () { if (enPanel) return renderMiLista(); return _renderSongList.apply(this, arguments); };
 
   // ---------- Entrada ----------
+  // ---- Próximo tema / Tema aleatorio (sin los de Suno, sin repetir en el día) ----
+  function claveHoy() { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+  function hoyYB() { if (!datos.hoy || datos.hoy.f !== claveHoy()) datos.hoy = { f: claveHoy(), ids: [] }; return datos.hoy; }
+  function marcarHoy(id) { try { const o = hoyYB(); if (id && !o.ids.includes(id)) { o.ids.push(id); guardar(); } } catch (e) {} }
+  window.ybSaltar = async function (tipo) {
+    const act = activeSong && activeSong.__yb ? activeSong.__yb.mision : null;
+    const lista = MISIONES.filter(m => !m.proximamente && !(datos.ocultas && datos.ocultas[m.id]) && m.nivelMin <= nivelJugador());
+    let m;
+    if (tipo === 'prox') { const i = lista.findIndex(x => x.id === act); m = lista[(i + 1) % lista.length]; }
+    else {
+      marcarHoy(act);
+      let pool = lista.filter(x => /^cover-/.test(x.id) && x.id !== act && !hoyYB().ids.includes(x.id));
+      if (!pool.length) { datos.hoy = { f: claveHoy(), ids: act ? [act] : [] }; guardar(); pool = lista.filter(x => /^cover-/.test(x.id) && x.id !== act); try { showBigToast('Ya pasaste por todos los temas de hoy: arranco otra vuelta'); } catch (e) {} }
+      m = pool[Math.floor(Math.random() * pool.length)];
+    }
+    if (!m) return;
+    try { pauseSong(); } catch (e) {}
+    try { showBigToast('Cargando: ' + m.titulo); } catch (e) {}
+    await tocarMision(m, document.createElement('div'));
+  };
   window.ybAbrir = function () { try { pauseSong(); } catch (e) {} pop.classList.remove('on'); $('yb-in-nombre').value = datos.banda; pantalla('yb-nombre'); };
   if (location.hash === '#yourband') setTimeout(() => window.switchTab('yourband'), 300);
 })();
