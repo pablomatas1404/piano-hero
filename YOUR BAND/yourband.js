@@ -704,7 +704,14 @@
     if (!m) return;
     try { pauseSong(); } catch (e) {}
     try { showBigToast('Cargando: ' + m.titulo); } catch (e) {}
-    await tocarMision(m, document.createElement('div'));
+    sel.m = m; sel.parte = 'all';
+    const sp = (p) => { try { saltoProgreso(p, m.titulo); } catch (e) {} };
+    try {
+      ctxAudio(); sp(0);
+      sel.d = await cargar(m, p => sp(p));
+      await empezar();
+    } catch (e) { try { showBigToast('No pude cargar: ' + e.message); } catch (e2) {} }
+    sp(null);
   };
   window.ybAbrir = function () { try { pauseSong(); } catch (e) {} pop.classList.remove('on'); $('yb-in-nombre').value = datos.banda; pantalla('yb-nombre'); };
   if (location.hash === '#yourband') setTimeout(() => window.switchTab('yourband'), 300);

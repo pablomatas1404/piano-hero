@@ -1177,8 +1177,8 @@
        de botones se pasaban del borde de la pantalla y el teclado quedaba CORTADO abajo (por eso se veía todo negro: la parte
        blanca de abajo y los nombres de las teclas blancas quedaban fuera de la pantalla). Ahora el teclado se achica según el
        alto real de la pantalla y la barra de botones va más compacta. */
-    .keys-region{ height:clamp(70px, 29vh, 104px); }
-    .kids-keys-region{ height:clamp(70px, 29vh, 104px); }
+    .keys-region{ height:clamp(64px, 25vh, 92px); }
+    .kids-keys-region{ height:clamp(64px, 25vh, 92px); }
     .mini-toolbar{ padding:3px 10px; gap:3px 6px; }
     .mini-toolbar .btn{ padding:4px 9px; font-size:11px; }
     .mini-toolbar-collapse-btn{ padding:4px 9px; }
@@ -1194,6 +1194,11 @@
        piano y no tenía nada que ver con lo que reportó Pablo. */
     .bkey{ height:44%; }
   }
+  .hide-header-btn{ display:none; }
+  @media (max-height:700px){ .hide-header-btn{ display:inline-flex; } }
+  #saltoProg{ display:none; flex:1 1 90px; min-width:90px; max-width:220px; align-items:center; gap:6px; font-size:11px; font-weight:800; color:var(--accent); }
+  #saltoProg .barra{ flex:1; height:6px; background:#26324d; border-radius:4px; overflow:hidden; }
+  #saltoProg .barra i{ display:block; height:100%; width:0; background:linear-gradient(90deg,#4dd0ff,#4dff9e); transition:width .15s; }
   @media (max-height:700px) and (max-width:660px){ #nextSongBtn .lab, #randomSongBtn .lab{ display:none; } }
 
   /* ---- Celular (base para más adelante — no es el foco de esta tarea, pero no debe romper). ---- */
@@ -1373,6 +1378,7 @@ try { window.__MOVIL = Math.min(screen.width, screen.height) < 600 && ('ontouchs
     </div>
   </div>
   <button class="btn" id="btn-help" title="Instrucciones: cómo usar todo" onclick="openHelp()">❓ Instrucciones</button>
+  <button class="btn hide-header-btn" id="hideHeaderBtn" onclick="enterPhoneGameMode()" title="Esconder el encabezado y volver a la pantalla de juego">▲ Volver al juego</button>
   <!-- El ⚙️ Configuración duplicado que vivía acá (id="btn-settings") se borró (24/08/2026, a pedido
        de Pablo -- "tiene dos botones de configuración, uno hay que borrarlo, está duplicado"): el
        único que queda es el 🛡️ BLINDADO de arriba de todo, bien al principio del encabezado, junto
@@ -1808,6 +1814,7 @@ try { window.__MOVIL = Math.min(screen.width, screen.height) < 600 && ('ontouchs
       <button class="btn" onclick="openLearnHub()" title="Curso guiado de 8 lecciones: de tres notas con la mano derecha hasta tocar con las dos manos juntas">🎓 Aprender</button>
       <button class="btn" id="nextSongBtn" onclick="proximoTema()" title="Pasa al tema que sigue en la lista">⏭<span class="lab"> Próximo</span></button>
       <button class="btn" id="randomSongBtn" onclick="temaAleatorio()" title="Elige un tema al azar que no hayas tocado hoy (sin los de Suno)">🎲<span class="lab"> Aleatorio</span></button>
+      <span id="saltoProg"><span class="barra"><i></i></span><b>0%</b></span>
       <button class="btn" id="stopSoundBtn" style="display:none; color:var(--bad); border-color:var(--bad);" onclick="organPanic()" title="Corta YA cualquier acorde o ritmo que se haya quedado sonando, en la compu y en el Yamaha">⏹ Parar sonido</button>
       <button class="btn" id="cifraClubBtn" style="display:none" onclick="toggleCifraPanel()" title="Pegás una cifra de Cifra Club y la pantalla negra te va mostrando la letra y los acordes que tenés que tocar, como un karaoke">🎼 Tocar con Cifra Club</button>
       <span class="mini-toolbar-sep"></span>
@@ -10331,6 +10338,13 @@ function marcarTocadaHoyPH(card) {
     if (k && !o.t.includes(k)) { o.t.push(k); localStorage.setItem('ph_tocadas_hoy', JSON.stringify(o)); } } catch (e) {}
 }
 let saltandoTema = false;
+// Barrita finita al lado de Próximo/Aleatorio mientras carga el tema nuevo (p entre 0 y 1; null la esconde).
+function saltoProgreso(p, titulo) {
+  const w = document.getElementById('saltoProg'); if (!w) return;
+  if (p == null) { w.style.display = 'none'; return; }
+  w.style.display = 'flex'; w.title = 'Cargando: ' + (titulo || '');
+  w.querySelector('i').style.width = Math.round(p * 100) + '%'; w.querySelector('b').textContent = Math.round(p * 100) + '%';
+}
 function saltarTemaPH(azar) {
   const cartas = Array.from(document.querySelectorAll('#songList .song-card')).filter(c => c.querySelector('.drag-handle') && !c.classList.contains('locked'));
   if (!cartas.length) { showBigToast('Abrí la lista de canciones una vez para que sepa de dónde elegir'); return; }
@@ -15153,6 +15167,6 @@ requestAnimationFrame(frame);
 })();
 </script>
 <script>/* yb-autoactualizar: si esta pagina quedo guardada vieja en la tablet, se recarga sola con la version nueva */document.addEventListener("DOMContentLoaded",function(){try{var s=[].slice.call(document.scripts).filter(function(x){return /yourband\.js\?v=/.test(x.src)})[0];if(!s)return;var mine=(s.src.match(/v=([0-9a-z]+)/)||[])[1];fetch("YOUR BAND/version.txt?x="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){t=t.trim();if(t&&t!==mine&&!sessionStorage.getItem("yb_rec_"+t)){sessionStorage.setItem("yb_rec_"+t,"1");location.replace(location.pathname+"?v="+t);}}).catch(function(){});}catch(e){}});</script>
-<script src="YOUR BAND/yourband.js?v=20261101103635"></script>
+<script src="YOUR BAND/yourband.js?v=20261101104902"></script>
 </body>
 </html>
