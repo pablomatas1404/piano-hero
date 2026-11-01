@@ -76,6 +76,9 @@
     { id: 'cover-sultans-of-swing', titulo: 'Sultans of Swing (cover)', estilo: 'Dire Straits · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-sultans-of-swing/' },
     { id: 'cover-hold-the-line', titulo: 'Hold The Line (cover)', estilo: 'Toto · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-hold-the-line/' },
     { id: 'cover-to-be-with-you', titulo: 'To Be With You (cover)', estilo: 'Mr. Big · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-to-be-with-you/' },
+    { id: 'cover-down-under', titulo: 'Down Under (cover)', estilo: 'Men At Work · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-down-under/' },
+    { id: 'cover-new-sensation', titulo: 'New Sensation (cover)', estilo: 'INXS · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-new-sensation/' },
+    { id: 'cover-you-get-what-you-give', titulo: 'You Get What You Give (cover)', estilo: 'New Radicals · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-you-get-what-you-give/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)

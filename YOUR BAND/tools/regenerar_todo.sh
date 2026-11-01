@@ -72,3 +72,6 @@ node tools/generar_capas.js fuentes/cover-all-i-wanna-do canciones/cover-all-i-w
 node tools/generar_capas.js fuentes/cover-sultans-of-swing canciones/cover-sultans-of-swing "Sultans of Swing (cover)" "Dire Straits · cover para practicar" 312.5 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-hold-the-line canciones/cover-hold-the-line "Hold The Line (cover)" "Toto · cover para practicar" 244.5 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-to-be-with-you canciones/cover-to-be-with-you "To Be With You (cover)" "Mr. Big · cover para practicar" 205.8 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-down-under canciones/cover-down-under "Down Under (cover)" "Men At Work · cover para practicar" 209.3 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-new-sensation canciones/cover-new-sensation "New Sensation (cover)" "INXS · cover para practicar" 229.2 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-you-get-what-you-give canciones/cover-you-get-what-you-give "You Get What You Give (cover)" "New Radicals · cover para practicar" 297.5 "bajo,bateria,guitarra,voz,otros,piano"
