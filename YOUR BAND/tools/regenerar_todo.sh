@@ -57,3 +57,6 @@ node tools/generar_capas.js fuentes/cover-whats-love-got-to-do-with-it canciones
 node tools/generar_capas.js fuentes/cover-who-can-it-be-now canciones/cover-who-can-it-be-now "Who Can It Be Now (cover)" "Men At Work · cover para practicar" 213 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-take-the-long-way-home canciones/cover-take-the-long-way-home "Take The Long Way Home (cover)" "Supertramp · cover para practicar" 264.8 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-breakfast-in-america canciones/cover-breakfast-in-america "Breakfast in America" "Supertramp · Roger Hodgson · para practicar" 224.1 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-long-train-running canciones/cover-long-train-running "Long Train Running (cover)" "The Doobie Brothers · cover para practicar" 277.6 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-is-this-love canciones/cover-is-this-love "Is This Love (cover)" "Whitesnake · cover para practicar" 281 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-money-for-nothing canciones/cover-money-for-nothing "Money For Nothing (cover)" "Dire Straits · cover para practicar" 327 "bajo,bateria,guitarra,voz,otros,piano"

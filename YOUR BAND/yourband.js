@@ -61,6 +61,9 @@
     { id: 'cover-who-can-it-be-now', titulo: 'Who Can It Be Now (cover)', estilo: 'Men At Work · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-who-can-it-be-now/' },
     { id: 'cover-take-the-long-way-home', titulo: 'Take The Long Way Home (cover)', estilo: 'Supertramp · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-take-the-long-way-home/' },
     { id: 'cover-breakfast-in-america', titulo: 'Breakfast in America', estilo: 'Supertramp · Roger Hodgson · para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-breakfast-in-america/' },
+    { id: 'cover-long-train-running', titulo: 'Long Train Running (cover)', estilo: 'The Doobie Brothers · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-long-train-running/' },
+    { id: 'cover-is-this-love', titulo: 'Is This Love (cover)', estilo: 'Whitesnake · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-is-this-love/' },
+    { id: 'cover-money-for-nothing', titulo: 'Money For Nothing (cover)', estilo: 'Dire Straits · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-money-for-nothing/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
