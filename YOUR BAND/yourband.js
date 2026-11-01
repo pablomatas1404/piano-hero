@@ -68,6 +68,9 @@
     { id: 'cover-i-have-nothing', titulo: 'I Have Nothing (cover)', estilo: 'Whitney Houston · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-i-have-nothing/' },
     { id: 'cover-every-little-thing-she-does-is-magic', titulo: 'Every Little Thing She Does Is Magic (cover)', estilo: 'The Police · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-every-little-thing-she-does-is-magic/' },
     { id: 'cover-your-love', titulo: 'Your Love (cover)', estilo: 'The Outfield · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-your-love/' },
+    { id: 'cover-arthurs-theme', titulo: 'Arthur\'s Theme (cover)', estilo: 'Christopher Cross · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-arthurs-theme/' },
+    { id: 'cover-say-say-say', titulo: 'Say Say Say (cover)', estilo: 'Paul McCartney y Michael Jackson · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-say-say-say/' },
+    { id: 'cover-shout', titulo: 'Shout (cover)', estilo: 'Tears For Fears · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-shout/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)

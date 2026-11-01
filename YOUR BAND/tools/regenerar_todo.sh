@@ -64,3 +64,6 @@ node tools/generar_capas.js fuentes/cover-rosanna canciones/cover-rosanna "Rosan
 node tools/generar_capas.js fuentes/cover-i-have-nothing canciones/cover-i-have-nothing "I Have Nothing (cover)" "Whitney Houston · cover para practicar" 388.3 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-every-little-thing-she-does-is-magic canciones/cover-every-little-thing-she-does-is-magic "Every Little Thing She Does Is Magic (cover)" "The Police · cover para practicar" 243.4 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-your-love canciones/cover-your-love "Your Love (cover)" "The Outfield · cover para practicar" 223.8 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-arthurs-theme canciones/cover-arthurs-theme "Arthur's Theme (cover)" "Christopher Cross · cover para practicar" 288.6 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-say-say-say canciones/cover-say-say-say "Say Say Say (cover)" "Paul McCartney y Michael Jackson · cover para practicar" 260.8 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-shout canciones/cover-shout "Shout (cover)" "Tears For Fears · cover para practicar" 387.3 "bajo,bateria,guitarra,voz,otros,piano"
