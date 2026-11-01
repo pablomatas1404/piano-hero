@@ -269,11 +269,16 @@
     liberarOtras(m.id);
     const capas = await (await fetch(m.carpeta + 'capas.json', { cache: 'no-cache' })).json();
     const buffers = {}; let n = 0;
-    await Promise.all(capas.stems.map(async s => {
-      const ab = await (await fetch(m.carpeta + s + '.mp3')).arrayBuffer();
-      buffers[s] = aMono(await new Promise((ok, no) => ctxAudio().decodeAudioData(ab, ok, no)));
+    // Celular: de a una pista por vez (si se decodifican todas juntas, la memoria llega al tope y Chrome tira "Se produjo un error").
+    const una = async s => {
+      let ab = await (await fetch(m.carpeta + s + '.mp3')).arrayBuffer();
+      const dec = await new Promise((ok, no) => ctxAudio().decodeAudioData(ab, ok, no));
+      ab = null;
+      buffers[s] = aMono(dec);
       prog(++n / capas.stems.length);
-    }));
+    };
+    if (celu) { for (const s of capas.stems) { await una(s); await new Promise(r => setTimeout(r, 30)); } }
+    else await Promise.all(capas.stems.map(una));
     return (cache[m.id] = { capas, buffers });
   }
 
