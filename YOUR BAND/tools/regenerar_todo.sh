@@ -67,3 +67,8 @@ node tools/generar_capas.js fuentes/cover-your-love canciones/cover-your-love "Y
 node tools/generar_capas.js fuentes/cover-arthurs-theme canciones/cover-arthurs-theme "Arthur's Theme (cover)" "Christopher Cross · cover para practicar" 288.6 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-say-say-say canciones/cover-say-say-say "Say Say Say (cover)" "Paul McCartney y Michael Jackson · cover para practicar" 260.8 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/cover-shout canciones/cover-shout "Shout (cover)" "Tears For Fears · cover para practicar" 387.3 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-i-want-to-know-what-love-is canciones/cover-i-want-to-know-what-love-is "I Want To Know What Love Is (cover)" "Foreigner · cover para practicar" 332.6 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-all-i-wanna-do canciones/cover-all-i-wanna-do "All I Wanna Do (cover)" "Sheryl Crow · cover para practicar" 256.9 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-sultans-of-swing canciones/cover-sultans-of-swing "Sultans of Swing (cover)" "Dire Straits · cover para practicar" 312.5 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-hold-the-line canciones/cover-hold-the-line "Hold The Line (cover)" "Toto · cover para practicar" 244.5 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/cover-to-be-with-you canciones/cover-to-be-with-you "To Be With You (cover)" "Mr. Big · cover para practicar" 205.8 "bajo,bateria,guitarra,voz,otros,piano"

@@ -71,6 +71,11 @@
     { id: 'cover-arthurs-theme', titulo: 'Arthur\'s Theme (cover)', estilo: 'Christopher Cross · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-arthurs-theme/' },
     { id: 'cover-say-say-say', titulo: 'Say Say Say (cover)', estilo: 'Paul McCartney y Michael Jackson · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-say-say-say/' },
     { id: 'cover-shout', titulo: 'Shout (cover)', estilo: 'Tears For Fears · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-shout/' },
+    { id: 'cover-i-want-to-know-what-love-is', titulo: 'I Want To Know What Love Is (cover)', estilo: 'Foreigner · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-i-want-to-know-what-love-is/' },
+    { id: 'cover-all-i-wanna-do', titulo: 'All I Wanna Do (cover)', estilo: 'Sheryl Crow · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-all-i-wanna-do/' },
+    { id: 'cover-sultans-of-swing', titulo: 'Sultans of Swing (cover)', estilo: 'Dire Straits · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-sultans-of-swing/' },
+    { id: 'cover-hold-the-line', titulo: 'Hold The Line (cover)', estilo: 'Toto · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-hold-the-line/' },
+    { id: 'cover-to-be-with-you', titulo: 'To Be With You (cover)', estilo: 'Mr. Big · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-to-be-with-you/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
