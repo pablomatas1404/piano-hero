@@ -1,5 +1,5 @@
 // Suma una canción nueva a YOUR BAND en un solo paso.
-// Uso (desde la carpeta YOUR BAND):
+// Uso (desde la carpeta YOUR BAND; con GRUPO=latinos delante, el tema va a la pestaña Latinos):
 //   node tools/agregar_cancion.js <carpeta fuente> <id> "<Título>" "<Estilo>" [denso|desplazado]
 // La carpeta fuente tiene: cancion.mp3, stems/ (el zip descomprimido) y bajo/voz/guitarra _notas.json y _rms.json.
 // Hace: copia las pistas con nombres sin tildes, arma los niveles, suma la misión al menú (usa el primer
@@ -37,7 +37,7 @@ if (r.status !== 0) process.exit(r.status);
 // misión nueva en el menú
 const jsPath = path.join(raiz, 'yourband.js'); let js = fs.readFileSync(jsPath, 'utf8');
 const sinTildes = s => s.replace(/'/g, "\\'");
-const nueva = `{ id: '${id}', titulo: '${sinTildes(titulo)}', estilo: '${sinTildes(estilo)}', nivelMin: 1, carpeta: CARPETA + 'canciones/${id}/' },`;
+const nueva = `{ id: '${id}', titulo: '${sinTildes(titulo)}', estilo: '${sinTildes(estilo)}', nivelMin: 1, ${process.env.GRUPO ? "grupo: '" + process.env.GRUPO + "', " : ''}carpeta: CARPETA + 'canciones/${id}/' },`;
 if (js.includes(`id: '${id}'`)) console.log('La misión ya estaba en el menú.');
 else {
   const m = js.match(/\{ id: 'prox\d+'[^}]*\},?/);

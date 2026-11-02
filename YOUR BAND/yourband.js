@@ -79,6 +79,16 @@
     { id: 'cover-down-under', titulo: 'Down Under (cover)', estilo: 'Men At Work · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-down-under/' },
     { id: 'cover-new-sensation', titulo: 'New Sensation (cover)', estilo: 'INXS · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-new-sensation/' },
     { id: 'cover-you-get-what-you-give', titulo: 'You Get What You Give (cover)', estilo: 'New Radicals · cover para practicar', nivelMin: 1, carpeta: CARPETA + 'canciones/cover-you-get-what-you-give/' },
+    { id: 'cover-tan-enamorados', titulo: 'Tan enamorados (cover)', estilo: 'G Sony · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-tan-enamorados/' },
+    { id: 'cover-mil-horas', titulo: 'Mil horas (cover)', estilo: 'Julián Kartún · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-mil-horas/' },
+    { id: 'cover-amor-descartable', titulo: 'Amor descartable (cover)', estilo: 'Lali · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-amor-descartable/' },
+    { id: 'cover-nada-es-para-siempre', titulo: 'Nada es para siempre (cover)', estilo: 'Karina · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-nada-es-para-siempre/' },
+    { id: 'cover-la-gata-bajo-la-lluvia', titulo: 'La gata bajo la lluvia (cover)', estilo: 'Candu Domínguez · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-la-gata-bajo-la-lluvia/' },
+    { id: 'cover-no-quiero-ser-mas-tu-amigo', titulo: 'No quiero ser más tu amigo (cover)', estilo: 'Migue Granados · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-no-quiero-ser-mas-tu-amigo/' },
+    { id: 'cover-paisaje', titulo: 'Paisaje (cover)', estilo: 'Nathy Peluso · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-paisaje/' },
+    { id: 'cover-promesas-sobre-el-bidet', titulo: 'Promesas sobre el bidet (cover)', estilo: 'Pablo Granados · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-promesas-sobre-el-bidet/' },
+    { id: 'cover-como-la-flor', titulo: 'Como la flor (cover)', estilo: 'Cazzu · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-como-la-flor/' },
+    { id: 'cover-que-ganas-de-no-verte-nunca-mas', titulo: 'Qué ganas de no verte nunca más (cover)', estilo: 'Ángela Torres · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-que-ganas-de-no-verte-nunca-mas/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
@@ -223,11 +233,26 @@
   $('yb-b-nom').onclick = () => { $('yb-in-nombre').value = datos.banda; pantalla('yb-nombre'); };
 
   const claveEst = (m, rol, nv) => m + '|' + rol + '|' + nv;
+  // Pestañas de la lista: "Rock y pop" (todo lo de siempre) y "Latinos" (temas en castellano; en MISIONES llevan grupo: 'latinos').
+  const PESTANAS = [['general', '🎸 Rock y pop'], ['latinos', '💃 Latinos']];
+  const enVista = m => (m.grupo === 'latinos') === (datos.pestana === 'latinos');
+  function filaPestanas(alCambiar) {
+    const fila = document.createElement('div'); fila.style.cssText = 'display:flex;gap:6px;margin:4px 0 8px;grid-column:1/-1;width:100%';
+    PESTANAS.forEach(([k, t]) => {
+      const n = MISIONES.filter(m => !m.proximamente && (m.grupo === 'latinos') === (k === 'latinos')).length;
+      const b = document.createElement('button'); b.className = 'btn'; b.textContent = t + ' (' + n + ')';
+      const on = (datos.pestana || 'general') === k;
+      b.style.cssText = 'flex:1;touch-action:manipulation;font-weight:800;border-radius:12px;border:2px solid #4dd0ff;' + (on ? 'background:#4dd0ff;color:#06222d;' : 'background:#272340;color:#f2efff;') + (tactil ? 'font-size:16px;padding:12px 6px' : 'font-size:12px;padding:8px');
+      b.onclick = ev => { ev.stopPropagation(); ev.preventDefault(); setTimeout(() => { datos.pestana = k; guardar(); alCambiar(); }, 0); };
+      fila.appendChild(b);
+    });
+    return fila;
+  }
   function menu() {
     $('yb-menu-t').textContent = datos.banda + ' · ' + nombreCapas();
     $('yb-menu-n').innerHTML = `Nivel ${nivelJugador()} · <span class="yb-est">★</span> ${totalEstrellas()}`;
-    const c = $('yb-lista'); c.innerHTML = '';
-    MISIONES.forEach(m => {
+    const c = $('yb-lista'); c.innerHTML = ''; c.appendChild(filaPestanas(menu));
+    MISIONES.filter(enVista).forEach(m => {
       const bloq = m.nivelMin > nivelJugador(), d = document.createElement('div');
       d.className = 'yb-tarj ' + (m.proximamente || bloq ? 'ap' : 'el');
       let est = '';
@@ -614,7 +639,8 @@
       op.appendChild(fila);
     }
     const aviso = document.createElement('div'); aviso.style.cssText = 'font-size:11px;color:var(--muted);margin:2px 2px 8px'; aviso.textContent = 'Doble clic (o doble toque) en una canción para tocarla.'; list.appendChild(aviso);
-    MISIONES.filter(m => !m.proximamente && !(datos.ocultas && datos.ocultas[m.id])).forEach(m => {
+    list.appendChild(filaPestanas(renderMiLista));
+    MISIONES.filter(m => !m.proximamente && enVista(m) && !(datos.ocultas && datos.ocultas[m.id])).forEach(m => {
       const bloq = m.nivelMin > nivelJugador();
       const card = document.createElement('div'); card.className = 'song-card' + (bloq ? ' locked' : ''); card.dataset.title = m.titulo;
       const est = datos.estrellas[claveEst(m.id, claveCapas(), sel.nv)] || 0;
@@ -692,7 +718,7 @@
   function marcarHoy(id) { try { const o = hoyYB(); if (id && !o.ids.includes(id)) { o.ids.push(id); guardar(); } } catch (e) {} }
   window.ybSaltar = async function (tipo) {
     const act = activeSong && activeSong.__yb ? activeSong.__yb.mision : null;
-    const lista = MISIONES.filter(m => !m.proximamente && !(datos.ocultas && datos.ocultas[m.id]) && m.nivelMin <= nivelJugador());
+    const lista = MISIONES.filter(m => !m.proximamente && !(datos.ocultas && datos.ocultas[m.id]) && m.nivelMin <= nivelJugador() && enVista(m));
     let m;
     if (tipo === 'prox') { const i = lista.findIndex(x => x.id === act); m = lista[(i + 1) % lista.length]; }
     else {
