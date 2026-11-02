@@ -106,6 +106,7 @@
     { id: 'cover-lobo-hombre-en-paris', titulo: 'Lobo hombre en París (cover)', estilo: 'Matute y La Unión · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-lobo-hombre-en-paris/' },
     { id: 'cover-un-millon-de-anos-luz', titulo: 'Un millón de años luz (cover)', estilo: 'Aeropiano · cover de Soda Stereo', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-un-millon-de-anos-luz/' },
     { id: 'cover-gipsy-kings-rosario-lolita', titulo: 'Gipsy Kings (cover)', estilo: 'Rosario y Lolita Flores · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-gipsy-kings-rosario-lolita/' },
+    { id: 'cover-salando-las-heridas', titulo: 'Salando las heridas (cover)', estilo: 'Una Obra Redonda · Banda Soporte · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-salando-las-heridas/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
