@@ -95,3 +95,4 @@ node tools/generar_capas.js fuentes/latino-azucar-amargo canciones/cover-azucar-
 node tools/generar_capas.js fuentes/latino-nunca-es-suficiente canciones/cover-nunca-es-suficiente "Nunca es suficiente (cover)" "Natalie Pérez · cover para practicar" 284.6 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/latino-corazon-partio canciones/cover-corazon-partio "Corazón partío (cover)" "Tiago PZK · cover para practicar" 350.2 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/latino-no-podras canciones/cover-no-podras "No podrás (cover)" "Cuatro Cuartos · cover para practicar" 256.6 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/latino-quitame-ese-hombre canciones/cover-quitame-ese-hombre "Quítame ese hombre (cover)" "Ingrid Contreras · cover para practicar" 197.2 "bajo,bateria,guitarra,voz,otros,piano"

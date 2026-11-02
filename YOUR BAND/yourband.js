@@ -99,6 +99,7 @@
     { id: 'cover-nunca-es-suficiente', titulo: 'Nunca es suficiente (cover)', estilo: 'Natalie Pérez · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-nunca-es-suficiente/' },
     { id: 'cover-corazon-partio', titulo: 'Corazón partío (cover)', estilo: 'Tiago PZK · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-corazon-partio/' },
     { id: 'cover-no-podras', titulo: 'No podrás (cover)', estilo: 'Cuatro Cuartos · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-no-podras/' },
+    { id: 'cover-quitame-ese-hombre', titulo: 'Quítame ese hombre (cover)', estilo: 'Ingrid Contreras · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-quitame-ese-hombre/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
