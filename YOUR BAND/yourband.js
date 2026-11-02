@@ -107,6 +107,8 @@
     { id: 'cover-un-millon-de-anos-luz', titulo: 'Un millón de años luz (cover)', estilo: 'Aeropiano · cover de Soda Stereo', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-un-millon-de-anos-luz/' },
     { id: 'cover-gipsy-kings-rosario-lolita', titulo: 'Gipsy Kings (cover)', estilo: 'Rosario y Lolita Flores · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-gipsy-kings-rosario-lolita/' },
     { id: 'cover-salando-las-heridas', titulo: 'Salando las heridas (cover)', estilo: 'Una Obra Redonda · Banda Soporte · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-salando-las-heridas/' },
+    { id: 'cover-todo-un-palo-aeropiano', titulo: 'Todo un palo (cover)', estilo: 'Aeropiano · cover de los Redonditos', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-todo-un-palo-aeropiano/' },
+    { id: 'cover-un-wc-en-el-everest', titulo: 'Un WC en el Everest (cover)', estilo: 'Mariposa Pontiac · cover de los Redonditos', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-un-wc-en-el-everest/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
