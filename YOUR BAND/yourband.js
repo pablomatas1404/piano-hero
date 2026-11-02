@@ -97,6 +97,7 @@
     { id: 'cover-un-misil-en-mi-placard', titulo: 'Un misil en mi placard (cover)', estilo: 'Sobredosis de Soda · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-un-misil-en-mi-placard/' },
     { id: 'cover-azucar-amargo', titulo: 'Azúcar amargo (cover)', estilo: 'Marilina Bertoldi · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-azucar-amargo/' },
     { id: 'cover-nunca-es-suficiente', titulo: 'Nunca es suficiente (cover)', estilo: 'Natalie Pérez · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-nunca-es-suficiente/' },
+    { id: 'cover-corazon-partio', titulo: 'Corazón partío (cover)', estilo: 'Tiago PZK · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-corazon-partio/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
