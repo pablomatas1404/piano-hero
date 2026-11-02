@@ -106,3 +106,4 @@ node tools/generar_capas.js fuentes/latino-salando-las-heridas canciones/cover-s
 node tools/generar_capas.js fuentes/latino-todo-un-palo-aeropiano canciones/cover-todo-un-palo-aeropiano "Todo un palo (cover)" "Aeropiano · cover de los Redonditos" 315.4 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/latino-un-wc-en-el-everest canciones/cover-un-wc-en-el-everest "Un WC en el Everest (cover)" "Mariposa Pontiac · cover de los Redonditos" 307.4 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/latino-masacre-en-el-puticlub canciones/cover-masacre-en-el-puticlub "Masacre en el Puticlub (cover)" "La Mississippi · cover para practicar" 339.8 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/latino-todo-un-palo-pier canciones/cover-todo-un-palo-pier "Todo un palo (Pier en el Luna Park)" "Pier · cover para practicar" 400.4 "bajo,bateria,guitarra,voz,otros,piano"

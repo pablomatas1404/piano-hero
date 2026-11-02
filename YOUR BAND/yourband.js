@@ -110,6 +110,7 @@
     { id: 'cover-todo-un-palo-aeropiano', titulo: 'Todo un palo (cover)', estilo: 'Aeropiano · cover de los Redonditos', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-todo-un-palo-aeropiano/' },
     { id: 'cover-un-wc-en-el-everest', titulo: 'Un WC en el Everest (cover)', estilo: 'Mariposa Pontiac · cover de los Redonditos', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-un-wc-en-el-everest/' },
     { id: 'cover-masacre-en-el-puticlub', titulo: 'Masacre en el Puticlub (cover)', estilo: 'La Mississippi · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-masacre-en-el-puticlub/' },
+    { id: 'cover-todo-un-palo-pier', titulo: 'Todo un palo (Pier en el Luna Park)', estilo: 'Pier · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-todo-un-palo-pier/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
