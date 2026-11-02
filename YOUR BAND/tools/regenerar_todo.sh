@@ -92,3 +92,4 @@ node tools/generar_capas.js fuentes/latino-picnic-en-el-4to-b canciones/cover-pi
 node tools/generar_capas.js fuentes/latino-si-te-vas canciones/cover-si-te-vas "Si te vas (cover)" "Ángela Torres y Mex Urtizberea · cover para practicar" 235.7 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/latino-un-misil-en-mi-placard canciones/cover-un-misil-en-mi-placard "Un misil en mi placard (cover)" "Sobredosis de Soda · cover para practicar" 267.8 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/latino-azucar-amargo canciones/cover-azucar-amargo "Azúcar amargo (cover)" "Marilina Bertoldi · cover para practicar" 333.4 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/latino-nunca-es-suficiente canciones/cover-nunca-es-suficiente "Nunca es suficiente (cover)" "Natalie Pérez · cover para practicar" 284.6 "bajo,bateria,guitarra,voz,otros,piano"
