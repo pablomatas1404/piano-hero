@@ -102,6 +102,8 @@
     { id: 'cover-quitame-ese-hombre', titulo: 'Quítame ese hombre (cover)', estilo: 'Ingrid Contreras · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-quitame-ese-hombre/' },
     { id: 'cover-mix-mana', titulo: 'Mix Maná (cover)', estilo: 'Natasha Soley y Marcelo Gabriel · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-mix-mana/' },
     { id: 'cover-balada-del-diablo-y-la-muerte', titulo: 'Balada del diablo y la muerte (cover)', estilo: 'Luz Gaggi · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-balada-del-diablo-y-la-muerte/' },
+    { id: 'cover-mix-fonseca-vives', titulo: 'Mix Fonseca y Carlos Vives (cover)', estilo: 'Marcelo y Sol · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-mix-fonseca-vives/' },
+    { id: 'cover-lobo-hombre-en-paris', titulo: 'Lobo hombre en París (cover)', estilo: 'Matute y La Unión · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-lobo-hombre-en-paris/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)
