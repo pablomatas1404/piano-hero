@@ -100,6 +100,8 @@
     { id: 'cover-corazon-partio', titulo: 'Corazón partío (cover)', estilo: 'Tiago PZK · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-corazon-partio/' },
     { id: 'cover-no-podras', titulo: 'No podrás (cover)', estilo: 'Cuatro Cuartos · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-no-podras/' },
     { id: 'cover-quitame-ese-hombre', titulo: 'Quítame ese hombre (cover)', estilo: 'Ingrid Contreras · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-quitame-ese-hombre/' },
+    { id: 'cover-mix-mana', titulo: 'Mix Maná (cover)', estilo: 'Natasha Soley y Marcelo Gabriel · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-mix-mana/' },
+    { id: 'cover-balada-del-diablo-y-la-muerte', titulo: 'Balada del diablo y la muerte (cover)', estilo: 'Luz Gaggi · cover para practicar', nivelMin: 1, grupo: 'latinos', carpeta: CARPETA + 'canciones/cover-balada-del-diablo-y-la-muerte/' },
   ];
   const NIVELES = [['facil', 'Fácil'], ['medio', 'Medio'], ['dificil', 'Difícil'], ['profesional', 'Profesional (la más completa)']];
   // la versión "muy fácil" está guardada pero recién aparece si el jugador la pide (botón en la lista)

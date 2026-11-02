@@ -96,3 +96,5 @@ node tools/generar_capas.js fuentes/latino-nunca-es-suficiente canciones/cover-n
 node tools/generar_capas.js fuentes/latino-corazon-partio canciones/cover-corazon-partio "Corazón partío (cover)" "Tiago PZK · cover para practicar" 350.2 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/latino-no-podras canciones/cover-no-podras "No podrás (cover)" "Cuatro Cuartos · cover para practicar" 256.6 "bajo,bateria,guitarra,voz,otros,piano"
 node tools/generar_capas.js fuentes/latino-quitame-ese-hombre canciones/cover-quitame-ese-hombre "Quítame ese hombre (cover)" "Ingrid Contreras · cover para practicar" 197.2 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/latino-mix-mana canciones/cover-mix-mana "Mix Maná (cover)" "Natasha Soley y Marcelo Gabriel · cover para practicar" 357.4 "bajo,bateria,guitarra,voz,otros,piano"
+node tools/generar_capas.js fuentes/latino-balada-del-diablo-y-la-muerte canciones/cover-balada-del-diablo-y-la-muerte "Balada del diablo y la muerte (cover)" "Luz Gaggi · cover para practicar" 316.6 "bajo,bateria,guitarra,voz,otros,piano"
