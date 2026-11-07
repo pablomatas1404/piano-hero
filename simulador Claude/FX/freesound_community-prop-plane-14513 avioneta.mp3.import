@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://dgbgv2h7ixqou"
+path="res://.godot/imported/freesound_community-prop-plane-14513 avioneta.mp3-04001759459800069d2e6132e26e3a11.mp3str"
+
+[deps]
+
+source_file="res://FX/freesound_community-prop-plane-14513 avioneta.mp3"
+dest_files=["res://.godot/imported/freesound_community-prop-plane-14513 avioneta.mp3-04001759459800069d2e6132e26e3a11.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

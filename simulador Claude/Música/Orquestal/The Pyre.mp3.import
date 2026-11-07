@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://cdd3068sne3b"
+path="res://.godot/imported/The Pyre.mp3-33d1dd774869ef14b22b5e25e7de8e5e.mp3str"
+
+[deps]
+
+source_file="res://Música/Orquestal/The Pyre.mp3"
+dest_files=["res://.godot/imported/The Pyre.mp3-33d1dd774869ef14b22b5e25e7de8e5e.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

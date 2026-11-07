@@ -1,0 +1,54 @@
+Cesium3DTileset
+maximum_screen_space_error
+maximum_simultaneous_tile_loads
+preload_ancestors
+preload_siblings
+loading_descendant_limit
+forbid_holes
+generate_missing_normals_smooth
+create_physics_meshes
+data_source
+url
+ion_asset_id
+show_hierarchy
+Node
+name
+unique_name_in_owner
+scene_file_path
+owner
+multiplayer
+Process
+process_mode
+process_priority
+process_physics_priority
+Thread Group
+process_thread_group
+process_thread_group_order
+process_thread_messages
+Physics Interpolation
+physics_interpolation_mode
+Auto Translate
+auto_translate_mode
+Editor Description
+editor_description
+Node3D
+Transform
+transform
+global_transform
+position
+rotation
+rotation_degrees
+quaternion
+basis
+scale
+rotation_edit_mode
+rotation_order
+top_level
+global_position
+global_basis
+global_rotation
+global_rotation_degrees
+Visibility
+visible
+visibility_parent
+script

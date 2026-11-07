@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://bdw7pee3gfij3"
+path="res://.godot/imported/Hero Down.mp3-8cd5691a349cf7ec98eac5f40c27f9c8.mp3str"
+
+[deps]
+
+source_file="res://Música/Orquestal/Hero Down.mp3"
+dest_files=["res://.godot/imported/Hero Down.mp3-8cd5691a349cf7ec98eac5f40c27f9c8.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

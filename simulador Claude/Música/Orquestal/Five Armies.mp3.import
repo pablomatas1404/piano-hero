@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://2t56n5236ya4"
+path="res://.godot/imported/Five Armies.mp3-b24c729319a1d17912947a39793390d9.mp3str"
+
+[deps]
+
+source_file="res://Música/Orquestal/Five Armies.mp3"
+dest_files=["res://.godot/imported/Five Armies.mp3-b24c729319a1d17912947a39793390d9.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://ii6vj0wbvriy"
+path="res://.godot/imported/Instrucciones de seguridad en vuelo.mp3-6a68b97d6bc8eb08494cd78ce97ca849.mp3str"
+
+[deps]
+
+source_file="res://FX/Instrucciones/Instrucciones de seguridad en vuelo.mp3"
+dest_files=["res://.godot/imported/Instrucciones de seguridad en vuelo.mp3-6a68b97d6bc8eb08494cd78ce97ca849.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

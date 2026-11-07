@@ -1,0 +1,13 @@
+# Cache de importación de Godot -- se regenera solo al abrir el proyecto,
+# no hace falta (ni conviene) versionarla (pesa cientos de MB).
+.godot/
+
+# Archivos de respaldo temporales que deja el DLL de Cesium al recompilar.
+bin/~*
+*.TMP
+*.tmp
+
+# Claves de APIs externas (Mapbox, OpenTopography) -- nunca van a un repo
+# público. GitHub bloqueó el primer intento de push por esto (la clave
+# llegó a estar en un commit local, pero nunca se publicó).
+api_keys.gd

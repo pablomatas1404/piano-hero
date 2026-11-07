@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://c1jme4bhe3f8r"
+path="res://.godot/imported/ernyslts-aircraft-cabin-sound-avion grande lindo.mp3-dc108014c4149c39af97c8761a0211d8.mp3str"
+
+[deps]
+
+source_file="res://FX/ernyslts-aircraft-cabin-sound-avion grande lindo.mp3"
+dest_files=["res://.godot/imported/ernyslts-aircraft-cabin-sound-avion grande lindo.mp3-dc108014c4149c39af97c8761a0211d8.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

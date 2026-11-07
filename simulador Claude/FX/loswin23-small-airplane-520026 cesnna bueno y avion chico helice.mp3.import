@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://cnp64n3ugoda7"
+path="res://.godot/imported/loswin23-small-airplane-520026 cesnna bueno y avion chico helice.mp3-972f859c459623f44a33c30771df00f3.mp3str"
+
+[deps]
+
+source_file="res://FX/loswin23-small-airplane-520026 cesnna bueno y avion chico helice.mp3"
+dest_files=["res://.godot/imported/loswin23-small-airplane-520026 cesnna bueno y avion chico helice.mp3-972f859c459623f44a33c30771df00f3.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4

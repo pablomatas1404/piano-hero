@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Bitácora — Simulador de Vuelo</title>
+<style>
+  body { font-family: Georgia, serif; max-width: 820px; margin: 40px auto; padding: 0 20px; background: #faf8f5; color: #222; line-height: 1.5; }
+  h1 { font-size: 1.6em; border-bottom: 3px solid #2a5; padding-bottom: 8px; }
+  h2 { font-size: 1.2em; margin-top: 2.2em; color: #15502f; }
+  .fecha { color: #888; font-size: 0.9em; }
+  .carpeta { background: #eef; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+  ul { margin-top: 0.3em; }
+  .pendiente { color: #a33; }
+  .ok { color: #2a7a2a; }
+  hr { border: none; border-top: 1px solid #ddd; margin: 2.5em 0; }
+</style>
+</head>
+<body>
+
+<h1>Bitácora del Simulador de Vuelo</h1>
+<p>Registro de cambios importantes, para no perder el hilo entre sesiones y poder volver atrás si algo se rompe.</p>
+
+<p><strong>Carpeta de trabajo actual (donde están TODOS los cambios de esta sesión larga):</strong><br>
+<span class="carpeta">C:\00000000 PROYECTOS JUEGOS MATAS\PIANO HERO\simulador Claude</span></p>
+
+<p>Otras carpetas que existen y para qué sirve cada una:</p>
+<ul>
+  <li><span class="carpeta">mi-simulador-de-vuelo</span> — copia original/de producción, vieja. <strong>Nunca tocar.</strong></li>
+  <li><span class="carpeta">simulador Claude</span> — la carpeta de trabajo actual, con todos los arreglos de esta sesión. <strong>Esta es la que se abre en Godot.</strong></li>
+  <li><span class="carpeta">mi-simulador-de-vuelo-chatgpt-v2</span> — copia aparte que hizo ChatGPT por su cuenta (sin el "punto lejano" que se agregó después en "simulador Claude"). Queda de referencia, no se usa para jugar.</li>
+  <li><span class="carpeta">Simulador de Avión Chat GPT</span> — carpeta vieja/desactualizada de una sesión anterior. Ignorar.</li>
+</ul>
+
+<hr>
+
+<h2>2026-11-04 — Precarga de edificios de Google Photorealistic 3D Tiles</h2>
+<p class="fecha">Problema que se venía arrastrando desde fines de octubre: los edificios se veían "armándose en triángulos" (como hielo derritiéndose) recién cuando el avión ya estaba pasando o muy cerca, sobre todo en zonas densas (Aeroparque, River).</p>
+
+<p class="ok">✔ Resuelto en gran parte:</p>
+<ul>
+  <li>Se sacó el sistema viejo de "barrido de 9 cámaras" (rotar/mover la cámara real por varios puntos durante la cortina de carga) — no funcionaba, Cesium priorizaba la última vista y al volver al avión se perdía el refinamiento.</li>
+  <li>Solución aplicada (basada en lo que logró ChatGPT en su copia, confirmado por Pablo que mejoró mucho): en <span class="carpeta">mundo.gd</span>, dentro de <code>_process()</code>, se le pide a Cesium (<code>tileset.update_tileset(...)</code>) una <strong>vista sintética por delante del avión</strong> sin mover la cámara real que ve el jugador. Ciclo de varias posiciones (adelante, laterales, lejana, vista actual), activado solo cuando <code>velocidad_actual &gt; 25 m/s</code> (90 km/h).</li>
+  <li>Perfil del tileset de Google ajustado a <code>maximum_screen_space_error=16</code>, <code>maximum_simultaneous_tile_loads=8</code>, <code>loading_descendant_limit=8</code>, <code>preload_ancestors=true</code>, <code>preload_siblings=true</code>, <code>forbid_holes=false</code> (en <span class="carpeta">mundo.gd</span>, <span class="carpeta">principal.gd</span> función <code>_aplicar_calidad_graficos()</code>, y <span class="carpeta">principal.tscn</span>).</li>
+  <li>Mejora propia agregada después de portar lo de ChatGPT: un <strong>noveno punto "lejano"</strong> en el ciclo (hasta 9km / 36 segundos de horizonte, antes el máximo era 6km/24s), para que el sector lejano ya tenga un refinamiento en marcha antes de que el punto cercano lo vuelva a pedir.</li>
+  <li>Corrección técnica (Godot 4.7 es estricto con tipos): <code>clamp()</code> sin tipo explícito tiraba error de Variant — se cambió a <code>clampf()</code> con <code>var ... : float</code>.</li>
+  <li>Confirmado por Pablo en vuelo real: "cuando uno pasa por los edificios ya están generalmente armados" (antes no, ni siquiera los que estaban directamente abajo del punto precargado).</li>
+</ul>
+
+<p class="pendiente">⏳ Pendiente para la próxima sesión:</p>
+<ul>
+  <li><strong>Anticipar todavía más:</strong> que no solo esté armada la baldosa por la que el avión está pasando, sino también la <em>siguiente</em> (la de después). Probar a prueba y error, subiendo horizontes/distancias con cuidado de no reventar los FPS (el límite de 8 cargas simultáneas no se debe subir a 10 — ya probado que cae a 2-4 FPS).</li>
+  <li><strong>Lageo ocasional:</strong> Pablo reportó que "en algunos momentos se laguea, no siempre" — probar después de reiniciar la máquina (la sesión venía de muchas horas seguidas). Si persiste con la máquina recién reiniciada, investigar de nuevo.</li>
+  <li><strong>Idea para disimular el armado en vivo:</strong> Pablo propone bajar un poco la nitidez/HD general de la imagen (no todo tiene que ser máxima calidad) para que el "armado" de edificios lejanos se note menos a simple vista mientras se completa — "enturbiar las aguas" un poco a propósito. Evaluar si conviene vía post-proceso visual o bajando algún parámetro del tileset, sin que se vea peor en general.</li>
+  <li>Probar más con el Cessna a velocidad realista (170 km/h) en vez de aviones rápidos, para ver el comportamiento con más margen de tiempo de precarga (a esa velocidad las distancias mínimas fijas de precarga dan ~32s/~64s de anticipo, el mejor caso posible).</li>
+</ul>
+
+<p style="margin-top:2em; font-style:italic; color:#555;">
+Contexto: Pablo dio de baja el RFS (Real Flight Simulator, $6/mes) el 2026-11-04 porque considera que nuestro simulador ya lo superó en gráficos/experiencia de vuelo, aunque todavía falta desarrollar herramientas que el RFS sí tiene (velocímetros, vista de interior de cabina, etc. — no se empezaron a trabajar, es simplemente que nunca se tocó ese tema, no hay ningún impedimento técnico conocido).
+</p>
+
+<hr>
+
+<h2>2026-11-06 — Sonidos de motor por avión + viento + modo carrera</h2>
+
+<p class="ok">✔ Resuelto:</p>
+<ul>
+  <li><strong>Sonidos de motor en loop</strong> para Cessna, Boeing, Jet privado, Helicóptero, Ka-27 y Mil Mi-35M (ruso), con archivos nuevos que Pablo bajó de Freesound. Se descartaron dos sonidos por ser de "avión pasando" (un solo flyby, no sirven en loop constante): <code>motor_jet.mp3</code> y <code>plane_engine_jet.mp3</code> — <strong>los dos borrados del disco</strong>, ya no están en el proyecto. Todos los aviones que los tenían (10 en total) ahora usan el sonido de cabina de avión grande de 2 minutos (<code>ernyslts-aircraft-cabin-sound-avion grande lindo.mp3</code>) como placeholder, incluido el avión por defecto al arrancar (F/A-18E Super Hornet) — <strong>pendiente conseguirle un sonido de caza real</strong>, no debería sonar a cabina de avión de pasajeros.</li>
+  <li>El tono del motor ya sube con la velocidad (acelerás = sube, frenás = baja) — esto es <strong>automático para los 19 aviones</strong>, una sola línea de código sin excepciones por avión (<span class="carpeta">principal.gd:4164</span>).</li>
+  <li><strong>Instrucciones de seguridad</strong>: ya no arrancan solas a los 60 segundos de vuelo — ahora SOLO se prenden/apagan con el botón. La radio sigue siendo automática como siempre.</li>
+  <li><strong>Panel "Modo Carrera" sin botón para cerrar</strong>: agregada una X fija arriba a la derecha (creada por código, no en el archivo de escena — hubo un problema raro editando el .tscn a mano que no se llegó a entender, un nodo nuevo no aparecía ni reabriendo Godot de cero). ESCAPE también cierra el panel (ya existía antes, por si vuelve a trabarse algo).</li>
+  <li>Viento: encontrado el bug real de por qué "no se sentía nada" — el primer intento empujaba la <em>posición</em> del avión, pero la cámara se recalcula cada cuadro a partir de esa misma posición, así que avión y cámara se movían juntos y el efecto se cancelaba visualmente. Se cambió a una oscilación de <em>inclinación</em> (roll + cabeceo) sobre el modelo, con intensidad por defecto según el tamaño del avión (chicos oscilan más, grandes casi nada), ajustable con los botones +/- de cada avión.</li>
+</ul>
+
+<p class="pendiente">⏳ Pendiente, reportado por Pablo al cierre de la sesión (2026-11-06, de noche):</p>
+<ul>
+  <li><strong class="pendiente">Viento TODAVÍA no se siente</strong> en el juego real, pese al arreglo de arriba — Pablo pidió explícitamente armar UN prompt combinado para ChatGPT y Gemini (mismo patrón que se usó para la precarga de edificios en rondas anteriores) para que ayuden a resolverlo, ya que van 3 intentos fallidos. Hacer este prompt la próxima vez que Pablo lo pida ("cuando venga").</li>
+  <li><strong>Sonido de ruedas tocando pista</strong> (corto, solo en el instante del aterrizaje, no un loop): hay que buscarlo en inglés — términos para googlear/Freesound: <em>"tire screech landing"</em>, <em>"wheels touchdown runway sound"</em>, <em>"aircraft tire chirp"</em>, <em>"landing gear touchdown screech"</em>. Engancharlo al mismo "sensor" que ya existe para detectar cuando el avión se estabiliza al tocar pista (el sistema de aterrizaje/<code>_limitar_piso</code> ya sabe ese momento).</li>
+  <li><strong>Modelo del Cessna</strong>: Pablo lo encuentra "bastante berreta, bastante feo" — buscar un modelo 3D de Cessna más lindo para reemplazarlo.</li>
+  <li><strong>Sonido específico para el F/A-18E</strong> (avión por defecto): sigue con el placeholder de cabina de avión grande, buscar uno de caza/combate real.</li>
+  <li>Cámaras: Pablo mencionó de pasada que "no cambiaste lo de las cámaras" — sin más detalle todavía, preguntar qué es específicamente la próxima sesión.</li>
+  <li><strong>Versión para tablet (iOS, no Android)</strong>: idea nueva de Pablo, "lo que haya que hacer". A diferencia de Piano Hero (web app simple), este es un juego de Godot con el plugin nativo de Cesium — no se puede meter en un navegador. El camino real es exportar como app iOS nativa desde Godot, pero hay dos incógnitas grandes para investigar primero: (1) si el plugin Cesium for Godot tiene build para iOS, y (2) si el hardware de una tablet aguanta la carga de edificios fotorrealistas de Google (ya cuesta en la PC). Además, compilar para iOS requiere una Mac con Xcode para firmar la app. Investigar esto ANTES de ponerse a exportar nada.</li>
+</ul>
+
+<p style="margin-top:1em;">Pablo cerró la sesión muy conforme: "está cada vez mejor esto, está muy bueno el juego."</p>
+
+<hr>
+
+<h2>2026-11-07 — Sonido de auto + selector de auto al bajar</h2>
+
+<p class="ok">✔ Resuelto:</p>
+<ul>
+  <li><strong>Sonido de motor para el auto del modo a pie</strong>: bajado de Pixabay ("Engine, motor (loopable)", libre de uso), guardado en <span class="carpeta">FX/motor_auto_loop.mp3</span>. Prende al bajar del avión, para al subir (y viceversa con el sonido del avión), tono sube con la velocidad del auto igual que en los aviones.</li>
+  <li><strong>Segundo auto agregado: BMW M3 E46 azul</strong> (modelo de Lexyc16 en Sketchfab, licencia CC BY-NC -- gratis pero NO comercial; si el juego se llega a vender, reemplazar este modelo puntual por uno con licencia comercial), guardado en <span class="carpeta">modelos_vehiculos/bmw_m3_e46.glb</span>.</li>
+  <li><strong>Selector de auto al bajar</strong>: ahora al apretar "Bajar del avión" aparece un panel chico preguntando "¿Con qué auto querés ir?" (Patrullero o BMW M3 azul), con botón ✕ para cerrarlo por si se abre sin querer. Se recuerda el último elegido durante la sesión (no se guarda todavía al archivo, se resetea al patrullero si se reinicia el juego).</li>
+  <li>El BMW M3 usa la misma corrección de rotación 180° que el patrullero (está en <code>TIPOS_AUTO</code>, en <span class="carpeta">principal.gd</span>) -- <strong>pendiente que Pablo confirme en el juego</strong> si la trompa apunta bien para adelante, por si hay que ajustarla.</li>
+</ul>
+
+<p class="pendiente">⏳ Pendiente:</p>
+<ul>
+  <li>El BMW convertible Bordeaux (3dexport) que Pablo bajó primero venía en formato .max, que no sirve para Godot -- buscar si esa misma página ofrece el modelo en glTF/FBX/OBJ.</li>
+  <li>Seguir buscando un modelo de avión Cessna más lindo (el actual sigue siendo "berreta") y, en general, mejores modelos de avión gratis/pagos -- Pablo está revisando Sketchfab, Fab.com, CGTrader, TurboSquid, etc.</li>
+</ul>
+
+<p class="ok">✔ Agregado el mismo día, más tarde:</p>
+<ul>
+  <li><strong>Boeing 747-8i Lufthansa</strong>, agregado como avión nuevo a la lista ("Boeing 747-8i Lufthansa (nuevo)"). Bajado de CGTrader (gratis, licencia "Editorial", sin IA) -- <strong>crédito: diseñador 2001kraft</strong> (<a href="https://www.cgtrader.com/designers/2001kraft">cgtrader.com/designers/2001kraft</a>), guardado para dar atribución si el juego se llega a vender. Formato .fbx, guardado en <span class="carpeta">modelos_aviones/boeing_747-8i_lufthansa.fbx</span>. No trae fotos/texturas -- el color de Lufthansa (blanco/azul/amarillo) sale de materiales planos (un color sólido por pieza), así que debería verse con color igual sin archivos extra.</li>
+  <li><strong class="pendiente">Pendiente que Pablo lo prenda en el juego y confirme</strong>: escala y rotación puestas "a ojo" (escala 1.0, mismo giro de 180° que usan casi todos los modelos bajados) -- puede necesitar ajuste como pasó con todos los aviones nuevos anteriores.</li>
+</ul>
+
+<hr>
+
+<h2>2026-11-07 (más tarde) — Boeing Lufthansa descartado, cámaras recalculadas, zoom nuevo</h2>
+
+<p class="ok">✔ Resuelto:</p>
+<ul>
+  <li><strong>Crash al elegir el Lufthansa</strong> ("Trying to assign value of type 'ArrayMesh' to a variable of type 'PackedScene'"): un .obj se importa como malla suelta, no como escena -- el código que carga el modelo de cada avión ahora distingue los dos casos y envuelve la malla en un <code>MeshInstance3D</code> cuando hace falta (<span class="carpeta">principal.gd</span>, función <code>_aplicar_tipo_avion</code>). Sirve para cualquier avión .obj futuro, no solo este.</li>
+  <li><strong>Medición real con Godot headless</strong>: en vez de seguir ajustando "a ojo" a los pedazos, se armó un script temporal (<code>medir_aabb_temporal.gd</code>, ya borrado) que corre con <code>Godot...exe --headless --script</code> y mide el tamaño real (AABB) de cada modelo. Con esto se encontró que el Lufthansa estaba modelado en MILÍMETROS (76725x19557x67915 unidades, casi exacto a un 747-8i real en mm) -- la escala correcta era 0.001, no 0.7 ni 1.0 como se había puesto antes. Y con las medidas del Airbus/British comparadas contra el Boeing de referencia (que anda bien con ajuste de cámara = 0), se recalcularon esos ajustes de cámara con números reales en vez de ir probando a ciegas.</li>
+  <li><strong>Airbus A380</strong>: ajuste de cámara 1.0 → 0.2.</li>
+  <li><strong>British Airways 747-400</strong>: ajuste de cámara 6.0 → 1.3.</li>
+  <li><strong>Luces clavadas por Pablo</strong>: pinchó el editor de luces en vivo para el British y uno de los Boeing -- ya quedan guardadas automáticamente (el juego lee <code>ajustes_luces_debug.txt</code> al crear cada avión, no hace falta copiar nada a mano; igual conviene en algún momento pasarlas a <code>TIPOS_AVION</code> para prolijidad).</li>
+  <li><strong>Zoom de cámara con la ruedita del mouse</strong> (primer paso de un pedido más grande, ver pendientes): funciona en tierra y volando, en cualquier parte de la pantalla que NO sea un panel/botón/mapa (que ya usan la ruedita para lo suyo). Acerca/aleja la cámara sin tocar la altura ya calibrada de cada avión.</li>
+</ul>
+
+<p class="pendiente">⏳ Pendiente:</p>
+<ul>
+  <li><strong>Boeing 747-8i Lufthansa, DESCARTADO</strong> (reportado: "aparece con pedazos transparentes y colores circenses") -- borrado del juego y del disco. Pablo va a bajar otro modelo distinto de CGTrader (crédito pendiente de pasar cuando lo baje).</li>
+  <li><strong>Cámara orbital con el joystick derecho</strong> (pedido explícito, "dominio de la cámara... stick derecho para ver de qué lado querés"): que el stick derecho (sin uso actualmente) gire la vista alrededor del avión, de costado, de frente, etc. -- funciona en tierra Y volando, "como en todos los simuladores". Pendiente para la próxima, después del zoom con la ruedita que ya quedó andando.</li>
+  <li><strong>Editor de posición para aviones nuevos</strong> (aclarado después, no se descarta): una cruz con flechitas (arriba/abajo/izquierda/derecha) para correr la posición del avión a mano, SOLO con el avión detenido en tierra (no hace falta que ande mientras vuela, "para que no sea tan lío"). El tamaño/escala lo sigue ajustando Claude por código, esto es solo para correrlo de lugar. Queda para la próxima sesión.</li>
+</ul>
+
+<p class="ok">✔ Resuelto, mismo día, un rato después (confirmado por Pablo: "quedó espectacular, cero error" con el zoom):</p>
+<ul>
+  <li><strong>Cámara orbital con el stick derecho</strong>: el stick que mueve la mira de disparo ("mira_horizontal"/"mira_vertical") ahora tiene un segundo uso -- cuando NO hay una misión de combate activa (la mira está invisible, por eso Pablo lo sentía "al pedo" todo el resto del tiempo), ese mismo stick gira la cámara alrededor del avión: para los costados (yaw) y por arriba/abajo (pitch), para ver qué hay atrás, al costado, o dónde queda el aeropuerto sin tener que dejar de volar. Al soltar el stick, la cámara vuelve sola a la posición de siempre (detrás del avión) -- pensado como "mirar un toque", no una vista que se queda clavada. En modo guerra el stick sigue moviendo la mira como siempre, sin ningún cambio ahí.</li>
+</ul>
+
+<p class="pendiente">⏳ Pendiente de esta tanda:</p>
+<ul>
+  <li><strong>Luces desalineadas al hacer zoom</strong> (reportado por Pablo): pidió una captura de pantalla para poder diagnosticarlo bien en vez de ir a ciegas -- no se tocó nada todavía, a la espera de la foto.</li>
+  <li>Probar en el juego la cámara orbital nueva (yaw + pitch con el stick derecho, auto-retorno al soltar).</li>
+</ul>
+
+<p class="ok">✔ Resuelto, reporte de Pablo después de probar el zoom y la cámara orbital (estacionó, aterrizó en Tortuguitas, "todo espectacular, me encantó"):</p>
+<ul>
+  <li><strong>BUG REAL encontrado</strong> (reportado: "el stick no anda, está la mira, funciona la mira"): la cámara orbital nueva miraba "mira_hud.visible" para saber si había que dejarle el stick a la mira de disparo -- pero esa mira queda VISIBLE SIEMPRE apenas termina la cortina de carga de CUALQUIER vuelo, no solo en misiones de guerra (nunca se apaga de nuevo). Cambiado a mirar la bandera real "modo_guerra" (esa sí prende/apaga como corresponde). Ahora el stick mueve la cámara en vuelo libre y la mira en misiones de guerra, como se pidió.</li>
+  <li><strong>Giro en pista demasiado brusco</strong> (reportado: "cuando uno gira a la izquierda es como que se mueve muy de golpe"): el giro en tierra saltaba de golpe entre 0 y la velocidad máxima de giro apenas se apretaba/soltaba la flecha (a diferencia del banco en el aire, que sí se suaviza). Agregado el mismo suavizado (acelera entrando al giro, frena más rápido al soltar) -- mismo mecanismo que ya usa el banco en vuelo.</li>
+  <li><strong>Velocidad de animación</strong> (consultado: "¿no habilitás el 1.0?"): el archivo guardado confirma que el control YA llega hasta 0.2 (más lento que 1.0), por avión -- no hizo falta ningún cambio de código, es cuestión de apretar "−" en el panel de sensibilidad estando parado en el Boeing. Pendiente que Pablo lo pruebe con esto en claro.</li>
+  <li><strong>Reversa/pushback</strong> (pedido explícito, "para sacar el avión de un hangar en San Fernando sin pasar por arriba de todo"): nueva acción asignable "Reversa/pushback en tierra" en el menú de controles -- Pablo la va a asignar al botón X. Prende/apaga con cada apretada (no hay que mantenerlo apretado): prendida, el avión va para atrás solo a velocidad fija y modesta; una segunda apretada lo frena en el lugar. Solo funciona en tierra, se apaga sola si despega.</li>
+</ul>
+
+<p class="pendiente">⏳ Pendiente de esta tanda:</p>
+<ul>
+  <li>Luces desalineadas al hacer zoom -- sigue esperando la captura de pantalla.</li>
+  <li>Probar en el juego: giro en pista más suave, reversa/pushback con el botón X.</li>
+</ul>
+
+<p class="ok">✔ Resuelto (Pablo confirmó que la cámara orbital ya anda):</p>
+<ul>
+  <li><strong>Sin auto-retorno</strong> ("no quiero que vuelva sola, que quede mirando donde uno la deja, sin elástico"): sacado el auto-retorno al centro -- la cámara orbital ahora se queda clavada donde se suelta el stick.</li>
+  <li><strong>Botón de centrar</strong> (pedido: "el clic del stick para volver a la vista normal"): nueva acción asignable "Centrar cámara orbital (clic del stick)" en el menú de controles -- Pablo la va a asignar al clic del stick derecho (R3/RS). Apretarlo vuelve la cámara a la vista de siempre (derecho, detrás del avión) de un solo golpe.</li>
+</ul>
+
+<p class="pendiente">⏳ Pendiente de esta tanda:</p>
+<ul>
+  <li>Probar en el juego: cámara orbital sin auto-retorno + botón de centrar.</li>
+</ul>
+
+<p class="ok">✔ Resuelto (reporte después de probar el auto en Campo de Mayo):</p>
+<ul>
+  <li><strong>Reversa no doblaba</strong> (reportado: "es una reversa recta"): el cálculo de giro en tierra usaba "velocidad_actual", que la reversa deja en 0 -- sin eso no había giro posible. Ahora usa la velocidad fija de la reversa para ese cálculo, así dobla para los dos lados igual que yendo para adelante.</li>
+  <li><strong>BMW M3 azul</strong>: agrandado 20% (4.49m -> 5.39m de largo real).</li>
+  <li><strong>Editor de altura por avión</strong> (pedido: "un botón para subir un poco el avión si queda unos pisos más abajo... clavarlo como las luces"): nueva fila en Config con ▼/▲ (mueve la cámara en vivo para el avión actual) y "📌 Clavar altura" (lo guarda en <span class="carpeta">ajustes_altura_debug.txt</span>, mismo mecanismo que el editor de luces -- se aplica solo la próxima vez que se elige ese avión, no hace falta tocar código).</li>
+  <li><strong>BUG REAL encontrado -- "el viento nunca funcionó"</strong>: no era un bug de física, era conceptual -- la oscilación dependía del botón "💨 VIENTO" (clima), que arranca apagado y Pablo nunca tocó porque pensaba en esto como algo que debía estar SIEMPRE presente en el aire, no un interruptor de clima. Separado en dos: ahora hay una oscilación de base (<code>BASE_OSCILACION_VUELO</code>) siempre activa volando sin tocar nada, y el botón de viento le suma un extra más fuerte encima si se prende. Sigue escalando por tamaño de avión (chico más, grande menos) como ya estaba.</li>
+</ul>
+
+<p class="pendiente">⏳ Pendiente de esta tanda:</p>
+<ul>
+  <li>Probar en el juego: reversa con dirección, BMW más grande, editor de altura, oscilación de vuelo siempre activa.</li>
+  <li><strong>Precarga de edificios de Google ("un mar de helado" con el auto)</strong>: Pablo propone ir cambiando UN parámetro por sesión, probarlo, avisar si mejora o no, y seguir probando hasta encontrar el punto -- guardar el progreso en GitHub para no perderlo entre sesiones (el repo ya existe y tiene remoto configurado). Pablo recuerda que en algún momento ANTES de los cambios de City Tour los edificios se veían completos a pie de calle (hasta los carteles de propaganda) -- revisar qué cambió ahí como pista. Sin empezar todavía.</li>
+  <li>Cessna más lindo: Pablo sigue buscando.</li>
+  <li>Sigue pendiente: coordenadas exactas del estacionamiento de Aeroparque y/o su salida a la avenida, para que el auto arranque ahí al bajar del avión (preguntado a Pablo, sin respuesta todavía).</li>
+  <li>Verificar en el juego si Airbus/British quedaron bien con los nuevos valores de cámara (0.2 y 1.3) -- Pablo comentó que igual los subiría "un poquitito más".</li>
+</ul>
+
+</body>
+</html>

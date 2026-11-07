@@ -1,0 +1,19 @@
+[remap]
+
+importer="mp3"
+type="AudioStreamMP3"
+uid="uid://cxu3qgsdnqgyb"
+path="res://.godot/imported/000 El Kuelgue Cosquín Rock 2026.mp3-6dade6ef70f93ee55ba5233f91f19a56.mp3str"
+
+[deps]
+
+source_file="res://Música/Electronica/000 El Kuelgue Cosquín Rock 2026.mp3"
+dest_files=["res://.godot/imported/000 El Kuelgue Cosquín Rock 2026.mp3-6dade6ef70f93ee55ba5233f91f19a56.mp3str"]
+
+[params]
+
+loop=false
+loop_offset=0
+bpm=0
+beat_count=0
+bar_beats=4
