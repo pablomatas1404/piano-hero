@@ -195,8 +195,10 @@ public class AvionDeCarton : MonoBehaviour
     }
 
     bool lateralPlegado;
+    public static AvionDeCarton Inst; static bool panelBajoOculto, panelBajoCargado;
     void DibujarEditor()
     {
+        Inst = this;
         PrepararEstilos();
         if (ajuste == null) ajuste = AjustePorDefecto();
         ajuste.volumen = volumenMotor;
@@ -227,6 +229,18 @@ public class AvionDeCarton : MonoBehaviour
         }
 
         tapaI.Dispose();
+        // ---- triangulito: pliega el panel de abajo (queda una barrita) para ganar pantalla si se trabaja con la tablet ----
+        if (!panelBajoCargado) { panelBajoCargado = true; panelBajoOculto = PlayerPrefs.GetInt("panel_bajo_oculto", 0) == 1; }
+        if (panelBajoOculto)
+        {
+            Tienda.PanelLateral.rect = new Rect(0, 0, 0, 0); Torre.lateralAbierto = false;
+            var rbar = new Rect(10f, H - 26f, 120f, 22f);
+            var tapaB = Disposicion.Bloque("panel_plegado", "BOTON PANEL PLEGADO", rbar);
+            if (GUI.Button(rbar, "    Panel", sBtn)) { panelBajoOculto = false; PlayerPrefs.SetInt("panel_bajo_oculto", 0); }
+            GUI.DrawTexture(new Rect(rbar.x + 8f, rbar.y + 4f, 14f, 14f), Tablet.Triangulo(true));
+            tapaB.Dispose();
+            goto fin_panel_bajo;
+        }
         // ---- solapas (arriba de la franja de abajo) ----
         if (Mapeo.abrirLugares) { solapa = 5; Mapeo.abrirLugares = false; }
         if (Hangar.abrir) { solapa = 7; Hangar.abrir = false; }
@@ -249,6 +263,7 @@ public class AvionDeCarton : MonoBehaviour
             GUI.backgroundColor = antes;
         }
 
+        { var rtri = new Rect(270f, H - 194f - extra - 24f, 46f, 20f); if (GUI.Button(rtri, GUIContent.none, sBtn)) { panelBajoOculto = true; PlayerPrefs.SetInt("panel_bajo_oculto", 1); } GUI.DrawTexture(new Rect(rtri.x + 16f, rtri.y + 3f, 14f, 14f), Tablet.Triangulo(false)); }   // plegar el panel de abajo
         tapaT.Dispose();
 
         // ---- panel LATERAL grande (Destinos, Carrera, Aeropuertos cercanos, Shopping, Maletin): ocupa de arriba a abajo a la derecha ----
@@ -402,12 +417,77 @@ public class AvionDeCarton : MonoBehaviour
         GUILayout.EndArea();
         tapaP.Dispose();
 
+    fin_panel_bajo:
         // autoguardado: si cambió cualquier ajuste, se guarda solo 1 segundo después (no hay que repetirlo al empezar)
         string js = JsonUtility.ToJson(ajuste);
         if (ultimoJson == null) ultimoJson = js;
         else if (js != ultimoJson) { ultimoJson = js; guardarEn = Time.unscaledTime + 1f; string mj = ajuste.rx + "," + ajuste.ry + "," + ajuste.rz + "," + ajuste.escala + "," + ajuste.ox + "," + ajuste.oy + "," + ajuste.oz; if (mj != ultimoModelo) { ultimoModelo = mj; if (Mathf.Abs(cabeceoActual) < 3f && Mathf.Abs(bancoActual) < 3f) { AplicarAjuste(); RecalcularPie(); } } }
 
         AplicarAjuste();
+    }
+
+    // ---- apps de la tablet: Sensibilidad y Modelo en una sola columna ----
+    public static void AppSensibilidad() { if (Inst != null && ajuste != null) Inst.PanelSensibilidadTablet(); else GUILayout.Label("Sin datos todavia"); }
+    public static void AppModelo() { if (Inst != null && ajuste != null) Inst.PanelModeloTablet(); else GUILayout.Label("Sin datos todavia"); }
+    void PanelSensibilidadTablet()
+    {
+        float vMinK = ajuste.velMin * 3.6f, vMaxK = ajuste.velMax * 3.6f, nMinK = vMinK, nMaxK = vMaxK;
+        GUILayout.Label("SENSIBILIDAD", sTitulo);
+        ajuste.giro = Mathf.Clamp(FilaL("Giro", ajuste.giro, 0.05f, "F2"), 0.1f, 2f);
+        ajuste.angulo = Mathf.Clamp(FilaL("Angulo", ajuste.angulo, 2f, "F0"), 10f, 80f);
+        if (esHeli) ajuste.vertical = Mathf.Clamp(FilaL("Subida (m/s)", ajuste.vertical, 2f, "F0"), 2f, 40f);
+        else ajuste.vertical = Mathf.Clamp(FilaL("Cabeceo (nariz)", ajuste.vertical, 2f, "F0"), 10f, 80f);
+        nMinK = FilaL("Vel. min km/h", vMinK, 10f, "F0");
+        nMaxK = FilaL("Vel. max km/h", vMaxK, 10f, "F0");
+        ajuste.velAnim = Mathf.Clamp(FilaL("Vel. animacion", ajuste.velAnim, 0.1f, "F1"), 0.1f, 3f);
+        ajuste.viento = Mathf.Clamp(FilaL("Viento", ajuste.viento, 0.1f, "F1"), 0f, 3f);
+        ajuste.camVel = Mathf.Clamp(FilaL("Vel. camara", ajuste.camVel, 10f, "F0"), 10f, 200f);
+        zoomManual = Mathf.Clamp(FilaL("Zoom camara", zoomManual, 0.1f, "F2"), 0.25f, 5f);
+        ajuste.radioGiro = Mathf.Clamp(FilaL("Radio giro suelo", ajuste.radioGiro, 5f, "F0"), 5f, 500f);
+        ajuste.giroSueloMax = Mathf.Clamp(FilaL("Giro suelo max", ajuste.giroSueloMax, 2f, "F0"), 2f, 90f);
+        ajuste.acelSuelo = Mathf.Clamp(FilaL("Acel. suelo", ajuste.acelSuelo, 1f, "F0"), 1f, 100f);
+        ajuste.frenoSuelo = Mathf.Clamp(FilaL("Freno suelo", ajuste.frenoSuelo, 1f, "F0"), 1f, 200f);
+        ajuste.nivelSuelo = Mathf.Clamp(FilaL("Toque suave", ajuste.nivelSuelo, 0.5f, "F1"), 0.5f, 100f);
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button(vientoActivo ? "VIENTO: ON" : "VIENTO: OFF", sBtn, GUILayout.Width(110), GUILayout.Height(22)))
+        {
+            vientoActivo = !vientoActivo;
+            if (vientoActivo) { vientoDir = Random.value * 360f; vientoKmh = Random.Range(10f, 35f); }
+        }
+        GUILayout.Label(vientoActivo ? ((int)vientoDir + " gr  " + (int)vientoKmh + " km/h") : "sin viento", sTxt);
+        GUILayout.EndHorizontal();
+        if (nMinK != vMinK) ajuste.velMin = Mathf.Clamp(nMinK, 0f, 100000f) / 3.6f;
+        if (nMaxK != vMaxK) ajuste.velMax = Mathf.Clamp(nMaxK, 0f, 100000f) / 3.6f;
+    }
+    void PanelModeloTablet()
+    {
+        GUILayout.Label("GIRAR (grados)", sTitulo);
+        ajuste.rx = FilaL("Cabeceo X", ajuste.rx, paso, "F0");
+        ajuste.ry = FilaL("Rumbo Y", ajuste.ry, paso, "F0");
+        ajuste.rz = FilaL("Alabeo Z", ajuste.rz, paso, "F0");
+        GUILayout.Label("MOVER (metros)", sTitulo);
+        ajuste.ox = FilaL("Izq/Der", ajuste.ox, paso * 0.1f, "F1");
+        ajuste.oy = FilaL("Arr/Abajo", ajuste.oy, paso * 0.1f, "F1");
+        ajuste.oz = FilaL("Adel/Atras", ajuste.oz, paso * 0.1f, "F1");
+        GUILayout.Label("TOQUE (grados)   Tamano " + ajuste.escala.ToString("F3"), sTitulo);
+        GUILayout.BeginHorizontal();
+        foreach (float p in new float[] { 1f, 5f, 15f, 90f })
+        {
+            var antes = GUI.backgroundColor;
+            if (paso == p) GUI.backgroundColor = Color.green;
+            if (GUILayout.Button(p + "°", sBtn, GUILayout.Width(46), GUILayout.Height(22))) paso = p;
+            GUI.backgroundColor = antes;
+        }
+        GUILayout.EndHorizontal();
+        GUILayout.BeginHorizontal();
+        if (GUILayout.Button("Chico", sBtn, GUILayout.Width(70), GUILayout.Height(22))) ajuste.escala *= 0.9f;
+        if (GUILayout.Button("Grande", sBtn, GUILayout.Width(70), GUILayout.Height(22))) ajuste.escala *= 1.1f;
+        if (GUILayout.Button(pausado ? "PAUSADO" : "Pausar", sBtn, GUILayout.Width(70), GUILayout.Height(22))) pausado = !pausado;
+        GUILayout.EndHorizontal();
+        var verde0 = GUI.backgroundColor; GUI.backgroundColor = new Color(0.4f, 1f, 0.4f);
+        if (GUILayout.Button("CLAVAR RESULTADO", sBtn, GUILayout.Width(214), GUILayout.Height(26))) mensaje = GuardarAjuste();
+        GUI.backgroundColor = verde0;
+        GUILayout.Label(mensaje, sTxt);
     }
 
     static float escalaDefecto = 0.3f;
@@ -875,7 +955,7 @@ public class AvionDeCarton : MonoBehaviour
         {
             Vector2 mp = ratonCam.position.ReadValue(); float hh = Screen.height; float yG = hh - mp.y;
             float ext = solapa == 7 ? 190f : 0f;
-            ratonSobrePanel = (mp.x >= 260f && yG >= hh - 200f - ext) || (mp.x <= 355f && yG >= 205f && yG <= 560f) || Tienda.PanelLateral.rect.Contains(new Vector2(mp.x, yG)) || Disposicion.SobreAlgo(new Vector2(mp.x, yG));
+            ratonSobrePanel = (mp.x >= 260f && yG >= hh - 200f - ext) || (mp.x <= 355f && yG >= 205f && yG <= 560f) || Tienda.PanelLateral.rect.Contains(new Vector2(mp.x, yG)) || Disposicion.SobreAlgo(new Vector2(mp.x, yG)) || Tablet.Sobre(new Vector2(mp.x, yG));
         }
         if (ratonCam != null && !ratonSobrePanel)
         {

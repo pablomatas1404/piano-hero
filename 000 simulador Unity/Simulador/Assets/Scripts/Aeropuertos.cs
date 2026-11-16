@@ -446,22 +446,23 @@ public class Aeropuertos : MonoBehaviour
         for (int i = 0; i < filasT.Count; i++)
         {
             var f = filasT[i];
-            GUILayout.BeginHorizontal(GUILayout.Width(760));
-            GUILayout.Label(f.nombre, txt, GUILayout.Width(300));
-            GUILayout.Label(f.km.ToString("F1") + " km", txt, GUILayout.Width(80));
+            GUILayout.BeginHorizontal(GUILayout.Width(Tablet.Compacto ? 455 : 760));
+            GUILayout.Label(f.nombre, txt, GUILayout.Width(Tablet.Compacto ? 150 : 300));
+            GUILayout.Label(f.km.ToString("F1") + " km", txt, GUILayout.Width(Tablet.Compacto ? 62 : 80));
             var antes = GUI.backgroundColor;
             bool hab = GUI.enabled;
-            if (!f.tienePista) { GUI.enabled = false; GUILayout.Button("Sin ILS", btn, GUILayout.Width(80), GUILayout.Height(20)); GUI.enabled = hab; }
+            bool cp = Tablet.Compacto;
+            if (!f.tienePista) { GUI.enabled = false; GUILayout.Button("Sin ILS", btn, GUILayout.Width(cp ? 56 : 80), GUILayout.Height(20)); GUI.enabled = hab; }
             else
             {
                 if (f.ils) GUI.backgroundColor = new Color(0.5f, 1f, 0.5f);
-                if (GUILayout.Button(f.ils ? "ILS ON" : "ILS", btn, GUILayout.Width(80), GUILayout.Height(20))) { AlternarIlsTorre(f.nombre, !f.ils); f.ils = !f.ils; }
+                if (GUILayout.Button(f.ils ? "ILS ON" : "ILS", btn, GUILayout.Width(cp ? 56 : 80), GUILayout.Height(20))) { AlternarIlsTorre(f.nombre, !f.ils); f.ils = !f.ils; }
                 GUI.backgroundColor = antes;
             }
             float p; preciosT.TryGetValue(f.nombre, out p);
-            FilaPrecio(f.nombre, txt, btn, 26f, 90f);
+            FilaPrecio(f.nombre, txt, btn, cp ? 22f : 26f, cp ? 46f : 90f);
             bool esDest2 = Carrera.ViajeNombre == f.nombre; var bgI2 = GUI.backgroundColor; if (esDest2) GUI.backgroundColor = new Color(0.4f, 1f, 0.4f);
-            if (GUILayout.Button(esDest2 ? "Yendo" : "Ir", btn, GUILayout.Width(50), GUILayout.Height(20))) { if (esDest2) Carrera.CancelarViaje(); else Carrera.IniciarViaje(f.nombre, f.lat, f.lon, 600f, (int)p); }
+            if (GUILayout.Button(esDest2 ? "Yendo" : "Ir", btn, GUILayout.Width(cp ? 40 : 50), GUILayout.Height(20))) { if (esDest2) Carrera.CancelarViaje(); else Carrera.IniciarViaje(f.nombre, f.lat, f.lon, 600f, (int)p); }
             GUI.backgroundColor = bgI2;   // viaje de un paso: aterrizar a menos de 600 m (RADIO_VOLVER_BASE)
             GUILayout.EndHorizontal();
         }

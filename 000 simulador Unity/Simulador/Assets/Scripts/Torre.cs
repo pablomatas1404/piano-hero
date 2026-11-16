@@ -559,12 +559,13 @@ public partial class Torre : MonoBehaviour
     void CargarPos()
     {
         posCargada = true;
-        try { if (System.IO.File.Exists(RutaPos)) { var j = JsonUtility.FromJson<PosJ>(System.IO.File.ReadAllText(RutaPos)); if (j != null) { fx = Mathf.Clamp01(j.x); fy = Mathf.Clamp01(j.y); if (j.w > 100f) fw = j.w; if (j.h > 100f && j.v >= 5) fh = j.h; else if (j.h > 100f && j.v >= 4) fh = Mathf.Max(j.h + 100f, 700f); fijo = j.fijo; abierta = j.abierta; } } } catch { }
+        try { if (System.IO.File.Exists(RutaPos)) { var j = JsonUtility.FromJson<PosJ>(System.IO.File.ReadAllText(RutaPos)); if (j != null) { fx = Mathf.Clamp01(j.x); fy = Mathf.Clamp01(j.y); if (j.w > 100f) fw = j.w; if (j.h > 100f && j.v >= 6) fh = j.h; else fh = Mathf.Max(Screen.height - 20f, 700f); fijo = j.fijo; abierta = j.abierta; } } } catch { }
     }
-    void GuardarPos() { try { System.IO.File.WriteAllText(RutaPos, JsonUtility.ToJson(new PosJ { x = fx, y = fy, w = fw, h = fh, fijo = fijo, abierta = abierta, v = 5 })); } catch { } }
+    void GuardarPos() { try { System.IO.File.WriteAllText(RutaPos, JsonUtility.ToJson(new PosJ { x = fx, y = fy, w = fw, h = fh, fijo = fijo, abierta = abierta, v = 6 })); } catch { } }
     Vector2 MouseGui() { var m = UnityEngine.InputSystem.Mouse.current; if (m == null) return Vector2.zero; var p = m.position.ReadValue(); return new Vector2(p.x, Screen.height - p.y); }
     float finDiseno;   // donde termina de verdad el contenido (lo mide OrdenesGUI): el panel se ajusta para que no se corte nada abajo
-    float Escala() { return Mathf.Max(0.3f, Mathf.Min(fh / Mathf.Max(DH, finDiseno), fw / 380f)); }
+    float DisenoAlto { get { return Mathf.Max(finDiseno + (Tablet.Acoplada ? Tablet.RESERVA : 0f), Tablet.Acoplada ? 700f : 420f); } }
+    float Escala() { return Mathf.Max(0.3f, Mathf.Min(fh / DisenoAlto, fw / 380f)); }
     Rect PanelRect()
     {
         float W = Screen.width, H = Screen.height; fw = Mathf.Clamp(fw, 230f, Mathf.Max(230f, W - 10f)); fh = Mathf.Clamp(fh, 110f, Mathf.Max(110f, H - 10f));
@@ -630,6 +631,7 @@ public partial class Torre : MonoBehaviour
 
     void OnGUI()
     {
+        Tablet.Hueco = new Rect(0, 0, 0, 0);   // se vuelve a llenar mas abajo si la torre esta a la vista
         if (avion == null || AvionDeCarton.enAuto) return;
         DibujarMonedas();
         if (lateralAbierto) { arrastrando = false; resizando = 0; return; }   // con el panel grande de la derecha abierto (Destinos, etc.) la torre se esconde para no taparlo
@@ -643,6 +645,7 @@ public partial class Torre : MonoBehaviour
             sMsg = new GUIStyle(GUI.skin.label) { font = fuente, fontSize = 14, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft, clipping = TextClipping.Clip }; sMsg.normal.textColor = new Color(0.45f, 1f, 0.7f);
         }
         var rp = PanelRect(); float esc = Escala(); lastRp = rp; lastEsc = esc;
+        { float ty = rp.y + (finDiseno + 6f) * esc; Tablet.Hueco = abierta ? new Rect(rp.x + 8f * esc, ty, rp.width - 16f * esc, rp.yMax - ty - 8f * esc) : new Rect(0, 0, 0, 0); }
         Color borde = fijo ? new Color(0.2f, 0.75f, 0.95f, 0.6f) : new Color(1f, 0.8f, 0.1f, 1f);
         Rc(rp.x, rp.y, rp.width, rp.height, new Color(0f, 0f, 0f, 0.93f));
         Rc(rp.x, rp.y, rp.width, 1f, borde); Rc(rp.x, rp.yMax - 1f, rp.width, 1f, borde); Rc(rp.x, rp.y, 1f, rp.height, borde); Rc(rp.xMax - 1f, rp.y, 1f, rp.height, borde);
@@ -669,6 +672,28 @@ public partial class Torre : MonoBehaviour
         }
     }
 
+    // ---- app Instrumentos de la tablet: las mismas filas que antes estaban arriba del panel
+    public static void AppInstrumentos(Rect area) { if (inst != null) inst.FilasInstrumentos(area); }
+    void FilasInstrumentos(Rect r)
+    {
+        if (sEtq == null || sTit == null) { GUI.Label(r, "Sin datos todavia"); return; }
+        double lon, lat; float alt, rumbo; if (!MapaAuto.PosActiva(out lon, out lat, out alt, out rumbo)) { GUI.Label(r, "Sin posicion"); return; }
+        string dn; double dla, dlo; bool dest = Carrera.Destino(out dn, out dla, out dlo);
+        Color blanco = new Color(0.95f, 0.97f, 1f), verde = new Color(0.35f, 1f, 0.55f), cian = new Color(0.3f, 0.9f, 1f), ambar = new Color(1f, 0.78f, 0.2f);
+        float cw = (r.width - 20f) / 3f, x0 = r.x + 10f, y0 = r.y + 6f;
+        // fila 1: altura, velocidad, rumbo
+        GUI.Label(new Rect(x0, y0, cw, 14f), "ALTURA  M", sEtq); GUI.Label(new Rect(x0 + cw, y0, cw, 14f), "VELOCIDAD  KM/H", sEtq); GUI.Label(new Rect(x0 + 2f * cw, y0, cw, 14f), "RUMBO  GRADOS", sEtq);
+        Seg7(x0, y0 + 16f, 34f, Mathf.RoundToInt(alt).ToString(), blanco);
+        FlechasAltura(x0 + cw - 30f, y0 + 17f, 20f, 13f);   // triangulitos: rojo = corregi la altura, verde = bien
+        Seg7(x0 + cw, y0 + 16f, 34f, Mathf.RoundToInt(AvionDeCarton.VelMs * 3.6f).ToString(), verde);
+        Seg7(x0 + 2f * cw, y0 + 16f, 34f, Mathf.RoundToInt(rumbo).ToString("000"), cian);
+        // fila 2: destino y kilometros
+        float y1 = y0 + 62f;
+        GUI.Label(new Rect(x0, y1, 2f * cw, 14f), "DESTINO", sEtq); GUI.Label(new Rect(x0 + 2f * cw, y1, cw, 14f), "FALTAN  KM", sEtq);
+        GUI.Label(new Rect(x0, y1 + 14f, 2f * cw - 8f, 28f), dest ? Recortar(dn.ToUpper(), sTit, 2f * cw - 12f) : "SIN DESTINO", sTit);
+        Seg7(x0 + 2f * cw, y1 + 14f, 26f, dest ? Rel(Dist(lat, lon, dla, dlo) / 1000.0, 1) : "--.-", ambar);
+    }
+
     void Contenido(Rect r, Color borde)
     {
         var bg = GUI.backgroundColor;
@@ -692,17 +717,8 @@ public partial class Torre : MonoBehaviour
         string dn; double dla, dlo; bool dest = Carrera.Destino(out dn, out dla, out dlo);
         Color blanco = new Color(0.95f, 0.97f, 1f), verde = new Color(0.35f, 1f, 0.55f), cian = new Color(0.3f, 0.9f, 1f), ambar = new Color(1f, 0.78f, 0.2f);
         float cw = (r.width - 20f) / 3f, x0 = r.x + 10f, y0 = r.y + 38f;
-        // fila 1: altura, velocidad, rumbo
-        GUI.Label(new Rect(x0, y0, cw, 14f), "ALTURA  M", sEtq); GUI.Label(new Rect(x0 + cw, y0, cw, 14f), "VELOCIDAD  KM/H", sEtq); GUI.Label(new Rect(x0 + 2f * cw, y0, cw, 14f), "RUMBO  GRADOS", sEtq);
-        Seg7(x0, y0 + 16f, 34f, Mathf.RoundToInt(alt).ToString(), blanco);
-        FlechasAltura(x0 + cw - 30f, y0 + 17f, 20f, 13f);   // triangulitos: rojo = corregi la altura, verde = bien
-        Seg7(x0 + cw, y0 + 16f, 34f, Mathf.RoundToInt(AvionDeCarton.VelMs * 3.6f).ToString(), verde);
-        Seg7(x0 + 2f * cw, y0 + 16f, 34f, Mathf.RoundToInt(rumbo).ToString("000"), cian);
-        // fila 2: destino y kilometros
-        float y1 = y0 + 62f;
-        GUI.Label(new Rect(x0, y1, 2f * cw, 14f), "DESTINO", sEtq); GUI.Label(new Rect(x0 + 2f * cw, y1, cw, 14f), "FALTAN  KM", sEtq);
-        GUI.Label(new Rect(x0, y1 + 14f, 2f * cw - 8f, 28f), dest ? Recortar(dn.ToUpper(), sTit, 2f * cw - 12f) : "SIN DESTINO", sTit);
-        Seg7(x0 + 2f * cw, y1 + 14f, 26f, dest ? Rel(Dist(lat, lon, dla, dlo) / 1000.0, 1) : "--.-", ambar);
+        // (las filas de altura/velocidad/rumbo y destino ahora viven en la tablet: AppInstrumentos)
+        float y1 = y0 - 46f;
         // fila 3: premio
         float y2 = y1 + 46f;
         GUI.Label(new Rect(x0, y2, cw, 14f), "ACUMULADO  $", sEtq); GUI.Label(new Rect(x0 + cw * 0.9f, y2, cw, 14f), "RELOJ", sEtq); GUI.Label(new Rect(x0 + cw * 1.45f, y2, cw, 14f), "KM", sEtq); GUI.Label(new Rect(x0 + cw * 1.95f, y2, cw, 14f), "EN PESOS $", sEtq);

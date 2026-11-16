@@ -656,8 +656,9 @@ public class Guerra : MonoBehaviour
     void DibujarPestana(GUIStyle txt, GUIStyle btn, GUIStyle titulo)
     {
         GUILayout.Label("MODO GUERRA   (ON = aparecen los blancos de la mision elegida; sin mision no se ve nada)", titulo);
+        bool cp = Tablet.Compacto;
         scroll = GUILayout.BeginScrollView(scroll, false, true);
-        GUILayout.BeginHorizontal();
+        if (cp) GUILayout.BeginVertical(); else GUILayout.BeginHorizontal();
         var antes = GUI.backgroundColor; if (modoGuerra) GUI.backgroundColor = Color.red;
         if (GUILayout.Button(modoGuerra ? "MODO GUERRA: ON (apagar)" : "MODO GUERRA: OFF (prender)", btn, GUILayout.Width(210), GUILayout.Height(24)))
         {
@@ -665,25 +666,26 @@ public class Guerra : MonoBehaviour
             if (modoGuerra) { Torre.Sonar("guerra_on"); Torre.Hablar("guerra_invasion", 3.5f); } Sincronizar(); Mapeo.Cartel(modoGuerra ? "Modo guerra: ON" : "Modo guerra: OFF", 1.5f);
         }
         GUI.backgroundColor = antes;
-        GUILayout.Label("  Disparo: " + Controles_Texto("armamento") + "     La mira se mueve con el stick derecho.", txt);
-        GUILayout.EndHorizontal();
+        GUILayout.Label(cp ? "Disparo: " + Controles_Texto("armamento") + ". La mira se mueve con el stick derecho." : "  Disparo: " + Controles_Texto("armamento") + "     La mira se mueve con el stick derecho.", txt);
+        if (cp) GUILayout.EndVertical(); else GUILayout.EndHorizontal();
         if (misionActual != null)
         {
-            GUILayout.BeginHorizontal();
+            if (cp) GUILayout.BeginVertical(); else GUILayout.BeginHorizontal();
             GUILayout.Label("Mision: " + misionActual.titulo + "   paso " + (paso + 1) + "/" + misionActual.pasos.Length + ":  " + misionActual.pasos[paso].texto.Replace("\n", " - "), txt);
             if (GUILayout.Button("Cancelar", btn, GUILayout.Width(80), GUILayout.Height(20))) { misionActual = null; paso = -1; Sincronizar(); }
-            GUILayout.EndHorizontal();
+            if (cp) GUILayout.EndVertical(); else GUILayout.EndHorizontal();
         }
         GUILayout.Label("MISIONES  (elegir una prende el modo guerra solo)", titulo);
         foreach (var m in menu)
         {
-            GUILayout.BeginHorizontal();
+            if (cp) GUILayout.BeginVertical(); else GUILayout.BeginHorizontal();
             GUI.enabled = m.disponible;
             if (GUILayout.Button(m.titulo, btn, GUILayout.Width(190), GUILayout.Height(20))) Empezar(m);
             GUI.enabled = true;
             GUILayout.Label(m.desc + (m.nota != "" ? "   (" + m.nota + ")" : ""), txt);
-            GUILayout.EndHorizontal();
+            if (cp) { GUILayout.EndVertical(); GUILayout.Space(4); } else GUILayout.EndHorizontal();
         }
+        if (cp) { VelocidadesGuerraTablet(btn, txt); GUILayout.Label("Aeropuertos tomados por la invasion: " + (tomados.Count == 0 ? "ninguno" : string.Join(", ", tomados)), txt); GUILayout.EndScrollView(); return; }
         GUILayout.BeginHorizontal();
         GUILayout.Label("Velocidad de la bala enemiga: " + velBala.ToString("F0") + " m/s", txt, GUILayout.Width(250));
         if (GUILayout.Button("-", btn, GUILayout.Width(24), GUILayout.Height(20))) velBala = Mathf.Max(2f, velBala - 2f);
@@ -695,6 +697,21 @@ public class Guerra : MonoBehaviour
         GUILayout.EndHorizontal();
         GUILayout.Label("Aeropuertos tomados por la invasion: " + (tomados.Count == 0 ? "ninguno" : string.Join(", ", tomados)), txt);
         GUILayout.EndScrollView();
+    }
+
+    void VelocidadesGuerraTablet(GUIStyle btn, GUIStyle txt)
+    {
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("Velocidad de la bala enemiga: " + velBala.ToString("F0") + " m/s", txt);
+        if (GUILayout.Button("-", btn, GUILayout.Width(24), GUILayout.Height(20))) velBala = Mathf.Max(2f, velBala - 2f);
+        if (GUILayout.Button("+", btn, GUILayout.Width(24), GUILayout.Height(20))) velBala += 2f;
+        GUILayout.EndHorizontal();
+        GUILayout.BeginHorizontal();
+        GUILayout.Label("Velocidad de la invasion: " + velInvasion.ToString("F0") + " m/s", txt);
+        if (GUILayout.Button("-", btn, GUILayout.Width(24), GUILayout.Height(20))) velInvasion = Mathf.Max(1f, velInvasion - 1f);
+        if (GUILayout.Button("+", btn, GUILayout.Width(24), GUILayout.Height(20))) velInvasion = Mathf.Min(20f, velInvasion + 1f);
+        GUILayout.EndHorizontal();
+        if (GUILayout.Button("Curar al piloto", btn, GUILayout.Width(140), GUILayout.Height(22))) vidaJugador = VIDA_JUGADOR;
     }
 
     static string Controles_Texto(string id)

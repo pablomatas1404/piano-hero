@@ -401,6 +401,24 @@ public partial class Torre
         float w = sChip.CalcSize(new GUIContent(t)).x + 10f; Rc(x, y, w, 16f, fondo); sChip.normal.textColor = letra; GUI.Label(new Rect(x, y, w, 16f), t, sChip); return x + w + 5f;
     }
 
+    const bool RADIO_EN_PANEL = false;
+    public static void AppRadio(Rect a) { if (inst != null && inst.sEtq != null) inst.RadioCom(a.x + 10f, a.y + 10f, a.width - 20f, GUI.backgroundColor); else GUI.Label(a, "Radio no disponible todavia"); }
+    float RadioCom(float x0, float y, float W, Color bgc)
+    {
+        Color cian = new Color(0.3f, 0.9f, 1f);
+                GUI.Label(new Rect(x0, y, 120f, 14f), "RADIO COM  MHZ", sEtq);
+        { bool okF = EnFrecuencia; var cz = GUI.color; GUI.color = okF ? new Color(0.5f, 1f, 0.6f) : new Color(1f, 0.6f, 0.2f); GUI.Label(new Rect(x0 + 120f, y, W - 120f, 14f), (okF ? "SINTONIZADO EN LA ZONA: " : "FRECUENCIA QUE NECESITÁS: ") + FreqTxt(FreqNecesaria()) + " MHZ", sEtq); GUI.color = cz; }
+        string ft = FreqTxt(radioKhz); Seg7(x0, y + 15f, 28f, ft, cian);
+        float rx = x0 + AnchoSeg(ft, 28f) + 14f, ry = y + 16f;
+        if (GUI.Button(new Rect(rx, ry, 40f, 26f), "-1", sBtn)) MoverRadio(-1000);
+        if (GUI.Button(new Rect(rx + 44f, ry, 44f, 26f), "-.05", sBtn)) MoverRadio(-50);
+        if (GUI.Button(new Rect(rx + 92f, ry, 44f, 26f), "+.05", sBtn)) MoverRadio(50);
+        if (GUI.Button(new Rect(rx + 140f, ry, 40f, 26f), "+1", sBtn)) MoverRadio(1000);
+        y += 48f;
+        if (!EnFrecuencia) { GUI.backgroundColor = new Color(1f, 0.6f, 0.2f); if (GUI.Button(new Rect(x0, y, W, 24f), "SINTONIZAR " + FreqTxt(FreqNecesaria()) + " (AUTOMÁTICO)", sBtn)) { radioKhz = FreqNecesaria(); Aviso("RADIO EN " + FreqTxt(radioKhz) + " MHZ", 3f); } GUI.backgroundColor = bgc; y += 30f; }
+        return y;
+    }
+
     void OrdenesGUI(Rect r, float x0, float y4, Color ambar, Color verde, Color cian, Color blanco)
     {
         if (sTexto == null) { sTexto = new GUIStyle(GUI.skin.textField) { font = fuente, fontSize = 14, fontStyle = FontStyle.Bold }; sTexto.normal.textColor = Color.white; sTexto.focused.textColor = Color.white; }
@@ -509,17 +527,8 @@ public partial class Torre
         // ---- preguntas a la torre (cuadraditos: la torre contesta con datos reales del juego)
         y = Preguntas(x0, y, W, k) + 4f;
 
-        // ---- radio COM
-        GUI.Label(new Rect(x0, y, 120f, 14f), "RADIO COM  MHZ", sEtq);
-        { bool okF = EnFrecuencia; var cz = GUI.color; GUI.color = okF ? new Color(0.5f, 1f, 0.6f) : new Color(1f, 0.6f, 0.2f); GUI.Label(new Rect(x0 + 120f, y, W - 120f, 14f), (okF ? "SINTONIZADO EN LA ZONA: " : "FRECUENCIA QUE NECESITÁS: ") + FreqTxt(FreqNecesaria()) + " MHZ", sEtq); GUI.color = cz; }
-        string ft = FreqTxt(radioKhz); Seg7(x0, y + 15f, 28f, ft, cian);
-        float rx = x0 + AnchoSeg(ft, 28f) + 14f, ry = y + 16f;
-        if (GUI.Button(new Rect(rx, ry, 40f, 26f), "-1", sBtn)) MoverRadio(-1000);
-        if (GUI.Button(new Rect(rx + 44f, ry, 44f, 26f), "-.05", sBtn)) MoverRadio(-50);
-        if (GUI.Button(new Rect(rx + 92f, ry, 44f, 26f), "+.05", sBtn)) MoverRadio(50);
-        if (GUI.Button(new Rect(rx + 140f, ry, 40f, 26f), "+1", sBtn)) MoverRadio(1000);
-        y += 48f;
-        if (!EnFrecuencia) { GUI.backgroundColor = new Color(1f, 0.6f, 0.2f); if (GUI.Button(new Rect(x0, y, W, 24f), "SINTONIZAR " + FreqTxt(FreqNecesaria()) + " (AUTOMÁTICO)", sBtn)) { radioKhz = FreqNecesaria(); Aviso("RADIO EN " + FreqTxt(radioKhz) + " MHZ", 3f); } GUI.backgroundColor = bgc; y += 30f; }
+        // ---- radio COM: ahora vive en la tablet (app Radio COM); RADIO_EN_PANEL la devuelve al panel si hiciera falta
+        if (RADIO_EN_PANEL) y = RadioCom(x0, y, W, bgc);
         y += 6f * Mathf.Min(k, 1.3f);
 
         // ---- respuesta escrita

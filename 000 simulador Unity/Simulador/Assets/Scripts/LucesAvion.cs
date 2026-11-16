@@ -257,6 +257,28 @@ public class LucesAvion : MonoBehaviour
         GUILayout.Label("LUCES DEL AVION   Agarra con el mouse (apreta, arrastra y solta) la bolita ROJA, VERDE, BLANCA (estroboscopica) o las AMARILLAS (luces de las alas) y dejala donde quieras. Despues CLAVAR LUCES.", titulo);
         if (modelo == null) { GUILayout.Label("Primero elegi un avion.", txt); return; }
         scroll = GUILayout.BeginScrollView(scroll, false, true);
+        if (Tablet.Compacto)
+        {
+            // en la tablet todo va hacia abajo, uno debajo del otro
+            GUILayout.Label("Avion: " + nombreAvion, txt);
+            if (GUILayout.Button(lucesOn ? "Luces: ENCENDIDAS" : "Luces: apagadas", btn, GUILayout.Width(220), GUILayout.Height(22))) lucesOn = !lucesOn;
+            if (GUILayout.Button(alasForzadas ? "Luz de alas: apagada" : "Luz de alas: ENCENDIDA", btn, GUILayout.Width(220), GUILayout.Height(22))) alasForzadas = !alasForzadas;
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Bolitas -", btn, GUILayout.Width(105), GUILayout.Height(22))) escalaEdicion = Mathf.Max(0.25f, escalaEdicion * 0.75f);
+            if (GUILayout.Button("Bolitas +", btn, GUILayout.Width(105), GUILayout.Height(22))) escalaEdicion = Mathf.Min(4f, escalaEdicion * 1.33f);
+            GUILayout.EndHorizontal();
+            if (GUILayout.Button("Copiar ala IZQ -> DER (espejo)", btn, GUILayout.Width(250), GUILayout.Height(22))) pAlaD = new Vector3(-pAlaI.x, pAlaI.y, pAlaI.z);
+            if (GUILayout.Button("Copiar ala DER -> IZQ (espejo)", btn, GUILayout.Width(250), GUILayout.Height(22))) pAlaI = new Vector3(-pAlaD.x, pAlaD.y, pAlaD.z);
+            if (GUILayout.Button(sinBolitaBlanca ? "Bolita blanca: OCULTA en vuelo" : "Bolita blanca: visible", btn, GUILayout.Width(250), GUILayout.Height(22))) { sinBolitaBlanca = !sinBolitaBlanca; Clavar(); }
+            float pasoT = Mathf.Max(0.02f, largo * 0.01f) / Mathf.Max(0.0001f, modelo.lossyScale.x);
+            pRoja = Fila("Roja (izq)", pRoja, pasoT); pVerde = Fila("Verde (der)", pVerde, pasoT); pEstrobo = Fila("Estroboscopica", pEstrobo, pasoT); pAlaI = Fila("Ala izquierda", pAlaI, pasoT); pAlaD = Fila("Ala derecha", pAlaD, pasoT);
+            Reaplicar();
+            if (GUILayout.Button("CLAVAR LUCES (guardar para este avion)", btn, GUILayout.Width(280), GUILayout.Height(24))) Clavar();
+            if (GUILayout.Button("Volver a las de fabrica", btn, GUILayout.Width(280), GUILayout.Height(24))) Restaurar();
+            GUILayout.Label(aviso, txt);
+            GUILayout.EndScrollView();
+            return;
+        }
         GUILayout.BeginHorizontal();
         GUILayout.Label("Avion: " + nombreAvion, txt, GUILayout.Width(300));
         if (GUILayout.Button(lucesOn ? "Luces: ENCENDIDAS" : "Luces: apagadas", btn, GUILayout.Width(150), GUILayout.Height(20))) lucesOn = !lucesOn;

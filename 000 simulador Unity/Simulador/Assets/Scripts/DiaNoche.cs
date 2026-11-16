@@ -23,6 +23,7 @@ public class DiaNoche : MonoBehaviour
     static readonly Color COLOR_LUZ_AMANECER = new Color(1f, 0.55f, 0.3f);
     static readonly Color COLOR_LUZ_DIA = new Color(1f, 0.98f, 0.92f);
 
+    public static float HoraActual = 12f;   // la lee la tablet
     float horaDelDia = 12f;          // arranca al mediodia
     bool avanceAutomatico = true;    // arranca prendido
 
@@ -83,6 +84,7 @@ public class DiaNoche : MonoBehaviour
         if (avion == null || ancla == null) return;
 
         if (avanceAutomatico) horaDelDia = Mathf.Repeat(horaDelDia + (Time.deltaTime / SEGUNDOS_POR_DIA_COMPLETO) * 24f, 24f);
+        HoraActual = horaDelDia;
 
         // hora solar reajustada: el atardecer cae a las 21 y el amanecer a las 6
         float horaSolar;

@@ -77,6 +77,13 @@ public class Teletransporte : MonoBehaviour
         GUILayout.Label("TELETRANSPORTE (temporal, para trackear pistas): apareces a 80 m sobre el punto", titulo);
         if (inst == null || !inst.armado) { GUILayout.Label("Esperando que carguen los aeropuertos...", txt); return; }
         var bg = GUI.backgroundColor; GUI.backgroundColor = new Color(1f, 0.85f, 0.3f);
+        if (Tablet.Compacto)
+        {
+            foreach (var l in inst.lugares) if (GUILayout.Button(l.rotulo + (l.aprox ? " (aprox.)" : ""), btn, GUILayout.Height(26))) inst.Ir(l);
+            GUI.backgroundColor = bg;
+            if (inst.aviso != "" && Time.unscaledTime < inst.avisoHasta) GUILayout.Label(inst.aviso, txt);
+            return;
+        }
         for (int i = 0; i < inst.lugares.Count; i += 3)
         {
             GUILayout.BeginHorizontal();
