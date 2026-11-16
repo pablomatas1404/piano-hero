@@ -386,8 +386,8 @@ public partial class Torre
     void Halo(Rect r)
     {
         float t = Time.unscaledTime - haloDesde; if (t < 0f) return;
-        // 3 parpadeos al aparecer la pregunta y despues queda prendido (con un latido suave) hasta que se contesta
-        float p = t < 3f ? Mathf.Abs(Mathf.Sin(t * Mathf.PI)) : 0.85f + 0.15f * Mathf.Sin(Time.unscaledTime * 3f);
+        // parpadea como neon mientras la pregunta espera respuesta
+        float p = Mathf.Abs(Mathf.Sin(t * Mathf.PI));   // sigue parpadeando todo el tiempo que la pregunta espera respuesta (no queda fijo)
         for (int i = 0; i < 5; i++)
         {
             float o = 1.5f + i * 2.2f, a = p * (0.95f - i * 0.17f), g = 2.2f; var col = new Color(0.2f, 1f, 0.95f, Mathf.Max(0f, a)); var q = new Rect(r.x - o, r.y - o, r.width + 2f * o, r.height + 2f * o);
