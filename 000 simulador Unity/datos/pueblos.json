@@ -1,0 +1,897 @@
+[
+  {
+    "nombre": "Abufera Mar Chiquita",
+    "lat": -37.6512,
+    "lon": -57.3487
+  },
+  {
+    "nombre": "Aero club Escobar",
+    "lat": -34.2971,
+    "lon": -58.7916
+  },
+  {
+    "nombre": "Aeroclub Baradero",
+    "lat": -33.8158,
+    "lon": -59.487
+  },
+  {
+    "nombre": "Alsina",
+    "lat": -33.8961,
+    "lon": -59.3827
+  },
+  {
+    "nombre": "Altos de Mendoza - Rosario",
+    "lat": -32.9427,
+    "lon": -60.7321
+  },
+  {
+    "nombre": "Alvear - Rosario",
+    "lat": -32.9787,
+    "lon": -60.6852
+  },
+  {
+    "nombre": "Area Natural protegida Rocas Coloradas",
+    "lat": -45.5429,
+    "lon": -67.1688
+  },
+  {
+    "nombre": "Armstrong",
+    "lat": -32.7752,
+    "lon": -61.6017
+  },
+  {
+    "nombre": "Arroyo Moyano",
+    "lat": -34.5513,
+    "lon": -59.6363
+  },
+  {
+    "nombre": "Arroyo Seco",
+    "lat": -33.1347,
+    "lon": -60.459
+  },
+  {
+    "nombre": "Arroyo Tia Lucha",
+    "lat": -33.5614,
+    "lon": -59.8473
+  },
+  {
+    "nombre": "Balneario Parque Mar Chiquita",
+    "lat": -37.7422,
+    "lon": -57.4208
+  },
+  {
+    "nombre": "Baniado de Castro",
+    "lat": -33.6058,
+    "lon": -59.784
+  },
+  {
+    "nombre": "Baradero",
+    "lat": -33.8085,
+    "lon": -59.5083
+  },
+  {
+    "nombre": "Barrio Islas",
+    "lat": -34.349,
+    "lon": -58.7458
+  },
+  {
+    "nombre": "Barrio Los Lagos",
+    "lat": -34.4008,
+    "lon": -58.6701
+  },
+  {
+    "nombre": "Barrio San Agustin",
+    "lat": -34.3917,
+    "lon": -58.683
+  },
+  {
+    "nombre": "Barrio San Francisco",
+    "lat": -34.3857,
+    "lon": -58.6923
+  },
+  {
+    "nombre": "Barrio Santa Barbara",
+    "lat": -34.4358,
+    "lon": -58.6196
+  },
+  {
+    "nombre": "Barrio Santa Ines",
+    "lat": -34.5529,
+    "lon": -59.0699
+  },
+  {
+    "nombre": "Barrio Santa Isabel",
+    "lat": -34.365,
+    "lon": -58.7226
+  },
+  {
+    "nombre": "Barrio de Belgrano - Caba",
+    "lat": -34.5593,
+    "lon": -58.4591
+  },
+  {
+    "nombre": "Barrio de Palermo - Caba",
+    "lat": -34.579,
+    "lon": -58.4253
+  },
+  {
+    "nombre": "Beccar",
+    "lat": -34.4708,
+    "lon": -58.5455
+  },
+  {
+    "nombre": "Belen de Escobar",
+    "lat": -34.3162,
+    "lon": -58.776
+  },
+  {
+    "nombre": "Bell Ville - Pcia de Cordoba",
+    "lat": -32.6421,
+    "lon": -62.7204
+  },
+  {
+    "nombre": "Berazategui",
+    "lat": -34.7465,
+    "lon": -58.1755
+  },
+  {
+    "nombre": "Biedma - Capital de Rio Negro",
+    "lat": -42.4235,
+    "lon": -65.1775
+  },
+  {
+    "nombre": "CORDOBA CAPITAL",
+    "lat": -31.4348,
+    "lon": -64.162
+  },
+  {
+    "nombre": "Camet Norte",
+    "lat": -37.8212,
+    "lon": -57.4843
+  },
+  {
+    "nombre": "Campana",
+    "lat": -34.1789,
+    "lon": -58.9772
+  },
+  {
+    "nombre": "Caniada de Gomez",
+    "lat": -32.8044,
+    "lon": -61.395
+  },
+  {
+    "nombre": "Carcarana",
+    "lat": -32.849,
+    "lon": -61.1489
+  },
+  {
+    "nombre": "Carmen de Areco",
+    "lat": -34.5569,
+    "lon": -59.8126
+  },
+  {
+    "nombre": "Central Termica Costanera",
+    "lat": -34.6227,
+    "lon": -58.3353
+  },
+  {
+    "nombre": "Cerca del pueblo Irunia",
+    "lat": -26.1505,
+    "lon": -54.9428
+  },
+  {
+    "nombre": "Cerro Chapa - 210 Metros",
+    "lat": -25.6294,
+    "lon": -54.5092
+  },
+  {
+    "nombre": "Cerro Despensa - 1150 Metros",
+    "lat": -24.5382,
+    "lon": -65.2181
+  },
+  {
+    "nombre": "Chacabuco",
+    "lat": -34.5541,
+    "lon": -60.0111
+  },
+  {
+    "nombre": "Chacras del Parana",
+    "lat": -33.9787,
+    "lon": -59.2659
+  },
+  {
+    "nombre": "Chicoana - Pcia de Salta",
+    "lat": -25.1686,
+    "lon": -65.427
+  },
+  {
+    "nombre": "Cipolletti - Pcia dde Neuquen",
+    "lat": -38.899,
+    "lon": -68.0205
+  },
+  {
+    "nombre": "City Bell",
+    "lat": -34.8542,
+    "lon": -58.0382
+  },
+  {
+    "nombre": "Correa",
+    "lat": -32.8336,
+    "lon": -61.2457
+  },
+  {
+    "nombre": "Cortines",
+    "lat": -34.5594,
+    "lon": -59.2063
+  },
+  {
+    "nombre": "Cosquin - Cordoba",
+    "lat": -31.243,
+    "lon": -64.4659
+  },
+  {
+    "nombre": "Costa Atlantica Tierra del Fuego",
+    "lat": -53.5142,
+    "lon": -67.9357
+  },
+  {
+    "nombre": "Crotera Cerro do Jarau",
+    "lat": -30.1772,
+    "lon": -56.4282
+  },
+  {
+    "nombre": "Cruz del Eje - Cordoba",
+    "lat": -30.3664,
+    "lon": -65.2978
+  },
+  {
+    "nombre": "Dique Lujan",
+    "lat": -34.3702,
+    "lon": -58.7017
+  },
+  {
+    "nombre": "Dolores - Uruguay",
+    "lat": -33.5345,
+    "lon": -58.1787
+  },
+  {
+    "nombre": "El Carril - Pcia de Salta",
+    "lat": -25.0632,
+    "lon": -65.4462
+  },
+  {
+    "nombre": "El Tala",
+    "lat": -26.0993,
+    "lon": -65.2495
+  },
+  {
+    "nombre": "Embalse Arroyito -Depto de Confluencia - Pcia de Neuquen",
+    "lat": -39.2147,
+    "lon": -68.5039
+  },
+  {
+    "nombre": "Embalse Cabra Corral",
+    "lat": -25.3083,
+    "lon": -65.3995
+  },
+  {
+    "nombre": "Embalse Ezequiel Ramos Mexia",
+    "lat": -39.3805,
+    "lon": -68.7298
+  },
+  {
+    "nombre": "Embalse Piedra del Aguila",
+    "lat": -40.3957,
+    "lon": -70.1264
+  },
+  {
+    "nombre": "Estancia Villa Maria",
+    "lat": -34.9581,
+    "lon": -58.574
+  },
+  {
+    "nombre": "Ezpeleta",
+    "lat": -34.7309,
+    "lon": -58.1963
+  },
+  {
+    "nombre": "General Mansilla",
+    "lat": -35.0634,
+    "lon": -57.7446
+  },
+  {
+    "nombre": "General Rodriguez",
+    "lat": -34.5611,
+    "lon": -58.944
+  },
+  {
+    "nombre": "Guachipas - Pcia de Salta",
+    "lat": -25.7127,
+    "lon": -65.3219
+  },
+  {
+    "nombre": "Guichon",
+    "lat": -32.3022,
+    "lon": -57.36
+  },
+  {
+    "nombre": "Hipodromo de San Isidro",
+    "lat": -34.488,
+    "lon": -58.5205
+  },
+  {
+    "nombre": "Hudson",
+    "lat": -34.7755,
+    "lon": -58.1386
+  },
+  {
+    "nombre": "Isla Bodega",
+    "lat": -33.413,
+    "lon": -60.0593
+  },
+  {
+    "nombre": "Isla Cambacua",
+    "lat": -32.5613,
+    "lon": -58.2344
+  },
+  {
+    "nombre": "Isla Cattaneo",
+    "lat": -33.3449,
+    "lon": -60.1579
+  },
+  {
+    "nombre": "Isla La Espera",
+    "lat": -33.4274,
+    "lon": -60.0394
+  },
+  {
+    "nombre": "Isla Nueva e Isla Guaca",
+    "lat": -33.3866,
+    "lon": -60.0973
+  },
+  {
+    "nombre": "Isla San Pedro",
+    "lat": -33.6558,
+    "lon": -59.7138
+  },
+  {
+    "nombre": "Isla del Paraguayo",
+    "lat": -33.1397,
+    "lon": -60.4492
+  },
+  {
+    "nombre": "Itapua Porty Km 40",
+    "lat": -26.6941,
+    "lon": -55.3969
+  },
+  {
+    "nombre": "James Craik",
+    "lat": -32.1297,
+    "lon": -63.4098
+  },
+  {
+    "nombre": "Jockey Club -Rosario",
+    "lat": -32.9302,
+    "lon": -60.7479
+  },
+  {
+    "nombre": "Jockey Club de Rosario",
+    "lat": -32.9308,
+    "lon": -60.746
+  },
+  {
+    "nombre": "La Aguadita - Pcia de Tucuman",
+    "lat": -26.741,
+    "lon": -65.1245
+  },
+  {
+    "nombre": "La Falda - Cordoba",
+    "lat": -31.1094,
+    "lon": -64.4862
+  },
+  {
+    "nombre": "La Lucila",
+    "lat": -34.5039,
+    "lon": -58.4976
+  },
+  {
+    "nombre": "La Plata (Pueblo)",
+    "lat": -34.9045,
+    "lon": -57.975
+  },
+  {
+    "nombre": "La Union",
+    "lat": -34.8697,
+    "lon": -58.5483
+  },
+  {
+    "nombre": "Laboulaye - Pcia de Cordoba",
+    "lat": -34.1192,
+    "lon": -63.3502
+  },
+  {
+    "nombre": "Lago Fagnano",
+    "lat": -54.5418,
+    "lon": -68.1333
+  },
+  {
+    "nombre": "Lago Pellegrini - Pcia de Neuquen",
+    "lat": -38.8044,
+    "lon": -67.8715
+  },
+  {
+    "nombre": "Laguna Chascomus",
+    "lat": -35.5719,
+    "lon": -58.0147
+  },
+  {
+    "nombre": "Laguna Cuero de ZORRO",
+    "lat": -35.7872,
+    "lon": -62.9156
+  },
+  {
+    "nombre": "Laguna La Picasa",
+    "lat": -34.3332,
+    "lon": -62.1582
+  },
+  {
+    "nombre": "Laguna La Salada Grande",
+    "lat": -36.912,
+    "lon": -56.8866
+  },
+  {
+    "nombre": "Laguna Larga",
+    "lat": -31.7574,
+    "lon": -63.7751
+  },
+  {
+    "nombre": "Laguna Los Patos - Reserva Ecologica - Caba",
+    "lat": -34.6047,
+    "lon": -58.3581
+  },
+  {
+    "nombre": "Laguna de San Miguel del Monte - Lugar Turistico",
+    "lat": -35.4604,
+    "lon": -58.7989
+  },
+  {
+    "nombre": "Lagunas Las Chilcas",
+    "lat": -36.8274,
+    "lon": -56.8488
+  },
+  {
+    "nombre": "Leandro Alem",
+    "lat": -34.4692,
+    "lon": -61.3651
+  },
+  {
+    "nombre": "Leones",
+    "lat": -32.6125,
+    "lon": -62.2786
+  },
+  {
+    "nombre": "Lima",
+    "lat": -34.033,
+    "lon": -59.1873
+  },
+  {
+    "nombre": "Lincoln",
+    "lat": -34.9173,
+    "lon": -61.4876
+  },
+  {
+    "nombre": "Loma Hermosa",
+    "lat": -34.5609,
+    "lon": -58.6055
+  },
+  {
+    "nombre": "Lujan",
+    "lat": -34.56,
+    "lon": -59.1057
+  },
+  {
+    "nombre": "Manfredi",
+    "lat": -31.8221,
+    "lon": -63.714
+  },
+  {
+    "nombre": "Mar de Cobo",
+    "lat": -37.7707,
+    "lon": -57.4448
+  },
+  {
+    "nombre": "Marabo -  Provincia de Buenos Aires",
+    "lat": -34.5533,
+    "lon": -58.9381
+  },
+  {
+    "nombre": "Marco Juarez",
+    "lat": -32.7008,
+    "lon": -62.1077
+  },
+  {
+    "nombre": "Martinez",
+    "lat": -34.4951,
+    "lon": -58.5104
+  },
+  {
+    "nombre": "Mercado Central",
+    "lat": -34.7123,
+    "lon": -58.4852
+  },
+  {
+    "nombre": "Monasterio Mariapolis Lia",
+    "lat": -34.5443,
+    "lon": -60.6951
+  },
+  {
+    "nombre": "Morrison",
+    "lat": -32.5624,
+    "lon": -62.8107
+  },
+  {
+    "nombre": "Municipio de Puerto Iguazu",
+    "lat": -25.7584,
+    "lon": -54.6162
+  },
+  {
+    "nombre": "Muniz - Provincia de Buenos Aires",
+    "lat": -34.5614,
+    "lon": -58.7078
+  },
+  {
+    "nombre": "NORDELTA",
+    "lat": -34.4286,
+    "lon": -58.6295
+  },
+  {
+    "nombre": "Nuevo Paysandu - Uruguay",
+    "lat": -32.2848,
+    "lon": -58.0603
+  },
+  {
+    "nombre": "Obligado",
+    "lat": -33.588,
+    "lon": -59.8092
+  },
+  {
+    "nombre": "Oliva",
+    "lat": -32.0197,
+    "lon": -63.5193
+  },
+  {
+    "nombre": "Olivos",
+    "lat": -34.5102,
+    "lon": -58.4882
+  },
+  {
+    "nombre": "Oncativo",
+    "lat": -31.8948,
+    "lon": -63.645
+  },
+  {
+    "nombre": "POLLOS SAPUCAI - Granja San Juan",
+    "lat": -32.0266,
+    "lon": -68.5719
+  },
+  {
+    "nombre": "Paisandu - Uruguay",
+    "lat": -32.3388,
+    "lon": -58.0651
+  },
+  {
+    "nombre": "Pampa Nogueira - Pcia de Neuquen",
+    "lat": -40.0707,
+    "lon": -69.6712
+  },
+  {
+    "nombre": "Parque Centenario - Barrio Caballito - Caba",
+    "lat": -34.6048,
+    "lon": -58.4368
+  },
+  {
+    "nombre": "Parque Industrial Campana",
+    "lat": -34.2104,
+    "lon": -58.9176
+  },
+  {
+    "nombre": "Parque Nacional Bosques petrificados de Jaramillo",
+    "lat": -47.6117,
+    "lon": -67.9076
+  },
+  {
+    "nombre": "Parque Nacional Ciervo de las Pantanos",
+    "lat": -34.2528,
+    "lon": -58.8567
+  },
+  {
+    "nombre": "Parque Penia",
+    "lat": -37.9136,
+    "lon": -57.5471
+  },
+  {
+    "nombre": "Parque Rafael Aguiar - San Nicolas de los Arroyos",
+    "lat": -33.2974,
+    "lon": -60.2258
+  },
+  {
+    "nombre": "Parque Sarmiento - Caba",
+    "lat": -34.5594,
+    "lon": -58.4979
+  },
+  {
+    "nombre": "Parque industrial Tigre",
+    "lat": -34.4301,
+    "lon": -58.6148
+  },
+  {
+    "nombre": "Partido Carlos Tejedor",
+    "lat": -35.3122,
+    "lon": -62.1284
+  },
+  {
+    "nombre": "Pasa el Ferrocarril Belgrano",
+    "lat": -34.672,
+    "lon": -58.467
+  },
+  {
+    "nombre": "Pico Truncado",
+    "lat": -46.7907,
+    "lon": -67.9433
+  },
+  {
+    "nombre": "Piedras Coloradas",
+    "lat": -32.4229,
+    "lon": -57.4135
+  },
+  {
+    "nombre": "Pirapey Km 45",
+    "lat": -26.5937,
+    "lon": -55.3139
+  },
+  {
+    "nombre": "Planicie de Panquehuau",
+    "lat": -40.7998,
+    "lon": -70.6984
+  },
+  {
+    "nombre": "Pueblo Esther",
+    "lat": -33.0703,
+    "lon": -60.55
+  },
+  {
+    "nombre": "Pueblo Lavalleja - Uruguay",
+    "lat": -31.1611,
+    "lon": -56.8491
+  },
+  {
+    "nombre": "Puerto Esther - Vista Aerodromo",
+    "lat": -33.069,
+    "lon": -60.5496
+  },
+  {
+    "nombre": "Punta Chacra San JERONIMO",
+    "lat": -32.8689,
+    "lon": -61.0165
+  },
+  {
+    "nombre": "RIO PARANA",
+    "lat": -25.7738,
+    "lon": -54.629
+  },
+  {
+    "nombre": "Ramallo",
+    "lat": -33.471,
+    "lon": -59.9855
+  },
+  {
+    "nombre": "Reserva Biosfera del Parana- Zona B. Tampon",
+    "lat": -34.0976,
+    "lon": -58.4403
+  },
+  {
+    "nombre": "Reserva Natural Mixta Integral Punta Lara",
+    "lat": -34.7914,
+    "lon": -58.118
+  },
+  {
+    "nombre": "Reserva Natural de Objetivo Definido Rincon del Ajo",
+    "lat": -36.3295,
+    "lon": -57.0081
+  },
+  {
+    "nombre": "Reserva de Biosfera Patagonia Azul",
+    "lat": -44.5474,
+    "lon": -66.3146
+  },
+  {
+    "nombre": "Reserva de uso multiple Corazon de la Isla",
+    "lat": -54.3638,
+    "lon": -68.0412
+  },
+  {
+    "nombre": "Reseva Natural Aguas Chiquitas",
+    "lat": -26.5406,
+    "lon": -65.1644
+  },
+  {
+    "nombre": "Rio Coyle",
+    "lat": -51.3894,
+    "lon": -69.8047
+  },
+  {
+    "nombre": "Rio Gallegos Canal Norte",
+    "lat": -51.5796,
+    "lon": -69.3751
+  },
+  {
+    "nombre": "Rio Iguazu - Pcia de Misiones - Arg",
+    "lat": -25.617,
+    "lon": -54.4988
+  },
+  {
+    "nombre": "Rio Negro",
+    "lat": -38.3573,
+    "lon": -67.1484
+  },
+  {
+    "nombre": "Rio Parana vista a Laguna de Pereira",
+    "lat": -33.5002,
+    "lon": -59.9352
+  },
+  {
+    "nombre": "Rio Salado",
+    "lat": -35.6771,
+    "lon": -58.8532
+  },
+  {
+    "nombre": "Rio Segundo - Pcia de Cordoba",
+    "lat": -31.654,
+    "lon": -63.8719
+  },
+  {
+    "nombre": "Roldan -Rosario",
+    "lat": -32.8864,
+    "lon": -60.9006
+  },
+  {
+    "nombre": "Rufino",
+    "lat": -34.2374,
+    "lon": -62.6979
+  },
+  {
+    "nombre": "SALTA CAPITAL",
+    "lat": -24.7839,
+    "lon": -65.4246
+  },
+  {
+    "nombre": "SCSS San Sebastian",
+    "lat": -53.2455,
+    "lon": -68.1527
+  },
+  {
+    "nombre": "San Clemente del Tuyu",
+    "lat": -36.4191,
+    "lon": -56.8866
+  },
+  {
+    "nombre": "San Fernando (Pueblo)",
+    "lat": -34.4512,
+    "lon": -58.5738
+  },
+  {
+    "nombre": "San Isidro",
+    "lat": -34.4777,
+    "lon": -58.5431
+  },
+  {
+    "nombre": "San Nicolas de los Arroyos",
+    "lat": -33.3368,
+    "lon": -60.1751
+  },
+  {
+    "nombre": "San Pedro",
+    "lat": -33.6838,
+    "lon": -59.6875
+  },
+  {
+    "nombre": "Santa Clara del Mar",
+    "lat": -37.8347,
+    "lon": -57.4973
+  },
+  {
+    "nombre": "Santa Elena del Mar",
+    "lat": -37.867,
+    "lon": -57.5197
+  },
+  {
+    "nombre": "Sarmiento - Pcia de San Juan",
+    "lat": -32.3177,
+    "lon": -68.6393
+  },
+  {
+    "nombre": "Timote",
+    "lat": -35.3618,
+    "lon": -62.2094
+  },
+  {
+    "nombre": "Tio Pujio",
+    "lat": -32.2392,
+    "lon": -63.302
+  },
+  {
+    "nombre": "Tiro Suizo - Rosario",
+    "lat": -32.9993,
+    "lon": -60.6582
+  },
+  {
+    "nombre": "Tortugas",
+    "lat": -32.7435,
+    "lon": -61.8168
+  },
+  {
+    "nombre": "Toyota",
+    "lat": -34.1336,
+    "lon": -59.029
+  },
+  {
+    "nombre": "Unquillo",
+    "lat": -31.2342,
+    "lon": -64.3145
+  },
+  {
+    "nombre": "Vicunia Mackena",
+    "lat": -33.9271,
+    "lon": -64.3723
+  },
+  {
+    "nombre": "Villa  Carlos Paz - Cordoba",
+    "lat": -31.4155,
+    "lon": -64.4999
+  },
+  {
+    "nombre": "Villa Constitucion",
+    "lat": -33.2339,
+    "lon": -60.3166
+  },
+  {
+    "nombre": "Villa Dolores",
+    "lat": -33.033,
+    "lon": -60.6145
+  },
+  {
+    "nombre": "Villa Elisa",
+    "lat": -34.834,
+    "lon": -58.0639
+  },
+  {
+    "nombre": "Villa Gobernador Galvez",
+    "lat": -33.0147,
+    "lon": -60.6282
+  },
+  {
+    "nombre": "Villa Riachuelo . Caba",
+    "lat": -34.6876,
+    "lon": -58.4739
+  },
+  {
+    "nombre": "Villa Urquiza - Rosario",
+    "lat": -32.9575,
+    "lon": -60.712
+  },
+  {
+    "nombre": "Virreyes",
+    "lat": -34.4596,
+    "lon": -58.5714
+  },
+  {
+    "nombre": "Washintong",
+    "lat": -33.8661,
+    "lon": -64.6875
+  },
+  {
+    "nombre": "Zarate",
+    "lat": -34.1004,
+    "lon": -59.0905
+  }
+]

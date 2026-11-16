@@ -1,0 +1,1763 @@
+[
+  {
+    "nombre": "Aeroparque",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -34.5589,
+    "lon_aproximada": -58.4164,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -34.554,
+        "lon": -58.425333,
+        "alt_m": 6.1
+      },
+      "cabecera_2": {
+        "lat": -34.563833,
+        "lon": -58.4075,
+        "alt_m": 4.88
+      },
+      "rumbo_cab1_a_cab2_grados": 123.8,
+      "rumbo_cab2_a_cab1_grados": 303.8,
+      "ancho_medio_pista_m": 45,
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "San Fernando",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -34.4532,
+    "lon_aproximada": -58.5896,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -34.459167,
+        "lon": -58.595667,
+        "alt_m": 10.06
+      },
+      "cabecera_2": {
+        "lat": -34.45,
+        "lon": -58.5855,
+        "alt_m": 3.35
+      },
+      "rumbo_cab1_a_cab2_grados": 42.4,
+      "rumbo_cab2_a_cab1_grados": 222.4,
+      "ancho_medio_pista_m": 40,
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Ezeiza",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -34.8222,
+    "lon_aproximada": -58.5358,
+    "tiene_ils_dos_cabeceras": true,
+    "pistas": [
+      {
+        "cabecera_1": {
+          "lat": -34.8190632489792,
+          "lon": -58.5533262507912,
+          "alt_m": 37.2082823291421
+        },
+        "cabecera_2": {
+          "lat": -34.8253907177614,
+          "lon": -58.518147409345,
+          "alt_m": 38.4050613399595
+        },
+        "rumbo_cab1_a_cab2_grados": 102.4,
+        "rumbo_cab2_a_cab1_grados": 282.3,
+        "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+        "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+        "largo_pista_m": "no lo sé (no está guardado en el código)"
+      },
+      {
+        "cabecera_1": {
+          "lat": -34.8352106117019,
+          "lon": -58.5245659448607,
+          "alt_m": 36.6112232338637
+        },
+        "cabecera_2": {
+          "lat": -34.8085286713313,
+          "lon": -58.5338650217645,
+          "alt_m": 37.6294713849202
+        },
+        "rumbo_cab1_a_cab2_grados": 344,
+        "rumbo_cab2_a_cab1_grados": 164,
+        "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+        "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+        "largo_pista_m": "no lo sé (no está guardado en el código)"
+      }
+    ],
+    "nota": "Ezeiza tiene 2 pistas cruzadas reales en el código, cada una con su propio par de cabeceras",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "El Palomar",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -34.61,
+    "lon_aproximada": -58.6125,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -34.6009427588694,
+        "lon": -58.6171759926138,
+        "alt_m": 40.4461734620854
+      },
+      "cabecera_2": {
+        "lat": -34.6182983867754,
+        "lon": -58.6083196699711,
+        "alt_m": 49.8827434657142
+      },
+      "rumbo_cab1_a_cab2_grados": 157.2,
+      "rumbo_cab2_a_cab1_grados": 337.2,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Morón",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -34.6764,
+    "lon_aproximada": -58.6428,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -34.6885488419284,
+        "lon": -58.6462909490502,
+        "alt_m": 48.0545884827152
+      },
+      "cabecera_2": {
+        "lat": -34.6641891470396,
+        "lon": -58.6393783149291,
+        "alt_m": 43.2744749914855
+      },
+      "rumbo_cab1_a_cab2_grados": 13.1,
+      "rumbo_cab2_a_cab1_grados": 193.1,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Don Torcuato",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -34.49778,
+    "lon_aproximada": -58.60556,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": null,
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)",
+    "pistas": [
+      {
+        "cabecera_1": {
+          "lat": -34.4975899265123,
+          "lon": -58.60617855063226,
+          "alt_m": 24.41439437866211
+        },
+        "cabecera_2": {
+          "lat": -34.49597943712691,
+          "lon": -58.60698969556365,
+          "alt_m": 24.781831741333008
+        },
+        "rumbo_cab1_a_cab2_grados": 337.5,
+        "rumbo_cab2_a_cab1_grados": 157.5,
+        "ancho_medio_pista_m": 12
+      },
+      {
+        "cabecera_1": {
+          "lat": -34.49707390676842,
+          "lon": -58.605873255929495,
+          "alt_m": 24.761079788208008
+        },
+        "cabecera_2": {
+          "lat": -34.49582433986744,
+          "lon": -58.6064513821803,
+          "alt_m": 24.76727867126465
+        },
+        "rumbo_cab1_a_cab2_grados": 339.1,
+        "rumbo_cab2_a_cab1_grados": 159.1,
+        "ancho_medio_pista_m": 12
+      }
+    ]
+  },
+  {
+    "nombre": "Campo de Mayo",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -34.53476,
+    "lon_aproximada": -58.67191,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -34.5274077113893,
+        "lon": -58.6722874442012,
+        "alt_m": 44.9625268978998
+      },
+      "cabecera_2": {
+        "lat": -34.5421162803178,
+        "lon": -58.6715322190383,
+        "alt_m": 45.1745231309906
+      },
+      "rumbo_cab1_a_cab2_grados": 177.6,
+      "rumbo_cab2_a_cab1_grados": 357.6,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Quilmes",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -34.706667,
+    "lon_aproximada": -58.244444,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -34.7010847292481,
+        "lon": -58.2453531748818,
+        "alt_m": 19.4314980823547
+      },
+      "cabecera_2": {
+        "lat": -34.7110662434358,
+        "lon": -58.2438698890939,
+        "alt_m": 19.3805471602827
+      },
+      "rumbo_cab1_a_cab2_grados": 173,
+      "rumbo_cab2_a_cab1_grados": 353,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "La Plata",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -34.9744,
+    "lon_aproximada": -57.8956,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -34.9617070587302,
+        "lon": -57.8908018869423,
+        "alt_m": 35.0786370728165
+      },
+      "cabecera_2": {
+        "lat": -34.9755390857504,
+        "lon": -57.8949704513399,
+        "alt_m": 34.4030680740252
+      },
+      "rumbo_cab1_a_cab2_grados": 193.9,
+      "rumbo_cab2_a_cab1_grados": 13.9,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Villa Gesell",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -37.2344,
+    "lon_aproximada": -57.0214,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -37.234,
+        "lon": -57.037667,
+        "alt_m": 5.49
+      },
+      "cabecera_2": {
+        "lat": -37.236833,
+        "lon": -57.02,
+        "alt_m": 5.49
+      },
+      "rumbo_cab1_a_cab2_grados": 101.4,
+      "rumbo_cab2_a_cab1_grados": 281.4,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Mar del Plata",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -37.9342,
+    "lon_aproximada": -57.5733,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -37.928833,
+        "lon": -57.583833,
+        "alt_m": 21.64
+      },
+      "cabecera_2": {
+        "lat": -37.9395,
+        "lon": -57.562667,
+        "alt_m": 21.64
+      },
+      "rumbo_cab1_a_cab2_grados": 122.6,
+      "rumbo_cab2_a_cab1_grados": 302.6,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Córdoba (Taravella)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -31.31,
+    "lon_aproximada": -64.2083,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -31.3245,
+        "lon": -64.208167,
+        "alt_m": 465.15
+      },
+      "cabecera_2": {
+        "lat": -31.295667,
+        "lon": -64.2085,
+        "alt_m": 488.99
+      },
+      "rumbo_cab1_a_cab2_grados": 359.4,
+      "rumbo_cab2_a_cab1_grados": 179.4,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Mendoza (El Plumerillo)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -32.8317,
+    "lon_aproximada": -68.7928,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -32.819167,
+        "lon": -68.792667,
+        "alt_m": 698.02
+      },
+      "cabecera_2": {
+        "lat": -32.844333,
+        "lon": -68.793,
+        "alt_m": 704.11
+      },
+      "rumbo_cab1_a_cab2_grados": 180.6,
+      "rumbo_cab2_a_cab1_grados": 0.6,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "San Carlos de Bariloche",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -41.1511,
+    "lon_aproximada": -71.1578,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -41.146667,
+        "lon": -71.170667,
+        "alt_m": 834.87
+      },
+      "cabecera_2": {
+        "lat": -41.1555,
+        "lon": -71.145167,
+        "alt_m": 841.57
+      },
+      "rumbo_cab1_a_cab2_grados": 114.7,
+      "rumbo_cab2_a_cab1_grados": 294.7,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Jujuy (Gob. Guzmán)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -24.3928,
+    "lon_aproximada": -65.0978,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -24.381167,
+        "lon": -65.105,
+        "alt_m": 920.19
+      },
+      "cabecera_2": {
+        "lat": -24.404333,
+        "lon": -65.090667,
+        "alt_m": 884.83
+      },
+      "rumbo_cab1_a_cab2_grados": 150.6,
+      "rumbo_cab2_a_cab1_grados": 330.6,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "El Calafate",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -50.2803,
+    "lon_aproximada": -72.0533,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -50.281333,
+        "lon": -72.071,
+        "alt_m": 197.2
+      },
+      "cabecera_2": {
+        "lat": -50.279167,
+        "lon": -72.035333,
+        "alt_m": 192.63
+      },
+      "rumbo_cab1_a_cab2_grados": 84.6,
+      "rumbo_cab2_a_cab1_grados": 264.6,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Río Gallegos",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -51.6089,
+    "lon_aproximada": -69.3128,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -51.61,
+        "lon": -69.337167,
+        "alt_m": 18.9
+      },
+      "cabecera_2": {
+        "lat": -51.607667,
+        "lon": -69.287167,
+        "alt_m": 15.85
+      },
+      "rumbo_cab1_a_cab2_grados": 85.7,
+      "rumbo_cab2_a_cab1_grados": 265.7,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Ushuaia (Malvinas Argentinas)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -54.8433,
+    "lon_aproximada": -68.2956,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -54.844,
+        "lon": -68.314667,
+        "alt_m": 24.99
+      },
+      "cabecera_2": {
+        "lat": -54.8425,
+        "lon": -68.2765,
+        "alt_m": 21.03
+      },
+      "rumbo_cab1_a_cab2_grados": 86.1,
+      "rumbo_cab2_a_cab1_grados": 266.1,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "San Juan",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -31.5714,
+    "lon_aproximada": -68.4183,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -31.560333,
+        "lon": -68.418333,
+        "alt_m": 593.83
+      },
+      "cabecera_2": {
+        "lat": -31.5825,
+        "lon": -68.418167,
+        "alt_m": 591.7
+      },
+      "rumbo_cab1_a_cab2_grados": 179.6,
+      "rumbo_cab2_a_cab1_grados": 359.6,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Tandil",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -37.2344,
+    "lon_aproximada": -59.2286,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -37.245833,
+        "lon": -59.229833,
+        "alt_m": 175.56
+      },
+      "cabecera_2": {
+        "lat": -37.223,
+        "lon": -59.227333,
+        "alt_m": 167.02
+      },
+      "rumbo_cab1_a_cab2_grados": 5,
+      "rumbo_cab2_a_cab1_grados": 185,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Necochea/Quequén",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -36.5422,
+    "lon_aproximada": -56.7214,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Aero Club Luján",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -34.55114,
+    "lon_aproximada": -59.07861,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -34.5544970604824,
+        "lon": -59.0763310141286,
+        "alt_m": 37.872753161937
+      },
+      "cabecera_2": {
+        "lat": -34.5477829338129,
+        "lon": -59.0808948351915,
+        "alt_m": 40.5593090755865
+      },
+      "rumbo_cab1_a_cab2_grados": 330.8,
+      "rumbo_cab2_a_cab1_grados": 150.8,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Aeródromo Chivilcoy",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -34.96232,
+    "lon_aproximada": -60.03182,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -34.9584894215692,
+        "lon": -60.0288016448983,
+        "alt_m": 64.8651760295033
+      },
+      "cabecera_2": {
+        "lat": -34.9661466452173,
+        "lon": -60.0348295528628,
+        "alt_m": 65.5044843032956
+      },
+      "rumbo_cab1_a_cab2_grados": 212.8,
+      "rumbo_cab2_a_cab1_grados": 32.8,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Tucumán",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -26.8382,
+    "lon_aproximada": -65.1043,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -26.853833,
+        "lon": -65.107333,
+        "alt_m": 435.9
+      },
+      "cabecera_2": {
+        "lat": -26.822667,
+        "lon": -65.101333,
+        "alt_m": 455.4
+      },
+      "rumbo_cab1_a_cab2_grados": 9.7,
+      "rumbo_cab2_a_cab1_grados": 189.7,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Salta",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -24.8597,
+    "lon_aproximada": -65.4869,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -24.872833,
+        "lon": -65.49,
+        "alt_m": 1246.4
+      },
+      "cabecera_2": {
+        "lat": -24.846333,
+        "lon": -65.484167,
+        "alt_m": 1230.6
+      },
+      "rumbo_cab1_a_cab2_grados": 11.3,
+      "rumbo_cab2_a_cab1_grados": 191.3,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Catamarca",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -28.5931,
+    "lon_aproximada": -65.7512,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -28.6055,
+        "lon": -65.754167,
+        "alt_m": 459.62
+      },
+      "cabecera_2": {
+        "lat": -28.580833,
+        "lon": -65.748167,
+        "alt_m": 474.24
+      },
+      "rumbo_cab1_a_cab2_grados": 12.1,
+      "rumbo_cab2_a_cab1_grados": 192.1,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "La Rioja",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -29.3804,
+    "lon_aproximada": -66.7957,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -29.3915,
+        "lon": -66.8025,
+        "alt_m": 441.3
+      },
+      "cabecera_2": {
+        "lat": -29.369333,
+        "lon": -66.788833,
+        "alt_m": 428.51
+      },
+      "rumbo_cab1_a_cab2_grados": 28.3,
+      "rumbo_cab2_a_cab1_grados": 208.2,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Rosario (Islas Malvinas)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -32.9036,
+    "lon_aproximada": -60.7844,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -32.8899887834222,
+        "lon": -60.7815807340708,
+        "alt_m": 52.070948225446
+      },
+      "cabecera_2": {
+        "lat": -32.9167810491964,
+        "lon": -60.7877080510417,
+        "alt_m": 49.031780987978
+      },
+      "rumbo_cab1_a_cab2_grados": 190.9,
+      "rumbo_cab2_a_cab1_grados": 10.9,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Gualeguaychú",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -33.0056,
+    "lon_aproximada": -58.6128,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -33.0115,
+        "lon": -58.613,
+        "alt_m": 22.86
+      },
+      "cabecera_2": {
+        "lat": -32.9995,
+        "lon": -58.612667,
+        "alt_m": 16.16
+      },
+      "rumbo_cab1_a_cab2_grados": 1.3,
+      "rumbo_cab2_a_cab1_grados": 181.3,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Asunción (Paraguay)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -25.2411,
+    "lon_aproximada": -57.5168,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -25.254667,
+        "lon": -57.522667,
+        "alt_m": 88.39
+      },
+      "cabecera_2": {
+        "lat": -25.225,
+        "lon": -57.5155,
+        "alt_m": 75.9
+      },
+      "rumbo_cab1_a_cab2_grados": 12.3,
+      "rumbo_cab2_a_cab1_grados": 192.3,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Foz de Iguazú (Brasil)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -25.6003,
+    "lon_aproximada": -54.485,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -25.589333,
+        "lon": -54.4955,
+        "alt_m": 232.28
+      },
+      "cabecera_2": {
+        "lat": -25.602333,
+        "lon": -54.479,
+        "alt_m": 239.6
+      },
+      "rumbo_cab1_a_cab2_grados": 131.1,
+      "rumbo_cab2_a_cab1_grados": 311.1,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Estancia Hércules (Misiones)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -25.4617,
+    "lon_aproximada": -54.5972,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Concordia (Entre Ríos)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -31.297,
+    "lon_aproximada": -57.9966,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -31.303333,
+        "lon": -58.0005,
+        "alt_m": 34.14
+      },
+      "cabecera_2": {
+        "lat": -31.2905,
+        "lon": -57.992667,
+        "alt_m": 23.17
+      },
+      "rumbo_cab1_a_cab2_grados": 27.5,
+      "rumbo_cab2_a_cab1_grados": 207.5,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Punta Indio (Base Aeronaval)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -35.3533,
+    "lon_aproximada": -57.29,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -35.359169410128494,
+        "lon": -57.2975382341388,
+        "alt_m": 31.916051864624023
+      },
+      "cabecera_2": {
+        "lat": -35.34650411173567,
+        "lon": -57.28091756579957,
+        "alt_m": 31.916051864624023
+      },
+      "rumbo_cab1_a_cab2_grados": 46.9,
+      "rumbo_cab2_a_cab1_grados": 226.9,
+      "ancho_medio_pista_m": 25
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "La Cumbre (Córdoba)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -31.005,
+    "lon_aproximada": -64.5328,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Coronel Olmedo (Córdoba)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -31.4878,
+    "lon_aproximada": -64.1419,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Mariano Moreno (José C. Paz)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -34.5604,
+    "lon_aproximada": -58.7895,
+    "tiene_ils_dos_cabeceras": true,
+    "orientacion_pista_grados_dato_publico": 161,
+    "pista": {
+      "cabecera_1": {
+        "lat": -34.547255152636325,
+        "lon": -58.79496327438456,
+        "alt_m": 50.451133728027344
+      },
+      "cabecera_2": {
+        "lat": -34.572782869183044,
+        "lon": -58.78401260274866,
+        "alt_m": 48.702857971191406
+      },
+      "rumbo_cab1_a_cab2_grados": 160.5,
+      "rumbo_cab2_a_cab1_grados": 340.5,
+      "ancho_medio_pista_m": 20
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Las Termas de Río Hondo",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -27.4966,
+    "lon_aproximada": -64.936,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -27.507833,
+        "lon": -64.9365,
+        "alt_m": 278.29
+      },
+      "cabecera_2": {
+        "lat": -27.485333,
+        "lon": -64.935333,
+        "alt_m": 280.42
+      },
+      "rumbo_cab1_a_cab2_grados": 2.6,
+      "rumbo_cab2_a_cab1_grados": 182.6,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Marcos Juárez (Córdoba)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -32.6944,
+    "lon_aproximada": -62.1528,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Monte Caseros (Corrientes)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -30.2703,
+    "lon_aproximada": -57.6394,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Posadas (Misiones)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -27.3858,
+    "lon_aproximada": -55.9706,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -27.396,
+        "lon": -55.970333,
+        "alt_m": 130.47
+      },
+      "cabecera_2": {
+        "lat": -27.375667,
+        "lon": -55.970667,
+        "alt_m": 114.32
+      },
+      "rumbo_cab1_a_cab2_grados": 359.2,
+      "rumbo_cab2_a_cab1_grados": 179.2,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Curuzú Cuatiá (Corrientes)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -29.7725,
+    "lon_aproximada": -57.9828,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Viedma (Río Negro)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -40.8701,
+    "lon_aproximada": -62.9966,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -40.867,
+        "lon": -63.011167,
+        "alt_m": 6.1
+      },
+      "cabecera_2": {
+        "lat": -40.873167,
+        "lon": -62.982,
+        "alt_m": 4.57
+      },
+      "rumbo_cab1_a_cab2_grados": 105.6,
+      "rumbo_cab2_a_cab1_grados": 285.6,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "São Borja (Brasil)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -28.6531,
+    "lon_aproximada": -56.0328,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Apóstoles (Misiones)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -27.8994,
+    "lon_aproximada": -55.7672,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Alvear (Santa Fe)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -33.0464,
+    "lon_aproximada": -60.5969,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Bell Ville (Córdoba)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -32.6583,
+    "lon_aproximada": -62.7019,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Las Flores (Bs. As.)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -36.0664,
+    "lon_aproximada": -59.1006,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Cañada de Gómez (Santa Fe)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -32.8086,
+    "lon_aproximada": -61.365,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "General Madariaga (Bs. As.)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -37.0386,
+    "lon_aproximada": -57.1364,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": null,
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)",
+    "pistas": [
+      {
+        "cabecera_1": {
+          "lat": -37.041978905045916,
+          "lon": -57.14339772425685,
+          "alt_m": 24.84196662902832
+        },
+        "cabecera_2": {
+          "lat": -37.03629098263174,
+          "lon": -57.130996324475376,
+          "alt_m": 25.206377029418945
+        },
+        "rumbo_cab1_a_cab2_grados": 60.1,
+        "rumbo_cab2_a_cab1_grados": 240.1,
+        "ancho_medio_pista_m": 15
+      },
+      {
+        "cabecera_1": {
+          "lat": -37.04211204560511,
+          "lon": -57.137182031566596,
+          "alt_m": 23.79169464111328
+        },
+        "cabecera_2": {
+          "lat": -37.03557596594908,
+          "lon": -57.13569686838503,
+          "alt_m": 24.90520477294922
+        },
+        "rumbo_cab1_a_cab2_grados": 10.3,
+        "rumbo_cab2_a_cab1_grados": 190.3,
+        "ancho_medio_pista_m": 15
+      }
+    ]
+  },
+  {
+    "nombre": "Chascomús (Bs. As.)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -35.5422,
+    "lon_aproximada": -58.0519,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -35.53666019321336,
+        "lon": -58.050116602827835,
+        "alt_m": 29.129850387573242
+      },
+      "cabecera_2": {
+        "lat": -35.54798184251037,
+        "lon": -58.053919559488946,
+        "alt_m": 28.810192108154297
+      },
+      "rumbo_cab1_a_cab2_grados": 195.3,
+      "rumbo_cab2_a_cab1_grados": 15.3,
+      "ancho_medio_pista_m": 15
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Rauch (Bs. As.)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -36.7497,
+    "lon_aproximada": -59.0672,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Mercedes (Corrientes)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -29.2222,
+    "lon_aproximada": -58.0881,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Vidal (Mar Chiquita, Bs. As.)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -37.4678,
+    "lon_aproximada": -57.7672,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "nota": "SIN ILS todavía -- no tiene cabeceras medidas ni de SkyVector en el código (ver mundo.gd, aeropuertos_dos_cabeceras)",
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Carmelo (Uruguay)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -33.9661,
+    "lon_aproximada": -58.3253,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -33.9615,
+        "lon": -58.327167,
+        "alt_m": 10.97
+      },
+      "cabecera_2": {
+        "lat": -33.970667,
+        "lon": -58.323667,
+        "alt_m": 10.06
+      },
+      "rumbo_cab1_a_cab2_grados": 162.4,
+      "rumbo_cab2_a_cab1_grados": 342.4,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Mercedes (Uruguay)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -33.2486,
+    "lon_aproximada": -58.0728,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -33.242833,
+        "lon": -58.0775,
+        "alt_m": 14.02
+      },
+      "cabecera_2": {
+        "lat": -33.252667,
+        "lon": -58.071333,
+        "alt_m": 20.12
+      },
+      "rumbo_cab1_a_cab2_grados": 152.3,
+      "rumbo_cab2_a_cab1_grados": 332.3,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Paysandú (Uruguay)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -32.3631,
+    "lon_aproximada": -58.0664,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -32.370167,
+        "lon": -58.063333,
+        "alt_m": 49.07
+      },
+      "cabecera_2": {
+        "lat": -32.356667,
+        "lon": -58.060833,
+        "alt_m": 38.1
+      },
+      "rumbo_cab1_a_cab2_grados": 8.9,
+      "rumbo_cab2_a_cab1_grados": 188.9,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Salto (Uruguay)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -31.4347,
+    "lon_aproximada": -57.9842,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -31.444,
+        "lon": -57.9905,
+        "alt_m": 42.98
+      },
+      "cabecera_2": {
+        "lat": -31.432833,
+        "lon": -57.98,
+        "alt_m": 39.02
+      },
+      "rumbo_cab1_a_cab2_grados": 38.7,
+      "rumbo_cab2_a_cab1_grados": 218.7,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Neuquén (Presidente Perón)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -38.949,
+    "lon_aproximada": -68.155667,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -38.949,
+        "lon": -68.1705,
+        "alt_m": 271.58
+      },
+      "cabecera_2": {
+        "lat": -38.949,
+        "lon": -68.140833,
+        "alt_m": 271.58
+      },
+      "rumbo_cab1_a_cab2_grados": 90,
+      "rumbo_cab2_a_cab1_grados": 270,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Comodoro Rivadavia (Gral. Mosconi)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -45.784667,
+    "lon_aproximada": -67.460917,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -45.786333,
+        "lon": -67.473833,
+        "alt_m": 56.39
+      },
+      "cabecera_2": {
+        "lat": -45.783,
+        "lon": -67.448,
+        "alt_m": 56.39
+      },
+      "rumbo_cab1_a_cab2_grados": 79.5,
+      "rumbo_cab2_a_cab1_grados": 259.5,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Trelew (Almirante Zar)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -43.210417,
+    "lon_aproximada": -65.270417,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -43.2145,
+        "lon": -65.285167,
+        "alt_m": 34.75
+      },
+      "cabecera_2": {
+        "lat": -43.206333,
+        "lon": -65.255667,
+        "alt_m": 33.53
+      },
+      "rumbo_cab1_a_cab2_grados": 69.2,
+      "rumbo_cab2_a_cab1_grados": 249.2,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Bahía Blanca (Comandante Espora)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -38.727083,
+    "lon_aproximada": -62.1535,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -38.716667,
+        "lon": -62.157333,
+        "alt_m": 75.59
+      },
+      "cabecera_2": {
+        "lat": -38.7375,
+        "lon": -62.149667,
+        "alt_m": 75.59
+      },
+      "rumbo_cab1_a_cab2_grados": 164,
+      "rumbo_cab2_a_cab1_grados": 344,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Resistencia (Chaco)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -27.449917,
+    "lon_aproximada": -59.056,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -27.461667,
+        "lon": -59.061,
+        "alt_m": 52.12
+      },
+      "cabecera_2": {
+        "lat": -27.438167,
+        "lon": -59.051,
+        "alt_m": 52.73
+      },
+      "rumbo_cab1_a_cab2_grados": 20.7,
+      "rumbo_cab2_a_cab1_grados": 200.7,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Formosa (El Pucú)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -26.212833,
+    "lon_aproximada": -58.228167,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -26.220167,
+        "lon": -58.232,
+        "alt_m": 59.14
+      },
+      "cabecera_2": {
+        "lat": -26.2055,
+        "lon": -58.224333,
+        "alt_m": 59.14
+      },
+      "rumbo_cab1_a_cab2_grados": 25.1,
+      "rumbo_cab2_a_cab1_grados": 205.1,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Santiago del Estero",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -27.765667,
+    "lon_aproximada": -64.309917,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -27.775333,
+        "lon": -64.315667,
+        "alt_m": 200.9
+      },
+      "cabecera_2": {
+        "lat": -27.756,
+        "lon": -64.304167,
+        "alt_m": 200.9
+      },
+      "rumbo_cab1_a_cab2_grados": 27.8,
+      "rumbo_cab2_a_cab1_grados": 207.8,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Santa Rosa (La Pampa)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -36.588167,
+    "lon_aproximada": -64.275583,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -36.598333,
+        "lon": -64.278167,
+        "alt_m": 189.88
+      },
+      "cabecera_2": {
+        "lat": -36.578,
+        "lon": -64.273,
+        "alt_m": 189.88
+      },
+      "rumbo_cab1_a_cab2_grados": 11.5,
+      "rumbo_cab2_a_cab1_grados": 191.5,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "San Luis (Brig. Mayor César Raúl Ojeda)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -33.273167,
+    "lon_aproximada": -66.3565,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -33.286333,
+        "lon": -66.358333,
+        "alt_m": 700.73
+      },
+      "cabecera_2": {
+        "lat": -33.26,
+        "lon": -66.354667,
+        "alt_m": 710.79
+      },
+      "rumbo_cab1_a_cab2_grados": 6.6,
+      "rumbo_cab2_a_cab1_grados": 186.6,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Puerto Iguazú (Cataratas del Iguazú)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -25.73725,
+    "lon_aproximada": -54.473417,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -25.731,
+        "lon": -54.488333,
+        "alt_m": 279.2
+      },
+      "cabecera_2": {
+        "lat": -25.7435,
+        "lon": -54.4585,
+        "alt_m": 279.2
+      },
+      "rumbo_cab1_a_cab2_grados": 115,
+      "rumbo_cab2_a_cab1_grados": 294.9,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "San Martín de los Andes (Chapelco)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -40.075333,
+    "lon_aproximada": -71.13725,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -40.0795,
+        "lon": -71.150833,
+        "alt_m": 789.13
+      },
+      "cabecera_2": {
+        "lat": -40.071167,
+        "lon": -71.123667,
+        "alt_m": 789.13
+      },
+      "rumbo_cab1_a_cab2_grados": 68.2,
+      "rumbo_cab2_a_cab1_grados": 248.1,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Esquel",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -42.903833,
+    "lon_aproximada": -71.1355,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -42.909667,
+        "lon": -71.147833,
+        "alt_m": 799.19
+      },
+      "cabecera_2": {
+        "lat": -42.898,
+        "lon": -71.123167,
+        "alt_m": 781.2
+      },
+      "rumbo_cab1_a_cab2_grados": 57.2,
+      "rumbo_cab2_a_cab1_grados": 237.1,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "San Rafael (Mendoza)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -34.587833,
+    "lon_aproximada": -68.403583,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -34.584833,
+        "lon": -68.4145,
+        "alt_m": 754.69
+      },
+      "cabecera_2": {
+        "lat": -34.590833,
+        "lon": -68.392667,
+        "alt_m": 754.69
+      },
+      "rumbo_cab1_a_cab2_grados": 108.5,
+      "rumbo_cab2_a_cab1_grados": 288.5,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Villa de Merlo (Valle del Conlara)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -32.3845,
+    "lon_aproximada": -65.18575,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -32.3955,
+        "lon": -65.189833,
+        "alt_m": 615.7
+      },
+      "cabecera_2": {
+        "lat": -32.3735,
+        "lon": -65.181667,
+        "alt_m": 615.7
+      },
+      "rumbo_cab1_a_cab2_grados": 17.4,
+      "rumbo_cab2_a_cab1_grados": 197.4,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Río Cuarto (Las Higueras)",
+    "codigo_icao": "no lo sé (no está guardado en el código)",
+    "lat_aproximada": -33.092167,
+    "lon_aproximada": -64.269333,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -33.0995,
+        "lon": -64.277833,
+        "alt_m": 420.32
+      },
+      "cabecera_2": {
+        "lat": -33.084833,
+        "lon": -64.260833,
+        "alt_m": 420.32
+      },
+      "rumbo_cab1_a_cab2_grados": 44.2,
+      "rumbo_cab2_a_cab1_grados": 224.2,
+      "ancho_medio_pista_m": "no lo sé (no se guardó valor específico para este aeropuerto, el código no tiene un ancho por defecto explícito tampoco)",
+      "designador_pista": "no lo sé (no está guardado en el código, salvo que se infiera del rumbo)",
+      "largo_pista_m": "no lo sé (no está guardado en el código)"
+    },
+    "frecuencia_ils": "no lo sé (el código no guarda frecuencias de radio, solo geometría de aros)"
+  },
+  {
+    "nombre": "Santa Teresita (Bs. As.)",
+    "codigo_icao": "no lo sé",
+    "lat_aproximada": -36.54225002649238,
+    "lon_aproximada": -56.721499840886935,
+    "tiene_ils_dos_cabeceras": true,
+    "pista": {
+      "cabecera_1": {
+        "lat": -36.53553969402016,
+        "lon": -56.722956844729445,
+        "alt_m": 20.6134033203125
+      },
+      "cabecera_2": {
+        "lat": -36.5489603589646,
+        "lon": -56.72004283704442,
+        "alt_m": 20.119192123413086
+      },
+      "rumbo_cab1_a_cab2_grados": 170.1,
+      "rumbo_cab2_a_cab1_grados": 350.1,
+      "ancho_medio_pista_m": 15
+    }
+  },
+  {
+    "nombre": "Helipuerto Hotel Hermitage (Mar del Plata)",
+    "codigo_icao": "no lo sé",
+    "lat_aproximada": -38.00728257141979,
+    "lon_aproximada": -57.539408030315876,
+    "tiene_ils_dos_cabeceras": false,
+    "pista": null,
+    "alt_m": 26.834619522094727
+  },
+  {
+    "nombre": "Río de Janeiro - Galeão (Brasil)",
+    "codigo_icao": "SBGL",
+    "lat_aproximada": -22.81,
+    "lon_aproximada": -43.2506,
+    "tiene_ils_dos_cabeceras": false
+  },
+  {
+    "nombre": "Río de Janeiro - Santos Dumont (Brasil)",
+    "codigo_icao": "SBRJ",
+    "lat_aproximada": -22.9105,
+    "lon_aproximada": -43.1631,
+    "tiene_ils_dos_cabeceras": false
+  },
+  {
+    "nombre": "San Pablo - Guarulhos (Brasil)",
+    "codigo_icao": "SBGR",
+    "lat_aproximada": -23.4356,
+    "lon_aproximada": -46.4731,
+    "tiene_ils_dos_cabeceras": false
+  },
+  {
+    "nombre": "San Pablo - Congonhas (Brasil)",
+    "codigo_icao": "SBSP",
+    "lat_aproximada": -23.6261,
+    "lon_aproximada": -46.6564,
+    "tiene_ils_dos_cabeceras": false
+  },
+  {
+    "nombre": "Florianópolis (Brasil)",
+    "codigo_icao": "SBFL",
+    "lat_aproximada": -27.6703,
+    "lon_aproximada": -48.5525,
+    "tiene_ils_dos_cabeceras": false
+  },
+  {
+    "nombre": "Porto Alegre - Salgado Filho (Brasil)",
+    "codigo_icao": "SBPA",
+    "lat_aproximada": -29.9944,
+    "lon_aproximada": -51.1714,
+    "tiene_ils_dos_cabeceras": false
+  },
+  {
+    "nombre": "Curitiba (Brasil)",
+    "codigo_icao": "SBCT",
+    "lat_aproximada": -25.5285,
+    "lon_aproximada": -49.1758,
+    "tiene_ils_dos_cabeceras": false
+  },
+  {
+    "nombre": "Brasilia (Brasil)",
+    "codigo_icao": "SBBR",
+    "lat_aproximada": -15.8711,
+    "lon_aproximada": -47.9186,
+    "tiene_ils_dos_cabeceras": false
+  },
+  {
+    "nombre": "Salvador de Bahía (Brasil)",
+    "codigo_icao": "SBSV",
+    "lat_aproximada": -12.9086,
+    "lon_aproximada": -38.3225,
+    "tiene_ils_dos_cabeceras": false
+  },
+  {
+    "nombre": "Montevideo - Carrasco (Uruguay)",
+    "codigo_icao": "SUMU",
+    "lat_aproximada": -34.8384,
+    "lon_aproximada": -56.0308,
+    "tiene_ils_dos_cabeceras": false
+  },
+  {
+    "nombre": "Punta del Este - Laguna del Sauce (Uruguay)",
+    "codigo_icao": "SULS",
+    "lat_aproximada": -34.8551,
+    "lon_aproximada": -55.0943,
+    "tiene_ils_dos_cabeceras": false
+  },
+  {
+    "nombre": "Colonia (Uruguay)",
+    "codigo_icao": "SUCA",
+    "lat_aproximada": -34.4564,
+    "lon_aproximada": -57.7706,
+    "tiene_ils_dos_cabeceras": false
+  },
+  {
+    "nombre": "Asunción - Silvio Pettirossi (Paraguay)",
+    "codigo_icao": "SGAS",
+    "lat_aproximada": -25.24,
+    "lon_aproximada": -57.52,
+    "tiene_ils_dos_cabeceras": false
+  },
+  {
+    "nombre": "Santiago de Chile - Arturo Merino Benítez (Chile)",
+    "codigo_icao": "SCEL",
+    "lat_aproximada": -33.393,
+    "lon_aproximada": -70.7858,
+    "tiene_ils_dos_cabeceras": false
+  }
+]

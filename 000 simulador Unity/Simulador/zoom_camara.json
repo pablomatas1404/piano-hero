@@ -1,0 +1,24 @@
+{
+    "items": [
+        {
+            "nombre": "Mil Mi-35M (helicoptero ruso)",
+            "zoom": 1.0
+        },
+        {
+            "nombre": "F/A-18E Super Hornet (nuevo)",
+            "zoom": 1.197217345237732
+        },
+        {
+            "nombre": "Cessna osmosikum (nuevo) - el azul",
+            "zoom": 1.7160067558288575
+        },
+        {
+            "nombre": "Airbus A380-900",
+            "zoom": 1.4333293437957764
+        },
+        {
+            "nombre": "Miljet (interior 5 estrellas)",
+            "zoom": 1.0
+        }
+    ]
+}

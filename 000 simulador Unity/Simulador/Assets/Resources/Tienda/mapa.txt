@@ -1,0 +1,83 @@
+Parlante bluetooth|parlante
+Auriculares|auriculares
+Smartphone gama|smartphone
+Smartwatch|smartwatch
+Tablet|tablet
+Barra de sonido|barra
+Smart TV|tv
+Drone|drone
+Xbox|xbox
+PlayStation|playstation
+Notebook|notebook
+Camara profesional|camara
+PC gamer|pc
+Remera|remera
+Jean|jean
+Buzo|buzo
+Campera de cuero|campera
+Campera de aviador|aviador
+Traje|traje
+Zapatillas Nike|nike
+Zapatillas Adidas|adidas
+Zapatillas Puma|puma
+Zapatillas New Balance|newbalance
+Zapatillas Converse|converse
+Zapatos de vestir|zapato
+Botas|botas
+Mocasines|mocasin
+Anteojos|anteojos
+Cadena de plata|cadena
+Reloj de acero|relojacero
+Anillo de oro|anillo
+Reloj suizo|relojsuizo
+Collar de diamantes|collar
+Auto usado|autousado
+Moto deportiva|motodep
+Auto compacto|compacto
+Auto deportivo|deportivo
+Porsche|porsche
+Helicoptero|helicoptero
+Heladera|heladera
+Cama king|cama
+Sillon|sillon
+Cuadro|cuadro
+Departamento de 1|depto1
+Departamento de 2|depto2
+Quinta|quinta
+Mansion|mansion
+Gato|gato
+Perro|perro
+Cena|cena
+Guitarra|guitarra
+final del mundial|mundial
+Crucero|crucero
+Piano de cola|piano
+Punta del Este|v_pde
+Mendoza|v_mendoza
+Bariloche|v_bariloche
+Iguazu|v_iguazu
+Calafate|v_calafate
+Ushuaia|v_ushuaia
+Rio de Janeiro|v_rio
+Machu Picchu|v_machu
+Miami|v_miami
+Orlando|v_orlando
+Nueva York|v_ny
+Madrid|v_madrid
+Paris|v_paris
+Roma|v_roma
+Tokio|v_tokio
+iPhone|iphone
+MacBook|macbook
+Reloj de oro|relojoro
+Bicicleta|bici
+Moto 110|moto110
+Camioneta|camioneta
+Lancha|lancha
+Casa con pileta|casa
+Hangar|hangar
+Mar del Plata|v_mdp
+Florianopolis|v_floripa
+Santiago de Chile|v_santiago
+Cancun|v_cancun
+Sidney|v_sidney

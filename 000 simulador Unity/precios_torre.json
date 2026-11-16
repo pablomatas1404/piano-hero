@@ -1,0 +1,24 @@
+{
+    "items": [
+        {
+            "nombre": "Aeroparque",
+            "precio": 45.0
+        },
+        {
+            "nombre": "San Fernando",
+            "precio": 70.0
+        },
+        {
+            "nombre": "Mariano Moreno (José C. Paz)",
+            "precio": 70.0
+        },
+        {
+            "nombre": "Ezeiza",
+            "precio": 95.0
+        },
+        {
+            "nombre": "Rosario (Islas Malvinas)",
+            "precio": 168.0
+        }
+    ]
+}
