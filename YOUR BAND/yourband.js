@@ -349,8 +349,8 @@
     } catch (e) {}
   }
   function dibujarOct() { const o = $('yb-f-oct'); if (o) o.style.display = (currentInstrument === 'bajo') ? 'flex' : 'none'; }
-  // Octava del bajo respecto de la tecla: en la compu arranca una octava más aguda que en celular y tablet (queda en el registro de un bajo y no suena a retumbo de piano); celular y tablet, 1 octava más grave que la tecla (pedido de Pablo 21/11/2026). Si ya eligió una con los botones, se respeta.
-  const bajoOctBase = () => { try { return window.matchMedia('(pointer: coarse)').matches ? -12 : 0; } catch (e) { return -12; } };
+  // Octava del bajo respecto de la tecla: en la compu arranca UNA octava más grave que antes (que en celular y tablet), para que suene a bajo y no a piano (pedido de Pablo 21/11/2026). Si ya eligió una con los botones, se respeta.
+  const bajoOctBase = () => { try { return window.matchMedia('(pointer: coarse)').matches ? -12 : -24; } catch (e) { return -12; } };
   function moverOct(d) { datos.bajoOct3 = Math.max(-36, Math.min(12, (datos.bajoOct3 == null ? bajoOctBase() : datos.bajoOct3) + d)); datos.bajoOct2 = datos.bajoOct3; guardar(); try { showBigToast('Bajo: ' + (datos.bajoOct3 / 12) + ' octavas respecto de la tecla'); } catch (e) {} }
   function idInstr() { let id = (datos.instr && datos.instr[claveCapas()]) || (claveCapas() === 'bajo' ? 'bajo' : 'piano'); if (id === 'bajo' && claveCapas() !== 'bajo') id = 'piano'; return id; }
   function dibujarInstr() {
