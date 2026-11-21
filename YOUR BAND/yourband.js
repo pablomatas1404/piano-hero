@@ -349,7 +349,9 @@
     } catch (e) {}
   }
   function dibujarOct() { const o = $('yb-f-oct'); if (o) o.style.display = (currentInstrument === 'bajo') ? 'flex' : 'none'; }
-  function moverOct(d) { datos.bajoOct3 = Math.max(-36, Math.min(12, (datos.bajoOct3 == null ? -12 : datos.bajoOct3) + d)); datos.bajoOct2 = datos.bajoOct3; guardar(); try { showBigToast('Bajo: ' + (datos.bajoOct3 / 12) + ' octavas respecto de la tecla'); } catch (e) {} }
+  // Octava del bajo respecto de la tecla: en la compu arranca 2 octavas más grave (así suena a bajo y no a piano); celular y tablet, 1 (pedido de Pablo 21/11/2026). Si ya eligió una con los botones, se respeta.
+  const bajoOctBase = () => { try { return window.matchMedia('(pointer: coarse)').matches ? -12 : -24; } catch (e) { return -12; } };
+  function moverOct(d) { datos.bajoOct3 = Math.max(-36, Math.min(12, (datos.bajoOct3 == null ? bajoOctBase() : datos.bajoOct3) + d)); datos.bajoOct2 = datos.bajoOct3; guardar(); try { showBigToast('Bajo: ' + (datos.bajoOct3 / 12) + ' octavas respecto de la tecla'); } catch (e) {} }
   function idInstr() { let id = (datos.instr && datos.instr[claveCapas()]) || (claveCapas() === 'bajo' ? 'bajo' : 'piano'); if (id === 'bajo' && claveCapas() !== 'bajo') id = 'piano'; return id; }
   function dibujarInstr() {
     dibujarOct();
@@ -579,7 +581,7 @@
   // Bajo = el piano de Piano Hero, en las octavas graves, sin ningún efecto (suena como bajo y no satura).
   // Pide la misma nota 'oct' octavas más abajo (por defecto 12 semitonos = una octava).
   function bajoGuitarra() {
-    const oct = () => (datos.bajoOct3 == null ? -12 : datos.bajoOct3);
+    const oct = () => (datos.bajoOct3 == null ? bajoOctBase() : datos.bajoOct3);
     const mover = name => { try { return Tone.Frequency(name).transpose(oct()).toNote(); } catch (e) { return name; } };
     const v = () => (typeof piano !== 'undefined' ? piano : null);
     return {
