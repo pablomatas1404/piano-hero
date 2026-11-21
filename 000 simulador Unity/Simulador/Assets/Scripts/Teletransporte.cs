@@ -12,6 +12,7 @@ public class Teletransporte : MonoBehaviour
     bool abierto, armado; float prox; string aviso = ""; float avisoHasta; GUIStyle sBtn, sTxt;
     // frag = texto para buscar en la lista de aeropuertos; si no esta, se usa lat/lon de respaldo (aproximados)
     static readonly object[][] DEF = {
+        new object[]{ "Campo de Mayo", "Campo de Mayo", -34.5347, -58.6717, false },
         new object[]{ "Punta Indio (base aeronaval)", "Punta Indio", -35.3556, -57.2889, false },
         new object[]{ "Chascomus", "Chascomus", -35.5953, -58.0178, false },
         new object[]{ "General Madariaga", "Madariaga", -37.0, -57.1333, false },
@@ -22,6 +23,7 @@ public class Teletransporte : MonoBehaviour
 
     // estacionamientos de hangar marcados por Pablo (salida desde el hangar: pushback, rodaje, cabecera, despegue)
     static readonly object[][] HANGARES = {
+        new object[]{ "Country: entrada (cerca de la pista de Campo de Mayo)", -34.54635764908973, -58.676828896386894, 42.84, 56.05f },
         new object[]{ "Aeroparque: salir del hangar 15 (comercial)", -34.5593987400633, -58.4109402547462, 25.44, 47f },
         new object[]{ "Aeroparque: salir del hangar 5", -34.5569770646676, -58.4144436451155, 25.61, 18.6f },
         new object[]{ "Aeroparque: salir del hangar 1", -34.5599939928741, -58.4094390137567, 25.0, 69.4f },

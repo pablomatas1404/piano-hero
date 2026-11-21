@@ -142,6 +142,7 @@ public partial class Torre
     int toqueVisto;
     void TickToque()
     {
+        if (Time.timeSinceLevelLoad < 30f) { toqueVisto = AvionDeCarton.ToqueId; return; }   // al arrancar el juego el avion "toca" mientras carga: no es un aterrizaje (sonaba "toque suave" en la portada)
         if (AvionDeCarton.ToqueId == toqueVisto) return;
         toqueVisto = AvionDeCarton.ToqueId; float vv = Mathf.Abs(AvionDeCarton.ToqueVV); float lado; bool enPista = avion != null && Aeropuertos.DesvioPista(avion.transform.position, out lado);
         lado = 0f; if (avion != null) Aeropuertos.DesvioPista(avion.transform.position, out lado);

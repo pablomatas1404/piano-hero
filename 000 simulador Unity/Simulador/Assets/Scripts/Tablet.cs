@@ -11,21 +11,28 @@ public class Tablet : MonoBehaviour
     public static Rect Hueco;                // lo llena la Torre en cada cuadro: donde entra la tablet cuando esta acoplada
     public const float RESERVA = 470f;       // alto (en unidades de diseno de la Torre) que se le deja a la tablet
     static Rect ultimoRect; static bool visible;
-    public static bool Sobre(Vector2 p) { return visible && ultimoRect.Contains(p); }
+    public static bool Sobre(Vector2 p) { return visible && ultimoRect.Contains(p) || (APie && BotonTierra.Contains(p)); }
+    // a pie (manejando el autito o adentro de la casa) la tablet se abre con un boton discreto y las apps del avion quedan en gris
+    public static bool APie { get { return AvionDeCarton.enAuto || Casa.decorando; } }
+    static bool abiertaEnTierra;
+    static Rect BotonTierra { get { return new Rect(Screen.width - 112f, Screen.height - 44f, 104f, 34f); } }
+    static readonly int[] APPS_AVION = { 0, 1, 2, 3, 4, 7, 9, 11, 13, 14, 15, 17 };   // instrumentos, radio, destinos, carrera, cercanos, luces, guerra, teletransporte, sensibilidad, modelo, aviones, escolta
+    static bool DeAvion(int id) { return System.Array.IndexOf(APPS_AVION, id) >= 0; }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Crear() { new GameObject("Tablet").AddComponent<Tablet>(); }
 
     // ---------------------------------------------------------------- aplicaciones (una por pestana)
     public static bool Compacto;   // true mientras se dibuja una app dentro de la tablet: las filas anchas se achican
-    static readonly string[] NOM = { "Instrumentos", "Radio COM", "Destinos", "Carrera", "Cercanos", "Shopping", "Maletin", "Luces", "Tren", "Guerra", "Controles", "Teletransporte", "Sonidos", "Sensibilidad", "Modelo", "Aviones" };
+    static readonly string[] NOM = { "Instrumentos", "Radio COM", "Destinos", "Carrera", "Cercanos", "Shopping", "Maletin", "Luces", "Mapa", "Guerra", "Controles", "Teletransporte", "Sonidos", "Sensibilidad", "Modelo", "Aviones", "Ruleta", "Escolta", "Mi casa" };
     // ancho virtual de cada app: la app se dibuja con ese ancho y se achica (o agranda) para entrar justo en la tablet
-    static readonly float[] ANCHO_V = { 440, 440, 560, 560, 490, 520, 520, 520, 480, 520, 600, 460, 460, 460, 460, 620 };
+    static readonly float[] ANCHO_V = { 440, 440, 560, 560, 490, 520, 520, 520, 480, 520, 600, 460, 460, 460, 460, 620, 900, 520, 520 };
+    bool ruletaAbierta;   // la ruleta ya se abrio en esta visita a la app (asi, si se cierra con RETIRARSE, no se reabre sola)
     static readonly Color32[] COL = {
         new Color32(0, 150, 160, 255), new Color32(235, 130, 20, 255), new Color32(215, 50, 60, 255), new Color32(40, 110, 220, 255), new Color32(40, 160, 90, 255),
-        new Color32(220, 60, 130, 255), new Color32(130, 90, 60, 255), new Color32(235, 190, 20, 255), new Color32(90, 100, 120, 255), new Color32(180, 40, 40, 255),
+        new Color32(220, 60, 130, 255), new Color32(130, 90, 60, 255), new Color32(235, 190, 20, 255), new Color32(60, 140, 110, 255), new Color32(180, 40, 40, 255),
         new Color32(110, 80, 200, 255), new Color32(30, 170, 210, 255), new Color32(80, 90, 230, 255),
-        new Color32(110, 170, 40, 255), new Color32(190, 110, 220, 255), new Color32(60, 130, 180, 255) };
+        new Color32(110, 170, 40, 255), new Color32(190, 110, 220, 255), new Color32(60, 130, 180, 255), new Color32(190, 30, 60, 255), new Color32(200, 70, 30, 255), new Color32(60, 170, 90, 255) };
 
     int app = -1, sel = -1; List<int> orden = new List<int>();
     Vector2[] scroll = new Vector2[NOM.Length]; float[] zoomAco = new float[NOM.Length], zoomLib = new float[NOM.Length], zoomTmp = new float[NOM.Length];
@@ -159,13 +166,16 @@ public class Tablet : MonoBehaviour
             case 5: c = Mathf.Max(Box(x, y, 48, 58, 26, 20, 6), Ring(x, y, 48, 38, 11, 5) * (y < 42f ? 1f : 0f)); cut = 0f; break;                                                                    // shopping
             case 6: c = Mathf.Max(Box(x, y, 48, 56, 30, 20, 6), Seg(x, y, 38, 34, 58, 34, 5), Seg(x, y, 38, 34, 38, 40, 5), Seg(x, y, 58, 34, 58, 40, 5)); cut = Seg(x, y, 18, 56, 78, 56, 3); break;     // maletin
             case 7: c = Mathf.Max(Disc(x, y, 48, 42, 20), Box(x, y, 48, 70, 10, 6, 2), Seg(x, y, 48, 12, 48, 18, 4), Seg(x, y, 21, 24, 26, 29, 4), Seg(x, y, 75, 24, 70, 29, 4)); break;               // luces
-            case 8: c = Mathf.Max(Ring(x, y, 48, 54, 20, 12), Seg(x, y, 48, 14, 48, 30, 6), Disc(x, y, 48, 54, 4)); break;                                                                         // tren
+            case 8: c = Box(x, y, 48, 50, 34, 26, 4); cut = Mathf.Max(Seg(x, y, 37, 26, 37, 74, 3), Seg(x, y, 59, 26, 59, 74, 3), Disc(x, y, 48, 46, 5)); break;   // mapa
             case 9: c = Mathf.Max(Ring(x, y, 48, 48, 24, 5), Seg(x, y, 48, 16, 48, 36, 4), Seg(x, y, 48, 60, 48, 80, 4), Seg(x, y, 16, 48, 36, 48, 4), Seg(x, y, 60, 48, 80, 48, 4)); break;         // guerra
             case 10: c = Box(x, y, 48, 52, 34, 18, 12); cut = Mathf.Max(Seg(x, y, 30, 52, 44, 52, 5), Seg(x, y, 37, 45, 37, 59, 5), Disc(x, y, 60, 49, 4), Disc(x, y, 68, 56, 4)); break;               // controles
             case 11: c = Mathf.Max(Ring(x, y, 48, 48, 28, 6), Disc(x, y, 48, 48, 11)); cut = Disc(x, y, 48, 48, 5); break;                                                                           // teletransporte
             case 13: c = Mathf.Max(Seg(x, y, 28, 20, 28, 76, 4), Seg(x, y, 48, 20, 48, 76, 4), Seg(x, y, 68, 20, 68, 76, 4), Disc(x, y, 28, 60, 9), Disc(x, y, 48, 36, 9), Disc(x, y, 68, 52, 9)); cut = Mathf.Max(Disc(x, y, 28, 60, 4), Disc(x, y, 48, 36, 4), Disc(x, y, 68, 52, 4)); break;   // sensibilidad
             case 14: c = Mathf.Max(Seg(x, y, 48, 14, 48, 84, 10), Tri(x, y, 48, 38, 8, 66, 88, 66), Tri(x, y, 48, 72, 32, 86, 64, 86)); break;   // modelo (avion)
             case 15: c = Mathf.Max(Tri(x, y, 48, 14, 8, 44, 88, 44), Box(x, y, 48, 64, 30, 18, 3)); cut = Box(x, y, 48, 70, 11, 12, 2); break;   // aviones (hangar)
+            case 16: c = Mathf.Max(Ring(x, y, 48, 48, 30, 6), Ring(x, y, 48, 48, 14, 4), Seg(x, y, 48, 18, 48, 78, 3), Seg(x, y, 18, 48, 78, 48, 3), Disc(x, y, 48, 48, 6)); cut = 0f; break;   // ruleta
+            case 17: c = Mathf.Max(Tri(x, y, 36, 14, 14, 50, 58, 50), Seg(x, y, 36, 14, 36, 56, 6), Tri(x, y, 62, 44, 42, 78, 82, 78), Seg(x, y, 62, 44, 62, 86, 6)); break;   // escolta (dos aviones)
+            case 18: c = Mathf.Max(Tri(x, y, 48, 16, 14, 46, 82, 46), Box(x, y, 48, 64, 26, 20, 2)); cut = Box(x, y, 48, 72, 7, 12, 1); break;   // mi casa
             default: c = Mathf.Max(Box(x, y, 31, 48, 8, 10, 2), Tri(x, y, 38, 38, 56, 24, 56, 72), Tri(x, y, 38, 38, 56, 72, 38, 58), Ring(x, y, 56, 48, 14, 4) * (x > 58f ? 1f : 0f), Ring(x, y, 56, 48, 26, 4) * (x > 58f ? 1f : 0f)); break;   // sonidos
         }
         return c;
@@ -202,10 +212,21 @@ public class Tablet : MonoBehaviour
 
     void OnGUI()
     {
-        visible = false;
-        if (AvionDeCarton.enAuto) return;
+        visible = false; MapaAuto.enTablet = false;
+        if (app != 16) { ruletaAbierta = false; if (RuletaPrueba.Activa) RuletaPrueba.CerrarEnTablet(); }   // salir de la ruleta (INICIO) la cierra; lo apostado queda guardado
+        bool aPie = APie;
+        if (aPie)
+        {
+            Preparar(); GUI.depth = -61;
+            var bgT = GUI.backgroundColor; GUI.backgroundColor = abiertaEnTierra ? new Color(0.4f, 1f, 0.5f) : bgT;
+            if (GUI.Button(BotonTierra, abiertaEnTierra ? "CERRAR TABLET" : "TABLET", sBtnMini)) abiertaEnTierra = !abiertaEnTierra;
+            GUI.backgroundColor = bgT;
+            if (!abiertaEnTierra) return;
+            if (app >= 0 && DeAvion(app)) app = -1;
+        }
+        bool flotante = !Acoplada || aPie;
         Rect R;
-        if (Acoplada) { if (Hueco.width < 140f || Hueco.height < 140f) return; R = Hueco; } else R = RectLibre();
+        if (!flotante) { if (Hueco.width < 140f || Hueco.height < 140f) return; R = Hueco; } else R = RectLibre();
         Preparar();
         GUI.depth = -60; visible = true; ultimoRect = R;
         var e = Event.current;
@@ -219,8 +240,9 @@ public class Tablet : MonoBehaviour
         int hh = (int)DiaNoche.HoraActual, mm = Mathf.RoundToInt((DiaNoche.HoraActual - hh) * 60f); if (mm == 60) { mm = 0; hh = (hh + 1) % 24; }
         GUI.Label(new Rect(sb.x + 8f, sb.y, 70f, 26f), hh.ToString("00") + ":" + mm.ToString("00"), sHora);
         float bx = sb.xMax - 4f;
-        bx -= 88f; if (GUI.Button(new Rect(bx, sb.y + 3f, 86f, 20f), Acoplada ? "SACAR" : "ACOPLAR", sBtnMini)) { Acoplada = !Acoplada; if (Acoplada && Pausado) { Pausado = false; Time.timeScale = 1f; } for (int q = 0; q < zoomTmp.Length; q++) zoomTmp[q] = zoomApp[q]; Guardar(); }
-        if (!Acoplada)
+        bx -= 88f; if (aPie) { if (GUI.Button(new Rect(bx, sb.y + 3f, 86f, 20f), "CERRAR", sBtnMini)) abiertaEnTierra = false; }
+        else if (GUI.Button(new Rect(bx, sb.y + 3f, 86f, 20f), Acoplada ? "SACAR" : "ACOPLAR", sBtnMini)) { Acoplada = !Acoplada; if (Acoplada && Pausado) { Pausado = false; Time.timeScale = 1f; } for (int q = 0; q < zoomTmp.Length; q++) zoomTmp[q] = zoomApp[q]; Guardar(); }
+        if (!Acoplada && !aPie)
         {
             bx -= 124f;
             var bgc = GUI.backgroundColor; GUI.backgroundColor = Pausado ? new Color(1f, 0.45f, 0.3f) : bgc;
@@ -237,6 +259,7 @@ public class Tablet : MonoBehaviour
             if (GUI.Button(new Rect(ab.x + 6f, ab.y + 4f, 76f, 22f), "< INICIO", sBtnMini)) app = -1;
             else
             {
+                if (app == 16) RuletaPrueba.CabeceraTablet(new Rect(ab.x + 88f, ab.y + 4f, ab.width - 88f - 182f, 22f), sBtnMini);   // botones de la ruleta, chicos, junto a INICIO
                 bool clav = Mathf.Abs(zoomTmp[app] - zoomApp[app]) < 0.001f;
                 float zx = ab.xMax - 6f;
                 zx -= 70f; var bgz = GUI.backgroundColor; GUI.backgroundColor = clav ? new Color(0.5f, 0.5f, 0.5f) : new Color(0.4f, 1f, 0.45f);
@@ -258,7 +281,7 @@ public class Tablet : MonoBehaviour
 
         // ---- marco (encima de todo) + agarre para agrandar
         Nueve(R, bz);
-        if (!Acoplada)
+        if (flotante)
         {
             var g = new Rect(R.xMax - 26f, R.yMax - 26f, 26f, 26f);
             var c0 = GUI.color; GUI.color = new Color(1f, 1f, 1f, 0.55f);
@@ -287,7 +310,8 @@ public class Tablet : MonoBehaviour
             int id = orden[s]; float gx = (s % 5) * cw, gy = 10f + (s / 5) * ch - homeScroll;
             var cell = new Rect(gx, gy, cw, ch); var ir = new Rect(gx + (cw - isz) * 0.5f, gy, isz, isz);
             bool arr = icoArrastrando && icoPresionado == id;
-            var c0 = GUI.color; if (arr) GUI.color = new Color(1f, 1f, 1f, 0.35f);
+            bool gris = APie && DeAvion(id);
+            var c0 = GUI.color; if (arr) GUI.color = new Color(1f, 1f, 1f, 0.35f); if (gris) GUI.color = new Color(0.5f, 0.5f, 0.5f, 0.4f);
             GUI.DrawTexture(ir, ico[id]);
             if (sel == id && !arr) GUI.DrawTexture(new Rect(ir.x - 3f, ir.y - 3f, ir.width + 6f, ir.height + 6f), selTex);
             var ls = new Rect(gx - 8f, ir.yMax + 3f, cw + 16f, 22f); sEtq.normal.textColor = new Color(0f, 0f, 0f, 0.85f); GUI.Label(new Rect(ls.x + 1f, ls.y + 1f, ls.width, ls.height), NOM[id], sEtq); sEtq.normal.textColor = Color.white; GUI.Label(ls, NOM[id], sEtq);
@@ -296,7 +320,8 @@ public class Tablet : MonoBehaviour
             if (e.type == EventType.MouseDown && e.button == 0 && cell.Contains(e.mousePosition) && icoPresionado < 0)
             {
                 sel = id;
-                if (e.clickCount >= 2) { app = id; zoomTmp[id] = zoomApp[id]; icoPresionado = -1; }
+                if (e.clickCount >= 2 && gris) { Mapeo.Cartel(NOM[id] + ": solo desde el avion", 2f); icoPresionado = -1; }
+                else if (e.clickCount >= 2) { app = id; zoomTmp[id] = zoomApp[id]; icoPresionado = -1; }
                 else { icoPresionado = id; icoMouse0 = e.mousePosition + new Vector2(C.x, C.y); icoMouse = icoMouse0; icoArrastrando = false; }
                 e.Use();
             }
@@ -311,6 +336,11 @@ public class Tablet : MonoBehaviour
 
     void DibujarApp(Rect C)
     {
+        if (app == 16 && !ruletaAbierta && !RuletaPrueba.Activa)   // la ruleta se abre ADENTRO de la tablet: el avion sigue volando
+        {
+            ruletaAbierta = true; RuletaMesa.PlataLeer = () => Carrera.Plata; RuletaMesa.PlataSumar = d => { if (d > 0) Carrera.Pagar(d); else Carrera.Modificar(d); }; RuletaMesa.Escribiendo = b => Controles.escribiendo = b;
+            RuletaPrueba.AbrirEnJuego();
+        }
         float a0 = Tienda.PanelLateral.ancho; var r0 = Tienda.PanelLateral.rect;
         float esc = Mathf.Clamp(C.width / ANCHO_V[app] * zoomTmp[app], 0.3f, 2.2f), Wv = C.width / esc, Hv = C.height / esc;   // la app se dibuja a su ancho virtual y se escala para entrar justo
         Tienda.PanelLateral.ancho = Wv - 24f; Tienda.PanelLateral.rect = C;   // asi las pestanas de panel grande se acomodan al ancho de la tablet y el scroll no mueve la camara
@@ -318,6 +348,8 @@ public class Tablet : MonoBehaviour
         var m0 = GUI.matrix; GUI.matrix = m0 * Matrix4x4.TRS(new Vector3(C.x, C.y, 0f), Quaternion.identity, new Vector3(esc, esc, 1f));
         if (app == 0) { Torre.AppInstrumentos(new Rect(6f, 6f, Wv - 12f, Hv - 12f)); }
         else if (app == 1) { Torre.AppRadio(new Rect(6f, 6f, Wv - 12f, Hv - 12f)); }
+        else if (app == 8) { MapaAuto.enTablet = true; MapaAuto.AppMapa(new Rect(0f, 0f, Wv, Hv)); }   // el mapa grande, en la tablet
+        else if (app == 16) { if (!RuletaPrueba.DibujarDentro(new Rect(0f, 0f, Wv, Hv), new Vector2(C.x, C.y), esc)) app = -1; }   // la ruleta, dibujada en un lienzo que la tablet escala (si se cerro, vuelve al inicio)
         else
         {
             GUILayout.BeginArea(new Rect(6f, 4f, Wv - 12f, Hv - 8f));
@@ -330,12 +362,13 @@ public class Tablet : MonoBehaviour
                 case 5: Tienda.PestanaShopping(sTxt, sBtn, sTit); break;
                 case 6: Tienda.PestanaMaletin(sTxt, sBtn, sTit); break;
                 case 7: LucesAvion.PestanaLuces(sTxt, sBtn, sTit); break;
-                case 8: TrenAterrizaje.PestanaTren(sTxt, sBtn, sTit); break;
                 case 9: Guerra.PestanaGuerra(sTxt, sBtn, sTit); break;
                 case 10: Mapeo.PestanaControles(sTxt, sBtn, sTit); break;
                 case 11: Teletransporte.Pestana(sTxt, sBtn, sTit); break;
                 case 13: AvionDeCarton.AppSensibilidad(); break;
                 case 14: AvionDeCarton.AppModelo(); break;
+                case 17: Escolta.Pestana(sTxt, sBtn, sTit); break;
+                case 18: Casa.Pestana(sTxt, sBtn, sTit); break;
                 case 15: Hangar.PestanaAviones(Wv - 30f, Hv - 20f); break;
                 default:
                     GUILayout.Label("SONIDOS", sTit);

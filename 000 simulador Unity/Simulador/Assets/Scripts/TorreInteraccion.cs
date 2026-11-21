@@ -401,7 +401,7 @@ public partial class Torre
         float w = sChip.CalcSize(new GUIContent(t)).x + 10f; Rc(x, y, w, 16f, fondo); sChip.normal.textColor = letra; GUI.Label(new Rect(x, y, w, 16f), t, sChip); return x + w + 5f;
     }
 
-    const bool RADIO_EN_PANEL = false;
+    const bool RADIO_EN_PANEL = false, PREGUNTAS_EN_PANEL = false;
     public static void AppRadio(Rect a) { if (inst != null && inst.sEtq != null) inst.RadioCom(a.x + 10f, a.y + 10f, a.width - 20f, GUI.backgroundColor); else GUI.Label(a, "Radio no disponible todavia"); }
     float RadioCom(float x0, float y, float W, Color bgc)
     {
@@ -525,7 +525,7 @@ public partial class Torre
         }
 
         // ---- preguntas a la torre (cuadraditos: la torre contesta con datos reales del juego)
-        y = Preguntas(x0, y, W, k) + 4f;
+        if (PREGUNTAS_EN_PANEL) y = Preguntas(x0, y, W, k) + 4f;   // "Preguntale a la torre": sacado del panel (no se usaba); se vuelve a prender con esta constante
 
         // ---- radio COM: ahora vive en la tablet (app Radio COM); RADIO_EN_PANEL la devuelve al panel si hiciera falta
         if (RADIO_EN_PANEL) y = RadioCom(x0, y, W, bgc);

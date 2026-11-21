@@ -231,6 +231,7 @@ public class AvionDeCarton : MonoBehaviour
         tapaI.Dispose();
         // ---- triangulito: pliega el panel de abajo (queda una barrita) para ganar pantalla si se trabaja con la tablet ----
         if (!panelBajoCargado) { panelBajoCargado = true; panelBajoOculto = PlayerPrefs.GetInt("panel_bajo_oculto", 0) == 1; }
+        if (panelBajoOculto && (Mapeo.abrirLugares || Hangar.abrir)) panelBajoOculto = false;   // 19/11: con el panel plegado, la M (nombre del lugar) y Cambiar avion se abrian escondidos y dejaban todo trabado
         if (panelBajoOculto)
         {
             Tienda.PanelLateral.rect = new Rect(0, 0, 0, 0); Torre.lateralAbierto = false;
@@ -507,6 +508,7 @@ public class AvionDeCarton : MonoBehaviour
     public float AlturaSobrePiso { get { return hSobrePiso; } }
     // arranca ya volando (usado por el selector de aeropuertos del mapa): velocidad de crucero suave, sin quedar "en tierra"
     public void IniciarEnAire() { velocidad = esHeli ? 0f : Mathf.Clamp(velocidadInicialMs, ajuste.velMin, ajuste.velMax); enTierra = false; tiempoEnAire = 3f; tiempoSinToque = 3f; reversaActiva = false; intensidadFreno = 0f; giroEntrada = 0f; alturaPrev = -1f; }
+    public void FijarVelocidad(float ms) { velocidad = Mathf.Clamp(ms, ajuste != null ? ajuste.velMin : 0f, ajuste != null ? ajuste.velMax : 417f); }   // la usa la Escolta para arrancar a la par del avion presidencial
     public void Reanudar() { velocidad = 0f; enTierra = true; reversaActiva = false; intensidadFreno = 0f; bloqueoDespegue = 4f; giroEntrada = 0f; alturaPrev = -1f; }
 
     // Aparece el avion elegido (lo llama el selector). Si ya habia uno volando, el nuevo sale en el mismo lugar.

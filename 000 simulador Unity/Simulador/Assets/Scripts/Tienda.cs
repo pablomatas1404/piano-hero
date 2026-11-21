@@ -8,10 +8,10 @@ public static class Tienda
 {
     public class Art { public string id, cat, nombre, desc; public int precio; }
     static List<Art> catalogo;
-    static string filtro = "Tecnologia"; static Vector2 scrollS, scrollM; static string filtroM = "Todo";
+    static string filtro = "Mi casa"; static Vector2 scrollS, scrollM; static string filtroM = "Todo";
     static GUIStyle sTxtW, sNom, sNomC, sPrecio, sNomG;
 
-    public static readonly string[] CATEGORIAS = { "Tecnologia", "Ropa", "Calzado", "Joyas y relojes", "Vehiculos", "Hogar", "Lujo y vida", "Viajes" };
+    public static readonly string[] CATEGORIAS = { "Concesionaria", "Mi casa", "Tecnologia", "Ropa", "Calzado", "Joyas y relojes", "Vehiculos", "Hogar", "Lujo y vida", "Viajes" };
 
     static void A(string cat, string nombre, string desc, int precio) { catalogo.Add(new Art { id = cat + "|" + nombre, cat = cat, nombre = nombre, desc = desc, precio = precio }); }
 
@@ -19,6 +19,12 @@ public static class Tienda
     {
         if (catalogo != null) return;
         catalogo = new List<Art>();
+        // ---- MI CASA (19/11, prueba): al comprarlos aparecen en el living de la casa de Campo de Mayo (Casa.cs los muestra por este mismo nombre)
+        string C = "Mi casa";
+        A(C, "Planta grande", "Planta de interior en maceta. Le da vida al living.", 60);
+        A(C, "Ventilador de techo", "Cuatro aspas, para el verano.", 150);
+        A(C, "Sillon de lectura", "Sillon de cuero de los anos 60, para leer tranquilo.", 250);
+        A(C, "Sillon de 3 cuerpos", "Sillon clasico tapizado, entra toda la familia.", 300);
         // ---- tecnologia
         string T = "Tecnologia";
         A(T, "Parlante bluetooth", "Suena fuerte y se carga por USB.", 80);
@@ -272,6 +278,13 @@ public static class Tienda
         GUILayout.Label("SHOPPING   (gasta la plata de las misiones; lo que compras queda en la pestana Maletin)", titulo);
         GUILayout.Label("Tu dinero: $" + Carrera.Plata.ToString("N0"), sNom);
         BarraCategorias(btn, ref filtro, true);
+        if (filtro == "Concesionaria")   // autos para probar, alquilar y comprar (Concesionaria.cs)
+        {
+            scrollS = GUILayout.BeginScrollView(scrollS, false, true);
+            Concesionaria.Dibujar(txt, btn, PanelLateral.Ancho() - 40f);
+            GUILayout.EndScrollView();
+            return;
+        }
         scrollS = GUILayout.BeginScrollView(scrollS, false, true);
         float sw = SHOP_W, ph = sw * 0.8f;
         int cols = Mathf.Max(1, (int)((PanelLateral.Ancho() - 24f) / (sw + 6f)));
@@ -300,7 +313,7 @@ public static class Tienda
                     GUI.backgroundColor = alcanza ? new Color(0.4f, 1f, 0.4f) : new Color(0.55f, 0.4f, 0.4f);
                     if (GUILayout.Button(alcanza ? "COMPRAR" : "Falta", btn, GUILayout.ExpandWidth(true), GUILayout.Height(30)))
                     {
-                        if (alcanza && Carrera.Comprar(a.id, pr)) Mapeo.Cartel("COMPRASTE: " + a.nombre + "\n-$" + pr.ToString("N0") + "   (esta en tu Maletin)", 4f);
+                        if (alcanza && Carrera.Comprar(a.id, pr)) Mapeo.Cartel("COMPRASTE: " + a.nombre + "\n-$" + pr.ToString("N0") + (a.cat == "Mi casa" ? "   (ya esta en el living de tu casa: acomodalo con MODO DECORAR)" : "   (esta en tu Maletin)"), 5f);
                         else Mapeo.Cartel("Te faltan $" + (pr - Carrera.Plata).ToString("N0") + " para comprar " + a.nombre + ".\nHace mas misiones!", 3.5f);
                     }
                     GUI.backgroundColor = bg;

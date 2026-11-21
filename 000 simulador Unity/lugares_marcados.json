@@ -542,5 +542,82 @@
 		"lon": -58.794963274384557,
 		"nombre": "Aeropuerto Mariano Moreno Septima Brigada Aerea A1",
 		"orientacion": 340.84915161132813
+	},
+	{
+		"altitud": 42.3233642578125,
+		"lat": -34.535997023079567,
+		"lon": -58.674902704000189,
+		"nombre": "Terreno Campo de Mayo vertice 1",
+		"orientacion": 179.86454772949219
+	},
+	{
+		"altitud": 42.396682739257813,
+		"lat": -34.53787347416521,
+		"lon": -58.674897343297559,
+		"nombre": "Terreno Campo de Mayo vertice 2",
+		"orientacion": 179.86454772949219
+	},
+	{
+		"altitud": 42.973335266113281,
+		"lat": -34.539083976065214,
+		"lon": -58.676396880589174,
+		"nombre": "Terreno Campo de Mayo vertice 3",
+		"orientacion": 225.71011352539063
+	},
+	{
+		"altitud": 42.202655792236328,
+		"lat": -34.538254782333915,
+		"lon": -58.677775098276804,
+		"nombre": "Terreno Campo de Mayo vertice 3 B",
+		"orientacion": 305.7047119140625
+	},
+	{
+		"altitud": 42.206905364990234,
+		"lat": -34.537196529027163,
+		"lon": -58.675068971310957,
+		"nombre": "Terreno Campo de Mayo vertice 4",
+		"orientacion": 64.4939956665039
+	},
+	{
+		"altitud": 41.652702331542969,
+		"lat": -34.536653754996912,
+		"lon": -58.674370122745884,
+		"nombre": "Terreno Campo de Mayo Lote chico vertice 1",
+		"orientacion": 63.197002410888672
+	},
+	{
+		"altitud": 41.723773956298828,
+		"lat": -34.53647775405009,
+		"lon": -58.673949139091071,
+		"nombre": "Terreno Campo de Mayo lote chico vertice 2",
+		"orientacion": 63.197002410888672
+	},
+	{
+		"altitud": 41.795547485351563,
+		"lat": -34.53677702364,
+		"lon": -58.673812434263567,
+		"nombre": "Terreno campo de Mayo lote chico vertice 3",
+		"orientacion": 159.74745178222656
+	},
+	{
+		"altitud": 41.902118682861328,
+		"lat": -34.536982771781823,
+		"lon": -58.674340259753137,
+		"nombre": "Terreno Campo de Mayo lote chico vertice 3 B",
+		"orientacion": 243.87751770019531
+	},
+	{
+		"altitud": 41.669776916503906,
+		"lat": -34.536681166034626,
+		"lon": -58.674372884177536,
+		"nombre": "Terreno campo de Mayo lote chico vertice 4",
+		"orientacion": 348.69491577148438
+	},
+	{
+		"altitud": 42.840446472167969,
+		"lat": -34.546357649089728,
+		"lon": -58.676828896386894,
+		"nombre": "Entrada al country cerca de pista Campo de Mayo",
+		"orientacion": 56.053939819335938
 	}
 ]

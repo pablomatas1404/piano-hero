@@ -1,8 +1,11 @@
 {
     "nombre": "sdd",
-    "plata": 65523,
+    "plata": 50089,
     "horas_vuelo": 0.0,
-    "compras": [],
+    "compras": [
+        "Mi casa|Sillon de 3 cuerpos",
+        "Mi casa|Planta grande"
+    ],
     "hechas": [
         "n03",
         "n01",

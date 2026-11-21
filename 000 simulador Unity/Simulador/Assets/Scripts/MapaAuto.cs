@@ -8,7 +8,7 @@ using UnityEngine.Networking;
 using UnityEngine.Rendering.Universal;
 using CesiumForUnity;
 
-public class MapaAuto : MonoBehaviour
+public partial class MapaAuto : MonoBehaviour
 {
     // ---- constantes de Godot ----
     const int ZOOM_MIN = 3, ZOOM_MAX = 19;
@@ -16,18 +16,32 @@ public class MapaAuto : MonoBehaviour
     const float V_MAX = 55.56f, ACEL = 8f, FRENO = 12f, V_REVERSA = 4f, GIRO = 40f, ALTURA_A_PIE = 0.75f;
     const float FOV_MINI = 6f, ALTURA_MINI = 5000f;
 
-    class TipoAuto { public string nombre; public string archivo; public float largo; public float rotExtra; }
+    class TipoAuto { public string nombre; public string archivo; public float largo; public float rotExtra; public string id = ""; public string ruta; public float vMax = 55.56f, acel = 8f, giro = 40f; }
     static string Godot { get { return System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, "..", "..", "..", "simulador Claude")); } }
-    static readonly TipoAuto[] AUTOS =
+    static TipoAuto[] autosCache;
+    static TipoAuto[] AUTOS { get { if (autosCache == null) { var l = new List<TipoAuto>(); foreach (var a in Concesionaria.LISTA) l.Add(new TipoAuto { nombre = a.nombre, archivo = a.archivo, largo = a.largo, rotExtra = a.rotExtra, id = a.id, ruta = Concesionaria.Ruta(a), vMax = a.VelMs, acel = a.acel, giro = a.giro }); l.AddRange(VIEJOS); autosCache = l.ToArray(); } return autosCache; } }
+    static readonly TipoAuto[] VIEJOS =   // los primeros autos (se van a borrar cuando anden bien los nuevos)
     {
         new TipoAuto { nombre = "Patrullero",     archivo = "police_car.glb",   largo = 5.52f,  rotExtra = 0f },
         new TipoAuto { nombre = "BMW M3 azul",    archivo = "bmw_m3_e46.glb",   largo = 5.388f, rotExtra = 0f },
     };
-    static string RutaAuto(TipoAuto t) { return System.IO.Path.Combine(Godot, "modelos_vehiculos", t.archivo); }
+    static string RutaAuto(TipoAuto t) { var ca = t.id != null ? Concesionaria.Buscar(t.id) : null; if (ca != null) return Concesionaria.Ruta(ca); return t.ruta ?? System.IO.Path.Combine(Godot, "modelos_vehiculos", t.archivo); }   // la concesionaria decide si va la version liviana o la original
+    // ---- para la concesionaria ----
+    public static string AutoActualId { get { return inst != null && AvionDeCarton.enAuto && inst.autoGO != null ? AUTOS[Mathf.Clamp(inst.indiceAuto, 0, AUTOS.Length - 1)].id : ""; } }
+    public static void VolverAlAvion() { if (inst != null) inst.SubirAlAvion(); }
+    // usar un auto ya (si estas manejando, lo cambia en el lugar; si estas en el avion en tierra, baja al lado)
+    public static bool Usar(string id)
+    {
+        if (inst == null) return false; int idx = -1; for (int i = 0; i < AUTOS.Length; i++) if (AUTOS[i].id == id) idx = i;
+        if (idx < 0 || inst.cargandoAuto) return false;
+        if (AvionDeCarton.enAuto || (inst.avion != null && inst.avion.EnTierra)) { inst.selectorAbierto = false; inst.BajarAuto(idx); return true; }
+        return false;
+    }
+    float vMaxA = 55.56f, acelA = 8f, giroA = 40f, alturaA = 0.75f;   // los del auto que estas manejando
 
     AvionDeCarton avion; CesiumGlobeAnchor anclaAvion;
     GameObject autoGO; CesiumGlobeAnchor anclaAuto; Transform modeloAuto;
-    GLTFast.GltfImport[] importados = new GLTFast.GltfImport[AUTOS.Length];
+    readonly Dictionary<string, GLTFast.GltfImport> importados = new Dictionary<string, GLTFast.GltfImport>();
     Vector3 centroNativo; float escalaAuto; bool autoInvertido;
     float velAuto; bool cargandoAuto; string textoAviso = ""; float avisoHasta;
     bool selectorAbierto;
@@ -55,6 +69,97 @@ public class MapaAuto : MonoBehaviour
     }
     float zoomCam = 1f, yawCam, pitchCam;
     Camera cam; Vector3 camAdelUlt = Vector3.forward;
+    // vaiven al acelerar (20/11): el auto lleva CesiumOriginShift y el origen del mundo se corre DESPUES de que la camara se ubicaba
+    // -> la camara quedaba un cuadro atrasada o adelantada. Ahora la posicion de la camara se vuelve a poner justo antes de dibujar.
+    Vector3 offCam; public static bool vistaAdentro; Vector3 ojoLocal = new Vector3(-0.38f, 0.45f, 0.1f); float nearAntesAuto = -1f;
+    void AlRenderizarCamara(UnityEngine.Rendering.ScriptableRenderContext ctx, Camera c)
+    {
+        if (c == null || c != cam || !AvionDeCarton.enAuto || autoGO == null || APie.activo || Casa.decorando) return;
+        c.transform.position = vistaAdentro ? autoGO.transform.TransformPoint(ojoLocal) : autoGO.transform.position + offCam;
+    }
+    public static void AlternarVista()
+    {
+        if (inst == null || inst.cam == null) return; vistaAdentro = !vistaAdentro;
+        if (vistaAdentro) { inst.nearAntesAuto = inst.cam.nearClipPlane; inst.cam.nearClipPlane = 0.05f; } else if (inst.nearAntesAuto > 0f) inst.cam.nearClipPlane = inst.nearAntesAuto;
+        inst.yawCam = 0f; inst.pitchCam = 0f;
+    }
+    // ojos del conductor: detras del volante (si el modelo lo trae con nombre) o un lugar estimado por el tamano del auto
+    void CalcularOjo(Transform modelo, float largo)
+    {
+        Bounds bv = new Bounds(); bool hay = false;
+        foreach (var t in modelo.GetComponentsInChildren<Transform>(true))
+        {
+            string n = t.name.ToLowerInvariant();
+            bool vol = (n.Contains("steer") && !n.Contains("box") && !n.Contains("column") && !n.Contains("stalk") && !n.Contains("rack")) || n.Contains("volant") || n.Contains("lenkrad");
+            if (!vol) continue;
+            foreach (var r in t.GetComponentsInChildren<Renderer>(true)) { if (!hay) { bv = r.bounds; hay = true; } else bv.Encapsulate(r.bounds); }
+        }
+        var tA = autoGO.transform; float s = largo / 4.6f;
+        if (hay) { var v = tA.InverseTransformPoint(bv.center); ojoLocal = v + new Vector3(0f, 0.3f * s, -0.62f * s); }
+        else
+        {
+            var rs = modelo.GetComponentsInChildren<Renderer>(); if (rs.Length == 0) return;
+            Bounds b = rs[0].bounds; foreach (var r in rs) b.Encapsulate(r.bounds);
+            var mn = tA.InverseTransformPoint(b.min); var mx = tA.InverseTransformPoint(b.max);
+            float w = Mathf.Abs(mx.x - mn.x), h = Mathf.Abs(mx.y - mn.y), l = Mathf.Abs(mx.z - mn.z);
+            ojoLocal = new Vector3(-w * 0.2f, Mathf.Min(mn.y, mx.y) + h * 0.72f, l * 0.03f);   // volante a la izquierda (como en Argentina)
+        }
+        ojoBase = ojoLocal; ojoClave = "auto_ojo_" + specActual;
+        ojoLocal = ojoBase + new Vector3(PlayerPrefs.GetFloat(ojoClave + "_x", 0f), PlayerPrefs.GetFloat(ojoClave + "_y", 0f), PlayerPrefs.GetFloat(ojoClave + "_z", 0f));
+    }
+    Vector3 ojoBase; string ojoClave = "", specActual = "";
+    void MoverOjo(Vector3 d)
+    {
+        var a = ojoLocal - ojoBase + d; ojoLocal = ojoBase + a;
+        PlayerPrefs.SetFloat(ojoClave + "_x", a.x); PlayerPrefs.SetFloat(ojoClave + "_y", a.y); PlayerPrefs.SetFloat(ojoClave + "_z", a.z);
+    }
+    // ---- vidrios: polarizado (por defecto, le gusto a Pablo) o normal; se cambia con los botones de la vista conductor ----
+    public static bool polarizado = true; static bool polarizadoLeido;
+    readonly List<Material> vidrios = new List<Material>();
+    void BuscarVidrios(Transform modelo)
+    {
+        vidrios.Clear();
+        foreach (var r in modelo.GetComponentsInChildren<Renderer>(true))
+            foreach (var m in r.materials)
+            {
+                if (m == null) continue; string n = m.name.ToLowerInvariant();
+                if (n.Contains("glass") || n.Contains("window") || n.Contains("vidr") || n.Contains("windshield") || n.Contains("cristal") || n.Contains("lob") || m.renderQueue >= 3000) vidrios.Add(m);
+            }
+        AplicarVidrios();
+    }
+    void AplicarVidrios()
+    {
+        Color c = polarizado ? new Color(0.12f, 0.14f, 0.17f, 0.5f) : new Color(0.92f, 0.96f, 1f, 0.1f);
+        foreach (var m in vidrios)
+        {
+            if (m.HasProperty("baseColorFactor")) m.SetColor("baseColorFactor", c);
+            if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", c);
+            if (m.HasProperty("_Color")) m.SetColor("_Color", c);
+            if (m.HasProperty("roughnessFactor")) m.SetFloat("roughnessFactor", 0.03f);
+            if (m.HasProperty("_Smoothness")) m.SetFloat("_Smoothness", 0.95f);
+        }
+    }
+    // ---- liberar de la memoria los autos que no se usan (se acumulaban y Unity se cerro al cargar la Santa Fe) ----
+    void LiberarOtros(string quedar)
+    {
+        var claves = new List<string>(importados.Keys);
+        foreach (var k in claves) if (k != quedar) { try { importados[k].Dispose(); } catch { } importados.Remove(k); }
+        Resources.UnloadUnusedAssets();
+    }
+    // ---- el piso: primero un rayo corto (debajo del auto), si no encuentra nada uno largo; asi no se "sube" a copas de arboles ni queda hundido ----
+    static bool Piso(Vector3 p, out RaycastHit h)
+    {
+        if (Physics.Raycast(p + Vector3.up * 3f, Vector3.down, out h, 60f, ~0, QueryTriggerInteraction.Ignore)) return true;
+        return Physics.Raycast(p + Vector3.up * 400f, Vector3.down, out h, 800f, ~0, QueryTriggerInteraction.Ignore);
+    }
+    public void Enderezar()
+    {
+        if (autoGO == null) return; var t = autoGO.transform; RaycastHit h;
+        if (Physics.Raycast(t.position + Vector3.up * 400f, Vector3.down, out h, 800f, ~0, QueryTriggerInteraction.Ignore))
+        { t.position = new Vector3(t.position.x, h.point.y + alturaA, t.position.z); sueloEst = h.point.y; sueloInit = true; tiempoDesfase = 0f; }
+        Vector3 f = t.forward; f.y = 0f; if (f.sqrMagnitude > 0.01f) t.rotation = Quaternion.LookRotation(f.normalized, Vector3.up);
+        velAuto = 0f; AvisarTexto("Auto enderezado", 1.5f);
+    }
 
     // ---- mapa grande ----
     bool iniciado;
@@ -84,6 +189,10 @@ public class MapaAuto : MonoBehaviour
     }
 
     static MapaAuto inst;
+    public static Transform AutoT { get { return inst != null && inst.autoGO != null ? inst.autoGO.transform : null; } }   // lo usa APie (bajarse a caminar)
+    public static bool enTablet;   // la tablet lo prende mientras su app Mapa esta abierta: el mapa grande se dibuja alla y el de la izquierda se esconde
+    public static void AppMapa(Rect r) { if (inst != null) inst.DibujarMapaTablet(r); }
+    void DibujarMapaTablet(Rect r) { var e = Event.current; var rg = rectMapa; var og = mapaOculto; rectMapa = r; mapaOculto = false; DibujarMapa(e); rectMapa = rg; mapaOculto = og; }
     // posicion y rumbo (grados desde el norte) del avion, o del autito si se esta manejando; lo usa el mapeo (marcar lugar, ruta)
     public static bool PosActiva(out double lon, out double lat, out float alt, out float rumbo)
     {
@@ -100,6 +209,8 @@ public class MapaAuto : MonoBehaviour
     void Start()
     {
         inst = this;
+        UnityEngine.Rendering.RenderPipelineManager.beginCameraRendering += AlRenderizarCamara;
+        polarizado = PlayerPrefs.GetInt("auto_polarizado", 1) == 1;
         autoInvertido = PlayerPrefs.GetInt("auto_invertido", 0) == 1;
         zoomMapa = PlayerPrefs.GetInt("zoom_mapa", 12); zoomMini = PlayerPrefs.GetInt("zoom_mini", 12);
         puntoRojo = new Texture2D(16, 16, TextureFormat.RGBA32, false);
@@ -167,13 +278,14 @@ public class MapaAuto : MonoBehaviour
         if (avion == null) { avion = FindFirstObjectByType<AvionDeCarton>(); anclaAvion = avion != null ? avion.GetComponent<CesiumGlobeAnchor>() : null; }
         if (AvionDeCarton.enAuto && (avion == null || autoGO == null)) { LimpiarAuto(); AvionDeCarton.enAuto = false; }
         if (USAR_MINI_SATELITAL && rtMini == null && Camera.main != null) CrearMini();
-        if (AvionDeCarton.enAuto) ManejarAuto();
+        if (AvionDeCarton.enAuto && !APie.activo) ManejarAuto();   // caminando, el auto queda quieto
+        ChichesUpdate();
         AvionDeCarton.velAutoTxt = Mathf.RoundToInt(velAuto * 3.6f) + " km/h";
     }
 
     void LateUpdate()
     {
-        if (AvionDeCarton.enAuto && autoGO != null) CamaraAuto();
+        if (AvionDeCarton.enAuto && autoGO != null && !APie.activo) CamaraAuto();
         if (camMini != null)
         {
             var t = Activo;
@@ -209,19 +321,23 @@ public class MapaAuto : MonoBehaviour
 
     async void BajarAuto(int idx)
     {
-        if (cargandoAuto || avion == null || AvionDeCarton.enAuto) return;
+        if (cargandoAuto || avion == null) return;
         var spec = AUTOS[idx];
+        bool cambio = AvionDeCarton.enAuto && autoGO != null; Vector3 posCambio = Vector3.zero; Quaternion rotCambio = Quaternion.identity;
+        if (cambio) { posCambio = autoGO.transform.position; rotCambio = autoGO.transform.rotation; }
+        else if (AvionDeCarton.enAuto) return;
         string ruta = RutaAuto(spec);
         if (!System.IO.File.Exists(ruta)) { AvisarTexto("No encuentro " + spec.archivo, 3f); return; }
         cargandoAuto = true; AvisarTexto("Cargando " + spec.nombre + "...", 30f);
         try
         {
-            if (importados[idx] == null)
+            GLTFast.GltfImport imp;
+            if (!importados.TryGetValue(ruta, out imp))
             {
-                var g = new GLTFast.GltfImport();
-                bool ok = await g.Load(new System.Uri(ruta).AbsoluteUri);
+                imp = new GLTFast.GltfImport();
+                bool ok = await imp.Load(new System.Uri(ruta).AbsoluteUri);
                 if (!ok) { AvisarTexto("No pude cargar " + spec.archivo, 3f); cargandoAuto = false; return; }
-                importados[idx] = g;
+                importados[ruta] = imp;
             }
             if (avion == null) { cargandoAuto = false; return; }
 
@@ -251,13 +367,15 @@ public class MapaAuto : MonoBehaviour
             if (Physics.Raycast(pos + Vector3.up * 2000f, Vector3.down, out h, 4000f, ~0, QueryTriggerInteraction.Ignore)) yPiso = h.point.y;
             pos.y = yPiso + ALTURA_A_PIE;
 
+            if (cambio) { pos = posCambio; LimpiarAuto(); }
+            LiberarOtros(ruta);
             var geo = FindFirstObjectByType<CesiumGeoreference>();
             autoGO = new GameObject("Auto");
             autoGO.transform.SetParent(geo.transform, false);
             autoGO.transform.SetPositionAndRotation(pos, Quaternion.identity);
             var modelo = new GameObject("modelo");
             modelo.transform.SetParent(autoGO.transform, false);
-            await importados[idx].InstantiateMainSceneAsync(modelo.transform);
+            await imp.InstantiateMainSceneAsync(modelo.transform);
             if (autoGO == null) { cargandoAuto = false; return; }
 
             // auto-escala por la dimension mas larga y centrado (como _crear_modelo_auto)
@@ -269,10 +387,15 @@ public class MapaAuto : MonoBehaviour
                 float mas = Mathf.Max(bb.size.x, Mathf.Max(bb.size.y, bb.size.z));
                 escalaAuto = mas > 0.001f ? spec.largo / mas : 1f;
                 centroNativo = autoGO.transform.InverseTransformPoint(bb.center);
+                alturaA = Mathf.Clamp(bb.size.y * escalaAuto * 0.5f, 0.4f, 1.6f);   // el modelo queda centrado: el centro va a media altura del auto
             }
             modeloAuto = modelo.transform;
+            autoInvertido = PlayerPrefs.GetInt("auto_inv_" + spec.archivo, 0) == 1;   // "Dar vuelta auto" se recuerda por auto
             AplicarOrientacionModelo(spec);
-            autoGO.transform.rotation = Quaternion.LookRotation(adelante, Vector3.up);
+            specActual = spec.archivo; CalcularOjo(modelo.transform, spec.largo); BuscarVidrios(modelo.transform);
+            zoomCam = PlayerPrefs.GetFloat("auto_zoom_" + spec.archivo, 1f);
+            autoGO.transform.rotation = cambio ? rotCambio : Quaternion.LookRotation(adelante, Vector3.up);
+            vMaxA = spec.vMax; acelA = spec.acel; giroA = spec.giro;
 
             anclaAuto = autoGO.AddComponent<CesiumGlobeAnchor>();
             autoGO.AddComponent<CesiumOriginShift>();
@@ -296,7 +419,7 @@ public class MapaAuto : MonoBehaviour
 
             // el avion queda congelado y oculto donde estaba
             var src = avion.GetComponent<AudioSource>(); if (src != null) src.Pause();
-            foreach (var r in rsAvion) r.enabled = false;
+            foreach (var r in avion.GetComponentsInChildren<Renderer>()) r.enabled = false;
             AvionDeCarton.enAuto = true;
             velAuto = 0f; sueloInit = false; yawCam = 0f; pitchCam = 0f; indiceAuto = idx;
             AvisarTexto("Manejando: " + spec.nombre, 2f);
@@ -342,7 +465,8 @@ public class MapaAuto : MonoBehaviour
     void SubirAlAvion()
     {
         if (!AvionDeCarton.enAuto) return;
-        LimpiarAuto();
+        LimpiarAuto(); LiberarOtros(null);
+        if (vistaAdentro) AlternarVista();
         AvionDeCarton.enAuto = false; velAuto = 0f;
         if (avion != null)
         {
@@ -369,12 +493,12 @@ public class MapaAuto : MonoBehaviour
         if (Controles.Activa("alabeo_derecha")) giro += 1f;
         if (Controles.Activa("alabeo_izquierda")) giro -= 1f;
         giro = Mathf.Clamp(giro, -1f, 1f);
-        if (giro != 0f) t.Rotate(arriba, giro * GIRO * dt, Space.World);
+        if (giro != 0f) t.Rotate(arriba, giro * giroA * dt, Space.World);
 
         bool acel = Controles.Activa("acelerar");
         bool fren = Controles.Activa("frenar");
         bool reversa = Controles.Activa("reversa_pushback") || (kb != null && (kb.fKey.isPressed || kb.lKey.isPressed)) || (gp != null && gp.rightTrigger.ReadValue() > 0.2f);
-        if (acel) velAuto = Mathf.Min(V_MAX, velAuto + ACEL * dt);
+        if (acel) velAuto = Mathf.Min(vMaxA, velAuto + acelA * Mathf.Lerp(1f, 0.35f, velAuto / Mathf.Max(1f, vMaxA)) * dt);   // acelera menos cuanto mas rapido va
         else if (fren) velAuto = Mathf.Max(0f, velAuto - FRENO * dt);
 
         Vector3 f = t.forward; f -= Vector3.Dot(f, arriba) * arriba;
@@ -384,7 +508,7 @@ public class MapaAuto : MonoBehaviour
 
         // pegado al piso: rayo vertical, solo la altura se suaviza (lerp delta*10)
         RaycastHit h;
-        if (Physics.Raycast(t.position + arriba * 2000f, -arriba, out h, 4000f, ~0, QueryTriggerInteraction.Ignore))
+        if (Piso(t.position, out h))
         {
             // filtro anti-bultos: el piso estimado solo puede subir/bajar segun una pendiente maxima (autos, plantas, puentes de la foto 3D no te levantan)
             if (!sueloInit) { sueloEst = h.point.y; sueloInit = true; }
@@ -392,19 +516,19 @@ public class MapaAuto : MonoBehaviour
             float dif = h.point.y - sueloEst;
             if (Mathf.Abs(dif) > 8f) { tiempoDesfase += dt; if (tiempoDesfase > 2f) { sueloEst = h.point.y; tiempoDesfase = 0f; } } else tiempoDesfase = 0f;
             sueloEst += Mathf.Clamp(dif, -pasoMax, pasoMax);
-            float hAct = t.position.y, hObj = sueloEst + ALTURA_A_PIE;
+            float hAct = t.position.y, hObj = sueloEst + alturaA;
             float nueva = Mathf.Lerp(hAct, hObj, Mathf.Clamp01(dt * 10f));
             t.position += arriba * (nueva - hAct);
         }
         if (fuenteAuto != null && capasAuto == null) fuenteAuto.volume = Mathf.Pow(10f, Mathf.Lerp(-40f, -6f, 0.5f) / 20f) * Mezcla.De(Mezcla.MOTOR_AUTO);
         if (capasAuto != null)
         {
-            float fv = Mathf.Clamp01(velAuto / V_MAX), mz = Mezcla.De(Mezcla.MOTOR_AUTO) * 0.8f; bool ac = Controles.Activa("acelerar") && velAuto < V_MAX * 0.97f;
+            float fv = Mathf.Clamp01(velAuto / vMaxA), mz = Mezcla.De(Mezcla.MOTOR_AUTO) * 0.8f; bool ac = Controles.Activa("acelerar") && velAuto < vMaxA * 0.97f;
             float vRal = Mathf.Clamp01(1f - fv / 0.30f), vMed = Mathf.Clamp01(1f - Mathf.Abs(fv - 0.45f) / 0.30f), vAlt = Mathf.Clamp01((fv - 0.45f) / 0.35f), vAce = ac ? Mathf.Clamp01(1f - fv / 0.85f) * 0.85f : 0f;
             float[] vv = { vRal, vMed, vAlt, vAce };
             for (int ci = 0; ci < 4; ci++) if (capasAuto[ci] != null) { float meta = vv[ci] * mz; capasAuto[ci].volume = Mathf.MoveTowards(capasAuto[ci].volume, meta, dt * 3f); capasAuto[ci].pitch = ci == 3 ? 1f : Mathf.Lerp(0.95f, 1.1f, fv); }
         }
-        else if (fuenteAuto != null) fuenteAuto.pitch = Mathf.Lerp(0.85f, 1.25f, Mathf.Clamp01(velAuto / V_MAX));
+        else if (fuenteAuto != null) fuenteAuto.pitch = Mathf.Lerp(0.85f, 1.25f, Mathf.Clamp01(velAuto / vMaxA));
     }
 
     void CamaraAuto()
@@ -418,7 +542,7 @@ public class MapaAuto : MonoBehaviour
         if (raton != null && !ratonSobrePanel)
         {
             float rueda = raton.scroll.ReadValue().y;
-            if (rueda != 0f) zoomCam = Mathf.Clamp(zoomCam * Mathf.Exp(-Mathf.Sign(rueda) * 0.18f), 0.1f, 5f);
+            if (rueda != 0f) { zoomCam = Mathf.Clamp(zoomCam * Mathf.Exp(-Mathf.Sign(rueda) * 0.18f), 0.1f, 5f); PlayerPrefs.SetFloat("auto_zoom_" + specActual, zoomCam); }
         }
         var kb = Keyboard.current;
         if (kb != null && !Controles.escribiendo)
@@ -437,22 +561,33 @@ public class MapaAuto : MonoBehaviour
             Vector2 sd = gp.rightStick.ReadValue();
             if (sd.magnitude > 0.2f) { yawCam += sd.x * 90f * Time.deltaTime; pitchCam = Mathf.Clamp(pitchCam + sd.y * 60f * Time.deltaTime, -80f, 80f); }
         }
+        if (gp != null && !Controles.escribiendo && !APie.activo && gp.buttonNorth.wasPressedThisFrame) AlternarVista();   // boton Y: vista del conductor
+        if (vistaAdentro)
+        {
+            var baseRot = Quaternion.LookRotation(adel, arriba);
+            cam.transform.position = autoGO.transform.TransformPoint(ojoLocal);
+            cam.transform.rotation = baseRot * Quaternion.Euler(7f + Mathf.Clamp(-pitchCam, -50f, 50f), Mathf.Clamp(yawCam, -150f, 150f), 0f);   // 7 grados hacia abajo: se ve la ruta
+            return;
+        }
         Vector3 off = (-adel * 22f + arriba * 5f) * zoomCam;
         off = Quaternion.AngleAxis(yawCam, arriba) * off;
         Vector3 lat = Vector3.Cross(arriba, off);
         if (lat.sqrMagnitude > 0.0001f) off = Quaternion.AngleAxis(pitchCam, lat.normalized) * off;
+        offCam = off;
         cam.transform.position = autoGO.transform.position + off;
         Quaternion destino = Quaternion.LookRotation(autoGO.transform.position - cam.transform.position, arriba);
         cam.transform.rotation = Quaternion.Slerp(cam.transform.rotation, destino, 1f - Mathf.Exp(-12f * Time.deltaTime));
     }
 
     // ====================== baldosas del mapa ======================
+    public static bool satelite; float tPanMapa;   // imagen satelital (Esri) en vez de calles (OpenStreetMap)
     Texture2D Baldosa(int z, int x, int y)
     {
-        long k = Clave(z, x, y);
+        long k = Clave(z + (satelite ? 64 : 0), x, y);
         Texture2D t;
         if (baldosas.TryGetValue(k, out t)) return t;
-        if (!pendientes.Contains(k) && pendientes.Count < 4)
+        usoBaldosa[k] = Time.unscaledTime;
+        if (!pendientes.Contains(k) && pendientes.Count < 10)
         {
             float prox; if (!proximoIntento.TryGetValue(k, out prox) || Time.time >= prox) Descargar(k, z, x, y);
         }
@@ -464,7 +599,8 @@ public class MapaAuto : MonoBehaviour
         pendientes.Add(k);
         try
         {
-            using (var req = UnityWebRequestTexture.GetTexture("https://tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png"))
+            bool sat = k >> 48 >= 64;
+            using (var req = UnityWebRequestTexture.GetTexture(sat ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/" + z + "/" + y + "/" + x : "https://tile.openstreetmap.org/" + z + "/" + x + "/" + y + ".png"))
             {
                 req.SetRequestHeader("User-Agent", "SimuladorDeVueloUnity/1.0");
                 var op = req.SendWebRequest();
@@ -473,8 +609,8 @@ public class MapaAuto : MonoBehaviour
                 {
                     var tex = DownloadHandlerTexture.GetContent(req);
                     tex.wrapMode = TextureWrapMode.Clamp;
-                    if (baldosas.Count > 150) LimpiarBaldosas();
-                    baldosas[k] = tex;
+                    if (baldosas.Count > 320) PodarBaldosas();
+                    baldosas[k] = tex; usoBaldosa[k] = Time.unscaledTime;
                 }
                 else { proximoIntento[k] = Time.time + 6f; Debug.LogWarning("[Mapa] baldosa fallo: " + req.error + " (" + req.responseCode + ")"); }
             }
@@ -483,6 +619,45 @@ public class MapaAuto : MonoBehaviour
         pendientes.Remove(k);
     }
 
+    readonly Dictionary<long, float> usoBaldosa = new Dictionary<long, float>();
+    void PodarBaldosas()   // saca las 100 menos usadas (antes se borraban todas de golpe y el mapa parpadeaba)
+    {
+        var ks = new List<long>(baldosas.Keys); ks.Sort((a, b) => { float ua, ub; usoBaldosa.TryGetValue(a, out ua); usoBaldosa.TryGetValue(b, out ub); return ua.CompareTo(ub); });
+        for (int i = 0; i < 100 && i < ks.Count; i++) { Texture2D t; if (baldosas.TryGetValue(ks[i], out t) && t != null) Destroy(t); baldosas.Remove(ks[i]); usoBaldosa.Remove(ks[i]); }
+    }
+    // pide primero las baldosas que se ven, mas cerca del centro, y despues las de alrededor y las de adelante (donde vas a estar en unos segundos)
+    void PrecargarMapa(int tx0, int tx1, int ty0, int ty1, double cxPx, double cyPx, double lat, double lon, float rumbo, int n)
+    {
+        var lista = new List<KeyValuePair<float, long>>(); var txs = new List<int>(); var tys = new List<int>();
+        double mpp = 156543.03392 * System.Math.Cos(lat * System.Math.PI / 180.0) / System.Math.Pow(2.0, zoomMapa);
+        double dist = Mathf.Max(velMs, 40f) * 7.0, rr = rumbo * System.Math.PI / 180.0; double fx = cxPx + System.Math.Sin(rr) * dist / mpp, fy = cyPx - System.Math.Cos(rr) * dist / mpp;
+        for (int pasada = 0; pasada < 2; pasada++)
+        {
+            double ox = pasada == 0 ? 0 : fx - cxPx, oy = pasada == 0 ? 0 : fy - cyPx;
+            for (int ty = ty0 - 1; ty <= ty1 + 1; ty++) for (int tx = tx0 - 1; tx <= tx1 + 1; tx++)
+            {
+                if (ty < 0 || ty >= n) continue; int txw = ((tx % n) + n) % n; bool visible = pasada == 0 && tx >= tx0 && tx <= tx1 && ty >= ty0 && ty <= ty1;
+                double ddx = (tx + 0.5) * 256.0 + ox - (pasada == 0 ? cxPx : cxPx), ddy = (ty + 0.5) * 256.0 + oy - cyPx;
+                lista.Add(new KeyValuePair<float, long>((visible ? 0f : (pasada == 0 ? 2000f : 1000f)) + (float)System.Math.Sqrt(ddx * ddx + ddy * ddy), Clave(txw, ty, 0)));
+                txs.Add(txw); tys.Add(ty);
+            }
+        }
+        var idx = new List<int>(); for (int i = 0; i < lista.Count; i++) idx.Add(i); idx.Sort((a, b) => lista[a].Key.CompareTo(lista[b].Key));
+        foreach (int i in idx) { if (pendientes.Count >= 10) break; Baldosa(zoomMapa, txs[i], tys[i]); }
+        if (zoomMapa > 3) for (int ty = ty0; ty <= ty1; ty++) for (int tx = tx0; tx <= tx1; tx++) { if (ty < 0 || ty >= n) continue; int txw = ((tx % n) + n) % n; Texture2D t; if (!baldosas.TryGetValue(Clave(zoomMapa + (satelite ? 64 : 0), txw, ty), out t)) Baldosa(zoomMapa - 2 < 3 ? zoomMapa - 1 : zoomMapa - 2, txw >> (zoomMapa - 2 < 3 ? 1 : 2), ty >> (zoomMapa - 2 < 3 ? 1 : 2)); }
+    }
+    // baldosa lista, o un pedacito de la de menos zoom (borroso) mientras llega la nitida
+    Texture2D TexBaldosa(int z, int x, int y, out Rect uv)
+    {
+        uv = new Rect(0f, 0f, 1f, 1f); int sat = satelite ? 64 : 0; Texture2D t;
+        if (baldosas.TryGetValue(Clave(z + sat, x, y), out t) && t != null) { usoBaldosa[Clave(z + sat, x, y)] = Time.unscaledTime; return t; }
+        for (int up = 1; up <= 3 && z - up >= 0; up++)
+        {
+            long kp = Clave(z - up + sat, x >> up, y >> up);
+            if (baldosas.TryGetValue(kp, out t) && t != null) { usoBaldosa[kp] = Time.unscaledTime; float sz = 1f / (1 << up); int m = (1 << up) - 1; uv = new Rect((x & m) * sz, 1f - ((y & m) + 1) * sz, sz, sz); return t; }
+        }
+        return null;
+    }
     void LimpiarBaldosas()
     {
         foreach (var kv in baldosas) if (kv.Value != null) Destroy(kv.Value);
@@ -498,12 +673,12 @@ public class MapaAuto : MonoBehaviour
             rectMapa = new Rect(W - 264f, 151f, 264f, 255f);   // offsets de Godot
             rectMini = new Rect(20f, 110f, 220f, 220f);
             if (PlayerPrefs.HasKey("mapa_x")) rectMapa = new Rect(Mathf.Clamp(PlayerPrefs.GetFloat("mapa_x"), 0f, Mathf.Max(0f, W - 100f)), Mathf.Clamp(PlayerPrefs.GetFloat("mapa_y"), 0f, Mathf.Max(0f, H - 100f)), Mathf.Clamp(PlayerPrefs.GetFloat("mapa_w"), MAPA_MIN, MAPA_MAX), Mathf.Clamp(PlayerPrefs.GetFloat("mapa_h"), MAPA_MIN, MAPA_MAX));
-            clavado = PlayerPrefs.GetInt("mapa_clavado", 0) == 1;
+            clavado = PlayerPrefs.GetInt("mapa_clavado", 0) == 1; satelite = PlayerPrefs.GetInt("mapa_satelite", 0) == 1;
             mapaOculto = PlayerPrefs.GetInt("mapa_oculto", 0) == 1;
             iniciado = true;
         }
         var e = Event.current;
-        ratonSobrePanel = rectMapa.Contains(e.mousePosition) || (MINI_CALLES && rectMini.Contains(e.mousePosition));
+        ratonSobrePanel = rectMapa.Contains(e.mousePosition) || (MINI_CALLES && rectMini.Contains(e.mousePosition)) || Tablet.Sobre(e.mousePosition);
 
         // boton Bajar / Subir (arriba a la izquierda, antes de los instrumentos)
         bool enA = AvionDeCarton.enAuto;
@@ -514,8 +689,36 @@ public class MapaAuto : MonoBehaviour
         GUI.enabled = true;
         if (enA && GUI.Button(new Rect(196f, 4f, 120f, 26f), "Dar vuelta auto"))
         {
-            autoInvertido = !autoInvertido; PlayerPrefs.SetInt("auto_invertido", autoInvertido ? 1 : 0); PlayerPrefs.Save();
+            autoInvertido = !autoInvertido; PlayerPrefs.SetInt("auto_inv_" + AUTOS[Mathf.Clamp(indiceAuto, 0, AUTOS.Length - 1)].archivo, autoInvertido ? 1 : 0); PlayerPrefs.Save();
             AplicarOrientacionModelo(AUTOS[Mathf.Clamp(indiceAuto, 0, AUTOS.Length - 1)]);
+        }
+        if (enA && !APie.activo && !Casa.decorando)
+        {
+            var sb2 = new GUIStyle(GUI.skin.button) { fontSize = 13, fontStyle = FontStyle.Bold };
+            var rEnd = new Rect(W - 150f, H - 150f, 140f, 34f); var tE = Disposicion.Bloque("auto_enderezar", "BOTON ENDEREZAR AUTO", rEnd);
+            if (GUI.Button(rEnd, "ENDEREZAR AUTO", sb2)) Enderezar(); tE.Dispose();
+            if (vistaAdentro)
+            {
+                var rV = new Rect(20f, H - 200f, 300f, 110f); var tV = Disposicion.Bloque("auto_vidrios", "VIDRIOS Y VISTA DEL CONDUCTOR", rV);
+                var c0v = GUI.color; GUI.color = new Color(0, 0, 0, 0.45f); GUI.DrawTexture(rV, Texture2D.whiteTexture); GUI.color = c0v;
+                var bgx = GUI.backgroundColor;
+                GUI.backgroundColor = !polarizado ? new Color(0.4f, 1f, 0.5f) : bgx; if (GUI.Button(new Rect(rV.x + 6f, rV.y + 6f, 140f, 28f), "VIDRIO NORMAL", sb2)) { polarizado = false; AplicarVidrios(); PlayerPrefs.SetInt("auto_polarizado", 0); }
+                GUI.backgroundColor = polarizado ? new Color(0.4f, 1f, 0.5f) : bgx; if (GUI.Button(new Rect(rV.x + 152f, rV.y + 6f, 140f, 28f), "POLARIZADO", sb2)) { polarizado = true; AplicarVidrios(); PlayerPrefs.SetInt("auto_polarizado", 1); }
+                GUI.backgroundColor = bgx;
+                float p = 0.04f, bx = rV.x + 6f, by = rV.y + 40f;
+                GUI.Label(new Rect(bx, by, 290f, 20f), "Mover los ojos del conductor:", sb2); by += 22f;
+                if (GUI.RepeatButton(new Rect(bx, by, 46f, 30f), "ARR", sb2)) MoverOjo(new Vector3(0, p, 0));
+                if (GUI.RepeatButton(new Rect(bx + 48f, by, 46f, 30f), "ABA", sb2)) MoverOjo(new Vector3(0, -p, 0));
+                if (GUI.RepeatButton(new Rect(bx + 96f, by, 46f, 30f), "ADEL", sb2)) MoverOjo(new Vector3(0, 0, p));
+                if (GUI.RepeatButton(new Rect(bx + 144f, by, 46f, 30f), "ATRAS", sb2)) MoverOjo(new Vector3(0, 0, -p));
+                if (GUI.RepeatButton(new Rect(bx + 192f, by, 46f, 30f), "IZQ", sb2)) MoverOjo(new Vector3(-p, 0, 0));
+                if (GUI.RepeatButton(new Rect(bx + 240f, by, 46f, 30f), "DER", sb2)) MoverOjo(new Vector3(p, 0, 0));
+                tV.Dispose();
+            }
+            var sv = new GUIStyle(GUI.skin.button) { fontSize = 17, fontStyle = FontStyle.Bold };
+            var bgv = GUI.backgroundColor; GUI.backgroundColor = vistaAdentro ? new Color(0.4f, 1f, 0.5f) : new Color(0.6f, 0.8f, 1f);
+            if (GUI.Button(new Rect(W * 0.5f + 180f, H - 90f, 210f, 50f), vistaAdentro ? "VISTA DE AFUERA" : "VISTA CONDUCTOR", sv)) AlternarVista();
+            GUI.backgroundColor = bgv;
         }
         if (Time.time < avisoHasta)
         {
@@ -525,14 +728,19 @@ public class MapaAuto : MonoBehaviour
 
         if (selectorAbierto && !enA)
         {
-            var r = new Rect(W * 0.5f - 160f, 120f, 320f, 40f + AUTOS.Length * 44f + 40f);
+            var disp = new List<int>(); for (int i = 0; i < AUTOS.Length; i++) if (Concesionaria.Disponible(AUTOS[i].id)) disp.Add(i);
+            var r = new Rect(W * 0.5f - 190f, 120f, 380f, 40f + disp.Count * 44f + 66f);
             GUI.Box(r, "ELEGI TU AUTO");
-            for (int i = 0; i < AUTOS.Length; i++)
-                if (GUI.Button(new Rect(r.x + 14f, r.y + 32f + i * 44f, r.width - 28f, 38f), AUTOS[i].nombre)) { selectorAbierto = false; BajarAuto(i); }
+            for (int k = 0; k < disp.Count; k++)
+            {
+                int i = disp[k]; var ca = Concesionaria.Buscar(AUTOS[i].id); string ex = ca != null ? "   (" + Concesionaria.Estado(ca) + ")" : "";
+                if (GUI.Button(new Rect(r.x + 14f, r.y + 32f + k * 44f, r.width - 28f, 38f), AUTOS[i].nombre + ex)) { selectorAbierto = false; BajarAuto(i); }
+            }
+            GUI.Label(new Rect(r.x + 14f, r.y + r.height - 62f, r.width - 28f, 26f), "Mas autos: Shopping > Concesionaria (probar, alquilar, comprar)");
             if (GUI.Button(new Rect(r.x + 14f, r.y + r.height - 34f, r.width - 28f, 26f), "Cancelar")) selectorAbierto = false;
         }
 
-        DibujarMapa(e);
+        if (!enTablet) DibujarMapa(e);
         if (MINI_CALLES) DibujarMini(e);
 
         // arrastre global (mover contenido / mover / agrandar)
@@ -584,6 +792,7 @@ public class MapaAuto : MonoBehaviour
         var ancla = AnclaActiva;
         double lat = 0, lon = 0; float alt = 0f;
         if (ancla != null) { var llh = ancla.longitudeLatitudeHeight; lon = llh.x; lat = llh.y; alt = (float)llh.z; }
+        if (enTablet && !modoRec && !modoMarca && Time.unscaledTime > tPanMapa) sigueAvion = true;   // en la tablet no se despega del avion: nada de deslizar ni de que se vaya a la punta
         if (sigueAvion) { centroLat = lat; centroLon = lon; }
 
         // zoom automatico por altura (la ruedita lo fuerza 1 minuto)
@@ -600,15 +809,16 @@ public class MapaAuto : MonoBehaviour
             int tx0 = (int)System.Math.Floor(izq / 256.0), tx1 = (int)System.Math.Floor((izq + r.width) / 256.0);
             int ty0 = (int)System.Math.Floor(arr / 256.0), ty1 = (int)System.Math.Floor((arr + r.height) / 256.0);
             var col = GUI.color; GUI.color = new Color(1, 1, 1, alfa);
+            { double plon, plat; float palt, prum; if (!PosActiva(out plon, out plat, out palt, out prum)) { plon = lon; plat = lat; prum = 0f; } PrecargarMapa(tx0, tx1, ty0, ty1, cxPx, cyPx, plat, plon, prum, n); }
             for (int ty = ty0; ty <= ty1; ty++)
             {
                 if (ty < 0 || ty >= n) continue;
                 for (int tx = tx0; tx <= tx1; tx++)
                 {
-                    int txw = ((tx % n) + n) % n;
-                    var tex = Baldosa(zoomMapa, txw, ty);
+                    int txw = ((tx % n) + n) % n; Rect uvb;
+                    var tex = TexBaldosa(zoomMapa, txw, ty, out uvb);
                     if (tex == null) continue;
-                    GUI.DrawTexture(new Rect((float)(tx * 256.0 - izq), (float)(ty * 256.0 - arr), 256f, 256f), tex);
+                    GUI.DrawTextureWithTexCoords(new Rect((float)(tx * 256.0 - izq), (float)(ty * 256.0 - arr), 256f, 256f), tex, uvb);
                 }
             }
             GUI.color = col;
@@ -627,12 +837,14 @@ public class MapaAuto : MonoBehaviour
             // aeropuertos (puntos amarillos tocables)
             RefrescarPuntos();
             if (planVista && planLinea && planOrigen != "" && planDestino != "") DibujarLineaPlan(r, izq, arr);
-            if (planVista && puntosAero != null)
+            DibujarChichesMapa(r, izq, arr);
+            if ((planVista || capaAero) && puntosAero != null)
             {
                 if (sAero == null) { sAero = new GUIStyle(GUI.skin.label) { fontSize = 10, fontStyle = FontStyle.Bold, normal = { textColor = Color.white } }; sAeroSel = new GUIStyle(sAero) { normal = { textColor = new Color(1f, 0.9f, 0.2f) } }; }
                 var colAnt = GUI.color; var cir = Circulo();
                 foreach (var pa in puntosAero)
                 {
+                    if (soloPista && !pa.tienePista && pa.nombre != planOrigen && pa.nombre != planDestino) continue;
                     float ax = (float)(LonAPx(pa.lon, zoomMapa) - izq), ay = (float)(LatAPx(pa.lat, zoomMapa) - arr);
                     if (ax < -10f || ay < -10f || ax > r.width + 10f || ay > r.height + 10f) continue;
                     bool sel = pa.nombre == aeroSel; float rad = sel ? 8f : 5.5f;
@@ -647,31 +859,36 @@ public class MapaAuto : MonoBehaviour
         GUI.EndGroup();
 
         // botones T (transparencia) y Centrar, en las esquinas de abajo; el tirador va en la esquina derecha
+        if (!mapaLimpio) {
         if (GUI.Button(new Rect(r.x + 4f, r.yMax - 26f, 26f, 22f), "T")) transparente = !transparente;
         if (GUI.Button(new Rect(r.x + 34f, r.yMax - 26f, 70f, 22f), "Centrar"))
         {
             sigueAvion = true; if (arrastrando == Arr.Contenido) arrastrando = Arr.Nada;
         }
         if (GUI.Button(new Rect(r.x + 108f, r.yMax - 26f, 64f, 22f), clavado ? "Clavado" : "Clavar")) { clavado = !clavado; PlayerPrefs.SetInt("mapa_clavado", clavado ? 1 : 0); GuardarMapa(); }
-        if (r.width >= 250f && GUI.Button(new Rect(r.x + 176f, r.yMax - 26f, 66f, 22f), "Ocultar")) { mapaOculto = true; PlayerPrefs.SetInt("mapa_oculto", 1); PlayerPrefs.Save(); return; }
+        if (r.width >= 330f && GUI.Button(new Rect(r.x + 246f, r.yMax - 26f, 84f, 22f), satelite ? "CALLES" : "SATELITE")) { satelite = !satelite; PlayerPrefs.SetInt("mapa_satelite", satelite ? 1 : 0); PlayerPrefs.Save(); }
+        if (satelite && r.width >= 330f) GUI.Label(new Rect(r.xMax - 250f, r.yMax - 16f, 232f, 14f), "Imagen: Esri, Maxar, Earthstar Geographics", new GUIStyle(GUI.skin.label) { fontSize = 9, alignment = TextAnchor.MiddleRight });
+        if (r.width >= 250f && !enTablet && GUI.Button(new Rect(r.x + 176f, r.yMax - 26f, 66f, 22f), "Ocultar")) { mapaOculto = true; PlayerPrefs.SetInt("mapa_oculto", 1); PlayerPrefs.Save(); return; }
         GUI.Box(new Rect(r.xMax - 16f, r.yMax - 16f, 16f, 16f), "");   // tirador de tamaño
         GUI.Label(new Rect(r.x + 4f, r.y, r.width - 8f, 16f), "Mapa - z" + zoomMapa);
+        }
 
         // popup de 3 bolitas del aeropuerto elegido (se dibuja arriba del mapa, antes de procesar los clics del mapa)
         // boton arriba a la derecha: alterna entre el mapa normal y la vista PLAN DE VUELO (puntos + linea)
-        var rBtnVista = new Rect(r.xMax - 108f, r.y + 1f, 106f, 15f);
-        Instrucciones.Marcar("plan", rBtnVista);
-        if (GUI.Button(rBtnVista, planVista ? "MAPA NORMAL" : "PLAN DE VUELO")) { planVista = !planVista; if (!planVista) { aeroSel = ""; if (planPaso > 0) PlanCancelar(); } }
-        var rBtnRuta = new Rect(r.xMax - 108f, r.y + 17f, 106f, 15f);
-        if (planVista)
+        var rBtnVista = mapaLimpio ? Rect.zero : new Rect(r.xMax - 108f, r.y + 1f, 106f, 15f);
+        if (!mapaLimpio) Instrucciones.Marcar("plan", rBtnVista);
+        if (!mapaLimpio && GUI.Button(rBtnVista, planVista ? "MAPA NORMAL" : "PLAN DE VUELO")) { planVista = !planVista; if (!planVista) { aeroSel = ""; if (planPaso > 0) PlanCancelar(); } }
+        var rBtnRuta = mapaLimpio ? Rect.zero : new Rect(r.xMax - 108f, r.y + 17f, 106f, 15f);
+        if (planVista && !mapaLimpio)
         {
             bool hayRuta = planPaso > 0 || planLinea;
             if (GUI.Button(rBtnRuta, planPaso > 0 ? "CANCELAR RUTA" : (planLinea ? "BORRAR RUTA" : "ARMAR RUTA 1 > 2"))) { if (hayRuta) PlanCancelar(); else { planPaso = 1; aeroSel = ""; textoAviso = "Ruta: toca el ORIGEN (1)"; avisoHasta = Time.time + 3f; } }
         }
         if (planViaje && Carrera.HayViaje) planViajeVisto = true;
         if (planViaje && planViajeVisto && !Carrera.HayViaje) PlanCancelar();   // llegaste o cancelaste el viaje: se borra la linea
-        if (planVista && planPaso == 3) DibujarPlanListo(e, r);
-        else if (planVista && aeroSel != "") DibujarOpcionesAero(e, r);
+        if (planVista && planPaso == 3 && !mapaLimpio) DibujarPlanListo(e, r);
+        else if (planVista && aeroSel != "" && !mapaLimpio) DibujarOpcionesAero(e, r);
+        DibujarPanelChiches(e, r, izq, arr);
         if (e.type == EventType.MouseDown && e.button == 0 && r.Contains(e.mousePosition) && !((aeroSel != "" || planPaso == 3) && planVista && rectOpcionesAero.Contains(e.mousePosition)) && !rBtnVista.Contains(e.mousePosition) && !(planVista && rBtnRuta.Contains(e.mousePosition)))
         {
             string pb = planVista && planPaso != 3 ? PuntoBajo(e.mousePosition, r, izq, arr) : "";
